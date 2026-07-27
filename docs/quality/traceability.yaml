@@ -48,13 +48,30 @@ vertical_slices:
     implements: [US-D01, US-D02, US-D03, US-D04, US-D05]
     obeys: [PD-003, PD-018, PD-033, BR-011, BR-012, BR-013, BR-014]
     modules: [menu, audit]
+    operations: [listMenuCategories, createMenuCategory, updateMenuCategory, listMenuDishes, createMenuDish, updateMenuDish, createMenuOptionGroup, updateMenuOptionGroup, replaceMenuOptions, upsertBranchDishOverride, getGuestMenu]
     tests: [TEST-MENU-001, TEST-MENU-002, TEST-SNAPSHOT-001]
+    slice_004_verified_acceptance: [AC-US-D01-03, AC-US-D02-03, AC-US-D03-03, AC-US-D03-05, AC-US-D03-06, AC-US-D04-01]
+    cross_slice_acceptance:
+      AC-US-D05-01: Slice 004 implements menu management and guest browse; order-item snapshots require Slice 005's order submission and item persistence.
+      AC-US-D05-02: Slice 004 implements menu management and guest browse; order-item snapshots require Slice 005's order submission and item persistence.
 
   guest_qr_and_tables:
     implements: [US-E01, US-E02, US-E03, US-E04, US-F01, US-F02, US-F04, US-F05]
     obeys: [PD-006, PD-007, PD-008, PD-010, PD-011, PD-012, PD-034, BR-008, BR-009, BR-010, BR-019]
     modules: [tables, ordering, audit]
+    operations: [listTables, createTable, updateTable, issueTableQrCode, issueBranchQrCode, revokeQrCode, listQrCodes, exchangeTableQr]
     tests: [TEST-QR-001, TEST-GUEST-001, TEST-TABLE-001, TEST-TABLE-002]
+    slice_004_verified_acceptance: [AC-US-E01-01, AC-US-E01-02, AC-US-E01-03, AC-US-E01-04, AC-US-E02-01, AC-US-E02-02, AC-US-E02-03, AC-US-E02-04, AC-US-E03-01, AC-US-E03-02, AC-US-E03-03, AC-US-E03-04, AC-US-F01-01, AC-US-F01-02, AC-US-F01-03, AC-US-F01-04, AC-US-F01-05, AC-US-F02-01, AC-US-F02-02, AC-US-F02-03]
+    cross_slice_acceptance:
+      AC-US-E04-01: Customer name configuration is not implemented; requires Slice 005's order submission flow.
+      AC-US-E04-02: Guest sessions without accounts are implemented; storing customer names in orders requires Slice 005.
+      AC-US-E04-03: Customer name storage requires Slice 005's order item persistence.
+      AC-US-F04-01: Employee table assignment is not implemented; requires Slice 005's order and table-session lifecycle.
+      AC-US-F04-02: Assignment recording is not implemented; requires Slice 005's order lifecycle.
+      AC-US-F04-03: Table conflict warnings are not implemented; requires Slice 005's order lifecycle.
+      AC-US-F05-01: Multiple orders per table require Slice 005's order persistence and lifecycle.
+      AC-US-F05-02: Multiple orders per table require Slice 005's order and table-session management.
+      AC-US-F05-03: Order isolation by customer and notes requires Slice 005's order persistence and lifecycle.
 
   ordering:
     implements: [US-G01, US-G02, US-G03, US-G04, US-G05, US-G06, US-H02, US-H03, US-H04, US-H05]
