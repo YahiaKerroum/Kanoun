@@ -9,6 +9,8 @@ const validEnvironment = {
   LOG_LEVEL: "silent",
   DATABASE_URL: "postgresql://rms:password@127.0.0.1:5432/rms",
   SESSION_SECRET: "a-secure-test-secret-with-32-characters",
+  BOOTSTRAP_SECRET: "a-bootstrap-test-secret-with-32-characters",
+  SESSION_COOKIE_SECURE: "false",
   WEB_ORIGIN: "http://127.0.0.1:5173",
 } satisfies NodeJS.ProcessEnv;
 
@@ -33,5 +35,18 @@ describe("loadApiConfig", () => {
     expect(() => loadApiConfig(invalidEnvironment)).not.toThrow(
       /do-not-log-this/,
     );
+  });
+
+  it("fails closed when production recovery delivery is not HTTPS", () => {
+    expect(() =>
+      loadApiConfig({
+        ...validEnvironment,
+        NODE_ENV: "production",
+        SESSION_COOKIE_SECURE: "true",
+        RECOVERY_DELIVERY_URL: "http://delivery.internal/recovery",
+        RECOVERY_DELIVERY_SECRET:
+          "a-production-delivery-secret-with-32-characters",
+      }),
+    ).toThrow("Invalid API configuration fields: NODE_ENV");
   });
 });

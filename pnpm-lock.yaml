@@ -65,6 +65,12 @@ importers:
       '@rms/building-blocks':
         specifier: workspace:*
         version: link:../../packages/building-blocks
+      '@rms/modules':
+        specifier: workspace:*
+        version: link:../../packages/modules
+      '@rms/service-workflow':
+        specifier: workspace:*
+        version: link:../../packages/service-workflow
       express:
         specifier: 5.2.1
         version: 5.2.1(supports-color@7.2.0)
@@ -102,6 +108,9 @@ importers:
       react-dom:
         specifier: 19.2.8
         version: 19.2.8(react@19.2.8)
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
     devDependencies:
       '@types/react':
         specifier: 19.2.17
@@ -199,21 +208,43 @@ importers:
 
   packages/modules:
     dependencies:
+      '@rms/building-blocks':
+        specifier: workspace:*
+        version: link:../building-blocks
       argon2:
         specifier: 0.45.1
         version: 0.45.1
       connect-pg-simple:
         specifier: 10.0.0
         version: 10.0.0
+      express:
+        specifier: 5.2.1
+        version: 5.2.1(supports-color@7.2.0)
+      express-rate-limit:
+        specifier: 8.6.1
+        version: 8.6.1(express@5.2.1(supports-color@7.2.0))(supports-color@7.2.0)
       express-session:
         specifier: 1.19.0
         version: 1.19.0(supports-color@7.2.0)
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
     devDependencies:
+      '@types/express':
+        specifier: 5.0.6
+        version: 5.0.6
       '@types/express-session':
         specifier: 1.19.0
         version: 1.19.0
 
-  packages/service-workflow: {}
+  packages/service-workflow:
+    dependencies:
+      '@rms/building-blocks':
+        specifier: workspace:*
+        version: link:../building-blocks
+      '@rms/modules':
+        specifier: workspace:*
+        version: link:../modules
 
   packages/test-support:
     dependencies:

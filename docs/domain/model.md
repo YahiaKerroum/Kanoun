@@ -17,7 +17,12 @@ source_of_truth_for:
 ```mermaid
 erDiagram
     BUSINESS_ACCOUNT ||--o{ RESTAURANT : owns
+    BUSINESS_ACCOUNT ||--o{ STAFF_USER : authenticates
     RESTAURANT ||--o{ BRANCH : operates
+    RESTAURANT ||--o{ EMPLOYEE : employs
+    STAFF_USER ||--|| EMPLOYEE : represents
+    STAFF_USER ||--o{ STAFF_SESSION : opens
+    EMPLOYEE ||--o{ PERMISSION_GRANT : receives
     RESTAURANT ||--o{ MENU : defines
     BRANCH ||--o{ TABLE : contains
     BRANCH ||--o{ EMPLOYEE_BRANCH_ACCESS : scopes
@@ -50,6 +55,15 @@ Owns:
 - Feature/configuration versions.
 
 Identity credentials are references, not part of the employee profile.
+
+### IdentityAccess
+
+Owns staff users, password credentials, revocable server-side sessions,
+single-use invitation and recovery-token records, and grants-only permission
+assignments. A staff user references exactly one tenant-owned employee profile.
+Only keyed hashes of opaque session, CSRF, invitation, and recovery tokens are
+persisted. Credential resets and employee deactivation revoke affected sessions
+in the same `ServiceWorkflow` transaction as the authoritative change.
 
 ### Menu
 

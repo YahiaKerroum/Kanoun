@@ -36,7 +36,9 @@ jobs:
       TRUST_PROXY: "false"
       LOG_LEVEL: silent
       SESSION_SECRET: ci-only-session-secret-with-at-least-32-characters
-      WEB_ORIGIN: http://127.0.0.1:5173
+      BOOTSTRAP_SECRET: ci-only-bootstrap-secret-with-at-least-32-characters
+      SESSION_COOKIE_SECURE: "false"
+      WEB_ORIGIN: http://127.0.0.1:5175
 
     steps:
       - name: Check out repository

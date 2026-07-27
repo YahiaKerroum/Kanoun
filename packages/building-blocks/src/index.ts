@@ -4,9 +4,22 @@ export {
   type DatabasePool,
 } from "./database/pool.js";
 export {
+  appendOutboxMessage,
+  type OutboxMessage,
+} from "./database/outbox-writer.js";
+export {
+  type SqlExecutor,
+  type TransactionContext,
+} from "./database/sql-executor.js";
+export {
   idempotencyRecords,
   inboxCheckpoints,
   outboxMessages,
   platformSchema,
 } from "./database/platform-schema.js";
 export { type Brand } from "./types/brand.js";
+export {
+  createOpaqueToken,
+  hashOpaqueToken,
+  secretsMatch,
+} from "./security/opaque-token.js";

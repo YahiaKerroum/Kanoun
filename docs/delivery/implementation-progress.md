@@ -10,7 +10,7 @@ last_reviewed: 2026-07-27
 
 ## Current slice
 
-`SLICE-002 — tenant_branch_and_owner_bootstrap`
+`SLICE-003 — employees_permissions_and_configuration`
 
 ## Completed
 
@@ -31,20 +31,20 @@ last_reviewed: 2026-07-27
 - Supplied MISE design artifacts preserved in `Restaurant POS design system/`;
   the older artifacts and `design-exploration/` are historical only.
 - Repository hygiene baseline: ignore rules, editor settings, line endings, and onboarding README.
+- Slice 002 private atomic tenant/owner provisioning, restaurant and branch
+  configuration, grants-only authorization, revocable sessions, single-use
+  invitation/recovery, transactional audit/outbox, tenant isolation, and
+  concurrent final-administrator protection.
+- Protected MISE administration sign-in and truthful restaurant/assigned-branch
+  context.
 
 ## In progress
 
-- Protected owner account, business-account tenant, restaurant, branch, and
-  operating-hours bootstrap.
-- Grants-only owner session behavior and the last-administrator guard.
-- Tenant-isolation, authorization, session revocation, concurrency, and
-  validation evidence required by Slice 002.
+- Slice 003 employee profiles, permission management, and feature configuration.
 
 ## Current limitations
 
-- Customer and administration web applications remain truthful foundations
-  until their delivery slices introduce product flows.
-- Slice 001 implements an infrastructure gate, not a restaurant-domain story.
+- Customer web remains a truthful foundation until its owning slices.
 - Local verification requires Node.js 24.18.0; other Node releases are outside
   the supported toolchain even if some commands happen to run.
 - Production deployment is blocked by proposed `ADR-0007`.
@@ -52,7 +52,4 @@ last_reviewed: 2026-07-27
 
 ## Next slice
 
-`SLICE-002 — tenant_branch_and_owner_bootstrap`
-
-This slice implements `US-A01`, `US-A02`, `US-A04`, `US-R01`, `US-R02`,
-`US-R03`, and `US-R04`.
+`SLICE-003 — employees_permissions_and_configuration`

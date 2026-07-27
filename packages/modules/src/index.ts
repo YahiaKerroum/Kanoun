@@ -12,3 +12,11 @@ export const moduleNames = [
 ] as const;
 
 export type ModuleName = (typeof moduleNames)[number];
+
+export * from "./audit/index.js";
+export * from "./identity-access/index.js";
+export * from "./restaurant-configuration/index.js";
+export {
+  ApplicationError,
+  type ApplicationErrorCode,
+} from "./shared/application-error.js";

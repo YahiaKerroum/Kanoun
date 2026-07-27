@@ -9,6 +9,12 @@ info:
 servers:
   - url: /api
 tags:
+  - {name: Platform, description: Privately authorized tenant provisioning.}
+  - {
+      name: Identity,
+      description: "Staff identity, sessions, invitations, and recovery.",
+    }
+  - {name: Configuration, description: Tenant-scoped restaurant and branch configuration.}
   - {name: Public, description: Unauthenticated and guest-session operations.}
   - {name: Orders, description: Guest and staff order lifecycle operations.}
   - {name: Kitchen, description: Branch kitchen queue and work-item operations.}
@@ -16,6 +22,395 @@ tags:
   - {name: Realtime, description: Branch-scoped Server-Sent Events streams.}
 
 paths:
+  /v1/platform/tenants:
+    post:
+      tags: [Platform]
+      operationId: bootstrapTenantOwnerRestaurantAndBranch
+      summary: Privately provision a tenant, verified owner, restaurant, and branch atomically.
+      security: [{bootstrapSecret: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/TenantBootstrapRequest"}
+      responses:
+        "201":
+          description: Tenant and protected owner context created.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/TenantBootstrapResult"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "409": {$ref: "#/components/responses/Conflict"}
+        "422": {$ref: "#/components/responses/ValidationFailed"}
+        "429": {$ref: "#/components/responses/RateLimited"}
+
+  /v1/auth/login:
+    post:
+      tags: [Identity]
+      operationId: loginStaff
+      summary: Create a server-managed, revocable staff session.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [businessCode, email, password]
+              properties:
+                businessCode: {type: string, minLength: 3, maxLength: 64, pattern: "^[a-z0-9][a-z0-9-]+$"}
+                email: {type: string, format: email, maxLength: 320}
+                password: {type: string, minLength: 1, maxLength: 1000, writeOnly: true}
+      responses:
+        "201":
+          description: Authenticated; secure session and CSRF cookies are set.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/StaffSession"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "422": {$ref: "#/components/responses/ValidationFailed"}
+        "429": {$ref: "#/components/responses/RateLimited"}
+
+  /v1/auth/session:
+    get:
+      tags: [Identity]
+      operationId: getStaffSession
+      summary: Resolve the current revocable staff session.
+      security: [{staffCookie: []}]
+      responses:
+        "200":
+          description: Current session context.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/StaffSession"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+
+  /v1/auth/logout:
+    post:
+      tags: [Identity]
+      operationId: logoutStaff
+      summary: Revoke the current staff session.
+      security: [{staffCookie: [], csrfHeader: []}]
+      responses:
+        "204": {description: Session revoked and cookies cleared.}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "403": {$ref: "#/components/responses/Forbidden"}
+
+  /v1/auth/recovery-requests:
+    post:
+      tags: [Identity]
+      operationId: requestStaffCredentialRecovery
+      summary: Request credential recovery without disclosing account existence.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [businessCode, email]
+              properties:
+                businessCode: {type: string, minLength: 3, maxLength: 64}
+                email: {type: string, format: email, maxLength: 320}
+      responses:
+        "202": {description: Request accepted regardless of account existence.}
+        "422": {$ref: "#/components/responses/ValidationFailed"}
+        "429": {$ref: "#/components/responses/RateLimited"}
+        "503": {$ref: "#/components/responses/ServiceUnavailable"}
+
+  /v1/auth/recovery-completions:
+    post:
+      tags: [Identity]
+      operationId: completeStaffCredentialRecovery
+      summary: Consume a recovery token, replace the credential, and revoke existing sessions.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/TokenAndPassword"}
+      responses:
+        "204": {description: Credential replaced and sessions revoked.}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "422": {$ref: "#/components/responses/ValidationFailed"}
+        "429": {$ref: "#/components/responses/RateLimited"}
+
+  /v1/invitations/accept:
+    post:
+      tags: [Identity]
+      operationId: acceptStaffInvitation
+      summary: Consume a single-use invitation without adding grants.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/TokenAndPassword"}
+      responses:
+        "204": {description: Invitation accepted.}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "422": {$ref: "#/components/responses/ValidationFailed"}
+
+  /v1/staff/session/branch:
+    post:
+      tags: [Identity]
+      operationId: switchStaffBranch
+      summary: Switch to a branch assigned to the current employee.
+      security: [{staffCookie: [], csrfHeader: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [branchId]
+              properties:
+                branchId: {type: string, format: uuid}
+      responses:
+        "200":
+          description: Active branch changed.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [activeBranchId]
+                properties:
+                  activeBranchId: {type: string, format: uuid}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "403": {$ref: "#/components/responses/Forbidden"}
+        "404": {$ref: "#/components/responses/NotFound"}
+
+  /v1/staff/restaurants:
+    get:
+      tags: [Configuration]
+      operationId: listRestaurants
+      summary: List restaurants visible in the authenticated tenant scope.
+      security: [{staffCookie: []}]
+      responses:
+        "200":
+          description: Tenant-scoped restaurants.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items: {type: array, items: {$ref: "#/components/schemas/Restaurant"}}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "403": {$ref: "#/components/responses/Forbidden"}
+    post:
+      tags: [Configuration]
+      operationId: createRestaurant
+      summary: Create a restaurant inside the authenticated business account.
+      security: [{staffCookie: [], csrfHeader: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/CreateRestaurant"}
+      responses:
+        "201":
+          description: Restaurant created.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Restaurant"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "403": {$ref: "#/components/responses/Forbidden"}
+        "422": {$ref: "#/components/responses/ValidationFailed"}
+
+  /v1/staff/restaurants/{restaurantId}:
+    parameters:
+      - $ref: "#/components/parameters/RestaurantId"
+    get:
+      tags: [Configuration]
+      operationId: getRestaurant
+      summary: Get a tenant-scoped restaurant.
+      security: [{staffCookie: []}]
+      responses:
+        "200":
+          description: Restaurant.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Restaurant"}
+        "404": {$ref: "#/components/responses/NotFound"}
+    patch:
+      tags: [Configuration]
+      operationId: updateRestaurant
+      summary: Edit, activate, or deactivate a restaurant without deleting history.
+      security: [{staffCookie: [], csrfHeader: []}]
+      parameters:
+        - $ref: "#/components/parameters/ExpectedVersion"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/UpdateRestaurant"}
+      responses:
+        "200":
+          description: Updated restaurant.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Restaurant"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "409": {$ref: "#/components/responses/Conflict"}
+        "422": {$ref: "#/components/responses/ValidationFailed"}
+
+  /v1/staff/branches:
+    get:
+      tags: [Configuration]
+      operationId: listAssignedBranches
+      summary: List branches assigned to the authenticated employee.
+      security: [{staffCookie: []}]
+      responses:
+        "200":
+          description: Assigned branches.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items: {type: array, items: {$ref: "#/components/schemas/Branch"}}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "403": {$ref: "#/components/responses/Forbidden"}
+    post:
+      tags: [Configuration]
+      operationId: createBranch
+      summary: Create and assign a branch in an authorized restaurant.
+      security: [{staffCookie: [], csrfHeader: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/CreateBranch"}
+      responses:
+        "201":
+          description: Branch created.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Branch"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "422": {$ref: "#/components/responses/ValidationFailed"}
+
+  /v1/staff/branches/{branchId}:
+    parameters:
+      - $ref: "#/components/parameters/BranchId"
+    get:
+      tags: [Configuration]
+      operationId: getAssignedBranch
+      summary: Get an assigned branch without exposing another tenant or branch.
+      security: [{staffCookie: []}]
+      responses:
+        "200":
+          description: Branch.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Branch"}
+        "404": {$ref: "#/components/responses/NotFound"}
+    patch:
+      tags: [Configuration]
+      operationId: updateBranch
+      summary: Configure branch profile, hours, currency, status, and service availability.
+      security: [{staffCookie: [], csrfHeader: []}]
+      parameters:
+        - $ref: "#/components/parameters/ExpectedVersion"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/UpdateBranch"}
+      responses:
+        "200":
+          description: Updated branch.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Branch"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "409": {$ref: "#/components/responses/Conflict"}
+        "422": {$ref: "#/components/responses/ValidationFailed"}
+
+  /v1/staff/employees/{employeeId}/invitations:
+    post:
+      tags: [Identity]
+      operationId: inviteExistingEmployee
+      summary: Create a single-use invitation for an existing employee profile.
+      security: [{staffCookie: [], csrfHeader: []}]
+      parameters:
+        - $ref: "#/components/parameters/EmployeeId"
+      responses:
+        "201":
+          description: Raw invitation token returned once to the authorized administrator.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [invitationToken, expiresAt]
+                properties:
+                  invitationToken: {type: string, writeOnly: true}
+                  expiresAt: {type: string, format: date-time}
+        "404": {$ref: "#/components/responses/NotFound"}
+
+  /v1/staff/administrators/{employeeId}/removal:
+    post:
+      tags: [Identity]
+      operationId: removeAdministrator
+      summary: Remove administrator grants unless this would remove the final effective administrator.
+      security: [{staffCookie: [], csrfHeader: []}]
+      parameters:
+        - $ref: "#/components/parameters/EmployeeId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/Reason"}
+      responses:
+        "204": {description: Administrator grants removed and sessions revoked.}
+        "409": {$ref: "#/components/responses/Conflict"}
+
+  /v1/staff/administrators/transfer:
+    post:
+      tags: [Identity]
+      operationId: transferAdministrator
+      summary: Activate a replacement administrator before optionally removing the current administrator.
+      security: [{staffCookie: [], csrfHeader: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [replacementEmployeeId, removeCurrentAdministrator, reason]
+              properties:
+                replacementEmployeeId: {type: string, format: uuid}
+                removeCurrentAdministrator: {type: boolean}
+                reason: {type: string, minLength: 8, maxLength: 500}
+      responses:
+        "204": {description: Replacement activated and transfer audited.}
+        "409": {$ref: "#/components/responses/Conflict"}
+
+  /v1/staff/employees/{employeeId}/deactivation:
+    post:
+      tags: [Identity]
+      operationId: deactivateEmployeeIdentity
+      summary: Atomically deactivate an employee identity and revoke sessions, subject to the final-administrator guard.
+      security: [{staffCookie: [], csrfHeader: []}]
+      parameters:
+        - $ref: "#/components/parameters/EmployeeId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "#/components/schemas/Reason"
+                - type: object
+                  required: [expectedVersion]
+                  properties:
+                    expectedVersion: {type: integer, minimum: 1}
+      responses:
+        "204": {description: Employee and identity deactivated; sessions revoked.}
+        "409": {$ref: "#/components/responses/Conflict"}
+
   /v1/public/qr/{qrToken}/session:
     post:
       tags: [Public]
@@ -310,6 +705,14 @@ paths:
 
 components:
   securitySchemes:
+    bootstrapSecret:
+      type: apiKey
+      in: header
+      name: X-Bootstrap-Secret
+    csrfHeader:
+      type: apiKey
+      in: header
+      name: X-CSRF-Token
     staffCookie:
       type: apiKey
       in: cookie
@@ -320,6 +723,21 @@ components:
       name: rms_guest_session
 
   parameters:
+    RestaurantId:
+      name: restaurantId
+      in: path
+      required: true
+      schema: {type: string, format: uuid}
+    BranchId:
+      name: branchId
+      in: path
+      required: true
+      schema: {type: string, format: uuid}
+    EmployeeId:
+      name: employeeId
+      in: path
+      required: true
+      schema: {type: string, format: uuid}
     QrToken:
       name: qrToken
       in: path
@@ -376,8 +794,163 @@ components:
       headers:
         Retry-After: {schema: {type: integer}}
       content: {application/problem+json: {schema: {$ref: "#/components/schemas/Problem"}}}
+    ServiceUnavailable:
+      description: A required delivery dependency is unavailable.
+      content: {application/problem+json: {schema: {$ref: "#/components/schemas/Problem"}}}
 
   schemas:
+    StaffSession:
+      type: object
+      required: [employeeId, activeBranchId, expiresAt]
+      properties:
+        employeeId: {type: string, format: uuid}
+        activeBranchId: {type: [string, "null"], format: uuid}
+        authorizedBranchIds: {type: array, items: {type: string, format: uuid}}
+        expiresAt: {type: string, format: date-time}
+
+    TokenAndPassword:
+      type: object
+      required: [token, password]
+      properties:
+        token: {type: string, minLength: 32, maxLength: 256, writeOnly: true}
+        password: {type: string, minLength: 12, maxLength: 128, writeOnly: true}
+
+    Reason:
+      type: object
+      required: [reason]
+      properties:
+        reason: {type: string, minLength: 8, maxLength: 500}
+
+    Address:
+      type: object
+      required: [line1, city, countryCode]
+      properties:
+        line1: {type: string, minLength: 1, maxLength: 200}
+        line2: {type: string, minLength: 1, maxLength: 200}
+        city: {type: string, minLength: 1, maxLength: 120}
+        region: {type: string, minLength: 1, maxLength: 120}
+        postalCode: {type: string, minLength: 1, maxLength: 32}
+        countryCode: {type: string, pattern: "^[A-Z]{2}$"}
+
+    ContactInformation:
+      type: object
+      minProperties: 1
+      properties:
+        email: {type: string, format: email, maxLength: 320}
+        phone: {type: string, minLength: 5, maxLength: 32}
+
+    OpeningPeriod:
+      type: object
+      required: [dayOfWeek, opensAt, closesAt]
+      properties:
+        dayOfWeek: {type: integer, minimum: 0, maximum: 6}
+        opensAt: {type: string, pattern: "^([01][0-9]|2[0-3]):[0-5][0-9]$"}
+        closesAt: {type: string, pattern: "^([01][0-9]|2[0-3]):[0-5][0-9]$"}
+
+    Restaurant:
+      type: object
+      required: [id, businessAccountId, name, status, branding, settings, version]
+      properties:
+        id: {type: string, format: uuid}
+        businessAccountId: {type: string, format: uuid}
+        name: {type: string}
+        status: {type: string, enum: [active, inactive]}
+        branding: {type: object, additionalProperties: true}
+        settings: {type: object, additionalProperties: true}
+        version: {type: integer, minimum: 1}
+
+    CreateRestaurant:
+      type: object
+      required: [name]
+      properties:
+        name: {type: string, minLength: 1, maxLength: 160}
+        branding: {type: object, additionalProperties: true}
+        settings: {type: object, additionalProperties: true}
+
+    UpdateRestaurant:
+      type: object
+      minProperties: 1
+      properties:
+        name: {type: string, minLength: 1, maxLength: 160}
+        status: {type: string, enum: [active, inactive]}
+        branding: {type: object, additionalProperties: true}
+        settings: {type: object, additionalProperties: true}
+
+    Branch:
+      type: object
+      required: [id, businessAccountId, restaurantId, name, address, contact, timeZone, currency, status, serviceStatus, allowOrderOverride, version, openingHours]
+      properties:
+        id: {type: string, format: uuid}
+        businessAccountId: {type: string, format: uuid}
+        restaurantId: {type: string, format: uuid}
+        name: {type: string}
+        address: {$ref: "#/components/schemas/Address"}
+        contact: {$ref: "#/components/schemas/ContactInformation"}
+        timeZone: {type: string}
+        currency: {type: string, pattern: "^[A-Z]{3}$"}
+        status: {type: string, enum: [active, inactive]}
+        serviceStatus: {type: string, enum: [open, closed, temporarily_unavailable]}
+        allowOrderOverride: {type: boolean}
+        version: {type: integer, minimum: 1}
+        openingHours: {type: array, items: {$ref: "#/components/schemas/OpeningPeriod"}}
+
+    CreateBranch:
+      type: object
+      required: [restaurantId, name, address, contact, timeZone, currency, openingHours]
+      properties:
+        restaurantId: {type: string, format: uuid}
+        name: {type: string, minLength: 1, maxLength: 160}
+        address: {$ref: "#/components/schemas/Address"}
+        contact: {$ref: "#/components/schemas/ContactInformation"}
+        timeZone: {type: string, minLength: 1, maxLength: 100}
+        currency: {type: string, pattern: "^[A-Z]{3}$"}
+        openingHours: {type: array, minItems: 1, maxItems: 28, items: {$ref: "#/components/schemas/OpeningPeriod"}}
+
+    UpdateBranch:
+      type: object
+      minProperties: 1
+      properties:
+        name: {type: string, minLength: 1, maxLength: 160}
+        address: {$ref: "#/components/schemas/Address"}
+        contact: {$ref: "#/components/schemas/ContactInformation"}
+        timeZone: {type: string, minLength: 1, maxLength: 100}
+        currency: {type: string, pattern: "^[A-Z]{3}$"}
+        status: {type: string, enum: [active, inactive]}
+        serviceStatus: {type: string, enum: [open, closed, temporarily_unavailable]}
+        allowOrderOverride: {type: boolean}
+        openingHours: {type: array, minItems: 1, maxItems: 28, items: {$ref: "#/components/schemas/OpeningPeriod"}}
+
+    TenantBootstrapRequest:
+      type: object
+      required: [businessCode, businessName, restaurantName, branch, owner]
+      properties:
+        businessCode: {type: string, minLength: 3, maxLength: 64, pattern: "^[a-z0-9][a-z0-9-]+$"}
+        businessName: {type: string, minLength: 1, maxLength: 160}
+        restaurantName: {type: string, minLength: 1, maxLength: 160}
+        branch:
+          allOf:
+            - $ref: "#/components/schemas/CreateBranch"
+            - type: object
+              properties:
+                restaurantId: false
+        owner:
+          type: object
+          required: [displayName, email, password]
+          properties:
+            displayName: {type: string, minLength: 1, maxLength: 160}
+            email: {type: string, format: email, maxLength: 320}
+            password: {type: string, minLength: 12, maxLength: 128, writeOnly: true}
+
+    TenantBootstrapResult:
+      type: object
+      required: [businessAccountId, restaurant, branch, employeeId, userId]
+      properties:
+        businessAccountId: {type: string, format: uuid}
+        restaurant: {$ref: "#/components/schemas/Restaurant"}
+        branch: {$ref: "#/components/schemas/Branch"}
+        employeeId: {type: string, format: uuid}
+        userId: {type: string, format: uuid}
+
     GuestSession:
       type: object
       required: [branchId, tableId, expiresAt]
@@ -525,9 +1098,10 @@ components:
         status: {type: integer}
         code:
           type: string
-          enum: [validation_error, authentication_required, permission_denied, feature_disabled, resource_not_found, invalid_state_transition, concurrency_conflict, menu_changed, dish_unavailable, table_unavailable, payment_conflict, idempotency_conflict, rate_limited, unexpected_error]
+          enum: [validation_error, authentication_required, permission_denied, feature_disabled, resource_not_found, invalid_state_transition, concurrency_conflict, menu_changed, dish_unavailable, table_unavailable, payment_conflict, idempotency_conflict, rate_limited, service_unavailable, unexpected_error]
         detail: {type: [string, "null"]}
         correlationId: {type: string}
+        currentVersion: {type: integer, minimum: 1}
         errors:
           type: object
           additionalProperties:

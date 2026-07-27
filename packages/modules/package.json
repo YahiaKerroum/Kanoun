@@ -14,11 +14,16 @@
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
+    "@rms/building-blocks": "workspace:*",
     "argon2": "0.45.1",
     "connect-pg-simple": "10.0.0",
-    "express-session": "1.19.0"
+    "express": "5.2.1",
+    "express-rate-limit": "8.6.1",
+    "express-session": "1.19.0",
+    "zod": "4.4.3"
   },
   "devDependencies": {
+    "@types/express": "5.0.6",
     "@types/express-session": "1.19.0"
   }
 }

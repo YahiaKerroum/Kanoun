@@ -12,5 +12,9 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@rms/building-blocks": "workspace:*",
+    "@rms/modules": "workspace:*"
   }
 }

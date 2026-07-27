@@ -13,6 +13,13 @@ vertical_slices:
     operations: [getLiveness, getReadiness]
     tests: [TEST-MIGRATION-001, TEST-ARCH-001, TEST-CONTRACT-001, TEST-API-HEALTH-001, TEST-RESPONSIVE-001, TEST-A11Y-001]
 
+  tenant_branch_and_owner_bootstrap:
+    implements: [US-A01, US-A02, US-A04, US-R01, US-R02, US-R03, US-R04, NFR-03, NFR-07, NFR-08, NFR-10, NFR-12]
+    obeys: [PD-001, PD-004, PD-027, PD-030, PD-032, PD-035, ADR-0002, ADR-0003, ADR-0004, ADR-0005, ADR-0006, CFG-001, CFG-002, CFG-015, PERM-001, PERM-002, PERM-003, PERM-004, PERM-007, PERM-008, BR-001, BR-002, BR-003, BR-021, BR-024]
+    modules: [identity_access, restaurant_configuration, audit, service_workflow]
+    operations: [bootstrapTenantOwnerRestaurantAndBranch, loginStaff, getStaffSession, logoutStaff, requestStaffCredentialRecovery, completeStaffCredentialRecovery, acceptStaffInvitation, switchStaffBranch, listRestaurants, createRestaurant, getRestaurant, updateRestaurant, listAssignedBranches, createBranch, getAssignedBranch, updateBranch, inviteExistingEmployee, removeAdministrator, transferAdministrator, deactivateEmployeeIdentity]
+    tests: [TEST-TENANT-001, TEST-AUTH-001, TEST-SESSION-REVOCATION-001, TEST-INVITATION-001, TEST-RECOVERY-001, TEST-LAST-ADMIN-001, TEST-CONCURRENCY-001, TEST-AUDIT-001, TEST-HTTP-IDENTITY-001, TEST-A11Y-SETUP-001]
+
   tenant_and_configuration:
     implements: [US-A01, US-A02, US-A03, US-A04, US-B01, US-B02, US-B03, US-B04]
     obeys: [PD-001, PD-002, PD-003, PD-019, PD-026, PD-035, BR-001, BR-003, BR-006, BR-007]

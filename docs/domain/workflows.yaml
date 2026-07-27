@@ -11,6 +11,25 @@ rules:
   transition_records_actor_and_utc_time: true
 
 state_machines:
+  staff_identity:
+    owner: identity_access
+    initial: invited
+    states: [invited, active, disabled]
+    transitions:
+      - {id: TR-IDENTITY-001, from: invited, to: active, trigger: accept_single_use_invitation, actor: invited_staff, guards: [invitation_unexpired, invitation_unused, employee_active], effects: [set_adaptive_password_hash, verify_identity], events: [EVT-IDENTITY-INVITATION-ACCEPTED]}
+      - {id: TR-IDENTITY-002, from: active, to: disabled, trigger: deactivate_employee_identity, actor: administrator, permission: employees.manage, guards: [recent_authentication, last_administrator_preserved], effects: [revoke_all_sessions], events: [EVT-IDENTITY-EMPLOYEE-DEACTIVATED]}
+    commands_without_state_change:
+      - {id: CMD-IDENTITY-RECOVER, trigger: complete_credential_recovery, actor: staff, guards: [recovery_token_unexpired, recovery_token_unused], effects: [replace_adaptive_password_hash, revoke_all_sessions], events: [EVT-IDENTITY-CREDENTIALS-RECOVERED]}
+      - {id: CMD-IDENTITY-TRANSFER-ADMIN, trigger: transfer_administrator, actor: administrator, permission: employees.manage_permissions, guards: [recent_authentication, replacement_identity_active], effects: [grant_replacement_before_removal, revoke_affected_sessions], events: [EVT-IDENTITY-ADMINISTRATOR-TRANSFERRED]}
+
+  restaurant_lifecycle:
+    owner: restaurant_configuration
+    initial: active
+    states: [active, inactive]
+    transitions:
+      - {id: TR-RESTAURANT-001, from: active, to: inactive, trigger: deactivate_restaurant, actor: owner_or_administrator, permission: restaurant.edit, effects: [preserve_history], events: [EVT-RESTAURANT-UPDATED]}
+      - {id: TR-RESTAURANT-002, from: inactive, to: active, trigger: activate_restaurant, actor: owner_or_administrator, permission: restaurant.edit, events: [EVT-RESTAURANT-UPDATED]}
+
   order_approval:
     owner: ordering
     initial: submitted

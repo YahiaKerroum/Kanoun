@@ -1,4 +1,8 @@
-import express, { type Express } from "express";
+import express, {
+  type Express,
+  type RequestHandler,
+  type Router,
+} from "express";
 import helmet from "helmet";
 import type { Logger } from "pino";
 import {
@@ -12,6 +16,8 @@ export interface AppDependencies {
   readonly logger: Logger;
   readonly trustProxy: boolean;
   readonly checkReadiness: () => Promise<void>;
+  readonly staffSessionMiddleware?: RequestHandler;
+  readonly apiRouters?: readonly Router[];
 }
 
 export function createApp(dependencies: AppDependencies): Express {
@@ -29,6 +35,13 @@ export function createApp(dependencies: AppDependencies): Express {
       checkReadiness: dependencies.checkReadiness,
     }),
   );
+
+  if (dependencies.staffSessionMiddleware) {
+    app.use("/api/v1", dependencies.staffSessionMiddleware);
+  }
+  for (const router of dependencies.apiRouters ?? []) {
+    app.use("/api/v1", router);
+  }
 
   app.use(notFoundHandler);
   app.use(createUnexpectedErrorHandler(dependencies.logger));

@@ -1,29 +1,308 @@
+@import url("https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
 :root {
-  font-family: system-ui, sans-serif;
+  font-family: "Plus Jakarta Sans", system-ui, sans-serif;
   color: #1e1b14;
-  background: #fff8e8;
+  background: #ffb300;
+  --gold: #ffb300;
+  --ivory: #fff8e8;
+  --canvas: #faf8f4;
+  --line: #e9e0d2;
+  --muted: #625b50;
+  --brown: #6e4700;
 }
-
+* {
+  box-sizing: border-box;
+}
 body {
   margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
 }
-
-main {
+button,
+input,
+select {
+  font: inherit;
+}
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+a:focus-visible {
+  outline: 3px solid #6e4700;
+  outline-offset: 3px;
+}
+.loading-state {
   display: grid;
   min-height: 100vh;
-  align-content: center;
-  gap: 16px;
-  padding: 32px;
+  place-items: center;
+  background: var(--ivory);
+  font-weight: 700;
 }
-
-p,
-h1 {
+.sign-in-stage {
+  display: grid;
+  min-height: 100vh;
+  grid-template-columns: minmax(0, 1.25fr) minmax(420px, 0.75fr);
+  padding: 18px;
+  background: var(--gold);
+}
+.brand-panel,
+.sign-in-form {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.brand-panel {
+  padding: clamp(48px, 8vw, 128px);
+  background: #ffc01f;
+  border-radius: 20px 0 0 20px;
+}
+.brand-panel p,
+.eyebrow {
+  margin: 0 0 12px;
+  color: var(--brown);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.brand-panel h1 {
   max-width: 720px;
   margin: 0;
+  font: 800 clamp(46px, 6vw, 82px)/0.98 "Bricolage Grotesque";
+  letter-spacing: -0.04em;
 }
-
-p,
-span {
-  color: #6e4700;
+.brand-panel span {
+  max-width: 620px;
+  margin-top: 28px;
+  color: #49370e;
+  line-height: 1.7;
+}
+.sign-in-form {
+  padding: clamp(36px, 6vw, 78px);
+  border-radius: 0 20px 20px 0;
+  background: white;
+}
+.sign-in-form h2 {
+  margin: 0 0 34px;
+  font: 700 32px "Bricolage Grotesque";
+}
+.sign-in-form label {
+  display: grid;
+  gap: 8px;
+  margin-top: 18px;
+  color: var(--muted);
+  font-size: 12px;
   font-weight: 700;
+}
+.sign-in-form input {
+  height: 48px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 0 14px;
+  background: var(--canvas);
+}
+.sign-in-form button {
+  height: 50px;
+  margin-top: 28px;
+  border: 0;
+  border-radius: 13px;
+  background: var(--gold);
+  font-weight: 800;
+}
+.form-status,
+.status-line {
+  min-height: 22px;
+  color: #a03c00;
+  font-size: 12px;
+}
+.admin-stage {
+  min-height: 100vh;
+  padding: 18px;
+  background: var(--gold);
+}
+.admin-stage > header,
+.setup-workspace {
+  background: white;
+}
+.admin-stage > header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 88px;
+  border-radius: 20px 20px 0 0;
+  border-bottom: 1px solid var(--line);
+  padding: 14px 24px;
+}
+.brand-mark {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border-radius: 14px;
+  background: var(--gold);
+  font: 800 22px "Bricolage Grotesque";
+}
+.admin-stage header p,
+.admin-stage header h1 {
+  margin: 0;
+}
+.admin-stage header p {
+  color: var(--muted);
+  font-size: 11px;
+  text-transform: uppercase;
+}
+.admin-stage header h1 {
+  font: 700 26px "Bricolage Grotesque";
+}
+.branch-picker {
+  display: grid;
+  gap: 4px;
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+}
+.branch-picker select {
+  min-width: 240px;
+  height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 0 12px;
+  background: var(--canvas);
+}
+.setup-workspace {
+  display: grid;
+  min-height: calc(100vh - 124px);
+  grid-template-columns: 220px 1fr;
+  border-radius: 0 0 20px 20px;
+  overflow: hidden;
+}
+.setup-workspace nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 30px 20px;
+  border-right: 1px solid var(--line);
+}
+.setup-workspace nav a,
+.setup-workspace nav span {
+  min-height: 44px;
+  padding: 12px;
+  border-radius: 11px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+}
+.setup-workspace nav a:first-child {
+  color: #241a00;
+  background: var(--gold);
+}
+.setup-workspace nav span {
+  opacity: 0.55;
+}
+.setup-content {
+  padding: clamp(28px, 5vw, 64px);
+  max-width: 1050px;
+}
+.workspace-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 24px;
+}
+.workspace-heading h2 {
+  margin: 0;
+  font: 800 42px "Bricolage Grotesque";
+}
+.service-state {
+  padding: 9px 12px;
+  border-radius: 10px;
+  background: #fff0cc;
+  color: var(--brown);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: capitalize;
+}
+.service-state--open {
+  background: #e4f6ea;
+  color: #1e7a47;
+}
+.data-section {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 28px;
+  padding: 30px 0;
+  border-bottom: 1px solid var(--line);
+}
+.data-section h3 {
+  margin: 0;
+  font: 700 21px "Bricolage Grotesque";
+}
+.data-section ul {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+.data-section li {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 16px 0;
+  border-top: 1px solid var(--line);
+}
+.data-section li span {
+  color: var(--muted);
+  font-size: 12px;
+  text-align: right;
+}
+@media (max-width: 760px) {
+  .sign-in-stage {
+    grid-template-columns: 1fr;
+    padding: 0;
+  }
+  .brand-panel {
+    min-height: 42vh;
+    border-radius: 0;
+    padding: 36px 24px;
+  }
+  .brand-panel h1 {
+    font-size: 42px;
+  }
+  .sign-in-form {
+    border-radius: 0;
+    padding: 32px 24px;
+  }
+  .admin-stage {
+    padding: 0;
+  }
+  .admin-stage > header {
+    border-radius: 0;
+    flex-wrap: wrap;
+  }
+  .branch-picker {
+    width: 100%;
+    margin: 0;
+  }
+  .branch-picker select {
+    width: 100%;
+  }
+  .setup-workspace {
+    grid-template-columns: 1fr;
+    border-radius: 0;
+  }
+  .setup-workspace nav {
+    display: none;
+  }
+  .setup-content {
+    padding: 24px 18px;
+  }
+  .data-section {
+    grid-template-columns: 1fr;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
 }

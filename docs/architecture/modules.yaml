@@ -34,6 +34,10 @@ modules:
       - revoke_sessions
       - resolve_authorization
       - manage_permission_grants
+      - invite_existing_employee
+      - recover_credentials
+      - protect_last_administrator
+    publishes: [EVT-IDENTITY-OWNER-BOOTSTRAPPED, EVT-IDENTITY-SESSION-REVOKED, EVT-IDENTITY-STAFF-INVITED, EVT-IDENTITY-INVITATION-ACCEPTED, EVT-IDENTITY-CREDENTIALS-RECOVERED, EVT-IDENTITY-ADMINISTRATOR-REMOVED, EVT-IDENTITY-ADMINISTRATOR-TRANSFERRED, EVT-IDENTITY-EMPLOYEE-DEACTIVATED]
     never_owns: [employee_profile, restaurant_configuration]
 
   restaurant_configuration:
@@ -50,6 +54,10 @@ modules:
       - can_branch_accept_orders
       - get_effective_configuration
       - get_employee_reference
+      - create_and_manage_restaurant
+      - create_and_manage_branch
+      - manage_branch_operating_information
+    publishes: [EVT-RESTAURANT-CREATED, EVT-RESTAURANT-UPDATED, EVT-BRANCH-CREATED, EVT-BRANCH-UPDATED]
 
   menu:
     owns:

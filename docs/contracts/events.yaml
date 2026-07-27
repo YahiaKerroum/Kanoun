@@ -29,6 +29,66 @@ envelope:
   pii_policy: minimum_required_and_redacted
 
 events:
+  EVT-IDENTITY-OWNER-BOOTSTRAPPED:
+    type: identity.owner_bootstrapped.v1
+    owner: identity_access
+    aggregate: business_account
+    consumers: [notifications, reporting]
+  EVT-IDENTITY-SESSION-REVOKED:
+    type: identity.session_revoked.v1
+    owner: identity_access
+    aggregate: staff_session
+    consumers: [notifications]
+  EVT-IDENTITY-STAFF-INVITED:
+    type: identity.staff_invited.v1
+    owner: identity_access
+    aggregate: staff_invitation
+    consumers: [notifications]
+  EVT-IDENTITY-INVITATION-ACCEPTED:
+    type: identity.invitation_accepted.v1
+    owner: identity_access
+    aggregate: user
+    consumers: [notifications]
+  EVT-IDENTITY-CREDENTIALS-RECOVERED:
+    type: identity.credentials_recovered.v1
+    owner: identity_access
+    aggregate: user
+    consumers: [notifications]
+  EVT-IDENTITY-ADMINISTRATOR-REMOVED:
+    type: identity.administrator_removed.v1
+    owner: identity_access
+    aggregate: employee_access
+    consumers: [notifications]
+  EVT-IDENTITY-ADMINISTRATOR-TRANSFERRED:
+    type: identity.administrator_transferred.v1
+    owner: identity_access
+    aggregate: employee_access
+    consumers: [notifications]
+  EVT-IDENTITY-EMPLOYEE-DEACTIVATED:
+    type: identity.employee_deactivated.v1
+    owner: identity_access
+    aggregate: employee_access
+    consumers: [notifications]
+  EVT-RESTAURANT-CREATED:
+    type: restaurant.restaurant_created.v1
+    owner: restaurant_configuration
+    aggregate: restaurant
+    consumers: [reporting]
+  EVT-RESTAURANT-UPDATED:
+    type: restaurant.restaurant_updated.v1
+    owner: restaurant_configuration
+    aggregate: restaurant
+    consumers: [reporting]
+  EVT-BRANCH-CREATED:
+    type: restaurant.branch_created.v1
+    owner: restaurant_configuration
+    aggregate: branch
+    consumers: [reporting, notifications]
+  EVT-BRANCH-UPDATED:
+    type: restaurant.branch_updated.v1
+    owner: restaurant_configuration
+    aggregate: branch
+    consumers: [reporting, notifications]
   EVT-ORDER-SUBMITTED:
     type: ordering.order_submitted.v1
     owner: ordering
