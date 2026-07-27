@@ -17,6 +17,7 @@ export interface AppDependencies {
   readonly trustProxy: boolean;
   readonly checkReadiness: () => Promise<void>;
   readonly staffSessionMiddleware?: RequestHandler;
+  readonly guestSessionMiddleware?: RequestHandler;
   readonly apiRouters?: readonly Router[];
 }
 
@@ -38,6 +39,9 @@ export function createApp(dependencies: AppDependencies): Express {
 
   if (dependencies.staffSessionMiddleware) {
     app.use("/api/v1", dependencies.staffSessionMiddleware);
+  }
+  if (dependencies.guestSessionMiddleware) {
+    app.use("/api/v1", dependencies.guestSessionMiddleware);
   }
   for (const router of dependencies.apiRouters ?? []) {
     app.use("/api/v1", router);

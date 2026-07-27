@@ -15,6 +15,8 @@ tags:
       description: "Staff identity, sessions, invitations, and recovery.",
     }
   - {name: Configuration, description: Tenant-scoped restaurant and branch configuration.}
+  - {name: Menu, description: Restaurant menu structure and branch overrides.}
+  - {name: Tables, description: Branch tables and QR code issuance.}
   - {name: Public, description: Unauthenticated and guest-session operations.}
   - {name: Orders, description: Guest and staff order lifecycle operations.}
   - {name: Kitchen, description: Branch kitchen queue and work-item operations.}
@@ -789,6 +791,356 @@ paths:
         "204": {description: Employee and identity deactivated; sessions revoked.}
         "409": {$ref: "#/components/responses/Conflict"}
 
+  /v1/staff/restaurants/{restaurantId}/menu/categories:
+    get:
+      tags: [Menu]
+      operationId: listMenuCategories
+      summary: List a restaurant's menu categories.
+      security: [{staffCookie: []}]
+      parameters:
+        - $ref: "#/components/parameters/RestaurantId"
+      responses:
+        "200":
+          description: Menu categories.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items: {type: array, items: {$ref: "#/components/schemas/Category"}}
+        "404": {$ref: "#/components/responses/NotFound"}
+    post:
+      tags: [Menu]
+      operationId: createMenuCategory
+      summary: Create a menu category.
+      security: [{staffCookie: [], csrfHeader: []}]
+      parameters:
+        - $ref: "#/components/parameters/RestaurantId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/CreateCategory"}
+      responses:
+        "201":
+          description: Category created.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Category"}
+        "422": {$ref: "#/components/responses/ValidationFailed"}
+
+  /v1/staff/menu/categories/{categoryId}:
+    patch:
+      tags: [Menu]
+      operationId: updateMenuCategory
+      summary: Rename, reorder, hide, or deactivate a menu category.
+      security: [{staffCookie: [], csrfHeader: []}]
+      parameters:
+        - $ref: "#/components/parameters/CategoryId"
+        - $ref: "#/components/parameters/ExpectedVersion"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/UpdateCategory"}
+      responses:
+        "200":
+          description: Updated category.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Category"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "409": {$ref: "#/components/responses/Conflict"}
+        "422": {$ref: "#/components/responses/ValidationFailed"}
+
+  /v1/staff/restaurants/{restaurantId}/menu/dishes:
+    get:
+      tags: [Menu]
+      operationId: listMenuDishes
+      summary: List a restaurant's dishes.
+      security: [{staffCookie: []}]
+      parameters:
+        - $ref: "#/components/parameters/RestaurantId"
+      responses:
+        "200":
+          description: Dishes.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items: {type: array, items: {$ref: "#/components/schemas/AdminDish"}}
+        "404": {$ref: "#/components/responses/NotFound"}
+    post:
+      tags: [Menu]
+      operationId: createMenuDish
+      summary: Create a dish in a category.
+      security: [{staffCookie: [], csrfHeader: []}]
+      parameters:
+        - $ref: "#/components/parameters/RestaurantId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/CreateDish"}
+      responses:
+        "201":
+          description: Dish created.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/AdminDish"}
+        "422": {$ref: "#/components/responses/ValidationFailed"}
+
+  /v1/staff/menu/dishes/{dishId}:
+    patch:
+      tags: [Menu]
+      operationId: updateMenuDish
+      summary: Update a dish's structure, base price, availability, or status.
+      security: [{staffCookie: [], csrfHeader: []}]
+      parameters:
+        - $ref: "#/components/parameters/DishId"
+        - $ref: "#/components/parameters/ExpectedVersion"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/UpdateDish"}
+      responses:
+        "200":
+          description: Updated dish.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/AdminDish"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "409": {$ref: "#/components/responses/Conflict"}
+        "422": {$ref: "#/components/responses/ValidationFailed"}
+
+  /v1/staff/menu/option-groups:
+    post:
+      tags: [Menu]
+      operationId: createMenuOptionGroup
+      summary: Create an option group with its options for a dish.
+      security: [{staffCookie: [], csrfHeader: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/CreateOptionGroup"}
+      responses:
+        "201":
+          description: Option group created.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/AdminOptionGroup"}
+        "422": {$ref: "#/components/responses/ValidationFailed"}
+
+  /v1/staff/menu/option-groups/{optionGroupId}:
+    patch:
+      tags: [Menu]
+      operationId: updateMenuOptionGroup
+      summary: Update an option group's rules.
+      security: [{staffCookie: [], csrfHeader: []}]
+      parameters:
+        - $ref: "#/components/parameters/OptionGroupId"
+        - $ref: "#/components/parameters/ExpectedVersion"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/UpdateOptionGroup"}
+      responses:
+        "200":
+          description: Updated option group.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/AdminOptionGroup"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "409": {$ref: "#/components/responses/Conflict"}
+        "422": {$ref: "#/components/responses/ValidationFailed"}
+
+  /v1/staff/menu/option-groups/{optionGroupId}/options:
+    put:
+      tags: [Menu]
+      operationId: replaceMenuOptions
+      summary: Replace an option group's options.
+      security: [{staffCookie: [], csrfHeader: []}]
+      parameters:
+        - $ref: "#/components/parameters/OptionGroupId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/ReplaceOptions"}
+      responses:
+        "200":
+          description: Option group with replaced options.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/AdminOptionGroup"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "422": {$ref: "#/components/responses/ValidationFailed"}
+
+  /v1/staff/branches/{branchId}/menu/dishes/{dishId}/override:
+    put:
+      tags: [Menu]
+      operationId: upsertBranchDishOverride
+      summary: Set or clear a branch-specific price, availability, or visibility override for a dish.
+      security: [{staffCookie: [], csrfHeader: []}]
+      parameters:
+        - $ref: "#/components/parameters/BranchId"
+        - $ref: "#/components/parameters/DishId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/UpsertBranchOverride"}
+      responses:
+        "200":
+          description: Current branch override.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/BranchDishOverride"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "409": {$ref: "#/components/responses/Conflict"}
+        "422": {$ref: "#/components/responses/ValidationFailed"}
+
+  /v1/staff/branches/{branchId}/tables:
+    get:
+      tags: [Tables]
+      operationId: listTables
+      summary: List a branch's tables with derived operational state.
+      security: [{staffCookie: []}]
+      parameters:
+        - $ref: "#/components/parameters/BranchId"
+      responses:
+        "200":
+          description: Tables.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items: {type: array, items: {$ref: "#/components/schemas/AdminTable"}}
+        "404": {$ref: "#/components/responses/NotFound"}
+    post:
+      tags: [Tables]
+      operationId: createTable
+      summary: Create a table in a branch.
+      security: [{staffCookie: [], csrfHeader: []}]
+      parameters:
+        - $ref: "#/components/parameters/BranchId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/CreateTable"}
+      responses:
+        "201":
+          description: Table created.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/AdminTable"}
+        "422": {$ref: "#/components/responses/ValidationFailed"}
+
+  /v1/staff/tables/{tableId}:
+    patch:
+      tags: [Tables]
+      operationId: updateTable
+      summary: Rename, group, deactivate, or mark a table out of service.
+      security: [{staffCookie: [], csrfHeader: []}]
+      parameters:
+        - $ref: "#/components/parameters/TableId"
+        - $ref: "#/components/parameters/ExpectedVersion"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/UpdateTable"}
+      responses:
+        "200":
+          description: Updated table.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/AdminTable"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "409": {$ref: "#/components/responses/Conflict"}
+        "422": {$ref: "#/components/responses/ValidationFailed"}
+
+  /v1/staff/tables/{tableId}/qr-codes:
+    post:
+      tags: [Tables]
+      operationId: issueTableQrCode
+      summary: Issue or rotate the active ordering QR code for a table.
+      security: [{staffCookie: [], csrfHeader: []}]
+      parameters:
+        - $ref: "#/components/parameters/TableId"
+      responses:
+        "201":
+          description: Raw QR token and print URL returned once to the authorized administrator.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/IssuedQrCode"}
+        "404": {$ref: "#/components/responses/NotFound"}
+
+  /v1/staff/branches/{branchId}/qr-codes:
+    get:
+      tags: [Tables]
+      operationId: listQrCodes
+      summary: List a branch's issued QR codes, including revoked history.
+      security: [{staffCookie: []}]
+      parameters:
+        - $ref: "#/components/parameters/BranchId"
+      responses:
+        "200":
+          description: QR codes.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items: {type: array, items: {$ref: "#/components/schemas/TableQrCode"}}
+        "404": {$ref: "#/components/responses/NotFound"}
+    post:
+      tags: [Tables]
+      operationId: issueBranchQrCode
+      summary: Issue or rotate the active browse-only QR code for a branch.
+      security: [{staffCookie: [], csrfHeader: []}]
+      parameters:
+        - $ref: "#/components/parameters/BranchId"
+      responses:
+        "201":
+          description: Raw QR token and print URL returned once to the authorized administrator.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/IssuedQrCode"}
+        "404": {$ref: "#/components/responses/NotFound"}
+
+  /v1/staff/qr-codes/{qrCodeId}/revocations:
+    post:
+      tags: [Tables]
+      operationId: revokeQrCode
+      summary: Revoke a QR code so it can no longer create ordering sessions.
+      security: [{staffCookie: [], csrfHeader: []}]
+      parameters:
+        - $ref: "#/components/parameters/QrCodeId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/Reason"}
+      responses:
+        "200":
+          description: Revoked QR code.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/TableQrCode"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "409": {$ref: "#/components/responses/Conflict"}
+
   /v1/public/qr/{qrToken}/session:
     post:
       tags: [Public]
@@ -1124,6 +1476,31 @@ components:
       in: path
       required: true
       schema: {type: string, format: uuid}
+    CategoryId:
+      name: categoryId
+      in: path
+      required: true
+      schema: {type: string, format: uuid}
+    DishId:
+      name: dishId
+      in: path
+      required: true
+      schema: {type: string, format: uuid}
+    OptionGroupId:
+      name: optionGroupId
+      in: path
+      required: true
+      schema: {type: string, format: uuid}
+    TableId:
+      name: tableId
+      in: path
+      required: true
+      schema: {type: string, format: uuid}
+    QrCodeId:
+      name: qrCodeId
+      in: path
+      required: true
+      schema: {type: string, format: uuid}
     QrToken:
       name: qrToken
       in: path
@@ -1224,6 +1601,219 @@ components:
         displayName: {type: string, minLength: 1, maxLength: 160}
         email: {type: string, format: email, maxLength: 320}
         status: {type: string, enum: [active]}
+
+    Category:
+      type: object
+      required: [id, businessAccountId, restaurantId, name, displayOrder, status, version]
+      properties:
+        id: {type: string, format: uuid}
+        businessAccountId: {type: string, format: uuid}
+        restaurantId: {type: string, format: uuid}
+        name: {type: string}
+        displayOrder: {type: integer, minimum: 0}
+        status: {type: string, enum: [active, inactive]}
+        version: {type: integer, minimum: 1}
+
+    CreateCategory:
+      type: object
+      required: [name]
+      properties:
+        name: {type: string, minLength: 1, maxLength: 160}
+        displayOrder: {type: integer, minimum: 0, maximum: 10000, default: 0}
+
+    UpdateCategory:
+      type: object
+      minProperties: 1
+      properties:
+        name: {type: string, minLength: 1, maxLength: 160}
+        displayOrder: {type: integer, minimum: 0, maximum: 10000}
+        status: {type: string, enum: [active, inactive]}
+
+    AdminOption:
+      type: object
+      required: [id, name, priceDelta, displayOrder, status, version]
+      properties:
+        id: {type: string, format: uuid}
+        name: {type: string}
+        priceDelta: {$ref: "#/components/schemas/Money"}
+        displayOrder: {type: integer, minimum: 0}
+        status: {type: string, enum: [active, inactive]}
+        version: {type: integer, minimum: 1}
+
+    AdminOptionGroup:
+      type: object
+      required: [id, dishId, name, selectionType, isRequired, minimum, maximum, displayOrder, version, options]
+      properties:
+        id: {type: string, format: uuid}
+        dishId: {type: string, format: uuid}
+        name: {type: string}
+        selectionType: {type: string, enum: [single, multiple]}
+        isRequired: {type: boolean}
+        minimum: {type: integer, minimum: 0}
+        maximum: {type: integer, minimum: 1}
+        displayOrder: {type: integer, minimum: 0}
+        version: {type: integer, minimum: 1}
+        options: {type: array, items: {$ref: "#/components/schemas/AdminOption"}}
+
+    OptionInput:
+      type: object
+      required: [name, priceDelta]
+      properties:
+        name: {type: string, minLength: 1, maxLength: 160}
+        priceDelta: {$ref: "#/components/schemas/Money"}
+        displayOrder: {type: integer, minimum: 0, maximum: 10000, default: 0}
+
+    CreateOptionGroup:
+      type: object
+      required: [dishId, name, selectionType, minimumSelections, maximumSelections, options]
+      properties:
+        dishId: {type: string, format: uuid}
+        name: {type: string, minLength: 1, maxLength: 160}
+        selectionType: {type: string, enum: [single, multiple]}
+        isRequired: {type: boolean, default: false}
+        minimumSelections: {type: integer, minimum: 0, maximum: 50}
+        maximumSelections: {type: integer, minimum: 1, maximum: 50}
+        displayOrder: {type: integer, minimum: 0, maximum: 10000, default: 0}
+        options: {type: array, minItems: 1, maxItems: 50, items: {$ref: "#/components/schemas/OptionInput"}}
+
+    UpdateOptionGroup:
+      type: object
+      minProperties: 1
+      properties:
+        name: {type: string, minLength: 1, maxLength: 160}
+        isRequired: {type: boolean}
+        minimumSelections: {type: integer, minimum: 0, maximum: 50}
+        maximumSelections: {type: integer, minimum: 1, maximum: 50}
+        displayOrder: {type: integer, minimum: 0, maximum: 10000}
+
+    ReplaceOptions:
+      type: object
+      required: [options]
+      properties:
+        options:
+          type: array
+          minItems: 1
+          maxItems: 50
+          items:
+            allOf:
+              - $ref: "#/components/schemas/OptionInput"
+              - type: object
+                properties:
+                  status: {type: string, enum: [active, inactive], default: active}
+
+    AdminDish:
+      type: object
+      required: [id, businessAccountId, restaurantId, categoryId, name, basePrice, status, available, displayOrder, version]
+      properties:
+        id: {type: string, format: uuid}
+        businessAccountId: {type: string, format: uuid}
+        restaurantId: {type: string, format: uuid}
+        categoryId: {type: string, format: uuid}
+        name: {type: string}
+        description: {type: [string, "null"]}
+        imageUrl: {type: [string, "null"], format: uri}
+        basePrice: {$ref: "#/components/schemas/Money"}
+        status: {type: string, enum: [active, inactive]}
+        available: {type: boolean}
+        displayOrder: {type: integer, minimum: 0}
+        version: {type: integer, minimum: 1}
+
+    CreateDish:
+      type: object
+      required: [categoryId, name, basePrice]
+      properties:
+        categoryId: {type: string, format: uuid}
+        name: {type: string, minLength: 1, maxLength: 160}
+        description: {type: string, minLength: 1, maxLength: 1000}
+        imageUrl: {type: string, format: uri, maxLength: 2048}
+        basePrice: {$ref: "#/components/schemas/Money"}
+        displayOrder: {type: integer, minimum: 0, maximum: 10000, default: 0}
+
+    UpdateDish:
+      type: object
+      minProperties: 1
+      properties:
+        name: {type: string, minLength: 1, maxLength: 160}
+        description: {type: [string, "null"], minLength: 1, maxLength: 1000}
+        imageUrl: {type: [string, "null"], format: uri, maxLength: 2048}
+        categoryId: {type: string, format: uuid}
+        displayOrder: {type: integer, minimum: 0, maximum: 10000}
+        basePrice: {$ref: "#/components/schemas/Money"}
+        available: {type: boolean}
+        status: {type: string, enum: [active, inactive]}
+
+    BranchDishOverride:
+      type: object
+      required: [businessAccountId, branchId, dishId, visible, version]
+      properties:
+        businessAccountId: {type: string, format: uuid}
+        branchId: {type: string, format: uuid}
+        dishId: {type: string, format: uuid}
+        price: {oneOf: [{$ref: "#/components/schemas/Money"}, {type: "null"}]}
+        available: {type: [boolean, "null"]}
+        visible: {type: boolean}
+        version: {type: integer, minimum: 0}
+
+    UpsertBranchOverride:
+      type: object
+      required: [expectedVersion]
+      properties:
+        expectedVersion: {type: integer, minimum: 0, description: "Pass 0 when no override exists yet for this branch/dish pair."}
+        price: {oneOf: [{$ref: "#/components/schemas/Money"}, {type: "null"}]}
+        available: {type: [boolean, "null"]}
+        visible: {type: boolean}
+
+    AdminTable:
+      type: object
+      required: [id, businessAccountId, branchId, code, status, outOfService, version, derivedState]
+      properties:
+        id: {type: string, format: uuid}
+        businessAccountId: {type: string, format: uuid}
+        branchId: {type: string, format: uuid}
+        code: {type: string}
+        area: {type: [string, "null"]}
+        status: {type: string, enum: [active, inactive]}
+        outOfService: {type: boolean}
+        version: {type: integer, minimum: 1}
+        derivedState: {type: string, enum: [inactive, out_of_service, occupied, available]}
+
+    CreateTable:
+      type: object
+      required: [code]
+      properties:
+        code: {type: string, minLength: 1, maxLength: 32}
+        area: {type: string, minLength: 1, maxLength: 120}
+
+    UpdateTable:
+      type: object
+      minProperties: 1
+      properties:
+        code: {type: string, minLength: 1, maxLength: 32}
+        area: {type: [string, "null"], minLength: 1, maxLength: 120}
+        status: {type: string, enum: [active, inactive]}
+        outOfService: {type: boolean}
+
+    TableQrCode:
+      type: object
+      required: [id, businessAccountId, branchId, kind, status, createdAt]
+      properties:
+        id: {type: string, format: uuid}
+        businessAccountId: {type: string, format: uuid}
+        branchId: {type: string, format: uuid}
+        tableId: {type: [string, "null"], format: uuid}
+        kind: {type: string, enum: [table, branch]}
+        status: {type: string, enum: [active, revoked]}
+        createdAt: {type: string, format: date-time}
+        revokedAt: {type: [string, "null"], format: date-time}
+        revokedReason: {type: [string, "null"]}
+
+    IssuedQrCode:
+      type: object
+      required: [qrCode, rawToken, qrUrl]
+      properties:
+        qrCode: {$ref: "#/components/schemas/TableQrCode"}
+        rawToken: {type: string, description: "Returned once to the authorized administrator at issuance; only its hash is stored."}
+        qrUrl: {type: string, format: uri, description: "Standard HTTPS URL encoded into the printed QR image (NFR-17-03), embedding rawToken."}
 
     PermissionKey:
       type: string
@@ -1510,10 +2100,11 @@ components:
 
     GuestSession:
       type: object
-      required: [branchId, tableId, expiresAt]
+      required: [branchId, tableId, tableCode, expiresAt]
       properties:
         branchId: {type: string, format: uuid}
-        tableId: {type: string, format: uuid}
+        tableId: {type: [string, "null"], format: uuid}
+        tableCode: {type: [string, "null"], description: "Human-readable table identifier for on-screen verification (AC-US-F02-01); null for a browse-only branch QR."}
         expiresAt: {type: string, format: date-time}
 
     Menu:

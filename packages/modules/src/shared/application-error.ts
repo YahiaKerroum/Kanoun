@@ -6,7 +6,10 @@ export type ApplicationErrorCode =
   | "concurrency_conflict"
   | "validation_error"
   | "rate_limited"
-  | "service_unavailable";
+  | "service_unavailable"
+  | "menu_changed"
+  | "dish_unavailable"
+  | "table_unavailable";
 
 export class ApplicationError extends Error {
   public constructor(

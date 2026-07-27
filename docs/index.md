@@ -45,7 +45,8 @@ source_of_truth_for:
 | Slice 001 implementation declaration | `docs/delivery/slice-001-application-bootstrap.md` | Verified |
 | Slice 002 implementation declaration | `docs/delivery/slice-002-tenant-branch-owner-bootstrap.md` | Verified |
 | Slice 003 implementation declaration | `docs/delivery/slice-003-employees-permissions-configuration.md` | Verified |
-| Current engineering handoff | `docs/delivery/handoff-2026-07-27.md` | Ready for continuation |
+| Current engineering handoff | `docs/delivery/handoff-2026-07-27-slice-004-checkpoint.md` | Slice 004 in progress |
+| Prior engineering handoff (Slice 003 publication evidence) | `docs/delivery/handoff-2026-07-27.md` | Superseded — historical only |
 | Frontend quality | `docs/quality/frontend-quality.md` | Approved |
 | Deployment and recovery | `docs/operations/deployment-and-recovery.md` | Proposed until hosting ADR |
 | Observability and operations | `docs/operations/observability-and-runbook.md` | Approved baseline |

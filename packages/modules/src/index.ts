@@ -16,6 +16,9 @@ export type ModuleName = (typeof moduleNames)[number];
 export * from "./audit/index.js";
 export * from "./identity-access/index.js";
 export * from "./restaurant-configuration/index.js";
+export * from "./ordering/index.js";
+export * from "./menu/index.js";
+export * from "./tables/index.js";
 export {
   ApplicationError,
   type ApplicationErrorCode,

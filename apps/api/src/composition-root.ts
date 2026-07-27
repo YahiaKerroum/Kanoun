@@ -4,15 +4,24 @@ import {
   type DatabasePool,
 } from "@rms/building-blocks";
 import {
+  createGuestSessionMiddleware,
   createIdentityAccessRouter,
+  createMenuRouter,
+  createPublicMenuRouter,
+  createPublicTablesRouter,
   createRestaurantConfigurationRouter,
   createStaffSessionMiddleware,
+  createTablesRouter,
   IdentitySecurity,
   PostgresAuditWriter,
   PostgresIdentityAccessStore,
+  PostgresMenuStore,
+  PostgresOrderingStore,
   PostgresRestaurantConfigurationStore,
+  PostgresTablesStore,
 } from "@rms/modules";
 import {
+  MenuTablesService,
   PostgresServiceWorkflow,
   TenantOwnerService,
 } from "@rms/service-workflow";
@@ -37,6 +46,9 @@ export function composeApi(config: ApiConfig): ApiComposition {
   const identitySecurity = new IdentitySecurity(config.sessionSecret);
   const restaurantConfiguration = new PostgresRestaurantConfigurationStore();
   const identityAccess = new PostgresIdentityAccessStore();
+  const menu = new PostgresMenuStore();
+  const tables = new PostgresTablesStore();
+  const ordering = new PostgresOrderingStore();
   const audit = new PostgresAuditWriter();
   const workflow = new PostgresServiceWorkflow(databasePool);
   const credentialTokenDelivery = new WebhookCredentialTokenDelivery({
@@ -56,11 +68,26 @@ export function composeApi(config: ApiConfig): ApiComposition {
     audit,
     credentialTokenDelivery,
   });
+  const menuTablesService = new MenuTablesService({
+    databasePool,
+    workflow,
+    menu,
+    tables,
+    ordering,
+    restaurantConfiguration,
+    audit,
+    guestAccessSecret: config.guestAccessSecret,
+    customerWebOrigin: config.customerWebOrigin,
+  });
   const sessionDependencies = {
     authenticateSession: (token: string) =>
       tenantOwnerService.authenticateSession(token),
     hashCsrfToken: (token: string) => identitySecurity.hashToken(token),
     webOrigin: config.webOrigin,
+  };
+  const guestSessionDependencies = {
+    authenticateGuestSession: (token: string) =>
+      menuTablesService.authenticateGuestSession(token),
   };
   const identityRouter = createIdentityAccessRouter({
     ...sessionDependencies,
@@ -70,6 +97,21 @@ export function composeApi(config: ApiConfig): ApiComposition {
   const restaurantRouter = createRestaurantConfigurationRouter({
     ...sessionDependencies,
     useCases: tenantOwnerService,
+  });
+  const menuRouter = createMenuRouter({
+    ...sessionDependencies,
+    useCases: menuTablesService,
+  });
+  const tablesRouter = createTablesRouter({
+    ...sessionDependencies,
+    useCases: menuTablesService,
+  });
+  const publicMenuRouter = createPublicMenuRouter({
+    useCases: menuTablesService,
+  });
+  const publicTablesRouter = createPublicTablesRouter({
+    useCases: menuTablesService,
+    secureCookies: config.sessionCookieSecure,
   });
   const bootstrapRouter = createTenantBootstrapRouter({
     bootstrapSecret: config.bootstrapSecret,
@@ -86,11 +128,18 @@ export function composeApi(config: ApiConfig): ApiComposition {
     trustProxy: config.trustProxy,
     checkReadiness: () => pingDatabase(databasePool),
     staffSessionMiddleware: createStaffSessionMiddleware(sessionDependencies),
+    guestSessionMiddleware: createGuestSessionMiddleware(
+      guestSessionDependencies,
+    ),
     apiRouters: [
       bootstrapRouter,
       supportAccessRouter,
       identityRouter,
       restaurantRouter,
+      menuRouter,
+      tablesRouter,
+      publicMenuRouter,
+      publicTablesRouter,
     ],
   });
 

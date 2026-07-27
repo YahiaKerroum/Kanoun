@@ -193,6 +193,28 @@ state_machines:
         guards: [destination_table_available, same_branch]
         events: [EVT-TABLE-SESSION-MOVED]
 
+  table_qr_code:
+    owner: tables
+    initial: active
+    states: [active, revoked]
+    transitions:
+      - id: TR-QR-001
+        from: active
+        to: revoked
+        trigger: revoke_qr_code
+        actor: staff
+        permission: qr.manage
+        guards: []
+        effects: [reject_future_exchanges]
+        events: []
+    commands_without_state_change:
+      - id: CMD-QR-ROTATE
+        trigger: issue_qr_code
+        actor: staff
+        permission: qr.manage
+        guards: [previous_active_code_revoked_in_same_transaction]
+        events: []
+
   bill_request:
     owner: ordering
     initial: open

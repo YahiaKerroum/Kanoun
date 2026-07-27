@@ -22,6 +22,13 @@
       "when": 1785171600000,
       "tag": "0002_employees_permissions_configuration",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1785182400000,
+      "tag": "0003_menu_tables_and_qr",
+      "breakpoints": true
     }
   ]
 }

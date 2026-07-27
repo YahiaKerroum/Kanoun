@@ -11,8 +11,10 @@ const validEnvironment = {
   SESSION_SECRET: "a-secure-test-secret-with-32-characters",
   BOOTSTRAP_SECRET: "a-bootstrap-test-secret-with-32-characters",
   SUPPORT_ACCESS_SECRET: "a-support-access-secret-with-32-characters",
+  GUEST_ACCESS_SECRET: "a-guest-access-test-secret-with-32-characters",
   SESSION_COOKIE_SECURE: "false",
   WEB_ORIGIN: "http://127.0.0.1:5173",
+  CUSTOMER_WEB_ORIGIN: "http://127.0.0.1:5174",
 } satisfies NodeJS.ProcessEnv;
 
 describe("loadApiConfig", () => {

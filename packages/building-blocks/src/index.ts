@@ -19,6 +19,15 @@ export {
 } from "./database/platform-schema.js";
 export { type Brand } from "./types/brand.js";
 export {
+  addMoney,
+  compareMoney,
+  isNegative,
+  multiplyMoney,
+  subtractMoney,
+  zeroMoney,
+  type Money,
+} from "./types/money.js";
+export {
   createOpaqueToken,
   hashOpaqueToken,
   secretsMatch,
