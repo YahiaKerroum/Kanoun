@@ -6,6 +6,13 @@ document:
   last_reviewed: 2026-07-27
 
 vertical_slices:
+  application_bootstrap:
+    implements: [NFR-02, NFR-03, NFR-12, NFR-13]
+    obeys: [PD-031, ADR-0001, ADR-0002, ADR-0003, ADR-0004, ADR-0005, ADR-0006, BR-024]
+    modules: [platform, service_workflow]
+    operations: [getLiveness, getReadiness]
+    tests: [TEST-MIGRATION-001, TEST-ARCH-001, TEST-CONTRACT-001, TEST-API-HEALTH-001, TEST-RESPONSIVE-001, TEST-A11Y-001]
+
   tenant_and_configuration:
     implements: [US-A01, US-A02, US-A03, US-A04, US-B01, US-B02, US-B03, US-B04]
     obeys: [PD-001, PD-002, PD-003, PD-019, PD-026, PD-035, BR-001, BR-003, BR-006, BR-007]

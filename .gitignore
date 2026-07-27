@@ -8,6 +8,10 @@ build/
 coverage/
 .turbo/
 *.tsbuildinfo
+packages/**/src/**/*.js
+packages/**/src/**/*.js.map
+packages/**/src/**/*.d.ts
+packages/**/src/**/*.d.ts.map
 playwright-report/
 test-results/
 .vitest/
@@ -44,3 +48,4 @@ Desktop.ini
 .npmrc.local
 .playwright-mcp/
 .image-slots.state.json
+.local/

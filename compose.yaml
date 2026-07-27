@@ -1,0 +1,19 @@
+services:
+  postgres:
+    image: postgres:18.1-alpine
+    environment:
+      POSTGRES_DB: rms
+      POSTGRES_USER: rms
+      POSTGRES_PASSWORD: rms_local_only
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rms -d rms"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    volumes:
+      - rms-postgres:/var/lib/postgresql
+
+volumes:
+  rms-postgres:

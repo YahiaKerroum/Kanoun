@@ -2,15 +2,18 @@ openapi: 3.1.0
 info:
   title: Restaurant Management System API
   version: 0.1.0
-  description: Proposed MVP contract for the Express/TypeScript implementation. It becomes implementation-authoritative as Slice 001 generates and verifies server/client contract bindings.
+  description: Proposed MVP contract for the Express/TypeScript implementation. Slice 001 validates the document; each operation becomes implementation-authoritative when its delivery slice adds matching server behavior and contract tests.
+  license:
+    name: Proprietary
+    identifier: LicenseRef-Proprietary
 servers:
   - url: /api
 tags:
-  - {name: Public}
-  - {name: Orders}
-  - {name: Kitchen}
-  - {name: Payments}
-  - {name: Realtime}
+  - {name: Public, description: Unauthenticated and guest-session operations.}
+  - {name: Orders, description: Guest and staff order lifecycle operations.}
+  - {name: Kitchen, description: Branch kitchen queue and work-item operations.}
+  - {name: Payments, description: Staff-recorded payment and correction operations.}
+  - {name: Realtime, description: Branch-scoped Server-Sent Events streams.}
 
 paths:
   /v1/public/qr/{qrToken}/session:
@@ -18,6 +21,7 @@ paths:
       tags: [Public]
       operationId: exchangeTableQr
       summary: Exchange a table QR token for a scoped guest session.
+      security: []
       parameters:
         - $ref: "#/components/parameters/QrToken"
       responses:
@@ -33,6 +37,7 @@ paths:
     get:
       tags: [Public]
       operationId: getGuestMenu
+      summary: Get the current menu for the authenticated guest session.
       security: [{guestCookie: []}]
       responses:
         "200":
@@ -46,6 +51,7 @@ paths:
     post:
       tags: [Public, Orders]
       operationId: submitGuestOrder
+      summary: Submit and automatically accept a guest order.
       security: [{guestCookie: []}]
       parameters:
         - $ref: "#/components/parameters/IdempotencyKey"
@@ -68,6 +74,7 @@ paths:
     get:
       tags: [Public, Orders]
       operationId: getGuestOrder
+      summary: Get an order created by the authenticated guest session.
       security: [{guestCookie: []}]
       parameters:
         - $ref: "#/components/parameters/OrderId"
@@ -83,6 +90,7 @@ paths:
     post:
       tags: [Public, Orders]
       operationId: requestGuestOrderCancellation
+      summary: Request cancellation of a guest order.
       security: [{guestCookie: []}]
       parameters:
         - $ref: "#/components/parameters/OrderId"
@@ -105,6 +113,7 @@ paths:
     post:
       tags: [Public, Orders]
       operationId: requestGuestOrderBill
+      summary: Request the bill for one guest order.
       security: [{guestCookie: []}]
       parameters:
         - $ref: "#/components/parameters/OrderId"
@@ -118,6 +127,7 @@ paths:
     get:
       tags: [Orders]
       operationId: listStaffOrders
+      summary: List permission- and branch-scoped staff orders.
       security: [{staffCookie: []}]
       parameters:
         - {name: branchId, in: query, required: true, schema: {type: string, format: uuid}}
@@ -139,6 +149,7 @@ paths:
     post:
       tags: [Orders]
       operationId: createStaffOrder
+      summary: Create and automatically accept a staff-entered order.
       security: [{staffCookie: []}]
       parameters:
         - $ref: "#/components/parameters/IdempotencyKey"
@@ -166,6 +177,7 @@ paths:
     post:
       tags: [Orders]
       operationId: markOrderServed
+      summary: Mark a ready order as served.
       security: [{staffCookie: []}]
       parameters:
         - $ref: "#/components/parameters/OrderId"
@@ -183,6 +195,7 @@ paths:
     post:
       tags: [Payments]
       operationId: recordOrderPayment
+      summary: Record an immutable full-balance payment for an order.
       security: [{staffCookie: []}]
       parameters:
         - $ref: "#/components/parameters/OrderId"
@@ -205,6 +218,7 @@ paths:
     post:
       tags: [Orders]
       operationId: completeOrder
+      summary: Complete a served and paid order.
       security: [{staffCookie: []}]
       parameters:
         - $ref: "#/components/parameters/OrderId"
@@ -229,6 +243,7 @@ paths:
     get:
       tags: [Kitchen]
       operationId: getKitchenQueue
+      summary: Get the authoritative branch kitchen queue.
       security: [{staffCookie: []}]
       parameters:
         - {name: branchId, in: query, required: true, schema: {type: string, format: uuid}}
@@ -240,11 +255,13 @@ paths:
               schema:
                 type: array
                 items: {$ref: "#/components/schemas/KitchenWorkItem"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
 
   /v1/staff/kitchen/items/{workItemId}/start:
     post:
       tags: [Kitchen]
       operationId: startKitchenWorkItem
+      summary: Start preparation of a kitchen work item.
       security: [{staffCookie: []}]
       parameters:
         - $ref: "#/components/parameters/WorkItemId"
@@ -261,6 +278,7 @@ paths:
     post:
       tags: [Kitchen]
       operationId: markKitchenWorkItemReady
+      summary: Mark a preparing kitchen work item as ready.
       security: [{staffCookie: []}]
       parameters:
         - $ref: "#/components/parameters/WorkItemId"
@@ -277,6 +295,7 @@ paths:
     get:
       tags: [Realtime]
       operationId: streamStaffEvents
+      summary: Stream branch-scoped operational event hints to staff.
       security: [{staffCookie: []}]
       parameters:
         - {name: branchId, in: query, required: true, schema: {type: string, format: uuid}}
@@ -287,6 +306,7 @@ paths:
           content:
             text/event-stream:
               schema: {type: string}
+        "401": {$ref: "#/components/responses/Unauthorized"}
 
 components:
   securitySchemes:

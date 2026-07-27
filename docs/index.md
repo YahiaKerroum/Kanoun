@@ -34,7 +34,7 @@ source_of_truth_for:
 | Technical choices and ADR status | `docs/architecture/adr/README.md` and `ADR-*.md` | Per ADR status |
 | Express/TypeScript implementation rules | `docs/architecture/express-implementation-guide.md` | Approved |
 | Non-normative implementation patterns | `docs/architecture/engineering-patterns.md` | Proposed guidance |
-| HTTP API | `docs/contracts/openapi.yaml` | Proposed until application bootstrap |
+| HTTP API | `docs/contracts/openapi.yaml` | Proposed operation-by-operation; validated in Slice 001 |
 | Events and delivery | `docs/contracts/events.yaml` | Approved semantic baseline |
 | Conceptual/physical data design | `docs/data/model.md` | Approved conceptual baseline |
 | Threats and security controls | `docs/security/threat-model.md` | Approved baseline |
@@ -42,6 +42,8 @@ source_of_truth_for:
 | Requirement-to-test mapping | `docs/quality/traceability.yaml` | Approved baseline |
 | MVP implementation order | `docs/delivery/mvp-slices.yaml` | Approved |
 | Implementation progress | `docs/delivery/implementation-progress.md` | Active |
+| Slice 001 implementation declaration | `docs/delivery/slice-001-application-bootstrap.md` | Verified |
+| Current engineering handoff | `docs/delivery/handoff-2026-07-27.md` | Ready for continuation |
 | Frontend quality | `docs/quality/frontend-quality.md` | Approved |
 | Deployment and recovery | `docs/operations/deployment-and-recovery.md` | Proposed until hosting ADR |
 | Observability and operations | `docs/operations/observability-and-runbook.md` | Approved baseline |

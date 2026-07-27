@@ -1,0 +1,11 @@
+Restaurant POS design system/
+design-exploration/
+docs/
+AGENTS.md
+restaurant-management-system-architecture.md
+restaurant-management-system-requirements.md
+pnpm-lock.yaml
+packages/**/src/**/*.js
+packages/**/src/**/*.js.map
+packages/**/src/**/*.d.ts
+packages/**/src/**/*.d.ts.map

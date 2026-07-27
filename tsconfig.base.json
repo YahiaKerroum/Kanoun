@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "lib": ["ES2023"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "forceConsistentCasingInFileNames": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "sourceMap": true,
+    "declaration": true,
+    "declarationMap": true,
+    "paths": {
+      "@rms/building-blocks": ["./packages/building-blocks/src/index.ts"],
+      "@rms/contracts": ["./packages/contracts/src/index.ts"],
+      "@rms/modules": ["./packages/modules/src/index.ts"],
+      "@rms/service-workflow": ["./packages/service-workflow/src/index.ts"],
+      "@rms/test-support": ["./packages/test-support/src/index.ts"]
+    }
+  }
+}

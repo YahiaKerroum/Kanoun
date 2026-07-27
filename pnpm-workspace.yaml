@@ -1,0 +1,14 @@
+packages:
+  - apps/api
+  - apps/worker
+  - apps/web/*
+  - packages/*
+
+allowBuilds:
+  argon2: true
+  esbuild: true
+
+minimumReleaseAgeExclude:
+  - "@redocly/cli@2.41.0"
+  - express-rate-limit@8.6.1
+  - globals@17.8.0

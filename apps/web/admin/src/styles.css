@@ -1,0 +1,29 @@
+:root {
+  font-family: system-ui, sans-serif;
+  color: #1e1b14;
+  background: #fff8e8;
+}
+
+body {
+  margin: 0;
+}
+
+main {
+  display: grid;
+  min-height: 100vh;
+  align-content: center;
+  gap: 16px;
+  padding: 32px;
+}
+
+p,
+h1 {
+  max-width: 720px;
+  margin: 0;
+}
+
+p,
+span {
+  color: #6e4700;
+  font-weight: 700;
+}

@@ -39,7 +39,27 @@ No artifact may silently override another artifact that is authoritative for a d
 
 ## Current repository state
 
-The repository currently contains specifications and design exploration only. The accepted stack is Node.js active LTS, Express 5, strict TypeScript, PostgreSQL, React, REST, and Server-Sent Events. No executable workspace has been bootstrapped yet. Do not invent build, migration, or test commands. Slice 001 must pin exact versions, create the workspace required by `docs/architecture/express-implementation-guide.md`, and update this section with exact commands.
+Slice 001 is complete. The executable pnpm workspace uses Node.js `24.18.0`, pnpm `11.17.0`, Express `5.2.1`, strict TypeScript `6.0.3`, Zod `4.4.3`, PostgreSQL `18.1`, React `19.2.8`, and Vite `8.1.5`. The API and worker are separate processes; customer, staff, and administration clients are separate React applications. The current staff visual authority is `Restaurant POS design system/Mise Staff Shell v2.dc.html`; older artifacts are historical only.
+
+Exact workspace commands:
+
+- install: `corepack pnpm install --frozen-lockfile`
+- start local PostgreSQL: `docker compose up -d postgres`
+- apply migrations: `corepack pnpm db:migrate`
+- develop API, worker, and staff web: `corepack pnpm dev`
+- develop one process: `corepack pnpm dev:api`, `corepack pnpm dev:worker`, or `corepack pnpm dev:staff`
+- format: `corepack pnpm format` or verify with `corepack pnpm format:check`
+- lint: `corepack pnpm lint`
+- type check: `corepack pnpm typecheck`
+- unit and PostgreSQL integration tests: `corepack pnpm test` (`TEST_DATABASE_URL` enables PostgreSQL tests)
+- architecture tests: `corepack pnpm test:architecture`
+- OpenAPI and event-contract validation: `corepack pnpm contracts:lint`
+- production builds: `corepack pnpm build`
+- browser and accessibility tests: `corepack pnpm test:browser`
+- full non-browser verification: `corepack pnpm check`
+- production-dependency audit: `corepack pnpm audit --prod --audit-level high`
+
+Copy `.env.example` to `.env` for local development. The API, worker, and migration configuration load it when present. CI applies migrations and supplies `TEST_DATABASE_URL`, so integration tests must not be allowed to skip there. Do not invent replacement commands; update this section atomically when a verified command changes.
 
 ## Mandatory implementation rules
 

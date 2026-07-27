@@ -10,32 +10,47 @@ last_reviewed: 2026-07-27
 
 ## Current slice
 
-`SLICE-001 — application_bootstrap`
+`SLICE-002 — tenant_branch_and_owner_bootstrap`
 
 ## Completed
 
 - Approved product and architecture documentation baseline.
-- Supplied MISE design artifacts preserved in `Restaurant POS design system/`.
+- Exact runtime, package-manager, framework, database, migration, and test-tool
+  versions pinned with a frozen lockfile.
+- Executable API, worker, customer web, staff web, and administration web
+  projects created using the approved modular-monolith boundaries.
+- Versioned PostgreSQL migration proven against PostgreSQL 18.1 for platform
+  idempotency, inbox-checkpoint, and transactional-outbox tables.
+- Structured request logging, correlation IDs, security headers, bounded JSON
+  input, readiness/liveness endpoints, and canonical problem responses in the
+  Express composition root.
+- Architecture dependency checks, OpenAPI/event validation, unit/integration
+  tests, production builds, dependency audit, and GitHub CI.
+- Responsive and accessibility-checked MISE staff shell implemented from
+  `Restaurant POS design system/Mise Staff Shell v2.dc.html`.
+- Supplied MISE design artifacts preserved in `Restaurant POS design system/`;
+  the older artifacts and `design-exploration/` are historical only.
 - Repository hygiene baseline: ignore rules, editor settings, line endings, and onboarding README.
 
 ## In progress
 
-- Pin the Node.js, package-manager, Express, TypeScript, validation, PostgreSQL,
-  migration, and test-tool versions.
-- Create the workspace required by the Express implementation guide.
-- Prove the PostgreSQL migration pipeline and architecture dependency tests.
-- Establish the staff React shell from `Mise Staff Shell v2.dc.html`.
+- Protected owner account, business-account tenant, restaurant, branch, and
+  operating-hours bootstrap.
+- Grants-only owner session behavior and the last-administrator guard.
+- Tenant-isolation, authorization, session revocation, concurrency, and
+  validation evidence required by Slice 002.
 
 ## Current limitations
 
-- No executable application exists in the documentation-baseline commit.
-- No product story has been implemented; Slice 001 is an infrastructure gate.
+- Customer and administration web applications remain truthful foundations
+  until their delivery slices introduce product flows.
+- Slice 001 implements an infrastructure gate, not a restaurant-domain story.
+- Local verification requires Node.js 24.18.0; other Node releases are outside
+  the supported toolchain even if some commands happen to run.
 - Production deployment is blocked by proposed `ADR-0007`.
 - `MISE` remains a working product name until product approves a final name.
 
 ## Next slice
-
-After Slice 001 passes locally and in CI:
 
 `SLICE-002 — tenant_branch_and_owner_bootstrap`
 

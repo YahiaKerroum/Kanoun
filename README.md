@@ -5,9 +5,10 @@ A specification-first, multi-tenant restaurant management and point-of-sale plat
 ## Current implementation status
 
 - Product, domain, security, contract, quality, and architecture baselines are approved.
-- The selected application stack is Node.js active LTS, Express 5, strict TypeScript, PostgreSQL, React, REST, and Server-Sent Events.
-- The current delivery increment is `SLICE-001` (`application_bootstrap`).
-- Executable applications, commands, migrations, and CI are not present in this documentation-baseline commit. They are the next verified increment.
+- `SLICE-001` (`application_bootstrap`) is complete: the executable workspace, migration pipeline, module-boundary checks, API/worker processes, React applications, and CI are present.
+- The staff application shell follows `Restaurant POS design system/Mise Staff Shell v2.dc.html`. `design-exploration/` and the older design-system artifacts are retained as history, not implementation authority.
+- The next delivery increment is `SLICE-002` (`tenant_branch_and_owner_bootstrap`).
+- No restaurant-domain product story is claimed by Slice 001; the visible shell uses honest setup and deferred states until Slice 002 adds protected owner and branch workflows.
 - Production infrastructure remains blocked until `ADR-0007` is accepted or superseded.
 
 Progress and limitations are tracked in
@@ -37,60 +38,98 @@ Express is restricted to HTTP adapters. Domain and application code cannot impor
 
 ## Technology stack
 
-Exact versions are pinned during Slice 001.
-
-- Node.js active LTS and pnpm
-- Express 5 with strict TypeScript and ECMAScript modules
-- PostgreSQL with versioned migrations
-- React and Vite for customer, staff, and administration web applications
+- Node.js `24.18.0` and pnpm `11.17.0`
+- Express `5.2.1`, strict TypeScript `6.0.3`, Zod `4.4.3`, and ECMAScript modules
+- PostgreSQL `18.1`, `pg` `8.22.0`, and Drizzle migrations
+- React `19.2.8` and Vite `8.1.5` for customer, staff, and administration web applications
 - REST/JSON described by OpenAPI and Server-Sent Events
-- Automated unit, integration, contract, architecture, and browser tests
+- Vitest `4.1.10`, Playwright `1.62.0`, dependency-cruiser `18.1.0`, and Redocly `2.41.0`
+
+Every dependency is exact-pinned in a workspace manifest and resolved by the committed lockfile.
 
 ## Repository structure
 
 ```text
 apps/                       Executable API, worker, and React applications
-packages/                   Business modules and shared application contracts
+packages/                   Modules, contracts, workflow, database, and test support
+migrations/                 Versioned PostgreSQL migrations and Drizzle metadata
+tests/                      Cross-workspace architecture tests
+scripts/                    Contract validation scripts
 docs/                       Normative product, domain, architecture, and quality docs
 Restaurant POS design system/
-                            Supplied implementation design source
+                            Current v2 design source plus superseded supplied artifacts
 design-exploration/         Historical design exploration; not implementation authority
 restaurant-management-system-requirements.md
 restaurant-management-system-architecture.md
 ```
-
-The executable `apps/` and `packages/` workspace is created by Slice 001.
 
 ## Local development
 
 ### Prerequisites
 
 - Git
-- The Node.js version pinned in `.nvmrc` after Slice 001
-- Corepack with the package-manager version pinned in `package.json`
-- PostgreSQL at the version documented after Slice 001
+- Node.js `24.18.0`, pinned in `.node-version` and `.nvmrc`
+- Corepack with pnpm `11.17.0`, pinned by `packageManager`
+- PostgreSQL `18.1`
 - Docker only when using the optional containerized database workflow
 
 ### Environment
 
-No secret or local environment file is committed. Slice 001 adds a safe
-`.env.example`; copy it to `.env` and replace placeholders locally.
+No secret or local environment file is committed. Copy `.env.example` to `.env`,
+keep the example local credentials for an isolated development database only,
+and replace `SESSION_SECRET` with at least 32 random characters. The API, worker,
+and migration configuration load the root `.env` file when it is present;
+already-defined process variables take precedence.
 
-### Commands
+### First run
 
-Executable commands are intentionally not invented before the workspace exists.
-Slice 001 will add and verify exact commands for:
+```powershell
+corepack enable
+corepack prepare pnpm@11.17.0 --activate
+corepack pnpm install --frozen-lockfile
+Copy-Item .env.example .env
+docker compose up -d postgres
+corepack pnpm db:migrate
+corepack pnpm dev
+```
 
-- Dependency installation
-- Local PostgreSQL setup and migrations
-- API, worker, and web development
-- Formatting and linting
-- Type checking
-- Unit, integration, contract, architecture, and browser tests
-- Production builds
+The combined development command starts the API on `http://127.0.0.1:3000`,
+the worker, and the MISE staff application on `http://127.0.0.1:5173`.
+The staff development server proxies `/health` to the API.
 
-Once verified, the exact command list will be published here and in
-[`AGENTS.md`](AGENTS.md).
+Run individual processes with:
+
+```powershell
+corepack pnpm dev:api
+corepack pnpm dev:worker
+corepack pnpm dev:staff
+corepack pnpm --filter @rms/customer-web dev
+corepack pnpm --filter @rms/admin-web dev
+```
+
+### Verification
+
+```powershell
+corepack pnpm format:check
+corepack pnpm lint
+corepack pnpm typecheck
+$env:TEST_DATABASE_URL = "postgresql://rms:rms_local_only@127.0.0.1:5432/rms"
+corepack pnpm test
+corepack pnpm test:architecture
+corepack pnpm contracts:lint
+corepack pnpm build
+corepack pnpm exec playwright install chromium
+corepack pnpm test:browser
+corepack pnpm audit --prod --audit-level high
+```
+
+`corepack pnpm check` runs formatting, lint, type, unit/integration, architecture,
+contract, and production-build verification in one command. PostgreSQL
+integration tests run when `TEST_DATABASE_URL` is defined and otherwise report a
+skip. CI always supplies it, applies the migration, and runs the complete check.
+
+Stop the optional database with `docker compose down`. Do not add `-v` unless
+you explicitly intend to delete the local database volume.
 
 ## Documentation
 
