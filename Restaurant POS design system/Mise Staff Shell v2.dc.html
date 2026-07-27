@@ -1,0 +1,1583 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F2EFE7;font-family:'Plus Jakarta Sans',system-ui,sans-serif;color:#1E1B14;font-feature-settings:'tnum' 1;-webkit-font-smoothing:antialiased;text-wrap:pretty}
+a{color:#8A5A00;text-decoration:none}
+a:hover{color:#FFC01F;text-decoration:underline}
+::selection{background:#FFE49A}
+</style>
+<script src="./image-slot.js"></script>
+</helmet>
+
+<section style="padding:56px 56px 96px;display:flex;flex-direction:column;gap:40px">
+
+<div style="display:flex;flex-direction:column;gap:10px;max-width:940px">
+<div style="font:600 12px/1 'Plus Jakarta Sans';letter-spacing:.24em;color:#8A5A00">ROUND 04 · SAFFRON GOLD</div>
+<div style="font:700 40px/46px 'Bricolage Grotesque';letter-spacing:-.02em">MISE — energetic service platform</div>
+<div style="font:400 15px/23px 'Plus Jakarta Sans';color:#565044">A distinct brand family — saffron gold and ivory — on the composition your references use: a saturated brand field around a floating white app, a light rail with one filled active pill, photo-forward cards, and prices in accent. Display type is Bricolage Grotesque, interface type is Plus Jakarta Sans, and the icon family is Material Symbols Rounded. Same data and the same operational rules as round 03 — <a href="#2a">2a</a> dashboard, <a href="#2b">2b</a> order entry, <a href="#2c">2c</a> orders, <a href="#2d">2d</a> kitchen, <a href="#2e">2e</a> tables and payment, <a href="#2f">2f</a> mobile, <a href="#2g">2g</a> states.</div>
+</div>
+
+<div style="display:flex;flex-wrap:wrap;gap:56px">
+
+<div id="2a" style="display:flex;flex-direction:column;gap:12px;scroll-margin:40px">
+<div style="display:flex;align-items:baseline;gap:10px">
+<span style="font:700 12px/1 'Plus Jakarta Sans';letter-spacing:.06em;color:#241A00;background:#FFB300;padding:6px 9px;border-radius:7px">2a</span>
+<span style="font:700 16px/1.2 'Bricolage Grotesque'">Dashboard</span>
+<span style="font:400 13px/1.2 'Plus Jakarta Sans';color:#655C50">1440 × 900 · exceptions, floor, then pace</span>
+</div>
+<div style="width:1440px;height:900px;background:#FFC01F;border-radius:26px;padding:18px;display:flex;overflow:hidden">
+<div style="flex:1;min-width:0;display:flex;background:#FAF8F4;border-radius:20px;overflow:hidden">
+
+<div style="width:92px;flex:0 0 92px;background:#FFFFFF;border-right:1px solid #EFE7DA;display:flex;flex-direction:column;align-items:center;padding:18px 0 18px">
+<div style="width:40px;height:40px;border-radius:13px;background:#FFC01F;display:flex;align-items:center;justify-content:center">
+<span style="font-family:'Material Symbols Rounded';font-size:23px;color:#241A00">ramen_dining</span>
+</div>
+<div style="font:700 13px/1 'Bricolage Grotesque';letter-spacing:.14em;color:#1E1B14;margin-top:9px">MISE</div>
+<div style="display:flex;flex-direction:column;align-items:center;width:100%;margin-top:20px">
+<sc-for list="{{ navDash }}" as="i" hint-placeholder-count="10">
+<div style="position:relative;width:68px;height:50px;border-radius:15px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:{{i.bg}};margin-top:{{i.mt}}">
+<span style="font-family:'Material Symbols Rounded';font-size:21px;color:{{i.fg}}">{{i.icon}}</span>
+<div style="font:600 9px/11px 'Plus Jakarta Sans';letter-spacing:.02em;color:{{i.fg}}">{{i.label}}</div>
+<sc-if value="{{ i.badge }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;top:3px;right:9px;min-width:16px;height:16px;border-radius:8px;background:#C22C23;color:#FFF;font:700 10px/16px 'Plus Jakarta Sans';text-align:center">{{i.badge}}</div>
+</sc-if>
+</div>
+</sc-for>
+</div>
+<div style="flex:1"></div>
+<div style="position:relative;width:42px;height:42px;border-radius:14px;background:#FFF0CC;display:flex;align-items:center;justify-content:center;font:700 14px/1 'Plus Jakarta Sans';color:#8A5A00">IK
+<div style="position:absolute;right:-2px;bottom:-2px;width:12px;height:12px;border-radius:7px;background:#2F9E5F;border:2px solid #FFF"></div>
+</div>
+</div>
+
+<div style="flex:1;min-width:0;display:flex;flex-direction:column">
+<div style="height:84px;flex:0 0 84px;background:#FFFFFF;border-bottom:1px solid #EFE7DA;display:flex;align-items:center;padding:0 22px;gap:16px">
+<div style="min-width:196px">
+<div style="font:700 26px/32px 'Bricolage Grotesque';letter-spacing:-.015em">Tonight</div>
+<div style="font:500 12px/16px 'Plus Jakarta Sans';color:#776E60">Wednesday 22 July · 21:04</div>
+</div>
+<div style="display:flex;align-items:center;gap:8px;height:42px;padding:0 12px;border-radius:12px;background:#FAF8F4;border:1px solid #EFE7DA">
+<span style="font-family:'Material Symbols Rounded';font-size:19px;color:#8A5A00">storefront</span>
+<div><div style="font:700 13px/16px 'Plus Jakarta Sans'">Hydra Branch</div><div style="font:500 10px/13px 'Plus Jakarta Sans';color:#776E60">Algiers</div></div>
+<span style="font-family:'Material Symbols Rounded';font-size:19px;color:#776E60">expand_more</span>
+</div>
+<div style="display:flex;align-items:center;gap:7px;height:42px;padding:0 13px;border-radius:12px;background:#E4F6EA">
+<div style="width:8px;height:8px;border-radius:5px;background:#2F9E5F"></div>
+<div style="font:700 13px/16px 'Plus Jakarta Sans';color:#1E7A47">Dinner service live</div>
+</div>
+<div style="flex:1"></div>
+<div style="display:flex;align-items:center;gap:9px;width:262px;height:44px;border-radius:13px;background:#FAF8F4;border:1px solid #EFE7DA;padding:0 13px">
+<span style="font-family:'Material Symbols Rounded';font-size:20px;color:#776E60">search</span>
+<div style="flex:1;font:500 13px/18px 'Plus Jakarta Sans';color:#776E60">Search tables, orders, dishes</div>
+<div style="width:22px;height:22px;border-radius:7px;background:#FFFFFF;border:1px solid #E9E0D2;font:700 11px/20px 'Plus Jakarta Sans';color:#776E60;text-align:center">/</div>
+</div>
+<div style="display:flex;align-items:center;gap:7px;height:34px;padding:0 11px;border-radius:11px;background:#E4F6EA">
+<span style="font-family:'Material Symbols Rounded';font-size:18px;color:#1E7A47">cloud_done</span>
+<div style="font:600 12px/16px 'Plus Jakarta Sans';color:#1E7A47">Updated just now</div>
+</div>
+<div style="position:relative;width:44px;height:44px;border-radius:13px;background:#FAF8F4;border:1px solid #EFE7DA;display:flex;align-items:center;justify-content:center">
+<span style="font-family:'Material Symbols Rounded';font-size:21px;color:#565044">notifications</span>
+<div style="position:absolute;top:-3px;right:-3px;min-width:18px;height:18px;border-radius:9px;background:#C22C23;color:#FFF;font:700 10px/18px 'Plus Jakarta Sans';text-align:center;border:2px solid #FFF">3</div>
+</div>
+<div style="display:flex;align-items:center;gap:9px;height:44px;padding:0 11px 0 5px;border-radius:14px;background:#FAF8F4;border:1px solid #EFE7DA">
+<div style="width:34px;height:34px;border-radius:11px;background:#FFF0CC;font:700 12px/34px 'Plus Jakarta Sans';color:#8A5A00;text-align:center">IK</div>
+<div><div style="font:700 13px/16px 'Plus Jakarta Sans'">Imane K.</div><div style="font:500 10px/13px 'Plus Jakarta Sans';color:#776E60">Server · Floor 1</div></div>
+<span style="font-family:'Material Symbols Rounded';font-size:19px;color:#776E60">expand_more</span>
+</div>
+</div>
+
+<div style="flex:1;min-height:0;padding:20px 22px 22px;display:flex;flex-direction:column;gap:18px">
+
+<div style="flex:0 0 104px;display:grid;grid-template-columns:repeat(4,1fr);gap:16px">
+<sc-for list="{{ tiles }}" as="t" hint-placeholder-count="4">
+<div style="background:#FFFFFF;border:1px solid #EFE7DA;border-radius:18px;box-shadow:0 6px 18px rgba(110,71,0,.07);padding:0 16px;display:flex;align-items:center;gap:13px">
+<div style="width:46px;height:46px;flex:0 0 46px;border-radius:15px;background:{{t.bg}};display:flex;align-items:center;justify-content:center">
+<span style="font-family:'Material Symbols Rounded';font-size:24px;color:{{t.c}}">{{t.icon}}</span>
+</div>
+<div style="flex:1;min-width:0">
+<div style="display:flex;align-items:baseline;gap:7px">
+<div style="font:700 28px/32px 'Bricolage Grotesque';color:{{t.c}}">{{t.n}}</div>
+<div style="font:700 14px/19px 'Plus Jakarta Sans'">{{t.label}}</div>
+</div>
+<div style="font:500 12px/16px 'Plus Jakarta Sans';color:#776E60">{{t.sub}}</div>
+</div>
+<div style="width:34px;height:34px;flex:0 0 34px;border-radius:11px;background:#FAF8F4;display:flex;align-items:center;justify-content:center">
+<span style="font-family:'Material Symbols Rounded';font-size:19px;color:#565044">arrow_forward</span>
+</div>
+</div>
+</sc-for>
+</div>
+
+<div style="flex:1;min-height:0;display:flex;gap:18px">
+<div style="flex:1;min-width:0;background:#FFFFFF;border:1px solid #EFE7DA;border-radius:20px;box-shadow:0 6px 18px rgba(110,71,0,.07);padding:18px 20px;display:flex;flex-direction:column">
+<div style="display:flex;align-items:center;gap:14px">
+<div style="font:700 20px/26px 'Bricolage Grotesque'">Live floor</div>
+<div style="display:flex;gap:7px">
+<sc-for list="{{ areaTabs }}" as="a" hint-placeholder-count="3">
+<div style="height:32px;padding:0 13px;border-radius:11px;background:{{a.bg}};display:flex;align-items:center;font:600 12px/16px 'Plus Jakarta Sans';color:{{a.fg}}">{{a.label}}</div>
+</sc-for>
+</div>
+<div style="flex:1"></div>
+<div style="display:flex;gap:13px">
+<sc-for list="{{ legend }}" as="l" hint-placeholder-count="4">
+<div style="display:flex;align-items:center;gap:6px"><div style="width:9px;height:9px;border-radius:5px;background:{{l.c}}"></div><div style="font:600 11px/16px 'Plus Jakarta Sans';color:#565044">{{l.label}}</div></div>
+</sc-for>
+</div>
+</div>
+<div style="flex:1;min-height:0;display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(3,1fr);gap:12px;margin-top:16px">
+<sc-for list="{{ tables }}" as="t" hint-placeholder-count="12">
+<div style="border:1px solid {{t.cellLine}};background:{{t.cellBg}};border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px">
+<div style="width:56px;height:44px;border-radius:{{t.shape}};background:{{t.bg}};border:2px solid {{t.line}};display:flex;align-items:center;justify-content:center;font:700 18px/1 'Bricolage Grotesque';color:#1E1B14">{{t.n}}</div>
+<div style="font:700 11px/14px 'Plus Jakarta Sans';color:{{t.labelC}}">{{t.label}}</div>
+<div style="font:500 10px/13px 'Plus Jakarta Sans';color:#776E60">{{t.seats}}</div>
+</div>
+</sc-for>
+</div>
+</div>
+
+<div style="width:378px;flex:0 0 378px;background:#FFFFFF;border:1px solid #EFE7DA;border-radius:20px;box-shadow:0 6px 18px rgba(110,71,0,.07);padding:18px 20px;display:flex;flex-direction:column">
+<div style="display:flex;align-items:flex-start;gap:10px">
+<div style="flex:1">
+<div style="font:700 22px/28px 'Bricolage Grotesque'">Table 12</div>
+<div style="font:500 12px/17px 'Plus Jakarta Sans';color:#776E60">Session #S-318 · main hall · 6 covers</div>
+</div>
+<div style="display:flex;align-items:center;gap:6px;height:30px;padding:0 10px;border-radius:10px;background:#FFF0CC">
+<span style="font-family:'Material Symbols Rounded';font-size:16px;color:#8A5A00">payments</span>
+<span style="font:700 11px/16px 'Plus Jakarta Sans';color:#8A5A00">Awaiting payment</span>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:7px;margin-top:12px">
+<sc-for list="{{ tableFacts }}" as="f" hint-placeholder-count="3">
+<div style="display:flex;align-items:center;gap:10px;height:36px;flex:0 0 36px;padding:0 12px;border-radius:12px;background:#FAF8F4">
+<span style="font-family:'Material Symbols Rounded';font-size:19px;color:#8A5A00">{{f.icon}}</span>
+<div style="flex:1;font:500 12px/17px 'Plus Jakarta Sans';color:#565044">{{f.k}}</div>
+<div style="font:700 13px/18px 'Plus Jakarta Sans'">{{f.v}}</div>
+</div>
+</sc-for>
+</div>
+<div style="flex:1"></div>
+<div style="border-radius:16px;background:#FFF8E8;border:1px solid #FFE49A;padding:14px 16px;display:flex;align-items:flex-end;justify-content:space-between">
+<div>
+<div style="font:700 13px/18px 'Plus Jakarta Sans'">Remaining balance</div>
+<div style="font:500 11px/15px 'Plus Jakarta Sans';color:#565044">DA 3,000 paid in cash · 2 orders</div>
+</div>
+<div style="font:700 30px/32px 'Bricolage Grotesque';color:#8A5A00">DA 3,461</div>
+</div>
+<button type="button" style="height:50px;flex:0 0 50px;margin-top:12px;border:none;border-radius:15px;background:#FFB300;color:#241A00;font:700 15px/20px 'Plus Jakarta Sans';display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;box-shadow:0 8px 18px rgba(224,154,0,.32)">
+<span style="font-family:'Material Symbols Rounded';font-size:21px">payments</span>Record payment</button>
+<div style="display:flex;gap:10px;margin-top:10px">
+<button type="button" style="flex:1;height:42px;border:1px solid #E9E0D2;border-radius:13px;background:#FFF;color:#565044;font:600 13px/18px 'Plus Jakarta Sans';cursor:pointer">Session orders</button>
+<button type="button" style="flex:1;height:42px;border:1px solid #E9E0D2;border-radius:13px;background:#FFF;color:#565044;font:600 13px/18px 'Plus Jakarta Sans';cursor:pointer">Print bill</button>
+</div>
+</div>
+</div>
+
+<div style="flex:0 0 236px;display:flex;gap:18px">
+<div style="flex:1;min-width:0;background:#FFFFFF;border:1px solid #EFE7DA;border-radius:20px;box-shadow:0 6px 18px rgba(110,71,0,.07);padding:16px 18px;display:flex;flex-direction:column">
+<div style="display:flex;align-items:center">
+<div style="font:700 18px/24px 'Bricolage Grotesque'">Popular tonight</div>
+<div style="flex:1"></div>
+<div style="font:700 12px/16px 'Plus Jakarta Sans';color:#8A5A00">Full menu</div>
+</div>
+<div style="flex:1;min-height:0;display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:13px">
+<sc-for list="{{ popular }}" as="p" hint-placeholder-count="4">
+<div style="border-radius:16px;background:#FAF8F4;padding:8px;display:flex;flex-direction:column;gap:8px">
+<div style="flex:1;min-height:0;position:relative;border-radius:12px;overflow:hidden;background:#F3EBDD">
+<sc-if value="{{ photos }}" hint-placeholder-val="{{ true }}">
+<image-slot id="v2-pop-{{p.id}}" shape="rect" placeholder="{{p.slot}}"></image-slot>
+</sc-if>
+<sc-if value="{{ noPhotos }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px">
+<span style="font-family:'Material Symbols Rounded';font-size:24px;color:#8A7F6E">restaurant</span>
+<div style="font:600 10px/14px 'Plus Jakarta Sans';color:#776E60">{{p.cat}}</div>
+</div>
+</sc-if>
+<div style="position:absolute;left:7px;top:7px;height:22px;padding:0 8px;border-radius:8px;background:rgba(255,255,255,.92);display:flex;align-items:center;gap:4px;pointer-events:none">
+<span style="font-family:'Material Symbols Rounded';font-size:14px;color:#E0600F">star</span>
+<span style="font:700 11px/14px 'Plus Jakarta Sans';color:#1E1B14">{{p.rating}}</span>
+</div>
+</div>
+<div style="padding:0 3px 3px">
+<div style="font:700 13px/17px 'Plus Jakarta Sans'">{{p.name}}</div>
+<div style="display:flex;align-items:baseline;gap:7px;margin-top:2px">
+<div style="font:700 14px/18px 'Bricolage Grotesque';color:#8A5A00">{{p.price}}</div>
+<div style="font:500 11px/15px 'Plus Jakarta Sans';color:#776E60">{{p.orders}}</div>
+</div>
+</div>
+</div>
+</sc-for>
+</div>
+</div>
+
+<div style="width:452px;flex:0 0 452px;background:#FFFFFF;border:1px solid #EFE7DA;border-radius:20px;box-shadow:0 6px 18px rgba(110,71,0,.07);padding:16px 18px;display:flex;flex-direction:column">
+<div style="display:flex;align-items:center">
+<div style="font:700 18px/24px 'Bricolage Grotesque'">Service pace</div>
+<div style="font:500 11px/16px 'Plus Jakarta Sans';color:#776E60;margin-left:8px">covers per hour</div>
+<div style="flex:1"></div>
+<div style="display:flex;align-items:baseline;gap:6px">
+<div style="font:700 22px/26px 'Bricolage Grotesque';color:#8A5A00">DA 28,640</div>
+<div style="display:flex;align-items:center;gap:3px;padding:2px 7px;border-radius:8px;background:#E4F6EA">
+<span style="font-family:'Material Symbols Rounded';font-size:14px;color:#1E7A47">trending_up</span>
+<span style="font:700 11px/15px 'Plus Jakarta Sans';color:#1E7A47">12%</span>
+</div>
+</div>
+</div>
+<div style="flex:1;min-height:0;display:flex;align-items:flex-end;gap:9px;margin-top:14px">
+<sc-for list="{{ paceBars }}" as="b" hint-placeholder-count="9">
+<div style="flex:1;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:6px">
+<div style="width:100%;height:{{b.h}};border-radius:8px;background:{{b.c}}"></div>
+<div style="font:600 10px/13px 'Plus Jakarta Sans';color:#776E60">{{b.label}}</div>
+</div>
+</sc-for>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<div id="2b" style="display:flex;flex-direction:column;gap:12px;scroll-margin:40px">
+<div style="display:flex;align-items:baseline;gap:10px">
+<span style="font:700 12px/1 'Plus Jakarta Sans';letter-spacing:.06em;color:#241A00;background:#FFB300;padding:6px 9px;border-radius:7px">2b</span>
+<span style="font:700 16px/1.2 'Bricolage Grotesque'">Order entry</span>
+<span style="font:400 13px/1.2 'Plus Jakarta Sans';color:#655C50">1440 × 900 · category tiles, photo grid, persistent ticket</span>
+</div>
+<div style="width:1440px;height:900px;background:#FFC01F;border-radius:26px;padding:18px;display:flex;overflow:hidden">
+<div style="flex:1;min-width:0;display:flex;background:#FAF8F4;border-radius:20px;overflow:hidden">
+
+<div style="width:92px;flex:0 0 92px;background:#FFFFFF;border-right:1px solid #EFE7DA;display:flex;flex-direction:column;align-items:center;padding:18px 0">
+<div style="width:40px;height:40px;border-radius:13px;background:#FFC01F;display:flex;align-items:center;justify-content:center">
+<span style="font-family:'Material Symbols Rounded';font-size:23px;color:#241A00">ramen_dining</span>
+</div>
+<div style="font:700 13px/1 'Bricolage Grotesque';letter-spacing:.14em;color:#1E1B14;margin-top:9px">MISE</div>
+<div style="display:flex;flex-direction:column;align-items:center;width:100%;margin-top:20px">
+<sc-for list="{{ navOrders }}" as="i" hint-placeholder-count="10">
+<div style="position:relative;width:68px;height:50px;border-radius:15px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:{{i.bg}};margin-top:{{i.mt}}">
+<span style="font-family:'Material Symbols Rounded';font-size:21px;color:{{i.fg}}">{{i.icon}}</span>
+<div style="font:600 9px/11px 'Plus Jakarta Sans';letter-spacing:.02em;color:{{i.fg}}">{{i.label}}</div>
+<sc-if value="{{ i.badge }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;top:3px;right:9px;min-width:16px;height:16px;border-radius:8px;background:#C22C23;color:#FFF;font:700 10px/16px 'Plus Jakarta Sans';text-align:center">{{i.badge}}</div>
+</sc-if>
+</div>
+</sc-for>
+</div>
+<div style="flex:1"></div>
+<div style="width:42px;height:42px;border-radius:14px;background:#FFF0CC;display:flex;align-items:center;justify-content:center;font:700 14px/1 'Plus Jakarta Sans';color:#8A5A00">IK</div>
+</div>
+
+<div style="flex:1;min-width:0;display:flex;flex-direction:column">
+<div style="height:84px;flex:0 0 84px;background:#FFFFFF;border-bottom:1px solid #EFE7DA;display:flex;align-items:center;padding:0 22px;gap:16px">
+<div style="min-width:190px">
+<div style="font:700 26px/32px 'Bricolage Grotesque';letter-spacing:-.015em">New order</div>
+<div style="font:500 12px/16px 'Plus Jakarta Sans';color:#776E60">Dine-in · table 12 · 6 covers</div>
+</div>
+<div style="display:flex;align-items:center;gap:8px;height:42px;padding:0 12px;border-radius:12px;background:#FAF8F4;border:1px solid #EFE7DA">
+<span style="font-family:'Material Symbols Rounded';font-size:19px;color:#8A5A00">storefront</span>
+<div style="font:700 13px/16px 'Plus Jakarta Sans'">Hydra Branch</div>
+<span style="font-family:'Material Symbols Rounded';font-size:19px;color:#776E60">expand_more</span>
+</div>
+<div style="display:flex;align-items:center;gap:7px;height:42px;padding:0 13px;border-radius:12px;background:#E4F6EA">
+<div style="width:8px;height:8px;border-radius:5px;background:#2F9E5F"></div>
+<div style="font:700 13px/16px 'Plus Jakarta Sans';color:#1E7A47">Dinner service live</div>
+</div>
+<div style="flex:1"></div>
+<div style="display:flex;align-items:center;gap:9px;width:320px;height:44px;border-radius:13px;background:#FAF8F4;border:1px solid #EFE7DA;padding:0 13px">
+<span style="font-family:'Material Symbols Rounded';font-size:20px;color:#776E60">search</span>
+<div style="flex:1;font:500 13px/18px 'Plus Jakarta Sans';color:#776E60">Search dish, code or ingredient</div>
+<div style="width:22px;height:22px;border-radius:7px;background:#FFFFFF;border:1px solid #E9E0D2;font:700 11px/20px 'Plus Jakarta Sans';color:#776E60;text-align:center">/</div>
+</div>
+<div style="display:flex;align-items:center;gap:7px;height:44px;padding:0 13px;border-radius:13px;background:#FAF8F4;border:1px solid #EFE7DA">
+<span style="font-family:'Material Symbols Rounded';font-size:19px;color:#565044">filter_list</span>
+<div style="font:600 13px/18px 'Plus Jakarta Sans';color:#565044">Available only</div>
+</div>
+<div style="display:flex;align-items:center;gap:9px;height:44px;padding:0 11px 0 5px;border-radius:14px;background:#FAF8F4;border:1px solid #EFE7DA">
+<div style="width:34px;height:34px;border-radius:11px;background:#FFF0CC;font:700 12px/34px 'Plus Jakarta Sans';color:#8A5A00;text-align:center">IK</div>
+<div style="font:700 13px/16px 'Plus Jakarta Sans'">Imane K.</div>
+</div>
+</div>
+
+<div style="flex:1;min-height:0;padding:20px 22px 22px;display:flex;gap:18px">
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:16px">
+<div style="flex:0 0 88px;display:flex;gap:12px">
+<sc-for list="{{ catTiles }}" as="c" hint-placeholder-count="6">
+<div style="flex:1;border-radius:18px;background:{{c.bg}};border:1px solid {{c.line}};display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px">
+<span style="font-family:'Material Symbols Rounded';font-size:24px;color:{{c.fg}}">{{c.icon}}</span>
+<div style="font:700 12px/16px 'Plus Jakarta Sans';color:{{c.fg}}">{{c.label}}</div>
+<div style="font:500 10px/13px 'Plus Jakarta Sans';color:{{c.subFg}}">{{c.count}}</div>
+</div>
+</sc-for>
+</div>
+<div style="flex:1;min-height:0;display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(2,1fr);gap:16px">
+<sc-for list="{{ dishes }}" as="d" hint-placeholder-count="8">
+<div style="background:#FFFFFF;border:1px solid #EFE7DA;border-radius:20px;box-shadow:0 6px 18px rgba(110,71,0,.07);padding:10px;display:flex;flex-direction:column;gap:10px;opacity:{{d.op}}">
+<div style="flex:1;min-height:0;position:relative;border-radius:14px;overflow:hidden;background:#F3EBDD">
+<sc-if value="{{ photos }}" hint-placeholder-val="{{ true }}">
+<image-slot id="v2-dish-{{d.id}}" shape="rect" placeholder="{{d.slot}}"></image-slot>
+</sc-if>
+<sc-if value="{{ noPhotos }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px">
+<span style="font-family:'Material Symbols Rounded';font-size:26px;color:#8A7F6E">restaurant</span>
+<div style="font:600 10px/14px 'Plus Jakarta Sans';color:#776E60">{{d.cat}}</div>
+</div>
+</sc-if>
+<div style="position:absolute;left:8px;top:8px;display:flex;gap:6px;pointer-events:none">
+<div style="height:22px;padding:0 8px;border-radius:8px;background:rgba(255,255,255,.92);font:700 11px/22px 'Plus Jakarta Sans';color:#1E1B14">{{d.tag}}</div>
+<sc-if value="{{ d.state }}" hint-placeholder-val="{{ false }}">
+<div style="height:22px;padding:0 8px;border-radius:8px;background:{{d.stateBg}};font:700 11px/22px 'Plus Jakarta Sans';color:{{d.stateFg}}">{{d.state}}</div>
+</sc-if>
+</div>
+</div>
+<div style="padding:0 4px 2px">
+<div style="font:700 14px/19px 'Plus Jakarta Sans'">{{d.name}}</div>
+<div style="font:500 11px/15px 'Plus Jakarta Sans';color:#776E60">{{d.sub}}</div>
+<div style="display:flex;align-items:center;gap:8px;margin-top:8px">
+<div style="flex:1 1 auto;min-width:max-content;white-space:nowrap;font:700 17px/22px 'Bricolage Grotesque';color:#8A5A00">{{d.price}}</div>
+<div style="flex:0 1 auto;height:34px;padding:0 11px;border-radius:11px;background:{{d.btnBg}};display:flex;align-items:center;gap:5px;white-space:nowrap">
+<span style="font-family:'Material Symbols Rounded';font-size:18px;color:{{d.btnFg}}">{{d.btnIcon}}</span>
+<span style="font:700 12px/16px 'Plus Jakarta Sans';color:{{d.btnFg}}">{{d.btnLabel}}</span>
+</div>
+</div>
+</div>
+</div>
+</sc-for>
+</div>
+</div>
+
+<div style="width:400px;flex:0 0 400px;background:#FFFFFF;border:1px solid #EFE7DA;border-radius:20px;box-shadow:0 6px 18px rgba(110,71,0,.07);display:flex;flex-direction:column;overflow:hidden">
+<div style="padding:18px 20px 15px;border-bottom:1px solid #EFE7DA">
+<div style="display:flex;align-items:center;gap:10px">
+<div style="font:700 20px/26px 'Bricolage Grotesque'">Ticket</div>
+<div style="flex:1"></div>
+<div style="font:700 12px/16px 'Plus Jakarta Sans';color:#8A5A00">Hold draft</div>
+</div>
+<div style="display:flex;gap:8px;margin-top:12px">
+<div style="height:34px;padding:0 11px;border-radius:11px;background:#FFB300;display:flex;align-items:center;gap:6px">
+<span style="font-family:'Material Symbols Rounded';font-size:17px;color:#241A00">restaurant</span>
+<span style="font:700 12px/16px 'Plus Jakarta Sans';color:#241A00">Dine-in</span>
+</div>
+<div style="height:34px;padding:0 11px;border-radius:11px;background:#FAF8F4;border:1px solid #EFE7DA;display:flex;align-items:center;gap:6px">
+<span style="font:700 12px/16px 'Plus Jakarta Sans'">Table 12</span>
+<span style="font-family:'Material Symbols Rounded';font-size:17px;color:#776E60">expand_more</span>
+</div>
+<div style="height:34px;padding:0 11px;border-radius:11px;background:#FAF8F4;border:1px solid #EFE7DA;display:flex;align-items:center;gap:6px">
+<span style="font-family:'Material Symbols Rounded';font-size:17px;color:#565044">group</span>
+<span style="font:700 12px/16px 'Plus Jakarta Sans'">6 covers</span>
+</div>
+</div>
+</div>
+<div style="flex:1;min-height:0;padding:14px 20px;display:flex;flex-direction:column;gap:10px">
+<sc-for list="{{ orderLines }}" as="l" hint-placeholder-count="3">
+<div style="border-radius:16px;background:#FAF8F4;padding:12px;display:flex;gap:11px">
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
+<div style="font:700 14px/19px 'Plus Jakarta Sans'">{{l.name}}</div>
+<div style="font:500 11px/15px 'Plus Jakarta Sans';color:#565044">{{l.opts}}</div>
+<sc-if value="{{ l.flag }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;align-self:flex-start;align-items:center;gap:4px;margin-top:4px;height:22px;padding:0 8px;border-radius:8px;background:#FDE8E6">
+<span style="font-family:'Material Symbols Rounded';font-size:14px;color:#E0392F">warning</span>
+<span style="font:700 11px/22px 'Plus Jakarta Sans';color:#C22C23">{{l.flag}}</span>
+</div>
+</sc-if>
+<div style="display:flex;align-items:center;gap:12px;margin-top:5px">
+<div style="font:700 11px/15px 'Plus Jakarta Sans';color:#8A5A00">Customize</div>
+<div style="font:700 11px/15px 'Plus Jakarta Sans';color:#776E60">Remove</div>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;align-items:flex-end;gap:9px">
+<div style="font:700 15px/19px 'Bricolage Grotesque'">{{l.price}}</div>
+<div style="display:flex;align-items:center;gap:6px;height:32px;padding:0 6px;border-radius:11px;background:#FFFFFF;border:1px solid #E9E0D2">
+<span style="font-family:'Material Symbols Rounded';font-size:17px;color:#565044">remove</span>
+<div style="font:700 13px/17px 'Plus Jakarta Sans';min-width:12px;text-align:center">{{l.qty}}</div>
+<span style="font-family:'Material Symbols Rounded';font-size:17px;color:#8A5A00">add</span>
+</div>
+</div>
+</div>
+</sc-for>
+<div style="height:44px;flex:0 0 44px;border:1px dashed #E2D3B8;border-radius:14px;display:flex;align-items:center;justify-content:center;gap:7px">
+<span style="font-family:'Material Symbols Rounded';font-size:18px;color:#776E60">edit_note</span>
+<span style="font:600 12px/16px 'Plus Jakarta Sans';color:#776E60">Add a note for the kitchen</span>
+</div>
+</div>
+<div style="border-top:1px solid #EFE7DA;padding:16px 20px 18px">
+<div style="display:flex;flex-direction:column;gap:7px">
+<div style="display:flex;justify-content:space-between;font:500 12px/17px 'Plus Jakarta Sans';color:#565044"><div>Subtotal · 4 items</div><div style="font-weight:700;color:#1E1B14">DA 4,390</div></div>
+<div style="display:flex;justify-content:space-between;font:500 12px/17px 'Plus Jakarta Sans';color:#565044"><div>TVA 19%</div><div style="font-weight:700;color:#1E1B14">DA 834</div></div>
+</div>
+<div style="height:1px;flex:0 0 1px;background:#EFE7DA;margin:13px 0"></div>
+<div style="display:flex;align-items:flex-end;justify-content:space-between">
+<div style="font:700 14px/19px 'Plus Jakarta Sans'">Order total</div>
+<div style="font:700 32px/34px 'Bricolage Grotesque'">DA 5,224</div>
+</div>
+<div style="font:500 11px/15px 'Plus Jakarta Sans';color:#776E60;margin-top:5px">Priced from menu data at submission — illustrative here.</div>
+<button type="button" style="width:100%;height:52px;flex:0 0 52px;margin-top:14px;border:none;border-radius:15px;background:#FFB300;color:#241A00;font:700 15px/20px 'Plus Jakarta Sans';display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;box-shadow:0 8px 18px rgba(224,154,0,.32)">
+<span style="font-family:'Material Symbols Rounded';font-size:22px">outdoor_grill</span>Send to kitchen</button>
+<div style="display:flex;gap:10px;margin-top:10px">
+<button type="button" style="flex:1;height:42px;border:1px solid #E9E0D2;border-radius:13px;background:#FFF;color:#565044;font:600 13px/18px 'Plus Jakarta Sans';cursor:pointer">Save draft</button>
+<button type="button" style="flex:1;height:42px;border:1px solid #E9E0D2;border-radius:13px;background:#FFF;color:#565044;font:600 13px/18px 'Plus Jakarta Sans';cursor:pointer">Clear</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<div id="2c" style="display:flex;flex-direction:column;gap:12px;scroll-margin:40px">
+<div style="display:flex;align-items:baseline;gap:10px">
+<span style="font:700 12px/1 'Plus Jakarta Sans';letter-spacing:.06em;color:#241A00;background:#FFB300;padding:6px 9px;border-radius:7px">2c</span>
+<span style="font:700 16px/1.2 'Bricolage Grotesque'">Active orders</span>
+<span style="font:400 13px/1.2 'Plus Jakarta Sans';color:#655C50">1440 × 900 · list with attached inspector</span>
+</div>
+<div style="width:1440px;height:900px;background:#FFC01F;border-radius:26px;padding:18px;display:flex;overflow:hidden">
+<div style="flex:1;min-width:0;display:flex;background:#FAF8F4;border-radius:20px;overflow:hidden">
+
+<div style="width:92px;flex:0 0 92px;background:#FFFFFF;border-right:1px solid #EFE7DA;display:flex;flex-direction:column;align-items:center;padding:18px 0">
+<div style="width:40px;height:40px;border-radius:13px;background:#FFC01F;display:flex;align-items:center;justify-content:center">
+<span style="font-family:'Material Symbols Rounded';font-size:23px;color:#241A00">ramen_dining</span>
+</div>
+<div style="font:700 13px/1 'Bricolage Grotesque';letter-spacing:.14em;color:#1E1B14;margin-top:9px">MISE</div>
+<div style="display:flex;flex-direction:column;align-items:center;width:100%;margin-top:20px">
+<sc-for list="{{ navOrders }}" as="i" hint-placeholder-count="10">
+<div style="position:relative;width:68px;height:50px;border-radius:15px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:{{i.bg}};margin-top:{{i.mt}}">
+<span style="font-family:'Material Symbols Rounded';font-size:21px;color:{{i.fg}}">{{i.icon}}</span>
+<div style="font:600 9px/11px 'Plus Jakarta Sans';letter-spacing:.02em;color:{{i.fg}}">{{i.label}}</div>
+<sc-if value="{{ i.badge }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;top:3px;right:9px;min-width:16px;height:16px;border-radius:8px;background:#C22C23;color:#FFF;font:700 10px/16px 'Plus Jakarta Sans';text-align:center">{{i.badge}}</div>
+</sc-if>
+</div>
+</sc-for>
+</div>
+<div style="flex:1"></div>
+<div style="width:42px;height:42px;border-radius:14px;background:#FFF0CC;display:flex;align-items:center;justify-content:center;font:700 14px/1 'Plus Jakarta Sans';color:#8A5A00">IK</div>
+</div>
+
+<div style="flex:1;min-width:0;display:flex;flex-direction:column">
+<div style="height:84px;flex:0 0 84px;background:#FFFFFF;border-bottom:1px solid #EFE7DA;display:flex;align-items:center;padding:0 22px;gap:16px">
+<div style="min-width:180px">
+<div style="font:700 26px/32px 'Bricolage Grotesque';letter-spacing:-.015em">Orders</div>
+<div style="font:500 12px/16px 'Plus Jakarta Sans';color:#776E60">24 open · dinner service</div>
+</div>
+<div style="display:flex;align-items:center;gap:8px;height:42px;padding:0 12px;border-radius:12px;background:#FAF8F4;border:1px solid #EFE7DA">
+<span style="font-family:'Material Symbols Rounded';font-size:19px;color:#8A5A00">storefront</span>
+<div style="font:700 13px/16px 'Plus Jakarta Sans'">Hydra Branch</div>
+<span style="font-family:'Material Symbols Rounded';font-size:19px;color:#776E60">expand_more</span>
+</div>
+<div style="flex:1"></div>
+<div style="display:flex;align-items:center;gap:9px;width:262px;height:44px;border-radius:13px;background:#FAF8F4;border:1px solid #EFE7DA;padding:0 13px">
+<span style="font-family:'Material Symbols Rounded';font-size:20px;color:#776E60">search</span>
+<div style="flex:1;font:500 13px/18px 'Plus Jakarta Sans';color:#776E60">Order reference or table</div>
+</div>
+<div style="display:flex;align-items:center;gap:7px;height:34px;padding:0 11px;border-radius:11px;background:#E4F6EA">
+<span style="font-family:'Material Symbols Rounded';font-size:18px;color:#1E7A47">cloud_done</span>
+<div style="font:600 12px/16px 'Plus Jakarta Sans';color:#1E7A47">Updated 12s ago</div>
+</div>
+<div style="position:relative;width:44px;height:44px;border-radius:13px;background:#FAF8F4;border:1px solid #EFE7DA;display:flex;align-items:center;justify-content:center">
+<span style="font-family:'Material Symbols Rounded';font-size:21px;color:#565044">notifications</span>
+<div style="position:absolute;top:-3px;right:-3px;min-width:18px;height:18px;border-radius:9px;background:#C22C23;color:#FFF;font:700 10px/18px 'Plus Jakarta Sans';text-align:center;border:2px solid #FFF">3</div>
+</div>
+<div style="display:flex;align-items:center;gap:9px;height:44px;padding:0 11px 0 5px;border-radius:14px;background:#FAF8F4;border:1px solid #EFE7DA">
+<div style="width:34px;height:34px;border-radius:11px;background:#FFF0CC;font:700 12px/34px 'Plus Jakarta Sans';color:#8A5A00;text-align:center">IK</div>
+<div style="font:700 13px/16px 'Plus Jakarta Sans'">Imane K.</div>
+</div>
+</div>
+
+<div style="flex:1;min-height:0;padding:20px 22px 22px;display:flex;gap:18px">
+
+<div style="flex:1;min-width:0;background:#FFFFFF;border:1px solid #EFE7DA;border-radius:20px;box-shadow:0 6px 18px rgba(110,71,0,.07);display:flex;flex-direction:column;overflow:hidden">
+<div style="padding:16px 18px 14px;display:flex;align-items:center;gap:9px">
+<sc-for list="{{ orderFilters }}" as="f" hint-placeholder-count="5">
+<div style="height:38px;padding:0 14px;border-radius:13px;background:{{f.bg}};display:flex;align-items:center;gap:7px">
+<div style="font:700 13px/18px 'Plus Jakarta Sans';color:{{f.fg}}">{{f.label}}</div>
+<div style="min-width:20px;height:20px;padding:0 6px;border-radius:7px;background:{{f.pillBg}};font:700 11px/20px 'Plus Jakarta Sans';color:{{f.pillFg}};text-align:center">{{f.n}}</div>
+</div>
+</sc-for>
+<div style="flex:1"></div>
+<div style="height:38px;padding:0 13px;border-radius:13px;background:#FAF8F4;border:1px solid #EFE7DA;display:flex;align-items:center;gap:7px">
+<span style="font-family:'Material Symbols Rounded';font-size:18px;color:#565044">swap_vert</span>
+<div style="font:600 13px/18px 'Plus Jakarta Sans';color:#565044">Oldest first</div>
+</div>
+</div>
+<div style="display:flex;align-items:center;height:36px;padding:0 18px;background:#FAF8F4;font:700 10px/14px 'Plus Jakarta Sans';color:#776E60;letter-spacing:.08em">
+<div style="width:92px">ORDER</div>
+<div style="width:64px">TABLE</div>
+<div style="width:140px">STATUS</div>
+<div style="width:88px">ELAPSED</div>
+<div style="flex:1">ITEMS</div>
+<div style="width:96px;text-align:right">TOTAL</div>
+<div style="width:112px;text-align:right">PAYMENT</div>
+<div style="width:26px"></div>
+</div>
+<div style="flex:1;min-height:0;display:flex;flex-direction:column;padding:8px 10px">
+<sc-for list="{{ orders }}" as="o" hint-placeholder-count="7">
+<div style="display:flex;align-items:center;height:64px;flex:0 0 64px;padding:0 8px;border-radius:14px;background:{{o.rowBg}};border:1px solid {{o.rowLine}}">
+<div style="width:92px"><div style="font:700 14px/19px 'Plus Jakarta Sans'">{{o.ref}}</div><div style="font:500 11px/15px 'Plus Jakarta Sans';color:#776E60">{{o.time}}</div></div>
+<div style="width:64px;font:700 14px/19px 'Bricolage Grotesque'">{{o.table}}</div>
+<div style="width:140px">
+<div style="display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 9px;border-radius:9px;background:{{o.bg}}">
+<span style="font-family:'Material Symbols Rounded';font-size:16px;color:{{o.c}}">{{o.icon}}</span>
+<span style="font:700 11px/26px 'Plus Jakarta Sans';color:{{o.c}}">{{o.status}}</span>
+</div>
+</div>
+<div style="width:88px"><div style="font:700 14px/19px 'Plus Jakarta Sans';color:{{o.elC}}">{{o.elapsed}}</div><div style="font:500 10px/14px 'Plus Jakarta Sans';color:#776E60">{{o.elNote}}</div></div>
+<div style="flex:1;min-width:0;padding-right:12px"><div style="font:500 12px/17px 'Plus Jakarta Sans';color:#565044;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{o.items}}</div><div style="font:700 11px/15px 'Plus Jakarta Sans';color:{{o.noteC}}">{{o.note}}</div></div>
+<div style="width:96px;text-align:right;font:700 15px/20px 'Bricolage Grotesque'">{{o.total}}</div>
+<div style="width:112px;display:flex;justify-content:flex-end">
+<div style="display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 9px;border-radius:9px;background:{{o.payBg}}">
+<div style="width:7px;height:7px;border-radius:4px;background:{{o.payC}}"></div>
+<span style="font:700 11px/26px 'Plus Jakarta Sans';color:{{o.payC}}">{{o.pay}}</span>
+</div>
+</div>
+<div style="width:26px;display:flex;justify-content:flex-end"><span style="font-family:'Material Symbols Rounded';font-size:20px;color:#8A7F6E">chevron_right</span></div>
+</div>
+</sc-for>
+<div style="flex:1"></div>
+<div style="height:40px;display:flex;align-items:center;padding:0 8px;font:500 12px/16px 'Plus Jakarta Sans';color:#776E60">Showing 7 of 24 · Hydra branch, dinner service</div>
+</div>
+</div>
+
+<div style="width:470px;flex:0 0 470px;background:#FFFFFF;border:1px solid #EFE7DA;border-radius:20px;box-shadow:0 6px 18px rgba(110,71,0,.07);display:flex;flex-direction:column;overflow:hidden">
+<div style="padding:18px 20px 15px;border-bottom:1px solid #EFE7DA">
+<div style="display:flex;align-items:flex-start;gap:10px">
+<div style="flex:1">
+<div style="display:flex;align-items:center;gap:9px">
+<div style="font:700 24px/28px 'Bricolage Grotesque'">#A-1042</div>
+<div style="display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 9px;border-radius:9px;background:#FDE8E6">
+<span style="font-family:'Material Symbols Rounded';font-size:16px;color:#E0392F">schedule</span>
+<span style="font:700 11px/26px 'Plus Jakarta Sans';color:#C22C23">Delayed · 24 min</span>
+</div>
+</div>
+<div style="font:500 12px/17px 'Plus Jakarta Sans';color:#776E60;margin-top:2px">Table 7 · 4 covers · dine-in · opened 20:14 by Imane K.</div>
+</div>
+<span style="font-family:'Material Symbols Rounded';font-size:20px;color:#8A7F6E">close</span>
+</div>
+<div style="display:flex;align-items:center;margin-top:14px">
+<sc-for list="{{ stepper }}" as="s" hint-placeholder-count="5">
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;position:relative">
+<div style="position:absolute;top:8px;left:0;right:0;height:3px;border-radius:2px;background:{{s.bar}}"></div>
+<div style="position:relative;width:19px;height:19px;border-radius:10px;background:{{s.dotBg}};border:3px solid {{s.dotLine}}"></div>
+<div style="font:700 10px/14px 'Plus Jakarta Sans';color:{{s.fg}}">{{s.label}}</div>
+</div>
+</sc-for>
+</div>
+</div>
+<div style="flex:1;min-height:0;padding:14px 20px;display:flex;flex-direction:column;gap:10px">
+<div style="border-radius:14px;background:#FDE8E6;padding:11px 13px;display:flex;align-items:center;gap:10px">
+<span style="font-family:'Material Symbols Rounded';font-size:21px;color:#E0392F">emergency_home</span>
+<div style="font:500 12px/17px 'Plus Jakarta Sans';color:#9E2C24"><strong style="font-weight:800;color:#C22C23">Allergy — peanut, severe.</strong> Guest 2 · no satay sauce, no shared fry oil.</div>
+</div>
+<div style="border-radius:14px;background:#FFE9DC;padding:11px 13px;display:flex;align-items:center;gap:10px">
+<span style="font-family:'Material Symbols Rounded';font-size:21px;color:#A03C00">published_with_changes</span>
+<div style="font:500 12px/17px 'Plus Jakarta Sans';color:#A03C00"><strong style="font-weight:800">Changed after kitchen receipt.</strong> 20:26 · Imane K. · −1 Bourek, +1 Salade mechouia.</div>
+</div>
+<div style="font:700 10px/14px 'Plus Jakarta Sans';color:#776E60;letter-spacing:.08em;margin-top:2px">ITEMS · 4</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<sc-for list="{{ inspectorItems }}" as="it" hint-placeholder-count="4">
+<div style="display:flex;align-items:center;gap:11px;height:52px;flex:0 0 52px;padding:0 12px;border-radius:14px;background:#FAF8F4">
+<div style="width:28px;height:28px;border-radius:9px;background:#FFFFFF;font:700 13px/28px 'Plus Jakarta Sans';color:#8A5A00;text-align:center">{{it.qty}}</div>
+<div style="flex:1;min-width:0"><div style="font:700 13px/18px 'Plus Jakarta Sans'">{{it.name}}</div><div style="font:500 11px/15px 'Plus Jakarta Sans';color:#565044">{{it.opts}}</div></div>
+<div style="display:inline-flex;align-items:center;gap:5px;height:24px;padding:0 8px;border-radius:8px;background:{{it.bg}}">
+<div style="width:7px;height:7px;border-radius:4px;background:{{it.c}}"></div>
+<span style="font:700 11px/24px 'Plus Jakarta Sans';color:{{it.c}}">{{it.state}}</span>
+</div>
+<div style="width:72px;text-align:right;font:700 13px/18px 'Plus Jakarta Sans'">{{it.price}}</div>
+</div>
+</sc-for>
+</div>
+</div>
+<div style="border-top:1px solid #EFE7DA;padding:14px 20px 16px">
+<div style="display:flex;align-items:flex-end;justify-content:space-between">
+<div><div style="font:500 12px/17px 'Plus Jakarta Sans';color:#565044">Order total · TVA included</div>
+<div style="display:flex;align-items:center;gap:6px;margin-top:4px">
+<div style="width:7px;height:7px;border-radius:4px;background:#E0600F"></div>
+<div style="font:700 11px/15px 'Plus Jakarta Sans';color:#A03C00">{{ payNote }}</div>
+</div></div>
+<div style="font:700 30px/32px 'Bricolage Grotesque'">DA 4,820</div>
+</div>
+<button type="button" style="width:100%;height:50px;flex:0 0 50px;margin-top:12px;border:none;border-radius:15px;background:#FFB300;color:#241A00;font:700 15px/20px 'Plus Jakarta Sans';display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;box-shadow:0 8px 18px rgba(224,154,0,.32)">
+<span style="font-family:'Material Symbols Rounded';font-size:22px">room_service</span>Mark ready to serve</button>
+<div style="display:flex;gap:9px;margin-top:10px">
+<button type="button" style="flex:1;height:40px;border:1px solid #E9E0D2;border-radius:13px;background:#FFF;color:#565044;font:600 12px/17px 'Plus Jakarta Sans';cursor:pointer">Print ticket</button>
+<button type="button" style="flex:1;height:40px;border:1px solid #E9E0D2;border-radius:13px;background:#FFF;color:#565044;font:600 12px/17px 'Plus Jakarta Sans';cursor:pointer">Activity</button>
+<button type="button" style="flex:1;height:40px;border:1px solid #F7CFCB;border-radius:13px;background:#FFF;color:#C22C23;font:600 12px/17px 'Plus Jakarta Sans';cursor:pointer">Cancel order</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<div id="2d" style="display:flex;flex-direction:column;gap:12px;scroll-margin:40px">
+<div style="display:flex;align-items:baseline;gap:10px">
+<span style="font:700 12px/1 'Plus Jakarta Sans';letter-spacing:.06em;color:#241A00;background:#FFB300;padding:6px 9px;border-radius:7px">2d</span>
+<span style="font:700 16px/1.2 'Bricolage Grotesque'">Kitchen</span>
+<span style="font:400 13px/1.2 'Plus Jakarta Sans';color:#655C50">1440 × 900 · four lanes, readable at distance</span>
+</div>
+<div style="width:1440px;height:900px;background:#FFC01F;border-radius:26px;padding:18px;display:flex;overflow:hidden">
+<div style="flex:1;min-width:0;display:flex;background:#FAF8F4;border-radius:20px;overflow:hidden">
+
+<div style="width:92px;flex:0 0 92px;background:#FFFFFF;border-right:1px solid #EFE7DA;display:flex;flex-direction:column;align-items:center;padding:18px 0">
+<div style="width:40px;height:40px;border-radius:13px;background:#FFC01F;display:flex;align-items:center;justify-content:center">
+<span style="font-family:'Material Symbols Rounded';font-size:23px;color:#241A00">ramen_dining</span>
+</div>
+<div style="font:700 13px/1 'Bricolage Grotesque';letter-spacing:.14em;color:#1E1B14;margin-top:9px">MISE</div>
+<div style="display:flex;flex-direction:column;align-items:center;width:100%;margin-top:20px">
+<sc-for list="{{ navKitchen }}" as="i" hint-placeholder-count="10">
+<div style="position:relative;width:68px;height:50px;border-radius:15px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:{{i.bg}};margin-top:{{i.mt}}">
+<span style="font-family:'Material Symbols Rounded';font-size:21px;color:{{i.fg}}">{{i.icon}}</span>
+<div style="font:600 9px/11px 'Plus Jakarta Sans';letter-spacing:.02em;color:{{i.fg}}">{{i.label}}</div>
+<sc-if value="{{ i.badge }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;top:3px;right:9px;min-width:16px;height:16px;border-radius:8px;background:#C22C23;color:#FFF;font:700 10px/16px 'Plus Jakarta Sans';text-align:center">{{i.badge}}</div>
+</sc-if>
+</div>
+</sc-for>
+</div>
+<div style="flex:1"></div>
+<div style="width:42px;height:42px;border-radius:14px;background:#FFF0CC;display:flex;align-items:center;justify-content:center;font:700 14px/1 'Plus Jakarta Sans';color:#8A5A00">KT</div>
+</div>
+
+<div style="flex:1;min-width:0;display:flex;flex-direction:column">
+<div style="height:84px;flex:0 0 84px;background:#FFFFFF;border-bottom:1px solid #EFE7DA;display:flex;align-items:center;padding:0 22px;gap:16px">
+<div style="min-width:170px">
+<div style="font:700 26px/32px 'Bricolage Grotesque';letter-spacing:-.015em">Kitchen</div>
+<div style="font:500 12px/16px 'Plus Jakarta Sans';color:#776E60">9 tickets open · Karim T. on grill</div>
+</div>
+<div style="display:flex;align-items:center;gap:9px">
+<sc-for list="{{ stations }}" as="s" hint-placeholder-count="5">
+<div style="height:44px;padding:0 14px;border-radius:14px;background:{{s.bg}};border:1px solid {{s.line}};display:flex;align-items:center;gap:8px">
+<span style="font-family:'Material Symbols Rounded';font-size:20px;color:{{s.fg}}">{{s.icon}}</span>
+<div style="font:700 13px/18px 'Plus Jakarta Sans';color:{{s.fg}}">{{s.label}}</div>
+<div style="min-width:22px;height:22px;padding:0 6px;border-radius:8px;background:{{s.pillBg}};font:700 12px/22px 'Plus Jakarta Sans';color:{{s.pillFg}};text-align:center">{{s.n}}</div>
+</div>
+</sc-for>
+</div>
+<div style="flex:1"></div>
+<div style="display:flex;align-items:center;gap:7px;height:44px;padding:0 14px;border-radius:14px;background:#FAF8F4;border:1px solid #EFE7DA">
+<span style="font-family:'Material Symbols Rounded';font-size:20px;color:#565044">volume_up</span>
+<div style="font:700 13px/18px 'Plus Jakarta Sans';color:#565044">Sound on</div>
+</div>
+<div style="display:flex;align-items:center;gap:7px;height:34px;padding:0 11px;border-radius:11px;background:#E4F6EA">
+<span style="font-family:'Material Symbols Rounded';font-size:18px;color:#1E7A47">cloud_done</span>
+<div style="font:600 12px/16px 'Plus Jakarta Sans';color:#1E7A47">Live</div>
+</div>
+</div>
+
+<div style="flex:1;min-height:0;padding:18px 22px 20px;display:flex;flex-direction:column;gap:16px">
+<div style="flex:1;min-height:0;display:grid;grid-template-columns:repeat(4,1fr);gap:16px">
+<sc-for list="{{ lanes }}" as="ln" hint-placeholder-count="4">
+<div style="min-width:0;display:flex;flex-direction:column;overflow:hidden">
+<div style="height:46px;flex:0 0 46px;display:flex;align-items:center;gap:9px;padding:0 14px;border-radius:14px;background:{{ln.headBg}}">
+<div style="width:9px;height:9px;border-radius:5px;background:{{ln.c}}"></div>
+<div style="flex:1;font:700 15px/20px 'Bricolage Grotesque';color:{{ln.headFg}}">{{ln.title}}</div>
+<div style="min-width:24px;height:24px;padding:0 7px;border-radius:8px;background:#FFFFFF;font:700 12px/24px 'Plus Jakarta Sans';color:{{ln.headFg}};text-align:center">{{ln.n}}</div>
+</div>
+<div style="flex:1;min-height:0;padding-top:12px;display:flex;flex-direction:column;gap:12px">
+<sc-for list="{{ ln.tickets }}" as="k" hint-placeholder-count="2">
+<div style="background:#FFFFFF;border:1px solid #EFE7DA;border-top:4px solid {{k.top}};border-radius:18px;box-shadow:0 6px 18px rgba(110,71,0,.07);padding:12px;display:flex;flex-direction:column;gap:9px">
+<div style="display:flex;align-items:center;gap:8px">
+<div style="flex:1;font:700 18px/23px 'Bricolage Grotesque'">{{k.ref}}</div>
+<div style="display:inline-flex;align-items:center;gap:5px;height:26px;padding:0 9px;border-radius:9px;background:{{k.elBg}}">
+<span style="font-family:'Material Symbols Rounded';font-size:16px;color:{{k.elC}}">timer</span>
+<span style="font:700 12px/26px 'Plus Jakarta Sans';color:{{k.elC}}">{{k.el}}</span>
+</div>
+</div>
+<div style="font:600 12px/17px 'Plus Jakarta Sans';color:#565044">{{k.table}}</div>
+<div style="display:flex;flex-direction:column;gap:7px">
+<sc-for list="{{ k.items }}" as="ki" hint-placeholder-count="2">
+<div style="display:flex;gap:9px">
+<div style="width:24px;height:24px;flex:0 0 24px;border-radius:8px;background:#FFF8E8;font:700 12px/24px 'Plus Jakarta Sans';color:#8A5A00;text-align:center">{{ki.q}}</div>
+<div style="flex:1;min-width:0">
+<div style="font:700 14px/19px 'Plus Jakarta Sans'">{{ki.name}}</div>
+<div style="font:500 11px/15px 'Plus Jakarta Sans';color:#565044">{{ki.opt}}</div>
+</div>
+</div>
+</sc-for>
+</div>
+<sc-if value="{{ k.allergy }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;align-items:center;gap:7px;padding:7px 9px;border-radius:11px;background:#FDE8E6">
+<span style="font-family:'Material Symbols Rounded';font-size:17px;color:#E0392F">emergency_home</span>
+<div style="font:700 11px/15px 'Plus Jakarta Sans';color:#9E2C24">{{k.allergy}}</div>
+</div>
+</sc-if>
+<sc-if value="{{ k.changed }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;align-items:center;gap:7px;padding:7px 9px;border-radius:11px;background:#FFE9DC">
+<span style="font-family:'Material Symbols Rounded';font-size:17px;color:#A03C00">published_with_changes</span>
+<div style="font:700 11px/15px 'Plus Jakarta Sans';color:#A03C00">{{k.changed}}</div>
+</div>
+</sc-if>
+<sc-if value="{{ stationAssignment }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;align-items:center;gap:7px">
+<div style="height:26px;padding:0 9px;border-radius:9px;background:#FAF8F4;display:flex;align-items:center;gap:5px">
+<span style="font-family:'Material Symbols Rounded';font-size:15px;color:#565044">{{k.stIcon}}</span>
+<span style="font:700 11px/26px 'Plus Jakarta Sans';color:#565044">{{k.station}}</span>
+</div>
+<div style="font:500 11px/15px 'Plus Jakarta Sans';color:#776E60">{{k.who}}</div>
+</div>
+</sc-if>
+<button type="button" style="height:48px;flex:0 0 48px;border:none;border-radius:14px;background:{{k.btnBg}};color:{{k.btnFg}};font:700 14px/19px 'Plus Jakarta Sans';display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer">
+<span style="font-family:'Material Symbols Rounded';font-size:20px">{{k.btnIcon}}</span>{{k.btn}}</button>
+</div>
+</sc-for>
+<sc-if value="{{ ln.more }}" hint-placeholder-val="{{ false }}">
+<div style="height:40px;flex:0 0 40px;border:1px dashed #E2D3B8;border-radius:13px;display:flex;align-items:center;justify-content:center;gap:6px">
+<span style="font-family:'Material Symbols Rounded';font-size:18px;color:#776E60">expand_more</span>
+<div style="font:700 12px/16px 'Plus Jakarta Sans';color:#565044">{{ln.more}}</div>
+</div>
+</sc-if>
+</div>
+</div>
+</sc-for>
+</div>
+
+<div style="flex:0 0 74px;background:#FFFFFF;border:1px solid #EFE7DA;border-radius:18px;box-shadow:0 6px 18px rgba(110,71,0,.07);display:flex;align-items:center;padding:0 20px;gap:0">
+<div style="font:700 16px/21px 'Bricolage Grotesque'">Service health</div>
+<div style="width:1px;height:40px;background:#EFE7DA;margin:0 20px"></div>
+<sc-for list="{{ health }}" as="h" hint-placeholder-count="4">
+<div style="flex:1"><div style="font:500 11px/15px 'Plus Jakarta Sans';color:#776E60">{{h.k}}</div><div style="font:700 24px/28px 'Bricolage Grotesque';color:{{h.c}}">{{h.v}}</div></div>
+</sc-for>
+<div style="display:flex;align-items:center;gap:8px;height:42px;padding:0 14px;border-radius:13px;background:#FFE9DC">
+<span style="font-family:'Material Symbols Rounded';font-size:20px;color:#A03C00">priority_high</span>
+<div style="font:700 13px/18px 'Plus Jakarta Sans';color:#A03C00">3 tickets past target — grill is the constraint</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<div id="2e" style="display:flex;flex-direction:column;gap:12px;scroll-margin:40px">
+<div style="display:flex;align-items:baseline;gap:10px">
+<span style="font:700 12px/1 'Plus Jakarta Sans';letter-spacing:.06em;color:#241A00;background:#FFB300;padding:6px 9px;border-radius:7px">2e</span>
+<span style="font:700 16px/1.2 'Bricolage Grotesque'">Tables and payment</span>
+<span style="font:400 13px/1.2 'Plus Jakarta Sans';color:#655C50">1440 × 900 · floor with session and payment panel</span>
+</div>
+<div style="width:1440px;height:900px;background:#FFC01F;border-radius:26px;padding:18px;display:flex;overflow:hidden">
+<div style="flex:1;min-width:0;display:flex;background:#FAF8F4;border-radius:20px;overflow:hidden">
+
+<div style="width:92px;flex:0 0 92px;background:#FFFFFF;border-right:1px solid #EFE7DA;display:flex;flex-direction:column;align-items:center;padding:18px 0">
+<div style="width:40px;height:40px;border-radius:13px;background:#FFC01F;display:flex;align-items:center;justify-content:center">
+<span style="font-family:'Material Symbols Rounded';font-size:23px;color:#241A00">ramen_dining</span>
+</div>
+<div style="font:700 13px/1 'Bricolage Grotesque';letter-spacing:.14em;color:#1E1B14;margin-top:9px">MISE</div>
+<div style="display:flex;flex-direction:column;align-items:center;width:100%;margin-top:20px">
+<sc-for list="{{ navTables }}" as="i" hint-placeholder-count="10">
+<div style="position:relative;width:68px;height:50px;border-radius:15px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:{{i.bg}};margin-top:{{i.mt}}">
+<span style="font-family:'Material Symbols Rounded';font-size:21px;color:{{i.fg}}">{{i.icon}}</span>
+<div style="font:600 9px/11px 'Plus Jakarta Sans';letter-spacing:.02em;color:{{i.fg}}">{{i.label}}</div>
+<sc-if value="{{ i.badge }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;top:3px;right:9px;min-width:16px;height:16px;border-radius:8px;background:#C22C23;color:#FFF;font:700 10px/16px 'Plus Jakarta Sans';text-align:center">{{i.badge}}</div>
+</sc-if>
+</div>
+</sc-for>
+</div>
+<div style="flex:1"></div>
+<div style="width:42px;height:42px;border-radius:14px;background:#FFF0CC;display:flex;align-items:center;justify-content:center;font:700 14px/1 'Plus Jakarta Sans';color:#8A5A00">IK</div>
+</div>
+
+<div style="flex:1;min-width:0;display:flex;flex-direction:column">
+<div style="height:84px;flex:0 0 84px;background:#FFFFFF;border-bottom:1px solid #EFE7DA;display:flex;align-items:center;padding:0 22px;gap:16px">
+<div style="min-width:180px">
+<div style="font:700 26px/32px 'Bricolage Grotesque';letter-spacing:-.015em">Tables</div>
+<div style="font:500 12px/16px 'Plus Jakarta Sans';color:#776E60">14 of 18 seated · 2 awaiting payment</div>
+</div>
+<div style="display:flex;gap:8px">
+<sc-for list="{{ areaTabs }}" as="a" hint-placeholder-count="3">
+<div style="height:42px;padding:0 15px;border-radius:13px;background:{{a.bg}};display:flex;align-items:center;font:700 13px/18px 'Plus Jakarta Sans';color:{{a.fg}}">{{a.label}}</div>
+</sc-for>
+</div>
+<div style="flex:1"></div>
+<div style="display:flex;align-items:center;gap:9px;width:236px;height:44px;border-radius:13px;background:#FAF8F4;border:1px solid #EFE7DA;padding:0 13px">
+<span style="font-family:'Material Symbols Rounded';font-size:20px;color:#776E60">search</span>
+<div style="flex:1;font:500 13px/18px 'Plus Jakarta Sans';color:#776E60">Table or session</div>
+</div>
+<div style="display:flex;align-items:center;gap:7px;height:34px;padding:0 11px;border-radius:11px;background:#E4F6EA">
+<span style="font-family:'Material Symbols Rounded';font-size:18px;color:#1E7A47">cloud_done</span>
+<div style="font:600 12px/16px 'Plus Jakarta Sans';color:#1E7A47">Updated just now</div>
+</div>
+<div style="display:flex;align-items:center;gap:9px;height:44px;padding:0 11px 0 5px;border-radius:14px;background:#FAF8F4;border:1px solid #EFE7DA">
+<div style="width:34px;height:34px;border-radius:11px;background:#FFF0CC;font:700 12px/34px 'Plus Jakarta Sans';color:#8A5A00;text-align:center">IK</div>
+<div style="font:700 13px/16px 'Plus Jakarta Sans'">Imane K.</div>
+</div>
+</div>
+
+<div style="flex:1;min-height:0;padding:20px 22px 22px;display:flex;gap:18px">
+
+<div style="flex:1;min-width:0;background:#FFFFFF;border:1px solid #EFE7DA;border-radius:20px;box-shadow:0 6px 18px rgba(110,71,0,.07);padding:18px 20px;display:flex;flex-direction:column">
+<div style="display:flex;align-items:center;gap:16px">
+<div style="font:700 20px/26px 'Bricolage Grotesque'">Main hall</div>
+<div style="flex:1"></div>
+<div style="display:flex;gap:14px">
+<sc-for list="{{ legendFull }}" as="l" hint-placeholder-count="5">
+<div style="display:flex;align-items:center;gap:6px">
+<div style="width:10px;height:10px;border-radius:6px;background:{{l.c}}"></div>
+<div style="font:600 12px/16px 'Plus Jakarta Sans';color:#565044">{{l.label}}</div>
+<div style="font:700 12px/16px 'Plus Jakarta Sans'">{{l.n}}</div>
+</div>
+</sc-for>
+</div>
+</div>
+<div style="flex:1;min-height:0;display:grid;grid-template-columns:repeat(5,1fr);grid-template-rows:repeat(3,1fr);gap:14px;margin-top:16px">
+<sc-for list="{{ floor15 }}" as="t" hint-placeholder-count="15">
+<div style="border:1px solid {{t.cellLine}};background:{{t.cellBg}};border-radius:18px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px">
+<div style="width:74px;height:58px;border-radius:{{t.shape}};background:{{t.bg}};border:2px solid {{t.line}};display:flex;flex-direction:column;align-items:center;justify-content:center">
+<div style="font:700 20px/22px 'Bricolage Grotesque';color:#1E1B14">{{t.n}}</div>
+<div style="font:500 10px/13px 'Plus Jakarta Sans';color:#565044">{{t.seats}}</div>
+</div>
+<div style="font:700 11px/14px 'Plus Jakarta Sans';color:{{t.labelC}}">{{t.label}}</div>
+<div style="font:500 10px/13px 'Plus Jakarta Sans';color:#776E60">{{t.meta}}</div>
+</div>
+</sc-for>
+</div>
+</div>
+
+<div style="width:452px;flex:0 0 452px;background:#FFFFFF;border:1px solid #EFE7DA;border-radius:20px;box-shadow:0 6px 18px rgba(110,71,0,.07);display:flex;flex-direction:column;overflow:hidden">
+<div style="padding:18px 20px 15px;border-bottom:1px solid #EFE7DA;display:flex;align-items:flex-start;gap:10px">
+<div style="flex:1">
+<div style="font:700 24px/28px 'Bricolage Grotesque'">Table 12</div>
+<div style="font:500 12px/17px 'Plus Jakarta Sans';color:#776E60">Session #S-318 · opened 19:42 · 6 covers · Imane K.</div>
+</div>
+<div style="display:flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:9px;background:#FFF0CC">
+<span style="font-family:'Material Symbols Rounded';font-size:16px;color:#8A5A00">payments</span>
+<span style="font:700 11px/28px 'Plus Jakarta Sans';color:#8A5A00">Awaiting payment</span>
+</div>
+</div>
+<div style="flex:1;min-height:0;padding:15px 20px;display:flex;flex-direction:column">
+<div style="font:700 10px/14px 'Plus Jakarta Sans';color:#776E60;letter-spacing:.08em">ORDERS IN THIS SESSION · 2</div>
+<div style="display:flex;flex-direction:column;gap:9px;margin-top:10px">
+<sc-for list="{{ sessionOrders }}" as="o" hint-placeholder-count="2">
+<div style="display:flex;align-items:center;gap:11px;height:54px;flex:0 0 54px;padding:0 13px;border-radius:15px;background:#FAF8F4">
+<div style="flex:1;min-width:0"><div style="font:700 14px/19px 'Plus Jakarta Sans'">{{o.ref}}</div><div style="font:500 11px/15px 'Plus Jakarta Sans';color:#776E60">{{o.meta}}</div></div>
+<div style="display:inline-flex;align-items:center;gap:5px;height:24px;padding:0 8px;border-radius:8px;background:{{o.bg}}">
+<div style="width:7px;height:7px;border-radius:4px;background:{{o.c}}"></div>
+<span style="font:700 11px/24px 'Plus Jakarta Sans';color:{{o.c}}">{{o.status}}</span>
+</div>
+<div style="font:700 15px/20px 'Bricolage Grotesque';width:80px;text-align:right">{{o.total}}</div>
+</div>
+</sc-for>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px;margin-top:14px">
+<div style="display:flex;justify-content:space-between;font:500 12px/17px 'Plus Jakarta Sans';color:#565044"><div>Session subtotal</div><div style="font-weight:700;color:#1E1B14">DA 5,430</div></div>
+<div style="display:flex;justify-content:space-between;font:500 12px/17px 'Plus Jakarta Sans';color:#565044"><div>TVA 19%</div><div style="font-weight:700;color:#1E1B14">DA 1,031</div></div>
+<div style="display:flex;justify-content:space-between;font:500 12px/17px 'Plus Jakarta Sans';color:#565044"><div>Paid · cash · 20:51 · Yacine B.</div><div style="font-weight:700;color:#1E7A47">− DA 3,000</div></div>
+</div>
+<div style="display:flex;align-items:flex-end;justify-content:space-between;margin-top:12px;padding:13px 15px;border-radius:16px;background:#FFF8E8;border:1px solid #FFE49A">
+<div><div style="font:700 13px/18px 'Plus Jakarta Sans'">Remaining balance</div><div style="font:500 11px/15px 'Plus Jakarta Sans';color:#565044">Completion blocked while a balance remains</div></div>
+<div style="font:700 28px/30px 'Bricolage Grotesque';color:#8A5A00">DA 3,461</div>
+</div>
+<div style="font:700 10px/14px 'Plus Jakarta Sans';color:#776E60;letter-spacing:.08em;margin-top:14px">PAYMENT METHOD</div>
+<div style="display:flex;gap:9px;margin-top:9px">
+<sc-for list="{{ methods }}" as="m" hint-placeholder-count="3">
+<div style="flex:1;height:56px;border-radius:15px;background:{{m.bg}};border:1px solid {{m.line}};display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px">
+<span style="font-family:'Material Symbols Rounded';font-size:21px;color:{{m.fg}}">{{m.icon}}</span>
+<div style="font:700 12px/16px 'Plus Jakarta Sans';color:{{m.fg}}">{{m.label}}</div>
+</div>
+</sc-for>
+</div>
+<div style="display:flex;gap:11px;margin-top:11px">
+<div style="flex:1">
+<div style="font:600 11px/15px 'Plus Jakarta Sans';color:#565044;margin-bottom:5px">Amount received</div>
+<div style="height:46px;border-radius:13px;background:#FFF;border:2px solid #FFB300;display:flex;align-items:center;padding:0 13px;gap:8px">
+<div style="font:500 13px/18px 'Plus Jakarta Sans';color:#776E60">DA</div>
+<div style="font:700 18px/22px 'Bricolage Grotesque'">3,461</div>
+</div>
+</div>
+<div style="width:158px">
+<div style="font:600 11px/15px 'Plus Jakarta Sans';color:#565044;margin-bottom:5px">Collected by</div>
+<div style="height:46px;border-radius:13px;background:#FAF8F4;border:1px solid #E9E0D2;display:flex;align-items:center;padding:0 11px;gap:8px">
+<div style="width:28px;height:28px;border-radius:9px;background:#FFF0CC;font:700 11px/28px 'Plus Jakarta Sans';color:#8A5A00;text-align:center">IK</div>
+<div style="font:700 12px/17px 'Plus Jakarta Sans'">Imane K.</div>
+</div>
+</div>
+</div>
+<div style="flex:1"></div>
+</div>
+<div style="border-top:1px solid #EFE7DA;padding:14px 20px 16px">
+<button type="button" style="width:100%;height:52px;flex:0 0 52px;border:none;border-radius:15px;background:#FFB300;color:#241A00;font:700 15px/20px 'Plus Jakarta Sans';display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;box-shadow:0 8px 18px rgba(224,154,0,.32)">
+<span style="font-family:'Material Symbols Rounded';font-size:22px">payments</span>Record payment · DA 3,461</button>
+<div style="display:flex;gap:9px;margin-top:10px">
+<button type="button" style="flex:1;height:40px;border:1px solid #E9E0D2;border-radius:13px;background:#FFF;color:#565044;font:600 12px/17px 'Plus Jakarta Sans';cursor:pointer">Print bill</button>
+<button type="button" style="flex:1;height:40px;border:1px solid #E9E0D2;border-radius:13px;background:#FFF;color:#565044;font:600 12px/17px 'Plus Jakarta Sans';cursor:pointer">Move table</button>
+<button type="button" style="flex:1;height:40px;border:1px solid #E9E0D2;border-radius:13px;background:#FAF8F4;color:#8A7F6E;font:600 12px/17px 'Plus Jakarta Sans';cursor:not-allowed">Close session</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<div id="2f" style="display:flex;flex-direction:column;gap:12px;scroll-margin:40px">
+<div style="display:flex;align-items:baseline;gap:10px">
+<span style="font:700 12px/1 'Plus Jakarta Sans';letter-spacing:.06em;color:#241A00;background:#FFB300;padding:6px 9px;border-radius:7px">2f</span>
+<span style="font:700 16px/1.2 'Bricolage Grotesque'">Mobile staff</span>
+<span style="font:400 13px/1.2 'Plus Jakarta Sans';color:#655C50">390 × 844 · four destinations plus More</span>
+</div>
+<div style="display:flex;gap:30px;padding:32px 36px;background:#FFC01F;border-radius:26px">
+
+<div style="display:flex;flex-direction:column;gap:12px">
+<div style="width:390px;height:844px;background:#FAF8F4;border-radius:36px;overflow:hidden;display:flex;flex-direction:column">
+<div style="background:#FFFFFF;padding:14px 18px 14px;display:flex;flex-direction:column;gap:12px;border-bottom:1px solid #EFE7DA">
+<div style="display:flex;align-items:center;font:600 11px/15px 'Plus Jakarta Sans';color:#776E60">
+<div>21:04</div><div style="flex:1"></div><div>Hydra branch</div>
+</div>
+<div style="display:flex;align-items:center;gap:10px">
+<div><div style="font:700 24px/29px 'Bricolage Grotesque'">Orders</div><div style="font:500 11px/15px 'Plus Jakarta Sans';color:#776E60">6 assigned to you</div></div>
+<div style="flex:1"></div>
+<div style="width:40px;height:40px;border-radius:13px;background:#FAF8F4;border:1px solid #EFE7DA;display:flex;align-items:center;justify-content:center"><span style="font-family:'Material Symbols Rounded';font-size:21px;color:#565044">search</span></div>
+<div style="position:relative;width:40px;height:40px;border-radius:13px;background:#FAF8F4;border:1px solid #EFE7DA;display:flex;align-items:center;justify-content:center"><span style="font-family:'Material Symbols Rounded';font-size:21px;color:#565044">notifications</span>
+<div style="position:absolute;top:-3px;right:-3px;min-width:17px;height:17px;border-radius:9px;background:#C22C23;color:#FFF;font:700 10px/17px 'Plus Jakarta Sans';text-align:center;border:2px solid #FFF">3</div></div>
+</div>
+<div style="display:flex;align-items:center;gap:7px;height:30px;align-self:flex-start;padding:0 10px;border-radius:10px;background:#E4F6EA">
+<span style="font-family:'Material Symbols Rounded';font-size:16px;color:#1E7A47">cloud_done</span>
+<div style="font:600 11px/30px 'Plus Jakarta Sans';color:#1E7A47">Updated just now · dinner service</div>
+</div>
+</div>
+<div style="display:flex;gap:8px;padding:14px 18px 12px;overflow:hidden">
+<sc-for list="{{ mobileFilters }}" as="f" hint-placeholder-count="4">
+<div style="height:36px;flex:0 0 auto;padding:0 13px;border-radius:12px;background:{{f.bg}};display:flex;align-items:center;gap:6px">
+<div style="font:700 12px/16px 'Plus Jakarta Sans';color:{{f.fg}}">{{f.label}}</div>
+<div style="font:700 12px/16px 'Plus Jakarta Sans';color:{{f.fg}}">{{f.n}}</div>
+</div>
+</sc-for>
+</div>
+<div style="flex:1;min-height:0;padding:0 18px;display:flex;flex-direction:column;gap:12px">
+<sc-for list="{{ mobileOrders }}" as="o" hint-placeholder-count="3">
+<div style="background:#FFFFFF;border:1px solid #EFE7DA;border-left:4px solid {{o.mark}};border-radius:18px;box-shadow:0 6px 18px rgba(110,71,0,.07);padding:13px 14px;display:flex;flex-direction:column;gap:9px">
+<div style="display:flex;align-items:center;gap:9px">
+<div style="font:700 17px/22px 'Bricolage Grotesque'">{{o.ref}}</div>
+<div style="font:700 14px/19px 'Plus Jakarta Sans';color:#565044">{{o.table}}</div>
+<div style="flex:1"></div>
+<div style="font:700 16px/21px 'Bricolage Grotesque'">{{o.total}}</div>
+</div>
+<div style="display:flex;align-items:center;gap:8px">
+<div style="display:inline-flex;align-items:center;gap:5px;height:26px;padding:0 9px;border-radius:9px;background:{{o.bg}}">
+<span style="font-family:'Material Symbols Rounded';font-size:15px;color:{{o.c}}">{{o.icon}}</span>
+<span style="font:700 11px/26px 'Plus Jakarta Sans';color:{{o.c}}">{{o.status}}</span>
+</div>
+<div style="font:700 12px/16px 'Plus Jakarta Sans';color:{{o.elC}}">{{o.elapsed}}</div>
+<div style="flex:1"></div>
+<div style="font:500 11px/15px 'Plus Jakarta Sans';color:#776E60">{{o.pay}}</div>
+</div>
+<button type="button" style="height:48px;flex:0 0 48px;border:none;border-radius:14px;background:{{o.btnBg}};color:{{o.btnFg}};font:700 14px/19px 'Plus Jakarta Sans';cursor:pointer">{{o.btn}}</button>
+</div>
+</sc-for>
+</div>
+<div style="flex:0 0 84px;background:#FFFFFF;border-top:1px solid #EFE7DA;display:flex;align-items:center;padding:0 8px 10px">
+<sc-for list="{{ bottomNav }}" as="b" hint-placeholder-count="5">
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding-top:12px">
+<div style="width:44px;height:32px;border-radius:11px;background:{{b.bg}};display:flex;align-items:center;justify-content:center">
+<span style="font-family:'Material Symbols Rounded';font-size:22px;color:{{b.c}}">{{b.icon}}</span>
+</div>
+<div style="font:700 10px/13px 'Plus Jakarta Sans';color:{{b.labelC}}">{{b.label}}</div>
+</div>
+</sc-for>
+</div>
+</div>
+<div style="align-self:center;height:28px;padding:0 12px;border-radius:9px;background:rgba(255,255,255,.94);font:700 12px/28px 'Plus Jakarta Sans';color:#1E1B14">Orders list</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:12px">
+<div style="width:390px;height:844px;background:#FAF8F4;border-radius:36px;overflow:hidden;display:flex;flex-direction:column">
+<div style="background:#FFFFFF;padding:14px 18px;display:flex;flex-direction:column;gap:12px;border-bottom:1px solid #EFE7DA">
+<div style="display:flex;align-items:center;font:600 11px/15px 'Plus Jakarta Sans';color:#776E60">
+<div>21:04</div><div style="flex:1"></div><div>Hydra branch</div>
+</div>
+<div style="display:flex;align-items:center;gap:12px">
+<div style="width:40px;height:40px;border-radius:13px;background:#FAF8F4;border:1px solid #EFE7DA;display:flex;align-items:center;justify-content:center"><span style="font-family:'Material Symbols Rounded';font-size:22px;color:#565044">arrow_back</span></div>
+<div><div style="font:700 22px/27px 'Bricolage Grotesque'">#A-1042</div><div style="font:500 11px/15px 'Plus Jakarta Sans';color:#776E60">Table 7 · 4 covers · opened 20:14</div></div>
+<div style="flex:1"></div>
+<span style="font-family:'Material Symbols Rounded';font-size:22px;color:#776E60">more_vert</span>
+</div>
+</div>
+<div style="flex:1;min-height:0;padding:14px 18px;display:flex;flex-direction:column;gap:11px">
+<div style="display:flex;align-items:center;gap:8px">
+<div style="display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 10px;border-radius:10px;background:#FDE8E6">
+<span style="font-family:'Material Symbols Rounded';font-size:16px;color:#E0392F">schedule</span>
+<span style="font:700 11px/30px 'Plus Jakarta Sans';color:#C22C23">Delayed · 24 min</span>
+</div>
+<div style="display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 10px;border-radius:10px;background:#FFF8E8">
+<span style="font-family:'Material Symbols Rounded';font-size:16px;color:#8A5A00">outdoor_grill</span>
+<span style="font:700 11px/30px 'Plus Jakarta Sans';color:#8A5A00">Preparing</span>
+</div>
+</div>
+<div style="border-radius:14px;background:#FDE8E6;padding:11px 12px;display:flex;align-items:center;gap:9px">
+<span style="font-family:'Material Symbols Rounded';font-size:20px;color:#E0392F">emergency_home</span>
+<div style="font:500 11px/16px 'Plus Jakarta Sans';color:#9E2C24"><strong style="font-weight:800;color:#C22C23">Allergy — peanut, severe.</strong> Guest 2 · never collapsed on any surface.</div>
+</div>
+<div style="border-radius:14px;background:#FFE9DC;padding:11px 12px;display:flex;align-items:center;gap:9px">
+<span style="font-family:'Material Symbols Rounded';font-size:20px;color:#A03C00">published_with_changes</span>
+<div style="font:500 11px/16px 'Plus Jakarta Sans';color:#A03C00"><strong style="font-weight:800">Changed after kitchen receipt.</strong> 20:26 · Imane K.</div>
+</div>
+<div style="font:700 10px/14px 'Plus Jakarta Sans';color:#776E60;letter-spacing:.08em">ITEMS · 4</div>
+<div style="display:flex;flex-direction:column;gap:9px">
+<sc-for list="{{ inspectorItems }}" as="it" hint-placeholder-count="4">
+<div style="display:flex;align-items:center;gap:11px;height:56px;flex:0 0 56px;padding:0 12px;border-radius:15px;background:#FFFFFF;border:1px solid #EFE7DA">
+<div style="width:30px;height:30px;border-radius:10px;background:#FFF8E8;font:700 13px/30px 'Plus Jakarta Sans';color:#8A5A00;text-align:center">{{it.qty}}</div>
+<div style="flex:1;min-width:0"><div style="font:700 13px/18px 'Plus Jakarta Sans'">{{it.name}}</div><div style="font:500 11px/15px 'Plus Jakarta Sans';color:#565044">{{it.opts}}</div></div>
+<div style="display:inline-flex;align-items:center;gap:5px;height:24px;padding:0 8px;border-radius:8px;background:{{it.bg}}">
+<div style="width:7px;height:7px;border-radius:4px;background:{{it.c}}"></div>
+<span style="font:700 11px/24px 'Plus Jakarta Sans';color:{{it.c}}">{{it.state}}</span>
+</div>
+</div>
+</sc-for>
+</div>
+<div style="flex:1"></div>
+<div style="display:flex;justify-content:space-between;align-items:flex-end">
+<div style="font:500 12px/17px 'Plus Jakarta Sans';color:#565044">Order total · unpaid</div>
+<div style="font:700 26px/30px 'Bricolage Grotesque'">DA 4,820</div>
+</div>
+</div>
+<div style="background:#FFFFFF;border-top:1px solid #EFE7DA;padding:14px 18px 22px;display:flex;flex-direction:column;gap:10px">
+<button type="button" style="height:54px;flex:0 0 54px;border:none;border-radius:15px;background:#FFB300;color:#241A00;font:700 15px/20px 'Plus Jakarta Sans';display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;box-shadow:0 8px 18px rgba(224,154,0,.32)">
+<span style="font-family:'Material Symbols Rounded';font-size:22px">room_service</span>Mark ready to serve</button>
+<div style="display:flex;gap:10px">
+<button type="button" style="flex:1;height:48px;border:1px solid #E9E0D2;border-radius:14px;background:#FAF8F4;color:#565044;font:600 13px/18px 'Plus Jakarta Sans';cursor:pointer">Add items</button>
+<button type="button" style="flex:1;height:48px;border:1px solid #E9E0D2;border-radius:14px;background:#FAF8F4;color:#565044;font:600 13px/18px 'Plus Jakarta Sans';cursor:pointer">History</button>
+</div>
+</div>
+</div>
+<div style="align-self:center;height:28px;padding:0 12px;border-radius:9px;background:rgba(255,255,255,.94);font:700 12px/28px 'Plus Jakarta Sans';color:#1E1B14">Order detail</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:12px">
+<div style="width:390px;height:844px;background:#FAF8F4;border-radius:36px;overflow:hidden;display:flex;flex-direction:column">
+<div style="background:#FFFFFF;padding:14px 18px;display:flex;flex-direction:column;gap:12px;border-bottom:1px solid #EFE7DA">
+<div style="display:flex;align-items:center;font:600 11px/15px 'Plus Jakarta Sans';color:#776E60">
+<div>21:04</div><div style="flex:1"></div><div>Hydra branch</div>
+</div>
+<div style="display:flex;align-items:center;gap:10px">
+<div><div style="font:700 24px/29px 'Bricolage Grotesque'">Kitchen</div><div style="font:500 11px/15px 'Plus Jakarta Sans';color:#776E60">Grill station · Karim T.</div></div>
+<div style="flex:1"></div>
+<div style="height:40px;padding:0 12px;border-radius:13px;background:#FFF8E8;display:flex;align-items:center;gap:7px">
+<span style="font-family:'Material Symbols Rounded';font-size:19px;color:#8A5A00">outdoor_grill</span>
+<div style="font:700 13px/18px 'Plus Jakarta Sans';color:#8A5A00">Grill</div>
+<span style="font-family:'Material Symbols Rounded';font-size:19px;color:#8A5A00">expand_more</span>
+</div>
+</div>
+</div>
+<div style="display:flex;gap:8px;padding:14px 18px 12px">
+<sc-for list="{{ mobileLanes }}" as="l" hint-placeholder-count="4">
+<div style="flex:1;height:56px;border-radius:15px;background:{{l.bg}};border:1px solid {{l.line}};display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px">
+<div style="font:700 18px/22px 'Bricolage Grotesque';color:{{l.fg}}">{{l.n}}</div>
+<div style="font:700 10px/13px 'Plus Jakarta Sans';color:{{l.fg}}">{{l.label}}</div>
+</div>
+</sc-for>
+</div>
+<div style="flex:1;min-height:0;padding:2px 18px;display:flex;flex-direction:column;gap:12px">
+<sc-for list="{{ mobileTickets }}" as="k" hint-placeholder-count="2">
+<div style="background:#FFFFFF;border:1px solid #EFE7DA;border-top:4px solid {{k.top}};border-radius:18px;box-shadow:0 6px 18px rgba(110,71,0,.07);padding:14px;display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:9px">
+<div style="flex:1;font:700 19px/24px 'Bricolage Grotesque'">{{k.ref}}</div>
+<div style="display:inline-flex;align-items:center;gap:5px;height:28px;padding:0 9px;border-radius:9px;background:{{k.elBg}}">
+<span style="font-family:'Material Symbols Rounded';font-size:16px;color:{{k.elC}}">timer</span>
+<span style="font:700 13px/28px 'Plus Jakarta Sans';color:{{k.elC}}">{{k.el}}</span>
+</div>
+</div>
+<div style="font:600 12px/17px 'Plus Jakarta Sans';color:#565044">{{k.table}}</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<sc-for list="{{ k.items }}" as="ki" hint-placeholder-count="2">
+<div style="display:flex;gap:10px">
+<div style="width:26px;height:26px;flex:0 0 26px;border-radius:8px;background:#FFF8E8;font:700 13px/26px 'Plus Jakarta Sans';color:#8A5A00;text-align:center">{{ki.q}}</div>
+<div style="flex:1;min-width:0"><div style="font:700 15px/20px 'Plus Jakarta Sans'">{{ki.name}}</div><div style="font:500 11px/15px 'Plus Jakarta Sans';color:#565044">{{ki.opt}}</div></div>
+</div>
+</sc-for>
+</div>
+<sc-if value="{{ k.allergy }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;align-items:center;gap:7px;padding:8px 10px;border-radius:12px;background:#FDE8E6">
+<span style="font-family:'Material Symbols Rounded';font-size:18px;color:#E0392F">emergency_home</span>
+<div style="font:700 11px/15px 'Plus Jakarta Sans';color:#9E2C24">{{k.allergy}}</div>
+</div>
+</sc-if>
+<button type="button" style="height:52px;flex:0 0 52px;border:none;border-radius:14px;background:{{k.btnBg}};color:{{k.btnFg}};font:700 15px/20px 'Plus Jakarta Sans';display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer">
+<span style="font-family:'Material Symbols Rounded';font-size:21px">{{k.btnIcon}}</span>{{k.btn}}</button>
+</div>
+</sc-for>
+</div>
+<div style="flex:0 0 84px;background:#FFFFFF;border-top:1px solid #EFE7DA;display:flex;align-items:center;padding:0 8px 10px">
+<sc-for list="{{ bottomNavKitchen }}" as="b" hint-placeholder-count="5">
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding-top:12px">
+<div style="width:44px;height:32px;border-radius:11px;background:{{b.bg}};display:flex;align-items:center;justify-content:center">
+<span style="font-family:'Material Symbols Rounded';font-size:22px;color:{{b.c}}">{{b.icon}}</span>
+</div>
+<div style="font:700 10px/13px 'Plus Jakarta Sans';color:{{b.labelC}}">{{b.label}}</div>
+</div>
+</sc-for>
+</div>
+</div>
+<div style="align-self:center;height:28px;padding:0 12px;border-radius:9px;background:rgba(255,255,255,.94);font:700 12px/28px 'Plus Jakarta Sans';color:#1E1B14">Kitchen — one lane per state</div>
+</div>
+</div>
+</div>
+
+<div id="2g" style="display:flex;flex-direction:column;gap:12px;scroll-margin:40px">
+<div style="display:flex;align-items:baseline;gap:10px">
+<span style="font:700 12px/1 'Plus Jakarta Sans';letter-spacing:.06em;color:#241A00;background:#FFB300;padding:6px 9px;border-radius:7px">2g</span>
+<span style="font:700 16px/1.2 'Bricolage Grotesque'">Required states</span>
+<span style="font:400 13px/1.2 'Plus Jakarta Sans';color:#655C50">stale connection · destructive confirmation with reason</span>
+</div>
+<div style="display:flex;gap:28px;flex-wrap:wrap">
+
+<div style="width:860px;background:#FFFFFF;border:1px solid #EFE7DA;border-radius:22px;box-shadow:0 6px 18px rgba(110,71,0,.07);padding:24px;display:flex;flex-direction:column;gap:14px">
+<div style="font:600 13px/18px 'Plus Jakarta Sans';color:#565044">Stale connection — the fresh-data chip is replaced, actions are held, and nothing implies a submission succeeded</div>
+<div style="height:84px;background:#FFFFFF;border:1px solid #EFE7DA;border-radius:18px;display:flex;align-items:center;padding:0 20px;gap:16px">
+<div><div style="font:700 24px/29px 'Bricolage Grotesque'">Orders</div><div style="font:500 12px/16px 'Plus Jakarta Sans';color:#776E60">State not confirmed</div></div>
+<div style="display:flex;align-items:center;gap:8px;height:42px;padding:0 12px;border-radius:12px;background:#FAF8F4;border:1px solid #EFE7DA">
+<span style="font-family:'Material Symbols Rounded';font-size:19px;color:#8A5A00">storefront</span>
+<div style="font:700 13px/16px 'Plus Jakarta Sans'">Hydra Branch</div>
+</div>
+<div style="flex:1"></div>
+<div style="display:flex;align-items:center;gap:9px;height:44px;padding:0 14px;border-radius:13px;background:#FFE9DC">
+<span style="font-family:'Material Symbols Rounded';font-size:21px;color:#A03C00">cloud_off</span>
+<div><div style="font:700 13px/17px 'Plus Jakarta Sans';color:#A03C00">Not updating</div><div style="font:500 11px/14px 'Plus Jakarta Sans';color:#A03C00">Last confirmed 20:38</div></div>
+</div>
+<div style="display:flex;align-items:center;gap:9px;height:44px;padding:0 11px 0 5px;border-radius:14px;background:#FAF8F4;border:1px solid #EFE7DA">
+<div style="width:34px;height:34px;border-radius:11px;background:#FFF0CC;font:700 12px/34px 'Plus Jakarta Sans';color:#8A5A00;text-align:center">IK</div>
+<div style="font:700 13px/16px 'Plus Jakarta Sans'">Imane K.</div>
+</div>
+</div>
+<div style="border-radius:18px;background:#FFE9DC;padding:16px 18px;display:flex;align-items:center;gap:14px">
+<span style="font-family:'Material Symbols Rounded';font-size:28px;color:#A03C00">cloud_off</span>
+<div style="flex:1">
+<div style="font:700 15px/20px 'Plus Jakarta Sans';color:#A03C00">Showing data from 20:38 — 4 minutes old</div>
+<div style="font:500 13px/19px 'Plus Jakarta Sans';color:#A03C00">Order states, table states and balances may have changed. Anything submitted in the last 4 minutes is unconfirmed — do not assume a payment or a kitchen hand-off was recorded.</div>
+</div>
+<button type="button" style="height:44px;padding:0 18px;border:none;border-radius:13px;background:#A03C00;color:#FFF;font:700 14px/19px 'Plus Jakarta Sans';display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer">
+<span style="font-family:'Material Symbols Rounded';font-size:20px">refresh</span>Retry now</button>
+</div>
+<div style="opacity:.6;height:64px;border-radius:16px;background:#FAF8F4;display:flex;align-items:center;padding:0 16px;gap:14px">
+<div style="width:92px"><div style="font:700 14px/19px 'Plus Jakarta Sans'">#A-1042</div><div style="font:500 11px/15px 'Plus Jakarta Sans';color:#776E60">20:14</div></div>
+<div style="font:700 14px/19px 'Bricolage Grotesque'">T7</div>
+<div style="display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 9px;border-radius:9px;background:#EDEBE6;margin-left:10px">
+<span style="font-family:'Material Symbols Rounded';font-size:16px;color:#555049">help</span>
+<span style="font:700 11px/26px 'Plus Jakarta Sans';color:#555049">State unconfirmed</span>
+</div>
+<div style="flex:1"></div>
+<div style="font:500 12px/17px 'Plus Jakarta Sans';color:#776E60">Actions held until data is confirmed</div>
+</div>
+</div>
+
+<div style="width:860px;background:#FFFFFF;border:1px solid #EFE7DA;border-radius:22px;box-shadow:0 6px 18px rgba(110,71,0,.07);padding:24px;display:flex;flex-direction:column;gap:14px">
+<div style="font:600 13px/18px 'Plus Jakarta Sans';color:#565044">Destructive confirmation — reason required, audited, never brand-coloured</div>
+<div style="position:relative;height:474px;border-radius:18px;overflow:hidden;background:#FAF8F4">
+<div style="position:absolute;inset:0;background:rgba(40,28,0,.48)"></div>
+<div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:512px;background:#FFFFFF;border-radius:22px;box-shadow:0 18px 44px rgba(40,28,0,.34);padding:22px;display:flex;flex-direction:column;gap:13px">
+<div style="display:flex;gap:13px">
+<div style="width:44px;height:44px;flex:0 0 44px;border-radius:14px;background:#FDE8E6;display:flex;align-items:center;justify-content:center">
+<span style="font-family:'Material Symbols Rounded';font-size:24px;color:#E0392F">cancel</span>
+</div>
+<div>
+<div style="font:700 22px/27px 'Bricolage Grotesque'">Cancel order #A-1040?</div>
+<div style="font:500 12px/18px 'Plus Jakarta Sans';color:#565044;margin-top:3px">Table 2 · 6 items · DA 7,410. The kitchen has started two items. Cancelling notifies the grill and cold stations and keeps the order in history.</div>
+</div>
+</div>
+<div>
+<div style="font:700 11px/15px 'Plus Jakarta Sans';margin-bottom:8px">Reason <span style="color:#C22C23">· required</span></div>
+<div style="display:flex;flex-wrap:wrap;gap:8px">
+<sc-for list="{{ reasons }}" as="r" hint-placeholder-count="5">
+<div style="height:34px;padding:0 13px;border-radius:11px;background:{{r.bg}};border:1px solid {{r.line}};display:flex;align-items:center;font:700 12px/16px 'Plus Jakarta Sans';color:{{r.fg}}">{{r.label}}</div>
+</sc-for>
+</div>
+</div>
+<div>
+<div style="font:700 11px/15px 'Plus Jakarta Sans';margin-bottom:8px">Detail for the audit record</div>
+<div style="height:70px;border-radius:13px;background:#FAF8F4;border:1px solid #E9E0D2;padding:11px 13px;font:500 12px/18px 'Plus Jakarta Sans';color:#1E1B14">Guest left before service. Table 2 released, no charge applied.</div>
+</div>
+<div style="display:flex;align-items:center;gap:9px;padding:11px 13px;border-radius:13px;background:#FAF8F4">
+<span style="font-family:'Material Symbols Rounded';font-size:19px;color:#565044">history</span>
+<div style="font:500 11px/16px 'Plus Jakarta Sans';color:#565044">Recorded as <strong style="font-weight:800;color:#1E1B14">Imane K. · 21:04 · Hydra branch</strong> and visible in Audit. Cancelled amounts stay separate from sales.</div>
+</div>
+<div style="display:flex;gap:10px">
+<button type="button" style="flex:1;height:46px;border:1px solid #E9E0D2;border-radius:14px;background:#FFF;color:#1E1B14;font:700 14px/19px 'Plus Jakarta Sans';cursor:pointer">Keep order</button>
+<button type="button" style="flex:1;height:46px;border:none;border-radius:14px;background:#E0392F;color:#FFF;font:700 14px/19px 'Plus Jakarta Sans';display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer">
+<span style="font-family:'Material Symbols Rounded';font-size:20px">cancel</span>Cancel order</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+</div>
+</section>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;photos&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Spec rules&quot;},&quot;stationAssignment&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Spec rules&quot;},&quot;paymentScope&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Per table session&quot;,&quot;Per order&quot;],&quot;default&quot;:&quot;Per table session&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Spec rules&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const C = {
+      b700:'#6E4700', b600:'#8A5A00', b500:'#E09A00', b400:'#F5C24D', b200:'#FFE49A', b100:'#FFF0CC', b050:'#FFF8E8',
+      fill:'#FFB300',
+      canvas:'#FAF8F4', line:'#EFE7DA', line2:'#E9E0D2', text:'#1E1B14', muted:'#565044', subtle:'#776E60',
+      ok:'#2F9E5F', okD:'#1E7A47', okS:'#E4F6EA', warn:'#E0600F', warnD:'#A03C00', warnS:'#FFE9DC',
+      bad:'#E0392F', badD:'#C22C23', badS:'#FDE8E6', neu:'#555049', neuS:'#EDEBE6'
+    };
+
+    const photos = this.props.photos ?? true;
+    const stationAssignment = this.props.stationAssignment ?? true;
+    const paymentScope = this.props.paymentScope ?? 'Per table session';
+    const payNote = paymentScope === 'Per order'
+      ? 'Unpaid · collected on this order'
+      : 'Unpaid · collected on the table session';
+
+    const navBase = [
+      ['space_dashboard','Home','dashboard',0,''],
+      ['receipt_long','Orders','orders',0,'3'],
+      ['table_restaurant','Tables','tables',0,''],
+      ['outdoor_grill','Kitchen','kitchen',0,''],
+      ['restaurant_menu','Menu','menu',16,''],
+      ['inventory_2','Stock','inventory',0,''],
+      ['badge','Staff','staff',0,''],
+      ['monitoring','Reports','reports',16,''],
+      ['settings','Setup','settings',0,''],
+      ['history','Audit','audit',0,'']
+    ];
+    const nav = k => navBase.map(([icon,label,key,mt,badge]) => ({
+      icon, label, badge,
+      mt: (mt || 4) + 'px',
+      bg: key === k ? C.fill : 'transparent',
+      fg: key === k ? '#241A00' : C.muted
+    }));
+
+    const TS = {
+      a: [C.ok, C.okS, 'Available', C.okD],
+      o: [C.b600, C.b050, 'Occupied', C.b600],
+      r: [C.warn, C.warnS, 'Reserved', C.warnD],
+      c: [C.neu, C.neuS, 'Cleaning', C.neu],
+      p: [C.b700, C.b200, 'Awaiting payment', C.b700]
+    };
+    const mkTables = spec => spec.map(([n, sh, st, seats, meta, sel]) => ({
+      n: 'T' + n,
+      seats: seats + ' seats',
+      meta: meta || '',
+      shape: sh === 'r' ? '50%' : '14px',
+      line: TS[st][0],
+      bg: TS[st][1],
+      label: TS[st][2],
+      labelC: TS[st][3],
+      cellBg: sel ? C.b050 : '#FFFFFF',
+      cellLine: sel ? C.b500 : C.line
+    }));
+
+    const tables = mkTables([
+      [1,'r','a',2],[2,'r','o',4],[3,'r','a',2],[4,'s','a',4],
+      [5,'s','a',4],[6,'r','r',4],[7,'s','o',4],[8,'r','a',2],
+      [9,'r','c',6],[10,'r','a',4],[11,'s','r',4],[12,'s','p',6,'',true]
+    ]);
+
+    const floor15 = mkTables([
+      [1,'r','a',2,'Free 12 min'],[2,'r','o',4,'#A-1040'],[3,'r','a',2,'Free 4 min'],[4,'s','a',4,'Free 26 min'],[5,'s','o',4,'#A-1039'],
+      [6,'r','r',4,'20:30 Belkacem'],[7,'s','o',4,'#A-1042'],[8,'r','a',2,'Free 9 min'],[9,'r','c',6,'Since 20:52'],[10,'r','p',4,'DA 2,180'],
+      [11,'s','r',4,'21:15 Haddad'],[12,'s','p',6,'DA 3,461',true],[13,'r','a',4,'Free 31 min'],[14,'s','o',6,'#A-1043'],[15,'r','a',2,'Free 2 min']
+    ]);
+
+    const legend = [
+      {c: C.ok, label: 'Available'}, {c: C.b600, label: 'Occupied'},
+      {c: C.warn, label: 'Reserved'}, {c: C.neu, label: 'Cleaning'}
+    ];
+    const legendFull = [
+      {c: C.ok, label: 'Available', n: '5'}, {c: C.b600, label: 'Occupied', n: '4'},
+      {c: C.warn, label: 'Reserved', n: '2'}, {c: C.b700, label: 'Awaiting payment', n: '2'},
+      {c: C.neu, label: 'Cleaning', n: '1'}
+    ];
+
+    const tiles = [
+      {icon: 'schedule', label: 'delayed', sub: 'Longest 24 min · table 7', n: '3', c: C.badD, bg: C.badS},
+      {icon: 'receipt', label: 'bills requested', sub: 'Table 10, table 3', n: '2', c: C.warnD, bg: C.warnS},
+      {icon: 'room_service', label: 'ready to run', sub: 'Oldest waiting 6 min', n: '5', c: C.okD, bg: C.okS},
+      {icon: 'notifications_active', label: 'calling staff', sub: 'Table 6 · 2 min ago', n: '1', c: C.b600, bg: C.b050}
+    ];
+
+    const areaTabs = [
+      {label: 'Main hall', bg: C.fill, fg: '#241A00'},
+      {label: 'Terrace', bg: C.canvas, fg: C.muted},
+      {label: 'Mezzanine', bg: C.canvas, fg: C.muted}
+    ];
+
+    const popular = [
+      {id: 'chorba', name: 'Chorba frik', orders: '24 sold', price: 'DA 480', rating: '4.9', slot: 'chorba bowl', cat: 'Starter'},
+      {id: 'dorade', name: 'Grilled dorade', orders: '22 sold', price: 'DA 1,980', rating: '4.8', slot: 'whole fish', cat: 'Grill'},
+      {id: 'rechta', name: 'Rechta merguez', orders: '18 sold', price: 'DA 1,450', rating: '4.7', slot: 'rechta plate', cat: 'Grill'},
+      {id: 'bourek', name: 'Bourek cheese', orders: '16 sold', price: 'DA 520', rating: '4.6', slot: 'bourek rolls', cat: 'Starter'}
+    ];
+
+    const paceVals = [6, 12, 22, 38, 47, 55, 53, 40, 15];
+    const paceLabels = ['12','2','4','6','7','8','9','10','11'];
+    const paceBars = paceVals.map((v, i) => ({
+      h: Math.round((v / 60) * 100) + '%',
+      c: v >= 47 ? C.b500 : C.b200,
+      label: paceLabels[i]
+    }));
+
+    const catTiles = [
+      ['Starters','soup_kitchen','14 dishes',1],
+      ['Grill','outdoor_grill','22 dishes',0],
+      ['Tagines','stockpot','11 dishes',0],
+      ['Pasta','ramen_dining','8 dishes',0],
+      ['Sweets','cake','9 dishes',0],
+      ['Drinks','local_cafe','26 items',0]
+    ].map(([label, icon, count, on]) => ({
+      label, icon, count,
+      bg: on ? C.fill : '#FFFFFF',
+      line: on ? C.fill : C.line,
+      fg: on ? '#241A00' : C.muted,
+      subFg: on ? 'rgba(36,26,0,.74)' : C.subtle
+    }));
+
+    const dishes = [
+      ['chorba','Chorba frik','Lamb · freekeh · 12 min','DA 480','Starter',1],
+      ['bourek','Bourek cheese','4 pieces · fried','DA 520','Starter',1],
+      ['mechouia','Salade mechouia','Vegan · charred peppers','DA 620','Starter',1],
+      ['dorade','Grilled dorade','Whole 400 g · 18 min','DA 1,980','Grill',1],
+      ['merguez','Rechta merguez','House pasta · spicy','DA 1,450','Grill',1],
+      ['mechoui','Lamb mechoui','Shoulder · 45 min','DA 2,350','Grill',0],
+      ['zitoune','Tagine zitoune','Chicken · olives','DA 1,750','Tagine',1],
+      ['makroud','Makroud','3 pieces · semolina','DA 380','Sweets',1]
+    ].map(([id, name, sub, price, tag, avail]) => ({
+      id, name, sub, price, tag,
+      cat: tag,
+      slot: name.toLowerCase(),
+      op: avail ? '1' : '0.62',
+      state: avail ? '' : 'Sold out',
+      stateBg: C.neuS,
+      stateFg: C.neu,
+      btnBg: avail ? C.fill : C.neuS,
+      btnFg: avail ? '#241A00' : '#565044',
+      btnIcon: avail ? 'add' : 'block',
+      btnLabel: avail ? 'Add' : 'Sold out'
+    }));
+
+    const orderLines = [
+      {qty: '2', name: 'Chorba frik', opts: 'No lemon · extra bread', price: 'DA 960', flag: ''},
+      {qty: '1', name: 'Grilled dorade', opts: 'Well done · side of mechouia', price: 'DA 1,980', flag: ''},
+      {qty: '1', name: 'Rechta merguez', opts: 'No harissa', price: 'DA 1,450', flag: 'Peanut allergy — guest 2'}
+    ];
+
+    const OS = {
+      submitted: ['Submitted', 'inbox', C.neu, C.neuS],
+      preparing: ['Preparing', 'outdoor_grill', C.b600, C.b050],
+      part: ['Part ready', 'hourglass_bottom', C.warnD, C.warnS],
+      ready: ['Ready', 'room_service', C.okD, C.okS],
+      served: ['Served', 'check', C.neu, C.neuS],
+      await: ['Awaiting payment', 'payments', C.b700, C.b200],
+      paid: ['Paid', 'task_alt', C.okD, C.okS],
+      cancelled: ['Cancelled', 'cancel', C.badD, C.badS]
+    };
+    const PS = {
+      unpaid: ['Unpaid', C.warnD, C.warnS],
+      partial: ['Partial', C.warnD, C.warnS],
+      paid: ['Paid', C.okD, C.okS],
+      refunded: ['Refunded', C.neu, C.neuS]
+    };
+
+    const orders = [
+      ['#A-1042','20:14','T7','preparing','24 min','past 18 min target','4 · dorade, chorba, rechta…','Allergy — peanut','DA 4,820','unpaid',1,1],
+      ['#A-1041','20:31','T12','ready','11 min','waiting to run','3 · zitoune, bourek, makroud','','DA 3,150','unpaid',0,0],
+      ['#A-1040','20:26','T2','part','16 min','2 of 6 items ready','6 · mechoui, rechta, chorba…','Changed after kitchen receipt','DA 7,410','unpaid',0,1],
+      ['#A-1039','20:02','T5','served','32 min','served 20:41','4 · dorade, mechouia, makroud','','DA 5,260','partial',0,0],
+      ['#A-1038','19:48','T10','await','41 min','bill requested 20:58','2 · zitoune, bourek','','DA 2,180','unpaid',0,0],
+      ['#A-1037','19:33','T3','paid','56 min','closed 20:44','5 · merguez, chorba, drinks…','','DA 6,940','paid',0,0],
+      ['#A-1036','19:20','T9','cancelled','1 h 04','cancelled 19:29 · Nadia M.','3 · mechoui, bourek, tea','Reason: guest left','DA 0','refunded',0,0]
+    ].map(([ref, time, table, st, elapsed, elNote, items, note, total, pay, sel, alert]) => ({
+      ref, time, table, elapsed, elNote, items, note, total,
+      status: OS[st][0], icon: OS[st][1], c: OS[st][2], bg: OS[st][3],
+      pay: PS[pay][0], payC: PS[pay][1], payBg: PS[pay][2],
+      elC: alert ? C.badD : C.text,
+      noteC: note.indexOf('Allergy') === 0 ? C.badD : (note.indexOf('Changed') === 0 ? C.warnD : C.subtle),
+      rowBg: sel ? C.b050 : 'transparent',
+      rowLine: sel ? C.b200 : 'transparent'
+    }));
+
+    const orderFilters = [
+      ['All','24',1,C.badS,C.badD],['Delayed','3',0,C.badS,C.badD],['Ready','5',0,C.okS,C.okD],
+      ['Unpaid','8',0,C.warnS,C.warnD],['Changed','1',0,C.warnS,C.warnD]
+    ].map(([label, n, on, pillBg, pillFg]) => ({
+      label, n,
+      bg: on ? C.fill : C.canvas,
+      fg: on ? '#241A00' : C.muted,
+      pillBg: on ? 'rgba(0,0,0,.13)' : pillBg,
+      pillFg: on ? '#241A00' : pillFg
+    }));
+
+    const stepper = [
+      ['Submitted', 2], ['Preparing', 1], ['Ready', 0], ['Served', 0], ['Paid', 0]
+    ].map(([label, s], i) => ({
+      label,
+      dotBg: s === 2 ? C.b500 : '#FFFFFF',
+      dotLine: s ? C.b500 : C.line2,
+      bar: i === 0 ? 'transparent' : (s ? C.b500 : C.line2),
+      fg: s ? C.b600 : C.subtle
+    }));
+
+    const inspectorItems = [
+      ['1','Grilled dorade','Well done · side of mechouia','ready','DA 1,980'],
+      ['2','Chorba frik','No lemon','ready','DA 960'],
+      ['1','Rechta merguez','No harissa · peanut-free line','preparing','DA 1,450'],
+      ['1','Salade mechouia','Added 20:26','preparing','DA 620']
+    ].map(([qty, name, opts, st, price]) => ({
+      qty, name, opts, price,
+      state: OS[st][0], c: OS[st][2], bg: OS[st][3]
+    }));
+
+    const stations = [
+      ['All','restaurant','9',1],['Grill','outdoor_grill','5',0],['Cold','ac_unit','2',0],
+      ['Tagine','soup_kitchen','1',0],['Pastry','cake','1',0]
+    ].map(([label, icon, n, on]) => ({
+      label, icon, n,
+      bg: on ? C.fill : C.canvas,
+      line: on ? C.fill : C.line,
+      fg: on ? '#241A00' : C.muted,
+      pillBg: on ? 'rgba(0,0,0,.13)' : '#FFFFFF',
+      pillFg: on ? '#241A00' : C.muted
+    }));
+
+    const mkTicket = t => ({
+      ref: t.ref, table: t.table, el: t.el, items: t.items,
+      allergy: t.allergy || '', changed: t.changed || '',
+      station: t.station, stIcon: t.stIcon || 'outdoor_grill', who: t.who,
+      top: t.late ? C.bad : (t.top || C.line),
+      elC: t.late ? C.badD : C.muted,
+      elBg: t.late ? C.badS : C.canvas,
+      btn: t.btn, btnIcon: t.btnIcon,
+      btnBg: t.primary ? C.fill : C.b050,
+      btnFg: t.primary ? '#241A00' : C.b600
+    });
+
+    const prepSecond = mkTicket({ref: '#A-1045', table: 'Table 5 · 4 covers · 20:52', el: '12 min', items: [{q: '2', name: 'Grilled dorade', opt: 'One well done'}], station: 'Grill', who: 'Sofiane A.', btn: 'Mark items ready', btnIcon: 'done_all', primary: true});
+
+    const lanes = [
+      {
+        title: 'New', n: '2', c: C.neu, headBg: C.neuS, headFg: C.text, more: '',
+        tickets: [
+          mkTicket({ref: '#A-1044', table: 'Table 14 · 6 covers · 21:03', el: '1 min', items: [{q: '2', name: 'Chorba frik', opt: 'No lemon'}, {q: '1', name: 'Bourek cheese', opt: 'Standard'}], station: 'Cold', stIcon: 'ac_unit', who: 'Unassigned', btn: 'Start preparing', btnIcon: 'play_arrow', primary: true}),
+          mkTicket({ref: '#A-1043', table: 'Table 8 · 2 covers · 21:01', el: '3 min', items: [{q: '1', name: 'Tagine zitoune', opt: 'Extra olives'}], station: 'Tagine', stIcon: 'soup_kitchen', who: 'Unassigned', btn: 'Start preparing', btnIcon: 'play_arrow', primary: true})
+        ]
+      },
+      {
+        title: 'Preparing', n: '3', c: C.b500, headBg: C.b050, headFg: C.b700, more: '2 more preparing',
+        tickets: [
+          mkTicket({ref: '#A-1042', table: 'Table 7 · 4 covers · 20:14', el: '24 min', late: true, items: [{q: '1', name: 'Rechta merguez', opt: 'No harissa · separate pan'}, {q: '1', name: 'Salade mechouia', opt: 'Added 20:26'}], allergy: 'Peanut allergy — severe · guest 2', changed: 'CHANGED 20:26 — item added after receipt', station: 'Grill', who: 'Karim T.', btn: 'Mark items ready', btnIcon: 'done_all', primary: true})
+        ]
+      },
+      {
+        title: 'Part ready', n: '2', c: C.warn, headBg: C.warnS, headFg: C.warnD, more: '',
+        tickets: [
+          mkTicket({ref: '#A-1040', table: 'Table 2 · 6 covers · 20:26', el: '16 min', items: [{q: '2', name: 'Chorba frik', opt: 'Ready 20:34'}, {q: '1', name: 'Lamb mechoui', opt: 'On the grill · 45 min dish'}], changed: 'CHANGED 20:41 — 1 × Bourek removed', station: 'Grill', who: 'Karim T.', btn: 'Mark rest ready', btnIcon: 'done_all', primary: true}),
+          mkTicket({ref: '#A-1039', table: 'Table 5 · 4 covers · 20:02', el: '32 min', items: [{q: '1', name: 'Makroud', opt: 'Plate for 2 · waiting on pastry'}], station: 'Pastry', stIcon: 'cake', who: 'Nadia M.', btn: 'Mark rest ready', btnIcon: 'done_all', primary: true})
+        ]
+      },
+      {
+        title: 'Ready to run', n: '2', c: C.ok, headBg: C.okS, headFg: C.okD, more: '',
+        tickets: [
+          mkTicket({ref: '#A-1041', table: 'Table 12 · 6 covers · 20:31', el: '6 min', top: C.ok, items: [{q: '1', name: 'Tagine zitoune', opt: 'Ready 20:58'}, {q: '2', name: 'Bourek cheese', opt: 'Ready 20:58'}], station: 'Tagine', stIcon: 'soup_kitchen', who: 'Passed to Imane K.', btn: 'Handed to server', btnIcon: 'room_service'}),
+          mkTicket({ref: '#A-1037', table: 'Table 3 · 2 covers · 20:44', el: '2 min', top: C.ok, items: [{q: '2', name: 'Mint tea', opt: 'Pot · ready 21:02'}], station: 'Cold', stIcon: 'ac_unit', who: 'Waiting for a runner', btn: 'Handed to server', btnIcon: 'room_service'})
+        ]
+      }
+    ];
+
+    const health = [
+      {k: 'Average prep time', v: '14 min', c: C.text},
+      {k: 'Longest open ticket', v: '24 min', c: C.badD},
+      {k: 'Past target', v: '3', c: C.badD},
+      {k: 'On time tonight', v: '86%', c: C.okD}
+    ];
+
+    const methods = [
+      {label: 'Cash', icon: 'payments', bg: C.b050, line: C.b500, fg: C.b600},
+      {label: 'Card', icon: 'credit_card', bg: C.canvas, line: C.line2, fg: C.muted},
+      {label: 'Mobile', icon: 'smartphone', bg: C.canvas, line: C.line2, fg: C.muted}
+    ];
+
+    const sessionOrders = [
+      {ref: '#A-1041', meta: '3 items · 20:31 · Imane K.', status: 'Ready', c: C.okD, bg: C.okS, total: 'DA 3,150'},
+      {ref: '#A-1030', meta: '4 items · 19:52 · Yacine B.', status: 'Paid', c: C.okD, bg: C.okS, total: 'DA 3,311'}
+    ];
+
+    const tableFacts = [
+      {icon: 'group', k: 'Covers', v: '6 guests'},
+      {icon: 'badge', k: 'Server', v: 'Imane K.'},
+      {icon: 'schedule', k: 'Seated', v: '35 min ago'}
+    ];
+
+    const reasons = [
+      {label: 'Guest left', on: 1}, {label: 'Ordered by mistake', on: 0},
+      {label: 'Item unavailable', on: 0}, {label: 'Long wait', on: 0}, {label: 'Other', on: 0}
+    ].map(r => ({
+      label: r.label,
+      bg: r.on ? C.badS : '#FFFFFF',
+      line: r.on ? C.bad : C.line2,
+      fg: r.on ? C.badD : C.muted
+    }));
+
+    const mobileFilters = [
+      ['Mine','6',1],['Delayed','3',0],['Ready','5',0],['Unpaid','8',0]
+    ].map(([label, n, on]) => ({
+      label, n,
+      bg: on ? C.fill : '#FFFFFF',
+      fg: on ? '#241A00' : C.muted
+    }));
+
+    const mobileOrders = [
+      ['#A-1042','T7','preparing','24 min','Unpaid','DA 4,820',1,1,'Mark ready to serve'],
+      ['#A-1041','T12','ready','11 min','Unpaid','DA 3,150',0,0,'Mark served'],
+      ['#A-1038','T10','await','41 min','Bill requested','DA 2,180',0,0,'Record payment']
+    ].map(([ref, table, st, elapsed, pay, total, sel, late, btn]) => ({
+      ref, table, elapsed, pay, total, btn,
+      status: OS[st][0], icon: OS[st][1], c: OS[st][2], bg: OS[st][3],
+      elC: late ? C.badD : C.muted,
+      mark: sel ? C.fill : C.line,
+      btnBg: sel ? C.fill : C.b050,
+      btnFg: sel ? '#241A00' : C.b600
+    }));
+
+    const navItem = (icon, label, on) => ({icon, label, c: on ? '#241A00' : C.muted, labelC: on ? C.b600 : C.muted, bg: on ? C.fill : 'transparent'});
+    const bottomNav = [
+      navItem('receipt_long','Orders',1), navItem('table_restaurant','Tables',0),
+      navItem('outdoor_grill','Kitchen',0), navItem('space_dashboard','Floor',0), navItem('more_horiz','More',0)
+    ];
+    const bottomNavKitchen = [
+      navItem('receipt_long','Orders',0), navItem('table_restaurant','Tables',0),
+      navItem('outdoor_grill','Kitchen',1), navItem('space_dashboard','Floor',0), navItem('more_horiz','More',0)
+    ];
+
+    const mobileLanes = [
+      ['New','2',0,'#565044',C.neuS],['Preparing','3',1,'#241A00',C.fill],['Part ready','2',0,C.warnD,C.warnS],['Ready','2',0,C.okD,C.okS]
+    ].map(([label, n, on, fg, bg]) => ({
+      label, n, fg,
+      bg: bg,
+      line: on ? C.fill : 'transparent'
+    }));
+
+    const mobileTickets = [lanes[1].tickets[0], prepSecond];
+
+    return {
+      photos, noPhotos: !photos, stationAssignment, payNote,
+      navDash: nav('dashboard'), navOrders: nav('orders'), navTables: nav('tables'), navKitchen: nav('kitchen'),
+      tables, floor15, legend, legendFull, tiles, areaTabs, popular, paceBars, catTiles, dishes,
+      orderLines, orders, orderFilters, stepper, inspectorItems, stations, lanes, health,
+      methods, sessionOrders, tableFacts, reasons,
+      mobileFilters, mobileOrders, bottomNav, bottomNavKitchen, mobileLanes, mobileTickets
+    };
+  }
+}
+
+</script>
+</body>
+</html>

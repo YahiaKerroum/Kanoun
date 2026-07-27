@@ -1,0 +1,1765 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&amp;family=Instrument+Serif&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#EFE8E3;font-family:'Instrument Sans',system-ui,sans-serif;color:#252122;font-feature-settings:'tnum' 1;-webkit-font-smoothing:antialiased;text-wrap:pretty}
+a{color:#B95035;text-decoration:none}
+a:hover{color:#D96F4B;text-decoration:underline}
+::selection{background:#F8DED3}
+</style>
+<script src="./image-slot.js"></script>
+</helmet>
+
+<section style="padding:56px 56px 96px;display:flex;flex-direction:column;gap:40px">
+
+<div style="display:flex;flex-direction:column;gap:10px;max-width:900px">
+<div style="font:400 15px/1 'Instrument Serif';letter-spacing:.28em;color:#B95035">ROUND 03 · SOFT TERRACOTTA</div>
+<div style="font:700 34px/42px 'Instrument Sans';letter-spacing:-.02em">MISE — staff shell and dine-in service workflow</div>
+<div style="font:400 15px/23px 'Instrument Sans';color:#6F6764">Static hi-fi screens for stakeholder review. Desktop frames are 1440 × 900; the minimum practical width in the spec is 1180px. Sample data describes Dar Nedjma, Hydra branch, Algiers — labels, totals and timers are illustrative and must not be implemented as product logic. <strong style="font-weight:600;color:#252122">MISE</strong> is a placeholder wordmark replacing SAVORA. Dashboard layouts <a href="#1a">1a</a> and <a href="#1b">1b</a> are alternatives for the same page.</div>
+</div>
+
+<div style="display:flex;flex-wrap:wrap;gap:56px">
+
+<div id="1a" style="display:flex;flex-direction:column;gap:12px;scroll-margin:40px">
+<div style="display:flex;align-items:baseline;gap:10px">
+<span style="font:600 12px/1 'Instrument Sans';letter-spacing:.06em;color:#FFFCFA;background:#C96042;padding:6px 9px;border-radius:6px">1a</span>
+<span style="font:600 15px/1.2 'Instrument Sans'">Dashboard — floor first</span>
+<span style="font:400 13px/1.2 'Instrument Sans';color:#938A86">1440 × 900 · follows the reference composition</span>
+</div>
+<div style="width:1440px;height:900px;background:#FBF7F4;border:1px solid #E7DDD7;border-radius:16px;box-shadow:0 4px 18px rgba(74,48,38,.06);overflow:hidden;display:flex">
+
+<div style="width:88px;flex:0 0 88px;background:#C96042;display:flex;flex-direction:column;align-items:center;padding:24px 0 22px">
+<div style="font:400 23px/1 'Instrument Serif';color:#FFF6F1;letter-spacing:.06em">MISE</div>
+<div style="display:flex;flex-direction:column;align-items:center;margin-top:24px;width:100%">
+<sc-for list="{{ navDash }}" as="i" hint-placeholder-count="10">
+<div style="position:relative;width:54px;height:44px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:{{i.bg}};margin-top:{{i.mt}}">
+<span style="font-family:'Material Symbols Outlined';font-size:22px;color:{{i.fg}}">{{i.icon}}</span>
+<sc-if value="{{ i.badge }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;top:1px;right:2px;min-width:17px;height:17px;border-radius:9px;background:#FFFCFA;color:#B95035;font:700 10px/17px 'Instrument Sans';text-align:center">{{i.badge}}</div>
+</sc-if>
+</div>
+</sc-for>
+</div>
+<div style="flex:1"></div>
+<div style="position:relative;width:42px;height:42px;border-radius:21px;background:#B95035;border:2px solid #E98562;display:flex;align-items:center;justify-content:center;font:600 14px/1 'Instrument Sans';color:#FFF6F1">IK
+<div style="position:absolute;right:-2px;bottom:-2px;width:12px;height:12px;border-radius:7px;background:#3F8F55;border:2px solid #C96042"></div>
+</div>
+</div>
+
+<div style="flex:1;min-width:0;display:flex;flex-direction:column">
+<div style="height:86px;flex:0 0 86px;background:#C96042;margin:20px 24px 0;border-radius:14px;display:flex;align-items:center;padding:0 20px">
+<div style="font:700 27px/34px 'Instrument Sans';color:#FFFFFF;letter-spacing:-.015em">Dashboard</div>
+<div style="width:1px;height:46px;background:rgba(255,255,255,.24);margin:0 20px"></div>
+<div style="display:flex;align-items:center;gap:8px">
+<span style="font-family:'Material Symbols Outlined';font-size:20px;color:rgba(255,255,255,.85)">storefront</span>
+<div style="font:600 15px/20px 'Instrument Sans';color:#FFFFFF">Hydra Branch</div>
+<span style="font-family:'Material Symbols Outlined';font-size:20px;color:rgba(255,255,255,.7)">expand_more</span>
+</div>
+<div style="width:1px;height:46px;background:rgba(255,255,255,.24);margin:0 20px"></div>
+<div style="display:flex;align-items:center;gap:9px">
+<div style="width:9px;height:9px;border-radius:5px;background:#A9E6BB"></div>
+<div><div style="font:700 15px/19px 'Instrument Sans';color:#FFFFFF">Dinner service</div><div style="font:500 12px/16px 'Instrument Sans';color:rgba(255,255,255,.78)">Open since 18:30</div></div>
+</div>
+<div style="flex:1"></div>
+<div style="display:flex;align-items:center;gap:9px;width:236px;height:42px;border-radius:10px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.2);padding:0 12px">
+<span style="font-family:'Material Symbols Outlined';font-size:20px;color:rgba(255,255,255,.85)">search</span>
+<div style="flex:1;font:400 14px/20px 'Instrument Sans';color:rgba(255,255,255,.8)">Search tables, orders</div>
+<div style="width:22px;height:22px;border-radius:6px;background:rgba(255,255,255,.22);font:600 12px/22px 'Instrument Sans';color:#FFF;text-align:center">/</div>
+</div>
+<div style="display:flex;align-items:center;gap:8px;margin-left:18px">
+<span style="font-family:'Material Symbols Outlined';font-size:20px;color:rgba(255,255,255,.85)">sync</span>
+<div style="font:500 13px/17px 'Instrument Sans';color:rgba(255,255,255,.92)">Updated just now</div>
+</div>
+<div style="position:relative;margin-left:18px;width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.12)">
+<span style="font-family:'Material Symbols Outlined';font-size:22px;color:#FFF">notifications</span>
+<div style="position:absolute;top:0;right:0;min-width:17px;height:17px;border-radius:9px;background:#FFFCFA;color:#B95035;font:700 10px/17px 'Instrument Sans';text-align:center">3</div>
+</div>
+<div style="width:1px;height:46px;background:rgba(255,255,255,.24);margin:0 16px"></div>
+<div style="display:flex;align-items:center;gap:10px">
+<div style="width:38px;height:38px;border-radius:19px;background:#B95035;border:1px solid rgba(255,255,255,.35);font:600 13px/38px 'Instrument Sans';color:#FFF6F1;text-align:center">IK</div>
+<div><div style="font:600 14px/18px 'Instrument Sans';color:#FFF">Imane K.</div><div style="font:500 12px/16px 'Instrument Sans';color:rgba(255,255,255,.78)">Server · Floor 1</div></div>
+<span style="font-family:'Material Symbols Outlined';font-size:20px;color:rgba(255,255,255,.7)">expand_more</span>
+</div>
+</div>
+
+<div style="flex:1;min-height:0;padding:20px 24px 24px;display:flex;flex-direction:column;gap:20px">
+<div style="flex:0 0 452px;display:flex;gap:20px">
+
+<div style="flex:1;min-width:0;background:#FFFCFA;border:1px solid #E7DDD7;border-radius:14px;box-shadow:0 4px 18px rgba(74,48,38,.05);padding:20px 22px;display:flex;flex-direction:column">
+<div style="display:flex;align-items:center;gap:16px">
+<div style="font:700 20px/28px 'Instrument Sans'">Live floor</div>
+<div style="font:500 13px/18px 'Instrument Sans';color:#6F6764">Main hall · 12 tables</div>
+<div style="flex:1"></div>
+<div style="display:flex;gap:14px">
+<sc-for list="{{ legend }}" as="l" hint-placeholder-count="4">
+<div style="display:flex;align-items:center;gap:6px"><div style="width:9px;height:9px;border-radius:5px;background:{{l.c}}"></div><div style="font:500 12px/18px 'Instrument Sans';color:#6F6764">{{l.label}}</div></div>
+</sc-for>
+</div>
+</div>
+<div style="flex:1;min-height:0;display:flex;gap:20px;margin-top:18px">
+<div style="flex:1;min-width:0;display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(3,1fr);gap:12px">
+<sc-for list="{{ tables }}" as="t" hint-placeholder-count="12">
+<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;border-radius:12px;background:{{t.cellBg}};box-shadow:{{t.ring}}">
+<div style="width:74px;height:64px;border-radius:{{t.shape}};border:2px solid {{t.line}};background:{{t.bg}};display:flex;align-items:center;justify-content:center;font:700 19px/1 'Instrument Sans';color:#252122">{{t.n}}</div>
+<div style="font:600 11px/14px 'Instrument Sans';color:{{t.line}}">{{t.label}}</div>
+<div style="font:500 11px/14px 'Instrument Sans';color:#938A86">{{t.seats}}</div>
+</div>
+</sc-for>
+</div>
+
+<div style="width:298px;flex:0 0 298px;background:#FFFFFF;border:1px solid #E7DDD7;border-radius:12px;padding:18px;display:flex;flex-direction:column">
+<div style="display:flex;align-items:flex-start;gap:8px">
+<div style="flex:1"><div style="font:700 18px/24px 'Instrument Sans'">Table 12</div><div style="font:500 12px/18px 'Instrument Sans';color:#938A86">Session #S-318 · Main hall</div></div>
+<span style="font-family:'Material Symbols Outlined';font-size:20px;color:#938A86">close</span>
+</div>
+<div style="display:inline-flex;align-self:flex-start;align-items:center;gap:6px;margin-top:12px;padding:5px 10px;border-radius:7px;background:#F8DED3">
+<span style="font-family:'Material Symbols Outlined';font-size:16px;color:#B95035">payments</span>
+<span style="font:600 12px/16px 'Instrument Sans';color:#B95035">Awaiting payment</span>
+</div>
+<div style="margin-top:16px;display:flex;flex-direction:column;gap:11px">
+<sc-for list="{{ tableFacts }}" as="f" hint-placeholder-count="4">
+<div style="display:flex;align-items:center;gap:10px">
+<span style="font-family:'Material Symbols Outlined';font-size:19px;color:#938A86">{{f.icon}}</span>
+<div style="flex:1;font:400 13px/18px 'Instrument Sans';color:#6F6764">{{f.k}}</div>
+<div style="font:600 13px/18px 'Instrument Sans'">{{f.v}}</div>
+</div>
+</sc-for>
+</div>
+<div style="height:1px;background:#E7DDD7;margin:16px 0"></div>
+<div style="display:flex;align-items:flex-end;justify-content:space-between">
+<div style="font:400 13px/18px 'Instrument Sans';color:#6F6764">Remaining balance</div>
+<div style="font:700 26px/32px 'Instrument Sans';color:#B95035">DA 3,461</div>
+</div>
+<div style="font:500 12px/17px 'Instrument Sans';color:#938A86;margin-top:6px">2 orders in session · DA 3,000 paid in cash</div>
+<div style="flex:1"></div>
+<button type="button" style="height:44px;border:none;border-radius:8px;background:#D96F4B;color:#FFF;font:600 14px/20px 'Instrument Sans';display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer">
+<span style="font-family:'Material Symbols Outlined';font-size:20px">payments</span>Record payment</button>
+<button type="button" style="height:42px;margin-top:9px;border:1px solid #EBCFC3;border-radius:8px;background:#FFFCFA;color:#B95035;font:600 14px/20px 'Instrument Sans';display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer">
+<span style="font-family:'Material Symbols Outlined';font-size:20px">receipt_long</span>View session orders</button>
+</div>
+</div>
+</div>
+
+<div style="width:376px;flex:0 0 376px;background:#FFFCFA;border:1px solid #E7DDD7;border-radius:14px;box-shadow:0 4px 18px rgba(74,48,38,.05);padding:20px 20px 18px;display:flex;flex-direction:column">
+<div style="display:flex;align-items:baseline;gap:10px">
+<div style="font:700 20px/28px 'Instrument Sans'">Needs attention</div>
+<div style="font:500 13px/18px 'Instrument Sans';color:#938A86">11 open</div>
+</div>
+<div style="margin-top:16px;display:flex;flex-direction:column;gap:10px">
+<sc-for list="{{ attention }}" as="a" hint-placeholder-count="4">
+<div style="display:flex;align-items:center;gap:13px;height:74px;padding:0 14px;border:1px solid #E7DDD7;border-radius:12px;background:#FFFFFF">
+<div style="width:40px;height:40px;border-radius:10px;background:{{a.bg}};display:flex;align-items:center;justify-content:center">
+<span style="font-family:'Material Symbols Outlined';font-size:22px;color:{{a.c}}">{{a.icon}}</span>
+</div>
+<div style="flex:1;min-width:0"><div style="font:600 15px/20px 'Instrument Sans'">{{a.label}}</div><div style="font:500 12px/17px 'Instrument Sans';color:#6F6764">{{a.sub}}</div></div>
+<div style="font:700 24px/28px 'Instrument Sans';color:{{a.c}}">{{a.n}}</div>
+<span style="font-family:'Material Symbols Outlined';font-size:20px;color:#938A86">chevron_right</span>
+</div>
+</sc-for>
+</div>
+<div style="flex:1"></div>
+<button type="button" style="height:40px;border:1px solid #E7DDD7;border-radius:8px;background:transparent;color:#6F6764;font:600 14px/20px 'Instrument Sans';cursor:pointer">View all attention items</button>
+</div>
+</div>
+
+<div style="flex:1;min-height:0;display:flex;gap:20px">
+<div style="flex:1;min-width:0;background:#FFFCFA;border:1px solid #E7DDD7;border-radius:14px;box-shadow:0 4px 18px rgba(74,48,38,.05);padding:18px 20px;display:flex;flex-direction:column">
+<div style="display:flex;align-items:center">
+<div style="font:700 18px/24px 'Instrument Sans'">Popular tonight</div>
+<div style="flex:1"></div>
+<div style="font:600 13px/18px 'Instrument Sans';color:#B95035">View full menu</div>
+</div>
+<div style="flex:1;min-height:0;display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:14px">
+<sc-for list="{{ popular }}" as="p" hint-placeholder-count="4">
+<div style="border:1px solid #E7DDD7;border-radius:12px;background:#FFFFFF;overflow:hidden;display:flex;flex-direction:column">
+<div style="flex:1;min-height:0;position:relative;background:#F5EDE8">
+<sc-if value="{{ photos }}" hint-placeholder-val="{{ true }}">
+<image-slot id="pop-{{p.id}}" shape="rect" placeholder="{{p.slot}}"></image-slot>
+</sc-if>
+<sc-if value="{{ noPhotos }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;background:#F6F0EC">
+<span style="font-family:'Material Symbols Outlined';font-size:24px;color:#BFB1AA">restaurant</span>
+<div style="font:600 11px/15px 'Instrument Sans';color:#938A86">{{p.cat}}</div>
+</div>
+</sc-if>
+</div>
+<div style="padding:9px 11px 11px">
+<div style="font:600 13px/18px 'Instrument Sans'">{{p.name}}</div>
+<div style="font:500 12px/16px 'Instrument Sans';color:#6F6764">{{p.orders}}</div>
+</div>
+</div>
+</sc-for>
+</div>
+</div>
+
+<div style="width:568px;flex:0 0 568px;background:#FFFCFA;border:1px solid #E7DDD7;border-radius:14px;box-shadow:0 4px 18px rgba(74,48,38,.05);padding:18px 20px;display:flex;flex-direction:column">
+<div style="display:flex;align-items:center">
+<div style="font:700 18px/24px 'Instrument Sans'">Service pace</div>
+<div style="font:500 13px/18px 'Instrument Sans';color:#938A86;margin-left:10px">covers seated per hour</div>
+<div style="flex:1"></div>
+<div style="display:flex;align-items:center;gap:6px;height:30px;padding:0 10px;border:1px solid #E7DDD7;border-radius:8px">
+<span style="font:600 12px/16px 'Instrument Sans';color:#6F6764">Today</span>
+<span style="font-family:'Material Symbols Outlined';font-size:18px;color:#938A86">expand_more</span>
+</div>
+</div>
+<div style="flex:1;min-height:0;display:flex;gap:10px;margin-top:12px">
+<div style="width:26px;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-end;padding-bottom:18px;font:500 11px/12px 'Instrument Sans';color:#938A86">
+<div>60</div><div>45</div><div>30</div><div>15</div><div>0</div>
+</div>
+<div style="flex:1;min-width:0;display:flex;flex-direction:column">
+<div style="flex:1;min-height:0;position:relative;border-left:1px solid #E7DDD7;border-bottom:1px solid #E7DDD7">
+<div style="position:absolute;left:0;right:0;top:0;height:1px;background:#F0E9E5"></div>
+<div style="position:absolute;left:0;right:0;top:25%;height:1px;background:#F0E9E5"></div>
+<div style="position:absolute;left:0;right:0;top:50%;height:1px;background:#F0E9E5"></div>
+<div style="position:absolute;left:0;right:0;top:75%;height:1px;background:#F0E9E5"></div>
+<svg viewBox="0 0 560 140" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%">
+<path d="M0,129 70,118 140,98 210,66 280,43 350,20 420,25 490,56 560,110 L560,140 L0,140 Z" fill="#FBEAE2"></path>
+<polyline points="0,129 70,118 140,98 210,66 280,43 350,20 420,25 490,56 560,110" fill="none" stroke="#D96F4B" stroke-width="2.5" stroke-linejoin="round"></polyline>
+</svg>
+</div>
+<div style="display:flex;justify-content:space-between;padding-top:6px;font:500 11px/14px 'Instrument Sans';color:#938A86">
+<div>12 PM</div><div>2 PM</div><div>4 PM</div><div>6 PM</div><div>8 PM</div><div>10 PM</div>
+</div>
+</div>
+</div>
+<div style="margin-top:12px;height:60px;border:1px solid #E7DDD7;border-radius:12px;background:#FFF1EB;display:flex;align-items:center;padding:0 16px;gap:12px">
+<div style="flex:1"><div style="font:600 13px/18px 'Instrument Sans';color:#6F6764">Sales today · Hydra branch</div><div style="font:500 11px/15px 'Instrument Sans';color:#938A86">From 68 completed orders</div></div>
+<div style="font:700 28px/32px 'Instrument Sans';color:#B95035">DA 28,640</div>
+<div style="display:flex;align-items:center;gap:4px;padding:4px 8px;border-radius:7px;background:#E7F3E9">
+<span style="font-family:'Material Symbols Outlined';font-size:16px;color:#3F8F55">trending_up</span>
+<span style="font:600 12px/16px 'Instrument Sans';color:#3F8F55">+12%</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<div id="1b" style="display:flex;flex-direction:column;gap:12px;scroll-margin:40px">
+<div style="display:flex;align-items:baseline;gap:10px">
+<span style="font:600 12px/1 'Instrument Sans';letter-spacing:.06em;color:#FFFCFA;background:#C96042;padding:6px 9px;border-radius:6px">1b</span>
+<span style="font:600 15px/1.2 'Instrument Sans'">Dashboard — exception first</span>
+<span style="font:400 13px/1.2 'Instrument Sans';color:#938A86">1440 × 900 · alternative to <a href="#1a">1a</a></span>
+</div>
+<div style="width:1440px;height:900px;background:#FBF7F4;border:1px solid #E7DDD7;border-radius:16px;box-shadow:0 4px 18px rgba(74,48,38,.06);overflow:hidden;display:flex">
+
+<div style="width:88px;flex:0 0 88px;background:#C96042;display:flex;flex-direction:column;align-items:center;padding:24px 0 22px">
+<div style="font:400 23px/1 'Instrument Serif';color:#FFF6F1;letter-spacing:.06em">MISE</div>
+<div style="display:flex;flex-direction:column;align-items:center;margin-top:24px;width:100%">
+<sc-for list="{{ navDash }}" as="i" hint-placeholder-count="10">
+<div style="position:relative;width:54px;height:44px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:{{i.bg}};margin-top:{{i.mt}}">
+<span style="font-family:'Material Symbols Outlined';font-size:22px;color:{{i.fg}}">{{i.icon}}</span>
+<sc-if value="{{ i.badge }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;top:1px;right:2px;min-width:17px;height:17px;border-radius:9px;background:#FFFCFA;color:#B95035;font:700 10px/17px 'Instrument Sans';text-align:center">{{i.badge}}</div>
+</sc-if>
+</div>
+</sc-for>
+</div>
+<div style="flex:1"></div>
+<div style="position:relative;width:42px;height:42px;border-radius:21px;background:#B95035;border:2px solid #E98562;display:flex;align-items:center;justify-content:center;font:600 14px/1 'Instrument Sans';color:#FFF6F1">IK
+<div style="position:absolute;right:-2px;bottom:-2px;width:12px;height:12px;border-radius:7px;background:#3F8F55;border:2px solid #C96042"></div>
+</div>
+</div>
+
+<div style="flex:1;min-width:0;display:flex;flex-direction:column">
+<div style="height:86px;flex:0 0 86px;background:#C96042;margin:20px 24px 0;border-radius:14px;display:flex;align-items:center;padding:0 20px">
+<div style="font:700 27px/34px 'Instrument Sans';color:#FFFFFF;letter-spacing:-.015em">Dashboard</div>
+<div style="width:1px;height:46px;background:rgba(255,255,255,.24);margin:0 20px"></div>
+<div style="display:flex;align-items:center;gap:8px">
+<span style="font-family:'Material Symbols Outlined';font-size:20px;color:rgba(255,255,255,.85)">storefront</span>
+<div style="font:600 15px/20px 'Instrument Sans';color:#FFFFFF">Hydra Branch</div>
+<span style="font-family:'Material Symbols Outlined';font-size:20px;color:rgba(255,255,255,.7)">expand_more</span>
+</div>
+<div style="width:1px;height:46px;background:rgba(255,255,255,.24);margin:0 20px"></div>
+<div style="display:flex;align-items:center;gap:9px">
+<div style="width:9px;height:9px;border-radius:5px;background:#A9E6BB"></div>
+<div><div style="font:700 15px/19px 'Instrument Sans';color:#FFFFFF">Dinner service</div><div style="font:500 12px/16px 'Instrument Sans';color:rgba(255,255,255,.78)">Open since 18:30</div></div>
+</div>
+<div style="flex:1"></div>
+<div style="display:flex;align-items:center;gap:9px;width:236px;height:42px;border-radius:10px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.2);padding:0 12px">
+<span style="font-family:'Material Symbols Outlined';font-size:20px;color:rgba(255,255,255,.85)">search</span>
+<div style="flex:1;font:400 14px/20px 'Instrument Sans';color:rgba(255,255,255,.8)">Search tables, orders</div>
+<div style="width:22px;height:22px;border-radius:6px;background:rgba(255,255,255,.22);font:600 12px/22px 'Instrument Sans';color:#FFF;text-align:center">/</div>
+</div>
+<div style="display:flex;align-items:center;gap:8px;margin-left:18px">
+<span style="font-family:'Material Symbols Outlined';font-size:20px;color:rgba(255,255,255,.85)">sync</span>
+<div style="font:500 13px/17px 'Instrument Sans';color:rgba(255,255,255,.92)">Updated just now</div>
+</div>
+<div style="position:relative;margin-left:18px;width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.12)">
+<span style="font-family:'Material Symbols Outlined';font-size:22px;color:#FFF">notifications</span>
+<div style="position:absolute;top:0;right:0;min-width:17px;height:17px;border-radius:9px;background:#FFFCFA;color:#B95035;font:700 10px/17px 'Instrument Sans';text-align:center">3</div>
+</div>
+<div style="width:1px;height:46px;background:rgba(255,255,255,.24);margin:0 16px"></div>
+<div style="display:flex;align-items:center;gap:10px">
+<div style="width:38px;height:38px;border-radius:19px;background:#B95035;border:1px solid rgba(255,255,255,.35);font:600 13px/38px 'Instrument Sans';color:#FFF6F1;text-align:center">IK</div>
+<div><div style="font:600 14px/18px 'Instrument Sans';color:#FFF">Imane K.</div><div style="font:500 12px/16px 'Instrument Sans';color:rgba(255,255,255,.78)">Server · Floor 1</div></div>
+<span style="font-family:'Material Symbols Outlined';font-size:20px;color:rgba(255,255,255,.7)">expand_more</span>
+</div>
+</div>
+
+<div style="flex:1;min-height:0;padding:20px 24px 24px;display:flex;flex-direction:column;gap:20px">
+
+<div style="flex:0 0 214px;background:#FFFCFA;border:1px solid #E7DDD7;border-radius:14px;box-shadow:0 4px 18px rgba(74,48,38,.05);padding:16px 20px;display:flex;flex-direction:column">
+<div style="display:flex;align-items:baseline;gap:10px">
+<div style="font:700 20px/28px 'Instrument Sans'">Needs attention now</div>
+<div style="font:500 13px/18px 'Instrument Sans';color:#938A86">11 items · oldest 24 min</div>
+<div style="flex:1"></div>
+<div style="font:600 13px/18px 'Instrument Sans';color:#B95035">View queue</div>
+</div>
+<div style="flex:1;min-height:0;display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:14px">
+<sc-for list="{{ exceptions }}" as="e" hint-placeholder-count="4">
+<div style="border:1px solid #E7DDD7;border-left:4px solid {{e.c}};border-radius:12px;background:#FFFFFF;padding:13px 14px;display:flex;flex-direction:column">
+<div style="display:flex;align-items:center;gap:8px">
+<div style="font:700 15px/20px 'Instrument Sans'">{{e.ref}}</div>
+<div style="flex:1"></div>
+<div style="display:flex;align-items:center;gap:5px;padding:3px 8px;border-radius:7px;background:{{e.bg}}">
+<span style="font-family:'Material Symbols Outlined';font-size:15px;color:{{e.c}}">{{e.icon}}</span>
+<span style="font:600 11px/15px 'Instrument Sans';color:{{e.c}}">{{e.status}}</span>
+</div>
+</div>
+<div style="font:500 12px/17px 'Instrument Sans';color:#6F6764;margin-top:3px">{{e.table}}</div>
+<div style="font:600 13px/18px 'Instrument Sans';color:#252122;margin-top:7px">{{e.meta}}</div>
+<div style="flex:1"></div>
+<button type="button" style="height:38px;border:1px solid #EBCFC3;border-radius:8px;background:#FFF1EB;color:#B95035;font:600 13px/18px 'Instrument Sans';cursor:pointer">{{e.action}}</button>
+</div>
+</sc-for>
+</div>
+</div>
+
+<div style="flex:1;min-height:0;display:flex;gap:20px">
+<div style="flex:1;min-width:0;background:#FFFCFA;border:1px solid #E7DDD7;border-radius:14px;box-shadow:0 4px 18px rgba(74,48,38,.05);padding:20px 22px;display:flex;flex-direction:column">
+<div style="display:flex;align-items:center;gap:16px">
+<div style="font:700 20px/28px 'Instrument Sans'">Live floor</div>
+<div style="flex:1"></div>
+<div style="display:flex;gap:14px">
+<sc-for list="{{ legend }}" as="l" hint-placeholder-count="4">
+<div style="display:flex;align-items:center;gap:6px"><div style="width:9px;height:9px;border-radius:5px;background:{{l.c}}"></div><div style="font:500 12px/18px 'Instrument Sans';color:#6F6764">{{l.label}}</div></div>
+</sc-for>
+</div>
+</div>
+<div style="display:flex;gap:8px;margin-top:14px">
+<sc-for list="{{ areaTabs }}" as="a" hint-placeholder-count="3">
+<div style="height:34px;padding:0 14px;border-radius:9px;border:1px solid {{a.line}};background:{{a.bg}};display:flex;align-items:center;font:600 13px/18px 'Instrument Sans';color:{{a.fg}}">{{a.label}}</div>
+</sc-for>
+</div>
+<div style="flex:1;min-height:0;display:grid;grid-template-columns:repeat(6,1fr);grid-template-rows:repeat(2,1fr);gap:12px;margin-top:16px">
+<sc-for list="{{ tables }}" as="t" hint-placeholder-count="12">
+<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;border-radius:12px;background:{{t.cellBg}};box-shadow:{{t.ring}}">
+<div style="width:64px;height:56px;border-radius:{{t.shape}};border:2px solid {{t.line}};background:{{t.bg}};display:flex;align-items:center;justify-content:center;font:700 17px/1 'Instrument Sans';color:#252122">{{t.n}}</div>
+<div style="font:600 11px/14px 'Instrument Sans';color:{{t.line}}">{{t.label}}</div>
+</div>
+</sc-for>
+</div>
+</div>
+
+<div style="width:420px;flex:0 0 420px;display:flex;flex-direction:column;gap:20px">
+<div style="flex:1;min-height:0;background:#FFFCFA;border:1px solid #E7DDD7;border-radius:14px;box-shadow:0 4px 18px rgba(74,48,38,.05);padding:16px 20px;display:flex;flex-direction:column">
+<div style="display:flex;align-items:flex-start;gap:8px">
+<div style="flex:1"><div style="font:700 18px/24px 'Instrument Sans'">Table 12 · Session #S-318</div><div style="font:500 12px/18px 'Instrument Sans';color:#938A86">Opened 19:42 · Imane K. · 6 covers</div></div>
+<div style="display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:7px;background:#F8DED3">
+<span style="font-family:'Material Symbols Outlined';font-size:16px;color:#B95035">payments</span>
+<span style="font:600 12px/16px 'Instrument Sans';color:#B95035">Awaiting payment</span>
+</div>
+</div>
+<div style="margin-top:10px;display:flex;flex-direction:column;gap:7px">
+<sc-for list="{{ sessionOrders }}" as="o" hint-placeholder-count="2">
+<div style="display:flex;align-items:center;gap:10px;height:48px;padding:0 13px;border:1px solid #E7DDD7;border-radius:10px;background:#FFFFFF">
+<div style="flex:1;min-width:0"><div style="font:600 14px/19px 'Instrument Sans'">{{o.ref}}</div><div style="font:500 11px/15px 'Instrument Sans';color:#938A86">{{o.meta}}</div></div>
+<div style="display:flex;align-items:center;gap:5px;padding:3px 8px;border-radius:7px;background:{{o.bg}}">
+<div style="width:7px;height:7px;border-radius:4px;background:{{o.c}}"></div>
+<span style="font:600 11px/15px 'Instrument Sans';color:{{o.c}}">{{o.status}}</span>
+</div>
+<div style="font:600 14px/19px 'Instrument Sans';width:76px;text-align:right">{{o.total}}</div>
+</div>
+</sc-for>
+</div>
+<div style="flex:0 0 1px;height:1px;background:#E7DDD7;margin:10px 0"></div>
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="display:flex;justify-content:space-between;font:400 13px/18px 'Instrument Sans';color:#6F6764"><div>Session subtotal</div><div style="font-weight:600;color:#252122">DA 6,461</div></div>
+<div style="display:flex;justify-content:space-between;font:400 13px/18px 'Instrument Sans';color:#6F6764"><div>Paid · cash · Yacine B.</div><div style="font-weight:600;color:#3F8F55">− DA 3,000</div></div>
+</div>
+<div style="flex:1"></div>
+<div style="display:flex;align-items:flex-end;justify-content:space-between;margin-top:8px">
+<div style="font:600 14px/19px 'Instrument Sans'">Remaining</div>
+<div style="font:700 24px/28px 'Instrument Sans';color:#B95035">DA 3,461</div>
+</div>
+<button type="button" style="height:44px;flex:0 0 44px;margin-top:10px;border:none;border-radius:8px;background:#D96F4B;color:#FFF;font:600 14px/20px 'Instrument Sans';display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer">
+<span style="font-family:'Material Symbols Outlined';font-size:20px">payments</span>Record payment</button>
+</div>
+
+<div style="flex:0 0 96px;background:#FFFCFA;border:1px solid #E7DDD7;border-radius:14px;box-shadow:0 4px 18px rgba(74,48,38,.05);padding:14px 20px;display:flex;flex-direction:column">
+<div style="display:flex;align-items:baseline">
+<div style="font:700 16px/22px 'Instrument Sans'">Service pace</div>
+<div style="flex:1"></div>
+<div style="font:700 20px/26px 'Instrument Sans';color:#B95035">DA 28,640</div>
+</div>
+<div style="font:500 11px/15px 'Instrument Sans';color:#938A86">Covers per hour · sales today from 68 orders</div>
+<div style="flex:1;min-height:0;display:flex;align-items:flex-end;gap:7px;margin-top:12px">
+<sc-for list="{{ paceBars }}" as="b" hint-placeholder-count="9">
+<div style="flex:1;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:5px">
+<div style="width:100%;height:{{b.h}};border-radius:4px 4px 0 0;background:{{b.c}}"></div>
+<div style="font:500 10px/13px 'Instrument Sans';color:#938A86">{{b.label}}</div>
+</div>
+</sc-for>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<div id="1c" style="display:flex;flex-direction:column;gap:12px;scroll-margin:40px">
+<div style="display:flex;align-items:baseline;gap:10px">
+<span style="font:600 12px/1 'Instrument Sans';letter-spacing:.06em;color:#FFFCFA;background:#C96042;padding:6px 9px;border-radius:6px">1c</span>
+<span style="font:600 15px/1.2 'Instrument Sans'">Order entry</span>
+<span style="font:400 13px/1.2 'Instrument Sans';color:#938A86">1440 × 900 · 68 / 32</span>
+</div>
+<div style="width:1440px;height:900px;background:#FBF7F4;border:1px solid #E7DDD7;border-radius:16px;box-shadow:0 4px 18px rgba(74,48,38,.06);overflow:hidden;display:flex">
+
+<div style="width:88px;flex:0 0 88px;background:#C96042;display:flex;flex-direction:column;align-items:center;padding:24px 0 22px">
+<div style="font:400 23px/1 'Instrument Serif';color:#FFF6F1;letter-spacing:.06em">MISE</div>
+<div style="display:flex;flex-direction:column;align-items:center;margin-top:24px;width:100%">
+<sc-for list="{{ navOrders }}" as="i" hint-placeholder-count="10">
+<div style="position:relative;width:54px;height:44px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:{{i.bg}};margin-top:{{i.mt}}">
+<span style="font-family:'Material Symbols Outlined';font-size:22px;color:{{i.fg}}">{{i.icon}}</span>
+<sc-if value="{{ i.badge }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;top:1px;right:2px;min-width:17px;height:17px;border-radius:9px;background:#FFFCFA;color:#B95035;font:700 10px/17px 'Instrument Sans';text-align:center">{{i.badge}}</div>
+</sc-if>
+</div>
+</sc-for>
+</div>
+<div style="flex:1"></div>
+<div style="position:relative;width:42px;height:42px;border-radius:21px;background:#B95035;border:2px solid #E98562;display:flex;align-items:center;justify-content:center;font:600 14px/1 'Instrument Sans';color:#FFF6F1">IK
+<div style="position:absolute;right:-2px;bottom:-2px;width:12px;height:12px;border-radius:7px;background:#3F8F55;border:2px solid #C96042"></div>
+</div>
+</div>
+
+<div style="flex:1;min-width:0;display:flex;flex-direction:column">
+<div style="height:86px;flex:0 0 86px;background:#C96042;margin:20px 24px 0;border-radius:14px;display:flex;align-items:center;padding:0 20px">
+<div style="font:700 27px/34px 'Instrument Sans';color:#FFFFFF;letter-spacing:-.015em">New order</div>
+<div style="width:1px;height:46px;background:rgba(255,255,255,.24);margin:0 20px"></div>
+<div style="display:flex;align-items:center;gap:8px">
+<span style="font-family:'Material Symbols Outlined';font-size:20px;color:rgba(255,255,255,.85)">storefront</span>
+<div style="font:600 15px/20px 'Instrument Sans';color:#FFFFFF">Hydra Branch</div>
+<span style="font-family:'Material Symbols Outlined';font-size:20px;color:rgba(255,255,255,.7)">expand_more</span>
+</div>
+<div style="width:1px;height:46px;background:rgba(255,255,255,.24);margin:0 20px"></div>
+<div style="display:flex;align-items:center;gap:9px">
+<div style="width:9px;height:9px;border-radius:5px;background:#A9E6BB"></div>
+<div><div style="font:700 15px/19px 'Instrument Sans';color:#FFFFFF">Dinner service</div><div style="font:500 12px/16px 'Instrument Sans';color:rgba(255,255,255,.78)">Open since 18:30</div></div>
+</div>
+<div style="flex:1"></div>
+<div style="display:flex;align-items:center;gap:9px;width:280px;height:42px;border-radius:10px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.2);padding:0 12px">
+<span style="font-family:'Material Symbols Outlined';font-size:20px;color:rgba(255,255,255,.85)">search</span>
+<div style="flex:1;font:400 14px/20px 'Instrument Sans';color:rgba(255,255,255,.8)">Search dishes</div>
+<div style="width:22px;height:22px;border-radius:6px;background:rgba(255,255,255,.22);font:600 12px/22px 'Instrument Sans';color:#FFF;text-align:center">/</div>
+</div>
+<div style="display:flex;align-items:center;gap:8px;margin-left:18px">
+<span style="font-family:'Material Symbols Outlined';font-size:20px;color:rgba(255,255,255,.85)">sync</span>
+<div style="font:500 13px/17px 'Instrument Sans';color:rgba(255,255,255,.92)">Updated just now</div>
+</div>
+<div style="width:1px;height:46px;background:rgba(255,255,255,.24);margin:0 16px"></div>
+<div style="display:flex;align-items:center;gap:10px">
+<div style="width:38px;height:38px;border-radius:19px;background:#B95035;border:1px solid rgba(255,255,255,.35);font:600 13px/38px 'Instrument Sans';color:#FFF6F1;text-align:center">IK</div>
+<div><div style="font:600 14px/18px 'Instrument Sans';color:#FFF">Imane K.</div><div style="font:500 12px/16px 'Instrument Sans';color:rgba(255,255,255,.78)">Server · Floor 1</div></div>
+</div>
+</div>
+
+<div style="flex:1;min-height:0;padding:20px 24px 24px;display:flex;gap:20px">
+
+<div style="flex:1;min-width:0;background:#FFFCFA;border:1px solid #E7DDD7;border-radius:14px;box-shadow:0 4px 18px rgba(74,48,38,.05);padding:20px 22px;display:flex;flex-direction:column">
+<div style="display:flex;align-items:center;gap:12px">
+<div style="flex:1;height:44px;border:1px solid #E7DDD7;border-radius:8px;background:#FFFFFF;display:flex;align-items:center;gap:10px;padding:0 13px">
+<span style="font-family:'Material Symbols Outlined';font-size:20px;color:#938A86">search</span>
+<div style="font:400 14px/20px 'Instrument Sans';color:#938A86">Search dish, code or ingredient</div>
+</div>
+<div style="height:44px;padding:0 14px;border:1px solid #E7DDD7;border-radius:8px;background:#FFFFFF;display:flex;align-items:center;gap:8px">
+<span style="font-family:'Material Symbols Outlined';font-size:20px;color:#6F6764">filter_list</span>
+<div style="font:600 14px/20px 'Instrument Sans';color:#6F6764">Available only</div>
+</div>
+</div>
+<div style="display:flex;gap:8px;margin-top:16px;padding-bottom:14px;border-bottom:1px solid #E7DDD7">
+<sc-for list="{{ cats }}" as="c" hint-placeholder-count="6">
+<div style="height:38px;padding:0 15px;border-radius:9px;border:1px solid {{c.line}};background:{{c.bg}};display:flex;align-items:center;gap:7px;font:600 13px/18px 'Instrument Sans';color:{{c.fg}}">
+<span>{{c.label}}</span><span style="font:500 12px/16px 'Instrument Sans';color:{{c.countFg}}">{{c.count}}</span>
+</div>
+</sc-for>
+</div>
+<div style="flex:1;min-height:0;display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(2,1fr);gap:14px;margin-top:16px">
+<sc-for list="{{ dishes }}" as="d" hint-placeholder-count="8">
+<div style="border:1px solid #E7DDD7;border-radius:12px;background:#FFFFFF;overflow:hidden;display:flex;flex-direction:column;opacity:{{d.op}}">
+<div style="flex:1;min-height:0;position:relative;background:#F5EDE8">
+<sc-if value="{{ photos }}" hint-placeholder-val="{{ true }}">
+<image-slot id="dish-{{d.id}}" shape="rect" placeholder="{{d.slot}}"></image-slot>
+</sc-if>
+<sc-if value="{{ noPhotos }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;background:#F6F0EC">
+<span style="font-family:'Material Symbols Outlined';font-size:26px;color:#BFB1AA">restaurant</span>
+<div style="font:600 11px/15px 'Instrument Sans';color:#938A86">{{d.cat}}</div>
+</div>
+</sc-if>
+</div>
+<div style="padding:11px 13px 13px;display:flex;flex-direction:column;gap:3px">
+<div style="font:600 14px/19px 'Instrument Sans'">{{d.name}}</div>
+<div style="font:500 12px/16px 'Instrument Sans';color:#938A86">{{d.sub}}</div>
+<div style="display:flex;align-items:center;gap:8px;margin-top:6px">
+<div style="flex:1;font:700 15px/20px 'Instrument Sans';color:#252122">{{d.price}}</div>
+<div style="height:32px;padding:0 12px;border-radius:8px;background:{{d.btnBg}};border:1px solid {{d.btnLine}};display:flex;align-items:center;gap:5px">
+<span style="font-family:'Material Symbols Outlined';font-size:17px;color:{{d.btnFg}}">{{d.btnIcon}}</span>
+<span style="font:600 12px/16px 'Instrument Sans';color:{{d.btnFg}}">{{d.btnLabel}}</span>
+</div>
+</div>
+</div>
+</div>
+</sc-for>
+</div>
+</div>
+
+<div style="width:412px;flex:0 0 412px;background:#FFFCFA;border:1px solid #E7DDD7;border-radius:14px;box-shadow:0 4px 18px rgba(74,48,38,.05);display:flex;flex-direction:column;overflow:hidden">
+<div style="padding:18px 20px 16px;border-bottom:1px solid #E7DDD7">
+<div style="display:flex;align-items:center;gap:10px">
+<div style="font:700 18px/24px 'Instrument Sans'">Order summary</div>
+<div style="flex:1"></div>
+<div style="font:600 13px/18px 'Instrument Sans';color:#B95035">Hold draft</div>
+</div>
+<div style="display:flex;gap:8px;margin-top:12px">
+<div style="height:32px;padding:0 11px;border-radius:8px;background:#F8DED3;display:flex;align-items:center;gap:6px">
+<span style="font-family:'Material Symbols Outlined';font-size:17px;color:#B95035">restaurant</span>
+<span style="font:600 12px/16px 'Instrument Sans';color:#B95035">Dine-in</span>
+</div>
+<div style="height:32px;padding:0 11px;border:1px solid #E7DDD7;border-radius:8px;background:#FFFFFF;display:flex;align-items:center;gap:6px">
+<span style="font:600 12px/16px 'Instrument Sans';color:#252122">Table 12</span>
+<span style="font-family:'Material Symbols Outlined';font-size:17px;color:#938A86">expand_more</span>
+</div>
+<div style="height:32px;padding:0 11px;border:1px solid #E7DDD7;border-radius:8px;background:#FFFFFF;display:flex;align-items:center;gap:6px">
+<span style="font-family:'Material Symbols Outlined';font-size:17px;color:#6F6764">group</span>
+<span style="font:600 12px/16px 'Instrument Sans';color:#252122">6 covers</span>
+</div>
+</div>
+</div>
+<div style="flex:1;min-height:0;padding:14px 20px;display:flex;flex-direction:column;gap:10px">
+<sc-for list="{{ orderLines }}" as="l" hint-placeholder-count="4">
+<div style="border:1px solid #E7DDD7;border-radius:10px;background:#FFFFFF;padding:11px 12px;display:flex;gap:11px">
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
+<div style="font:600 14px/19px 'Instrument Sans'">{{l.name}}</div>
+<div style="font:500 12px/16px 'Instrument Sans';color:#6F6764">{{l.opts}}</div>
+<sc-if value="{{ l.flag }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;align-self:flex-start;align-items:center;gap:4px;margin-top:4px;padding:3px 7px;border-radius:6px;background:#FDE9E7">
+<span style="font-family:'Material Symbols Outlined';font-size:14px;color:#D83B35">warning</span>
+<span style="font:600 11px/15px 'Instrument Sans';color:#D83B35">{{l.flag}}</span>
+</div>
+</sc-if>
+<div style="display:flex;align-items:center;gap:12px;margin-top:4px">
+<div style="font:600 12px/16px 'Instrument Sans';color:#B95035">Customize</div>
+<div style="font:600 12px/16px 'Instrument Sans';color:#6F6764">Remove</div>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
+<div style="font:700 14px/19px 'Instrument Sans'">{{l.price}}</div>
+<div style="display:flex;align-items:center;gap:7px">
+<div style="width:26px;height:26px;border:1px solid #E7DDD7;border-radius:7px;display:flex;align-items:center;justify-content:center"><span style="font-family:'Material Symbols Outlined';font-size:16px;color:#6F6764">remove</span></div>
+<div style="font:700 14px/18px 'Instrument Sans';min-width:12px;text-align:center">{{l.qty}}</div>
+<div style="width:26px;height:26px;border:1px solid #E7DDD7;border-radius:7px;display:flex;align-items:center;justify-content:center"><span style="font-family:'Material Symbols Outlined';font-size:16px;color:#6F6764">add</span></div>
+</div>
+</div>
+</div>
+</sc-for>
+<div style="height:44px;flex:0 0 44px;border:1px dashed #E0D3CB;border-radius:10px;display:flex;align-items:center;justify-content:center;gap:7px">
+<span style="font-family:'Material Symbols Outlined';font-size:18px;color:#938A86">edit_note</span>
+<span style="font:500 13px/18px 'Instrument Sans';color:#938A86">Add a note for the kitchen</span>
+</div>
+</div>
+<div style="border-top:1px solid #E7DDD7;padding:16px 20px 18px;background:#FFF">
+<div style="display:flex;flex-direction:column;gap:7px">
+<div style="display:flex;justify-content:space-between;font:400 13px/18px 'Instrument Sans';color:#6F6764"><div>Subtotal · 4 items</div><div style="font-weight:600;color:#252122">DA 4,390</div></div>
+<div style="display:flex;justify-content:space-between;font:400 13px/18px 'Instrument Sans';color:#6F6764"><div>TVA 19%</div><div style="font-weight:600;color:#252122">DA 834</div></div>
+</div>
+<div style="height:1px;background:#E7DDD7;margin:13px 0"></div>
+<div style="display:flex;align-items:flex-end;justify-content:space-between">
+<div style="font:600 15px/20px 'Instrument Sans'">Order total</div>
+<div style="font:700 28px/32px 'Instrument Sans';color:#252122">DA 5,224</div>
+</div>
+<div style="font:500 11px/15px 'Instrument Sans';color:#938A86;margin-top:5px">Calculated from menu data at submission. Illustrative in this mockup.</div>
+<button type="button" style="width:100%;height:48px;margin-top:14px;border:none;border-radius:8px;background:#D96F4B;color:#FFF;font:600 15px/20px 'Instrument Sans';display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer">
+<span style="font-family:'Material Symbols Outlined';font-size:21px">outdoor_grill</span>Send to kitchen</button>
+<div style="display:flex;gap:10px;margin-top:10px">
+<button type="button" style="flex:1;height:40px;border:1px solid #E7DDD7;border-radius:8px;background:#FFFCFA;color:#6F6764;font:600 13px/18px 'Instrument Sans';cursor:pointer">Save as draft</button>
+<button type="button" style="flex:1;height:40px;border:1px solid #E7DDD7;border-radius:8px;background:#FFFCFA;color:#6F6764;font:600 13px/18px 'Instrument Sans';cursor:pointer">Clear order</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<div id="1d" style="display:flex;flex-direction:column;gap:12px;scroll-margin:40px">
+<div style="display:flex;align-items:baseline;gap:10px">
+<span style="font:600 12px/1 'Instrument Sans';letter-spacing:.06em;color:#FFFCFA;background:#C96042;padding:6px 9px;border-radius:6px">1d</span>
+<span style="font:600 15px/1.2 'Instrument Sans'">Active orders</span>
+<span style="font:400 13px/1.2 'Instrument Sans';color:#938A86">1440 × 900 · 62 / 38 with attached inspector</span>
+</div>
+<div style="width:1440px;height:900px;background:#FBF7F4;border:1px solid #E7DDD7;border-radius:16px;box-shadow:0 4px 18px rgba(74,48,38,.06);overflow:hidden;display:flex">
+
+<div style="width:88px;flex:0 0 88px;background:#C96042;display:flex;flex-direction:column;align-items:center;padding:24px 0 22px">
+<div style="font:400 23px/1 'Instrument Serif';color:#FFF6F1;letter-spacing:.06em">MISE</div>
+<div style="display:flex;flex-direction:column;align-items:center;margin-top:24px;width:100%">
+<sc-for list="{{ navOrders }}" as="i" hint-placeholder-count="10">
+<div style="position:relative;width:54px;height:44px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:{{i.bg}};margin-top:{{i.mt}}">
+<span style="font-family:'Material Symbols Outlined';font-size:22px;color:{{i.fg}}">{{i.icon}}</span>
+<sc-if value="{{ i.badge }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;top:1px;right:2px;min-width:17px;height:17px;border-radius:9px;background:#FFFCFA;color:#B95035;font:700 10px/17px 'Instrument Sans';text-align:center">{{i.badge}}</div>
+</sc-if>
+</div>
+</sc-for>
+</div>
+<div style="flex:1"></div>
+<div style="position:relative;width:42px;height:42px;border-radius:21px;background:#B95035;border:2px solid #E98562;display:flex;align-items:center;justify-content:center;font:600 14px/1 'Instrument Sans';color:#FFF6F1">IK
+<div style="position:absolute;right:-2px;bottom:-2px;width:12px;height:12px;border-radius:7px;background:#3F8F55;border:2px solid #C96042"></div>
+</div>
+</div>
+
+<div style="flex:1;min-width:0;display:flex;flex-direction:column">
+<div style="height:86px;flex:0 0 86px;background:#C96042;margin:20px 24px 0;border-radius:14px;display:flex;align-items:center;padding:0 20px">
+<div style="font:700 27px/34px 'Instrument Sans';color:#FFFFFF;letter-spacing:-.015em">Orders</div>
+<div style="width:1px;height:46px;background:rgba(255,255,255,.24);margin:0 20px"></div>
+<div style="display:flex;align-items:center;gap:8px">
+<span style="font-family:'Material Symbols Outlined';font-size:20px;color:rgba(255,255,255,.85)">storefront</span>
+<div style="font:600 15px/20px 'Instrument Sans';color:#FFFFFF">Hydra Branch</div>
+<span style="font-family:'Material Symbols Outlined';font-size:20px;color:rgba(255,255,255,.7)">expand_more</span>
+</div>
+<div style="width:1px;height:46px;background:rgba(255,255,255,.24);margin:0 20px"></div>
+<div style="display:flex;align-items:center;gap:9px">
+<div style="width:9px;height:9px;border-radius:5px;background:#A9E6BB"></div>
+<div><div style="font:700 15px/19px 'Instrument Sans';color:#FFFFFF">Dinner service</div><div style="font:500 12px/16px 'Instrument Sans';color:rgba(255,255,255,.78)">Open since 18:30</div></div>
+</div>
+<div style="flex:1"></div>
+<div style="display:flex;align-items:center;gap:9px;width:250px;height:42px;border-radius:10px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.2);padding:0 12px">
+<span style="font-family:'Material Symbols Outlined';font-size:20px;color:rgba(255,255,255,.85)">search</span>
+<div style="flex:1;font:400 14px/20px 'Instrument Sans';color:rgba(255,255,255,.8)">Order ref or table</div>
+</div>
+<div style="display:flex;align-items:center;gap:8px;margin-left:18px">
+<span style="font-family:'Material Symbols Outlined';font-size:20px;color:rgba(255,255,255,.85)">sync</span>
+<div style="font:500 13px/17px 'Instrument Sans';color:rgba(255,255,255,.92)">Updated 12s ago</div>
+</div>
+<div style="position:relative;margin-left:18px;width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.12)">
+<span style="font-family:'Material Symbols Outlined';font-size:22px;color:#FFF">notifications</span>
+<div style="position:absolute;top:0;right:0;min-width:17px;height:17px;border-radius:9px;background:#FFFCFA;color:#B95035;font:700 10px/17px 'Instrument Sans';text-align:center">3</div>
+</div>
+<div style="width:1px;height:46px;background:rgba(255,255,255,.24);margin:0 16px"></div>
+<div style="display:flex;align-items:center;gap:10px">
+<div style="width:38px;height:38px;border-radius:19px;background:#B95035;border:1px solid rgba(255,255,255,.35);font:600 13px/38px 'Instrument Sans';color:#FFF6F1;text-align:center">IK</div>
+<div><div style="font:600 14px/18px 'Instrument Sans';color:#FFF">Imane K.</div><div style="font:500 12px/16px 'Instrument Sans';color:rgba(255,255,255,.78)">Server · Floor 1</div></div>
+</div>
+</div>
+
+<div style="flex:1;min-height:0;padding:20px 24px 24px;display:flex;gap:20px">
+
+<div style="flex:1;min-width:0;background:#FFFCFA;border:1px solid #E7DDD7;border-radius:14px;box-shadow:0 4px 18px rgba(74,48,38,.05);display:flex;flex-direction:column;overflow:hidden">
+<div style="padding:18px 22px 16px;display:flex;align-items:center;gap:8px">
+<sc-for list="{{ orderFilters }}" as="f" hint-placeholder-count="5">
+<div style="height:36px;padding:0 13px;border-radius:9px;border:1px solid {{f.line}};background:{{f.bg}};display:flex;align-items:center;gap:7px">
+<div style="font:600 13px/18px 'Instrument Sans';color:{{f.fg}}">{{f.label}}</div>
+<div style="min-width:20px;height:20px;padding:0 5px;border-radius:6px;background:{{f.pillBg}};font:700 11px/20px 'Instrument Sans';color:{{f.pillFg}};text-align:center">{{f.n}}</div>
+</div>
+</sc-for>
+<div style="flex:1"></div>
+<div style="height:36px;padding:0 12px;border:1px solid #E7DDD7;border-radius:9px;background:#FFF;display:flex;align-items:center;gap:7px">
+<span style="font-family:'Material Symbols Outlined';font-size:18px;color:#6F6764">swap_vert</span>
+<div style="font:600 13px/18px 'Instrument Sans';color:#6F6764">Oldest first</div>
+</div>
+</div>
+<div style="display:flex;align-items:center;height:38px;padding:0 22px;background:#F6F0EC;border-top:1px solid #E7DDD7;border-bottom:1px solid #E7DDD7;font:600 11px/15px 'Instrument Sans';color:#6F6764;letter-spacing:.04em">
+<div style="width:96px">ORDER</div>
+<div style="width:78px">TABLE</div>
+<div style="width:146px">STATUS</div>
+<div style="width:92px">ELAPSED</div>
+<div style="flex:1">ITEMS</div>
+<div style="width:104px;text-align:right">TOTAL</div>
+<div style="width:118px;text-align:right">PAYMENT</div>
+<div style="width:28px"></div>
+</div>
+<div style="flex:1;min-height:0;display:flex;flex-direction:column">
+<sc-for list="{{ orders }}" as="o" hint-placeholder-count="7">
+<div style="display:flex;align-items:center;height:66px;padding:0 22px;border-bottom:1px solid #F0E9E5;background:{{o.rowBg}};box-shadow:{{o.rowMark}}">
+<div style="width:96px"><div style="font:700 14px/19px 'Instrument Sans'">{{o.ref}}</div><div style="font:500 11px/15px 'Instrument Sans';color:#938A86">{{o.time}}</div></div>
+<div style="width:78px;font:600 14px/19px 'Instrument Sans'">{{o.table}}</div>
+<div style="width:146px">
+<div style="display:inline-flex;align-items:center;gap:6px;padding:4px 9px;border-radius:7px;background:{{o.bg}}">
+<span style="font-family:'Material Symbols Outlined';font-size:16px;color:{{o.c}}">{{o.icon}}</span>
+<span style="font:600 12px/16px 'Instrument Sans';color:{{o.c}}">{{o.status}}</span>
+</div>
+</div>
+<div style="width:92px"><div style="font:600 14px/19px 'Instrument Sans';color:{{o.elC}}">{{o.elapsed}}</div><div style="font:500 11px/15px 'Instrument Sans';color:#938A86">{{o.elNote}}</div></div>
+<div style="flex:1;min-width:0;padding-right:12px"><div style="font:500 13px/18px 'Instrument Sans';color:#6F6764;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{o.items}}</div><div style="font:600 11px/15px 'Instrument Sans';color:{{o.noteC}}">{{o.note}}</div></div>
+<div style="width:104px;text-align:right;font:700 14px/19px 'Instrument Sans'">{{o.total}}</div>
+<div style="width:118px;display:flex;justify-content:flex-end">
+<div style="display:inline-flex;align-items:center;gap:6px;padding:4px 9px;border-radius:7px;background:{{o.payBg}}">
+<div style="width:7px;height:7px;border-radius:4px;background:{{o.payC}}"></div>
+<span style="font:600 12px/16px 'Instrument Sans';color:{{o.payC}}">{{o.pay}}</span>
+</div>
+</div>
+<div style="width:28px;display:flex;justify-content:flex-end"><span style="font-family:'Material Symbols Outlined';font-size:20px;color:#938A86">chevron_right</span></div>
+</div>
+</sc-for>
+<div style="flex:1"></div>
+<div style="height:46px;display:flex;align-items:center;padding:0 22px;border-top:1px solid #E7DDD7;font:500 12px/16px 'Instrument Sans';color:#938A86">Showing 7 of 24 orders · dinner service, Hydra branch</div>
+</div>
+</div>
+
+<div style="width:498px;flex:0 0 498px;background:#FFFFFF;border:1px solid #E7DDD7;border-radius:14px;box-shadow:0 4px 18px rgba(74,48,38,.05);display:flex;flex-direction:column;overflow:hidden">
+<div style="padding:18px 20px 16px;border-bottom:1px solid #E7DDD7">
+<div style="display:flex;align-items:flex-start;gap:10px">
+<div style="flex:1">
+<div style="display:flex;align-items:center;gap:9px">
+<div style="font:700 22px/28px 'Instrument Sans'">#A-1042</div>
+<div style="display:inline-flex;align-items:center;gap:6px;padding:4px 9px;border-radius:7px;background:#FDE9E7">
+<span style="font-family:'Material Symbols Outlined';font-size:16px;color:#D83B35">schedule</span>
+<span style="font:600 12px/16px 'Instrument Sans';color:#D83B35">Delayed · 24 min</span>
+</div>
+</div>
+<div style="font:500 13px/18px 'Instrument Sans';color:#6F6764;margin-top:3px">Table 7 · 4 covers · Dine-in · opened 20:14 by Imane K.</div>
+</div>
+<span style="font-family:'Material Symbols Outlined';font-size:20px;color:#938A86">close</span>
+</div>
+<div style="display:flex;align-items:center;margin-top:12px">
+<sc-for list="{{ stepper }}" as="s" hint-placeholder-count="5">
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;position:relative">
+<div style="position:absolute;top:9px;left:0;right:0;height:2px;background:{{s.bar}}"></div>
+<div style="position:relative;width:20px;height:20px;border-radius:10px;background:{{s.dotBg}};border:2px solid {{s.dotLine}}"></div>
+<div style="font:600 11px/15px 'Instrument Sans';color:{{s.fg}}">{{s.label}}</div>
+</div>
+</sc-for>
+</div>
+</div>
+<div style="flex:1;min-height:0;padding:14px 20px;display:flex;flex-direction:column;gap:10px">
+<div style="border:1px solid #F5C9C4;border-radius:10px;background:#FDE9E7;padding:10px 12px;display:flex;align-items:center;gap:10px">
+<span style="font-family:'Material Symbols Outlined';font-size:20px;color:#D83B35">emergency_home</span>
+<div style="font:500 12px/18px 'Instrument Sans';color:#8E2C28"><strong style="font-weight:700;color:#B02A25">Allergy — peanut, severe.</strong> Guest 2 · no satay sauce, no shared fry oil.</div>
+</div>
+<div style="border:1px solid #F0DCB6;border-radius:10px;background:#FFF1D9;padding:10px 12px;display:flex;align-items:center;gap:10px">
+<span style="font-family:'Material Symbols Outlined';font-size:20px;color:#B0700F">published_with_changes</span>
+<div style="font:500 12px/18px 'Instrument Sans';color:#8A5A0D"><strong style="font-weight:700">Changed after kitchen receipt.</strong> 20:26 · Imane K. · −1 Bourek, +1 Salade mechouia.</div>
+</div>
+<div style="font:600 12px/16px 'Instrument Sans';color:#6F6764;letter-spacing:.04em">ITEMS · 4</div>
+<div style="display:flex;flex-direction:column;gap:6px">
+<sc-for list="{{ inspectorItems }}" as="it" hint-placeholder-count="5">
+<div style="display:flex;align-items:center;gap:11px;padding:7px 11px;border:1px solid #E7DDD7;border-radius:10px">
+<div style="width:26px;height:26px;border-radius:7px;background:#FFF1EB;font:700 13px/26px 'Instrument Sans';color:#B95035;text-align:center">{{it.qty}}</div>
+<div style="flex:1;min-width:0"><div style="font:600 14px/19px 'Instrument Sans'">{{it.name}}</div><div style="font:500 12px/16px 'Instrument Sans';color:#6F6764">{{it.opts}}</div></div>
+<div style="display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:7px;background:{{it.bg}}">
+<div style="width:7px;height:7px;border-radius:4px;background:{{it.c}}"></div>
+<span style="font:600 11px/15px 'Instrument Sans';color:{{it.c}}">{{it.state}}</span>
+</div>
+<div style="width:78px;text-align:right;font:600 13px/18px 'Instrument Sans'">{{it.price}}</div>
+</div>
+</sc-for>
+</div>
+</div>
+<div style="border-top:1px solid #E7DDD7;padding:13px 20px 15px;background:#FFFCFA">
+<div style="display:flex;justify-content:space-between;font:400 13px/18px 'Instrument Sans';color:#6F6764"><div>Subtotal · TVA 19% included</div><div style="font:700 18px/24px 'Instrument Sans';color:#252122">DA 4,820</div></div>
+<div style="display:flex;align-items:center;gap:6px;margin-top:8px">
+<div style="width:7px;height:7px;border-radius:4px;background:#D98A17"></div>
+<div style="font:600 12px/17px 'Instrument Sans';color:#8A5A0D">{{ payNote }}</div>
+</div>
+<button type="button" style="width:100%;height:44px;margin-top:11px;border:none;border-radius:8px;background:#D96F4B;color:#FFF;font:600 15px/20px 'Instrument Sans';display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer">
+<span style="font-family:'Material Symbols Outlined';font-size:21px">room_service</span>Mark ready to serve</button>
+<div style="display:flex;gap:10px;margin-top:9px">
+<button type="button" style="flex:1;height:40px;border:1px solid #E7DDD7;border-radius:8px;background:#FFFCFA;color:#6F6764;font:600 13px/18px 'Instrument Sans';cursor:pointer">Print ticket</button>
+<button type="button" style="flex:1;height:40px;border:1px solid #E7DDD7;border-radius:8px;background:#FFFCFA;color:#6F6764;font:600 13px/18px 'Instrument Sans';cursor:pointer">Activity history</button>
+<button type="button" style="flex:1;height:40px;border:1px solid #F3CFCC;border-radius:8px;background:#FFFCFA;color:#C0332E;font:600 13px/18px 'Instrument Sans';cursor:pointer">Cancel order</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<div id="1e" style="display:flex;flex-direction:column;gap:12px;scroll-margin:40px">
+<div style="display:flex;align-items:baseline;gap:10px">
+<span style="font:600 12px/1 'Instrument Sans';letter-spacing:.06em;color:#FFFCFA;background:#C96042;padding:6px 9px;border-radius:6px">1e</span>
+<span style="font:600 15px/1.2 'Instrument Sans'">Kitchen</span>
+<span style="font:400 13px/1.2 'Instrument Sans';color:#938A86">1440 × 900 · four lanes, touch operable</span>
+</div>
+<div style="width:1440px;height:900px;background:#FBF7F4;border:1px solid #E7DDD7;border-radius:16px;box-shadow:0 4px 18px rgba(74,48,38,.06);overflow:hidden;display:flex">
+
+<div style="width:88px;flex:0 0 88px;background:#C96042;display:flex;flex-direction:column;align-items:center;padding:24px 0 22px">
+<div style="font:400 23px/1 'Instrument Serif';color:#FFF6F1;letter-spacing:.06em">MISE</div>
+<div style="display:flex;flex-direction:column;align-items:center;margin-top:24px;width:100%">
+<sc-for list="{{ navKitchen }}" as="i" hint-placeholder-count="10">
+<div style="position:relative;width:54px;height:44px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:{{i.bg}};margin-top:{{i.mt}}">
+<span style="font-family:'Material Symbols Outlined';font-size:22px;color:{{i.fg}}">{{i.icon}}</span>
+<sc-if value="{{ i.badge }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;top:1px;right:2px;min-width:17px;height:17px;border-radius:9px;background:#FFFCFA;color:#B95035;font:700 10px/17px 'Instrument Sans';text-align:center">{{i.badge}}</div>
+</sc-if>
+</div>
+</sc-for>
+</div>
+<div style="flex:1"></div>
+<div style="position:relative;width:42px;height:42px;border-radius:21px;background:#B95035;border:2px solid #E98562;display:flex;align-items:center;justify-content:center;font:600 14px/1 'Instrument Sans';color:#FFF6F1">KT
+<div style="position:absolute;right:-2px;bottom:-2px;width:12px;height:12px;border-radius:7px;background:#3F8F55;border:2px solid #C96042"></div>
+</div>
+</div>
+
+<div style="flex:1;min-width:0;display:flex;flex-direction:column">
+<div style="height:86px;flex:0 0 86px;background:#C96042;margin:20px 24px 0;border-radius:14px;display:flex;align-items:center;padding:0 20px">
+<div style="font:700 27px/34px 'Instrument Sans';color:#FFFFFF;letter-spacing:-.015em">Kitchen</div>
+<div style="width:1px;height:46px;background:rgba(255,255,255,.24);margin:0 20px"></div>
+<div style="display:flex;align-items:center;gap:8px">
+<span style="font-family:'Material Symbols Outlined';font-size:20px;color:rgba(255,255,255,.85)">storefront</span>
+<div style="font:600 15px/20px 'Instrument Sans';color:#FFFFFF">Hydra Branch</div>
+</div>
+<div style="width:1px;height:46px;background:rgba(255,255,255,.24);margin:0 20px"></div>
+<div style="display:flex;align-items:center;gap:9px">
+<div style="width:9px;height:9px;border-radius:5px;background:#A9E6BB"></div>
+<div><div style="font:700 15px/19px 'Instrument Sans';color:#FFFFFF">Dinner service</div><div style="font:500 12px/16px 'Instrument Sans';color:rgba(255,255,255,.78)">9 tickets open</div></div>
+</div>
+<div style="flex:1"></div>
+<div style="display:flex;align-items:center;gap:8px;height:42px;padding:0 14px;border-radius:10px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.2)">
+<span style="font-family:'Material Symbols Outlined';font-size:20px;color:#FFF">volume_up</span>
+<div style="font:600 13px/18px 'Instrument Sans';color:#FFF">Sound on</div>
+</div>
+<div style="display:flex;align-items:center;gap:8px;margin-left:18px">
+<span style="font-family:'Material Symbols Outlined';font-size:20px;color:rgba(255,255,255,.85)">sync</span>
+<div style="font:500 13px/17px 'Instrument Sans';color:rgba(255,255,255,.92)">Updated just now</div>
+</div>
+<div style="width:1px;height:46px;background:rgba(255,255,255,.24);margin:0 16px"></div>
+<div style="display:flex;align-items:center;gap:10px">
+<div style="width:38px;height:38px;border-radius:19px;background:#B95035;border:1px solid rgba(255,255,255,.35);font:600 13px/38px 'Instrument Sans';color:#FFF6F1;text-align:center">KT</div>
+<div><div style="font:600 14px/18px 'Instrument Sans';color:#FFF">Karim T.</div><div style="font:500 12px/16px 'Instrument Sans';color:rgba(255,255,255,.78)">Chef de partie · Grill</div></div>
+</div>
+</div>
+
+<div style="flex:1;min-height:0;padding:18px 24px 22px;display:flex;flex-direction:column;gap:16px">
+<div style="display:flex;align-items:center;gap:9px">
+<sc-for list="{{ stations }}" as="s" hint-placeholder-count="5">
+<div style="height:42px;padding:0 16px;border-radius:10px;border:1px solid {{s.line}};background:{{s.bg}};display:flex;align-items:center;gap:8px">
+<span style="font-family:'Material Symbols Outlined';font-size:20px;color:{{s.fg}}">{{s.icon}}</span>
+<div style="font:600 14px/20px 'Instrument Sans';color:{{s.fg}}">{{s.label}}</div>
+<div style="min-width:22px;height:22px;padding:0 6px;border-radius:7px;background:{{s.pillBg}};font:700 12px/22px 'Instrument Sans';color:{{s.pillFg}};text-align:center">{{s.n}}</div>
+</div>
+</sc-for>
+<div style="flex:1"></div>
+<div style="font:500 13px/18px 'Instrument Sans';color:#6F6764">Items can be advanced independently of the order</div>
+</div>
+
+<div style="flex:1;min-height:0;display:grid;grid-template-columns:repeat(4,1fr);gap:16px">
+<sc-for list="{{ lanes }}" as="ln" hint-placeholder-count="4">
+<div style="min-width:0;background:#FFFCFA;border:1px solid #E7DDD7;border-radius:14px;box-shadow:0 4px 18px rgba(74,48,38,.05);display:flex;flex-direction:column;overflow:hidden">
+<div style="height:52px;flex:0 0 52px;display:flex;align-items:center;gap:9px;padding:0 15px;border-bottom:1px solid #E7DDD7;background:{{ln.headBg}}">
+<div style="width:9px;height:9px;border-radius:5px;background:{{ln.c}}"></div>
+<div style="flex:1;font:700 15px/20px 'Instrument Sans';color:#252122">{{ln.title}}</div>
+<div style="min-width:24px;height:24px;padding:0 7px;border-radius:7px;background:#FFFFFF;border:1px solid #E7DDD7;font:700 12px/22px 'Instrument Sans';color:#6F6764;text-align:center">{{ln.n}}</div>
+</div>
+<div style="flex:1;min-height:0;padding:12px;display:flex;flex-direction:column;gap:12px">
+<sc-for list="{{ ln.tickets }}" as="k" hint-placeholder-count="2">
+<div style="border:1px solid #E7DDD7;border-top:3px solid {{k.top}};border-radius:12px;background:#FFFFFF;padding:12px;display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;align-items:center;gap:8px">
+<div style="flex:1;font:700 17px/22px 'Instrument Sans'">{{k.ref}}</div>
+<div style="display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:7px;background:{{k.elBg}}">
+<span style="font-family:'Material Symbols Outlined';font-size:15px;color:{{k.elC}}">timer</span>
+<span style="font:700 12px/16px 'Instrument Sans';color:{{k.elC}}">{{k.el}}</span>
+</div>
+</div>
+<div style="font:600 13px/18px 'Instrument Sans';color:#6F6764">{{k.table}}</div>
+<div style="display:flex;flex-direction:column;gap:7px">
+<sc-for list="{{ k.items }}" as="ki" hint-placeholder-count="2">
+<div style="display:flex;gap:9px">
+<div style="width:22px;height:22px;border-radius:6px;background:#FFF1EB;font:700 12px/22px 'Instrument Sans';color:#B95035;text-align:center">{{ki.q}}</div>
+<div style="flex:1;min-width:0">
+<div style="font:600 14px/19px 'Instrument Sans'">{{ki.name}}</div>
+<div style="font:500 12px/16px 'Instrument Sans';color:#6F6764">{{ki.opt}}</div>
+</div>
+</div>
+</sc-for>
+</div>
+<sc-if value="{{ k.allergy }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;align-items:center;gap:7px;padding:6px 9px;border-radius:8px;background:#FDE9E7;border:1px solid #F5C9C4">
+<span style="font-family:'Material Symbols Outlined';font-size:17px;color:#D83B35">emergency_home</span>
+<div style="font:700 12px/16px 'Instrument Sans';color:#B02A25">{{k.allergy}}</div>
+</div>
+</sc-if>
+<sc-if value="{{ k.changed }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;align-items:center;gap:7px;padding:6px 9px;border-radius:8px;background:#FFF1D9;border:1px solid #F0DCB6">
+<span style="font-family:'Material Symbols Outlined';font-size:17px;color:#B0700F">published_with_changes</span>
+<div style="font:700 12px/16px 'Instrument Sans';color:#8A5A0D">{{k.changed}}</div>
+</div>
+</sc-if>
+<sc-if value="{{ stationAssignment }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;align-items:center;gap:7px">
+<div style="height:26px;padding:0 9px;border-radius:7px;background:#F6F0EC;border:1px solid #E7DDD7;display:flex;align-items:center;gap:5px">
+<span style="font-family:'Material Symbols Outlined';font-size:15px;color:#6F6764">{{k.stIcon}}</span>
+<span style="font:600 11px/15px 'Instrument Sans';color:#6F6764">{{k.station}}</span>
+</div>
+<div style="font:500 11px/15px 'Instrument Sans';color:#938A86">{{k.who}}</div>
+</div>
+</sc-if>
+<button type="button" style="height:46px;border:none;border-radius:9px;background:{{k.btnBg}};color:{{k.btnFg}};font:600 14px/20px 'Instrument Sans';display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer">
+<span style="font-family:'Material Symbols Outlined';font-size:20px">{{k.btnIcon}}</span>{{k.btn}}</button>
+</div>
+</sc-for>
+<sc-if value="{{ ln.more }}" hint-placeholder-val="{{ false }}">
+<div style="height:38px;flex:0 0 38px;border:1px dashed #E0D3CB;border-radius:9px;display:flex;align-items:center;justify-content:center;gap:6px">
+<span style="font-family:'Material Symbols Outlined';font-size:17px;color:#938A86">expand_more</span>
+<div style="font:600 12px/16px 'Instrument Sans';color:#6F6764">{{ln.more}}</div>
+</div>
+</sc-if>
+</div>
+</div>
+</sc-for>
+</div>
+
+<div style="flex:0 0 66px;background:#FFFCFA;border:1px solid #E7DDD7;border-radius:14px;box-shadow:0 4px 18px rgba(74,48,38,.05);display:flex;align-items:center;padding:0 22px;gap:0">
+<div style="font:700 15px/20px 'Instrument Sans'">Service health</div>
+<div style="width:1px;height:40px;background:#E7DDD7;margin:0 22px"></div>
+<sc-for list="{{ health }}" as="h" hint-placeholder-count="4">
+<div style="flex:1"><div style="font:500 12px/16px 'Instrument Sans';color:#6F6764">{{h.k}}</div><div style="font:700 22px/28px 'Instrument Sans';color:{{h.c}}">{{h.v}}</div></div>
+</sc-for>
+<div style="display:flex;align-items:center;gap:7px;padding:8px 12px;border-radius:9px;background:#FFF1D9">
+<span style="font-family:'Material Symbols Outlined';font-size:19px;color:#B0700F">priority_high</span>
+<div style="font:600 13px/18px 'Instrument Sans';color:#8A5A0D">3 tickets past target — grill is the constraint</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<div id="1f" style="display:flex;flex-direction:column;gap:12px;scroll-margin:40px">
+<div style="display:flex;align-items:baseline;gap:10px">
+<span style="font:600 12px/1 'Instrument Sans';letter-spacing:.06em;color:#FFFCFA;background:#C96042;padding:6px 9px;border-radius:6px">1f</span>
+<span style="font:600 15px/1.2 'Instrument Sans'">Tables and payment</span>
+<span style="font:400 13px/1.2 'Instrument Sans';color:#938A86">1440 × 900 · 64 / 36</span>
+</div>
+<div style="width:1440px;height:900px;background:#FBF7F4;border:1px solid #E7DDD7;border-radius:16px;box-shadow:0 4px 18px rgba(74,48,38,.06);overflow:hidden;display:flex">
+
+<div style="width:88px;flex:0 0 88px;background:#C96042;display:flex;flex-direction:column;align-items:center;padding:24px 0 22px">
+<div style="font:400 23px/1 'Instrument Serif';color:#FFF6F1;letter-spacing:.06em">MISE</div>
+<div style="display:flex;flex-direction:column;align-items:center;margin-top:24px;width:100%">
+<sc-for list="{{ navTables }}" as="i" hint-placeholder-count="10">
+<div style="position:relative;width:54px;height:44px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:{{i.bg}};margin-top:{{i.mt}}">
+<span style="font-family:'Material Symbols Outlined';font-size:22px;color:{{i.fg}}">{{i.icon}}</span>
+<sc-if value="{{ i.badge }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;top:1px;right:2px;min-width:17px;height:17px;border-radius:9px;background:#FFFCFA;color:#B95035;font:700 10px/17px 'Instrument Sans';text-align:center">{{i.badge}}</div>
+</sc-if>
+</div>
+</sc-for>
+</div>
+<div style="flex:1"></div>
+<div style="position:relative;width:42px;height:42px;border-radius:21px;background:#B95035;border:2px solid #E98562;display:flex;align-items:center;justify-content:center;font:600 14px/1 'Instrument Sans';color:#FFF6F1">IK
+<div style="position:absolute;right:-2px;bottom:-2px;width:12px;height:12px;border-radius:7px;background:#3F8F55;border:2px solid #C96042"></div>
+</div>
+</div>
+
+<div style="flex:1;min-width:0;display:flex;flex-direction:column">
+<div style="height:86px;flex:0 0 86px;background:#C96042;margin:20px 24px 0;border-radius:14px;display:flex;align-items:center;padding:0 20px">
+<div style="font:700 27px/34px 'Instrument Sans';color:#FFFFFF;letter-spacing:-.015em">Tables</div>
+<div style="width:1px;height:46px;background:rgba(255,255,255,.24);margin:0 20px"></div>
+<div style="display:flex;align-items:center;gap:8px">
+<span style="font-family:'Material Symbols Outlined';font-size:20px;color:rgba(255,255,255,.85)">storefront</span>
+<div style="font:600 15px/20px 'Instrument Sans';color:#FFFFFF">Hydra Branch</div>
+<span style="font-family:'Material Symbols Outlined';font-size:20px;color:rgba(255,255,255,.7)">expand_more</span>
+</div>
+<div style="width:1px;height:46px;background:rgba(255,255,255,.24);margin:0 20px"></div>
+<div style="display:flex;align-items:center;gap:9px">
+<div style="width:9px;height:9px;border-radius:5px;background:#A9E6BB"></div>
+<div><div style="font:700 15px/19px 'Instrument Sans';color:#FFFFFF">Dinner service</div><div style="font:500 12px/16px 'Instrument Sans';color:rgba(255,255,255,.78)">14 of 18 tables seated</div></div>
+</div>
+<div style="flex:1"></div>
+<div style="display:flex;align-items:center;gap:9px;width:236px;height:42px;border-radius:10px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.2);padding:0 12px">
+<span style="font-family:'Material Symbols Outlined';font-size:20px;color:rgba(255,255,255,.85)">search</span>
+<div style="flex:1;font:400 14px/20px 'Instrument Sans';color:rgba(255,255,255,.8)">Table or session</div>
+</div>
+<div style="display:flex;align-items:center;gap:8px;margin-left:18px">
+<span style="font-family:'Material Symbols Outlined';font-size:20px;color:rgba(255,255,255,.85)">sync</span>
+<div style="font:500 13px/17px 'Instrument Sans';color:rgba(255,255,255,.92)">Updated just now</div>
+</div>
+<div style="width:1px;height:46px;background:rgba(255,255,255,.24);margin:0 16px"></div>
+<div style="display:flex;align-items:center;gap:10px">
+<div style="width:38px;height:38px;border-radius:19px;background:#B95035;border:1px solid rgba(255,255,255,.35);font:600 13px/38px 'Instrument Sans';color:#FFF6F1;text-align:center">IK</div>
+<div><div style="font:600 14px/18px 'Instrument Sans';color:#FFF">Imane K.</div><div style="font:500 12px/16px 'Instrument Sans';color:rgba(255,255,255,.78)">Server · Floor 1</div></div>
+</div>
+</div>
+
+<div style="flex:1;min-height:0;padding:20px 24px 24px;display:flex;gap:20px">
+
+<div style="flex:1;min-width:0;background:#FFFCFA;border:1px solid #E7DDD7;border-radius:14px;box-shadow:0 4px 18px rgba(74,48,38,.05);padding:20px 22px;display:flex;flex-direction:column">
+<div style="display:flex;align-items:center;gap:9px">
+<sc-for list="{{ areaTabs }}" as="a" hint-placeholder-count="3">
+<div style="height:38px;padding:0 15px;border-radius:9px;border:1px solid {{a.line}};background:{{a.bg}};display:flex;align-items:center;font:600 14px/20px 'Instrument Sans';color:{{a.fg}}">{{a.label}}</div>
+</sc-for>
+<div style="flex:1"></div>
+<div style="height:38px;padding:0 13px;border:1px solid #E7DDD7;border-radius:9px;background:#FFF;display:flex;align-items:center;gap:7px">
+<span style="font-family:'Material Symbols Outlined';font-size:18px;color:#6F6764">tune</span>
+<div style="font:600 13px/18px 'Instrument Sans';color:#6F6764">All states</div>
+</div>
+</div>
+<div style="display:flex;gap:16px;margin-top:16px;padding-bottom:16px;border-bottom:1px solid #E7DDD7">
+<sc-for list="{{ legendFull }}" as="l" hint-placeholder-count="5">
+<div style="display:flex;align-items:center;gap:7px">
+<div style="width:11px;height:11px;border-radius:6px;background:{{l.c}}"></div>
+<div style="font:500 13px/18px 'Instrument Sans';color:#6F6764">{{l.label}}</div>
+<div style="font:700 13px/18px 'Instrument Sans';color:#252122">{{l.n}}</div>
+</div>
+</sc-for>
+</div>
+<div style="flex:1;min-height:0;display:grid;grid-template-columns:repeat(5,1fr);grid-template-rows:repeat(3,1fr);gap:14px;margin-top:16px">
+<sc-for list="{{ floor15 }}" as="t" hint-placeholder-count="15">
+<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border-radius:12px;background:{{t.cellBg}};box-shadow:{{t.ring}}">
+<div style="width:84px;height:72px;border-radius:{{t.shape}};border:2px solid {{t.line}};background:{{t.bg}};display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px">
+<div style="font:700 20px/1 'Instrument Sans';color:#252122">{{t.n}}</div>
+<div style="font:500 11px/1 'Instrument Sans';color:#6F6764">{{t.seats}}</div>
+</div>
+<div style="font:600 11px/14px 'Instrument Sans';color:{{t.line}}">{{t.label}}</div>
+<div style="font:500 11px/14px 'Instrument Sans';color:#938A86">{{t.meta}}</div>
+</div>
+</sc-for>
+</div>
+</div>
+
+<div style="width:470px;flex:0 0 470px;background:#FFFFFF;border:1px solid #E7DDD7;border-radius:14px;box-shadow:0 4px 18px rgba(74,48,38,.05);display:flex;flex-direction:column;overflow:hidden">
+<div style="padding:18px 20px 16px;border-bottom:1px solid #E7DDD7">
+<div style="display:flex;align-items:flex-start;gap:10px">
+<div style="flex:1"><div style="font:700 22px/28px 'Instrument Sans'">Table 12</div><div style="font:500 13px/18px 'Instrument Sans';color:#6F6764;margin-top:2px">Session #S-318 · opened 19:42 · 6 covers · Imane K.</div></div>
+<div style="display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:7px;background:#F8DED3">
+<span style="font-family:'Material Symbols Outlined';font-size:16px;color:#B95035">payments</span>
+<span style="font:600 12px/16px 'Instrument Sans';color:#B95035">Awaiting payment</span>
+</div>
+</div>
+</div>
+<div style="flex:1;min-height:0;padding:16px 20px;display:flex;flex-direction:column">
+<div style="font:600 12px/16px 'Instrument Sans';color:#6F6764;letter-spacing:.04em">ORDERS IN THIS SESSION · 2</div>
+<div style="display:flex;flex-direction:column;gap:9px;margin-top:11px">
+<sc-for list="{{ sessionOrders }}" as="o" hint-placeholder-count="2">
+<div style="display:flex;align-items:center;gap:11px;height:58px;padding:0 13px;border:1px solid #E7DDD7;border-radius:10px">
+<div style="flex:1;min-width:0"><div style="font:600 15px/20px 'Instrument Sans'">{{o.ref}}</div><div style="font:500 12px/16px 'Instrument Sans';color:#938A86">{{o.meta}}</div></div>
+<div style="display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:7px;background:{{o.bg}}">
+<div style="width:7px;height:7px;border-radius:4px;background:{{o.c}}"></div>
+<span style="font:600 11px/15px 'Instrument Sans';color:{{o.c}}">{{o.status}}</span>
+</div>
+<div style="font:700 15px/20px 'Instrument Sans';width:84px;text-align:right">{{o.total}}</div>
+</div>
+</sc-for>
+</div>
+<div style="height:1px;background:#E7DDD7;margin:12px 0"></div>
+<div style="display:flex;flex-direction:column;gap:7px">
+<div style="display:flex;justify-content:space-between;font:400 13px/18px 'Instrument Sans';color:#6F6764"><div>Session subtotal</div><div style="font-weight:600;color:#252122">DA 5,430</div></div>
+<div style="display:flex;justify-content:space-between;font:400 13px/18px 'Instrument Sans';color:#6F6764"><div>TVA 19%</div><div style="font-weight:600;color:#252122">DA 1,031</div></div>
+<div style="display:flex;justify-content:space-between;font:400 13px/18px 'Instrument Sans';color:#6F6764"><div>Paid · cash · 20:51 · Yacine B.</div><div style="font-weight:600;color:#3F8F55">− DA 3,000</div></div>
+</div>
+<div style="display:flex;align-items:flex-end;justify-content:space-between;margin-top:11px;padding:12px 15px;border-radius:12px;background:#FFF1EB;border:1px solid #F3D8CC">
+<div><div style="font:600 14px/19px 'Instrument Sans'">Remaining balance</div><div style="font:500 12px/17px 'Instrument Sans';color:#6F6764">Completion is blocked while a balance remains</div></div>
+<div style="font:700 26px/30px 'Instrument Sans';color:#B95035">DA 3,461</div>
+</div>
+<div style="font:600 12px/16px 'Instrument Sans';color:#6F6764;letter-spacing:.04em;margin-top:14px">PAYMENT METHOD</div>
+<div style="display:flex;gap:9px;margin-top:9px">
+<sc-for list="{{ methods }}" as="m" hint-placeholder-count="3">
+<div style="flex:1;height:50px;border:1px solid {{m.line}};border-radius:10px;background:{{m.bg}};display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px">
+<span style="font-family:'Material Symbols Outlined';font-size:20px;color:{{m.fg}}">{{m.icon}}</span>
+<div style="font:600 12px/16px 'Instrument Sans';color:{{m.fg}}">{{m.label}}</div>
+</div>
+</sc-for>
+</div>
+<div style="display:flex;gap:11px;margin-top:11px">
+<div style="flex:1">
+<div style="font:500 12px/16px 'Instrument Sans';color:#6F6764;margin-bottom:5px">Amount received</div>
+<div style="height:44px;border:1px solid #C96042;border-radius:8px;background:#FFFCFA;display:flex;align-items:center;padding:0 13px;gap:8px;box-shadow:0 0 0 3px #F8DED3">
+<div style="font:500 14px/20px 'Instrument Sans';color:#938A86">DA</div>
+<div style="font:700 17px/22px 'Instrument Sans';color:#252122">3,461</div>
+</div>
+</div>
+<div style="width:150px">
+<div style="font:500 12px/16px 'Instrument Sans';color:#6F6764;margin-bottom:5px">Collected by</div>
+<div style="height:44px;border:1px solid #E7DDD7;border-radius:8px;background:#FFFCFA;display:flex;align-items:center;padding:0 11px;gap:8px">
+<div style="width:26px;height:26px;border-radius:13px;background:#F8DED3;font:600 11px/26px 'Instrument Sans';color:#B95035;text-align:center">IK</div>
+<div style="font:600 13px/18px 'Instrument Sans'">Imane K.</div>
+</div>
+</div>
+</div>
+<div style="flex:1"></div>
+</div>
+<div style="border-top:1px solid #E7DDD7;padding:15px 20px 18px;background:#FFFCFA">
+<button type="button" style="width:100%;height:48px;border:none;border-radius:8px;background:#D96F4B;color:#FFF;font:600 15px/20px 'Instrument Sans';display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer">
+<span style="font-family:'Material Symbols Outlined';font-size:21px">payments</span>Record payment · DA 3,461</button>
+<div style="display:flex;gap:10px;margin-top:10px">
+<button type="button" style="flex:1;height:40px;border:1px solid #E7DDD7;border-radius:8px;background:#FFFCFA;color:#6F6764;font:600 13px/18px 'Instrument Sans';cursor:pointer">Print bill</button>
+<button type="button" style="flex:1;height:40px;border:1px solid #E7DDD7;border-radius:8px;background:#FFFCFA;color:#6F6764;font:600 13px/18px 'Instrument Sans';cursor:pointer">Move table</button>
+<button type="button" style="flex:1;height:40px;border:1px solid #E7DDD7;border-radius:8px;background:#FFFCFA;color:#938A86;font:600 13px/18px 'Instrument Sans';cursor:not-allowed">Close session</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<div id="1g" style="display:flex;flex-direction:column;gap:12px;scroll-margin:40px">
+<div style="display:flex;align-items:baseline;gap:10px">
+<span style="font:600 12px/1 'Instrument Sans';letter-spacing:.06em;color:#FFFCFA;background:#C96042;padding:6px 9px;border-radius:6px">1g</span>
+<span style="font:600 15px/1.2 'Instrument Sans'">Mobile staff</span>
+<span style="font:400 13px/1.2 'Instrument Sans';color:#938A86">390 × 844 · rail becomes four destinations plus More</span>
+</div>
+<div style="display:flex;gap:32px;padding:32px 36px;background:#FBF7F4;border:1px solid #E7DDD7;border-radius:16px;box-shadow:0 4px 18px rgba(74,48,38,.06)">
+
+<div style="display:flex;flex-direction:column;gap:10px">
+<div style="width:390px;height:844px;background:#FBF7F4;border:1px solid #E0D3CB;border-radius:34px;overflow:hidden;display:flex;flex-direction:column">
+<div style="background:#C96042;padding:14px 18px 16px;display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:center;font:600 12px/16px 'Instrument Sans';color:rgba(255,255,255,.9)">
+<div>21:04</div><div style="flex:1"></div><div>Hydra · online</div>
+</div>
+<div style="display:flex;align-items:center;gap:10px">
+<div style="font:700 24px/30px 'Instrument Sans';color:#FFF">Orders</div>
+<div style="flex:1"></div>
+<div style="width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center"><span style="font-family:'Material Symbols Outlined';font-size:21px;color:#FFF">search</span></div>
+<div style="position:relative;width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center"><span style="font-family:'Material Symbols Outlined';font-size:21px;color:#FFF">notifications</span>
+<div style="position:absolute;top:-2px;right:-2px;min-width:17px;height:17px;border-radius:9px;background:#FFFCFA;color:#B95035;font:700 10px/17px 'Instrument Sans';text-align:center">3</div></div>
+</div>
+<div style="display:flex;align-items:center;gap:8px">
+<span style="font-family:'Material Symbols Outlined';font-size:18px;color:rgba(255,255,255,.85)">sync</span>
+<div style="font:500 12px/16px 'Instrument Sans';color:rgba(255,255,255,.9)">Updated just now · Dinner service</div>
+</div>
+</div>
+<div style="display:flex;gap:8px;padding:14px 18px;overflow:hidden">
+<sc-for list="{{ mobileFilters }}" as="f" hint-placeholder-count="4">
+<div style="height:36px;padding:0 13px;border-radius:9px;border:1px solid {{f.line}};background:{{f.bg}};display:flex;align-items:center;gap:6px;flex:0 0 auto">
+<div style="font:600 13px/18px 'Instrument Sans';color:{{f.fg}}">{{f.label}}</div>
+<div style="font:700 12px/16px 'Instrument Sans';color:{{f.fg}}">{{f.n}}</div>
+</div>
+</sc-for>
+</div>
+<div style="flex:1;min-height:0;padding:0 18px;display:flex;flex-direction:column;gap:11px">
+<sc-for list="{{ mobileOrders }}" as="o" hint-placeholder-count="5">
+<div style="border:1px solid #E7DDD7;border-radius:12px;background:#FFFCFA;padding:13px 14px;display:flex;flex-direction:column;gap:8px;box-shadow:{{o.mark}}">
+<div style="display:flex;align-items:center;gap:9px">
+<div style="font:700 16px/21px 'Instrument Sans'">{{o.ref}}</div>
+<div style="font:600 14px/19px 'Instrument Sans';color:#6F6764">{{o.table}}</div>
+<div style="flex:1"></div>
+<div style="font:700 14px/19px 'Instrument Sans'">{{o.total}}</div>
+</div>
+<div style="display:flex;align-items:center;gap:8px">
+<div style="display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:7px;background:{{o.bg}}">
+<span style="font-family:'Material Symbols Outlined';font-size:15px;color:{{o.c}}">{{o.icon}}</span>
+<span style="font:600 12px/16px 'Instrument Sans';color:{{o.c}}">{{o.status}}</span>
+</div>
+<div style="font:600 12px/16px 'Instrument Sans';color:{{o.elC}}">{{o.elapsed}}</div>
+<div style="flex:1"></div>
+<div style="font:500 12px/16px 'Instrument Sans';color:#938A86">{{o.pay}}</div>
+</div>
+<button type="button" style="height:46px;border:1px solid {{o.btnLine}};border-radius:9px;background:{{o.btnBg}};color:{{o.btnFg}};font:600 14px/20px 'Instrument Sans';cursor:pointer">{{o.btn}}</button>
+</div>
+</sc-for>
+</div>
+<div style="flex:0 0 78px;border-top:1px solid #E7DDD7;background:#FFFCFA;display:flex;align-items:center;padding:0 8px 8px">
+<sc-for list="{{ bottomNav }}" as="b" hint-placeholder-count="5">
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding-top:10px">
+<span style="font-family:'Material Symbols Outlined';font-size:24px;color:{{b.c}}">{{b.icon}}</span>
+<div style="font:600 11px/15px 'Instrument Sans';color:{{b.c}}">{{b.label}}</div>
+</div>
+</sc-for>
+</div>
+</div>
+<div style="font:500 13px/18px 'Instrument Sans';color:#6F6764;text-align:center">Orders list</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px">
+<div style="width:390px;height:844px;background:#FBF7F4;border:1px solid #E0D3CB;border-radius:34px;overflow:hidden;display:flex;flex-direction:column">
+<div style="background:#C96042;padding:14px 18px 16px;display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:center;font:600 12px/16px 'Instrument Sans';color:rgba(255,255,255,.9)">
+<div>21:04</div><div style="flex:1"></div><div>Hydra · online</div>
+</div>
+<div style="display:flex;align-items:center;gap:12px">
+<span style="font-family:'Material Symbols Outlined';font-size:24px;color:#FFF">arrow_back</span>
+<div><div style="font:700 22px/28px 'Instrument Sans';color:#FFF">#A-1042</div><div style="font:500 12px/16px 'Instrument Sans';color:rgba(255,255,255,.85)">Table 7 · 4 covers · opened 20:14</div></div>
+<div style="flex:1"></div>
+<span style="font-family:'Material Symbols Outlined';font-size:24px;color:#FFF">more_vert</span>
+</div>
+</div>
+<div style="flex:1;min-height:0;padding:16px 18px;display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:center;gap:9px">
+<div style="display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:7px;background:#FDE9E7">
+<span style="font-family:'Material Symbols Outlined';font-size:16px;color:#D83B35">schedule</span>
+<span style="font:600 12px/16px 'Instrument Sans';color:#D83B35">Delayed · 24 min</span>
+</div>
+<div style="display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:7px;background:#FFF1EB">
+<span style="font-family:'Material Symbols Outlined';font-size:16px;color:#B95035">outdoor_grill</span>
+<span style="font:600 12px/16px 'Instrument Sans';color:#B95035">Preparing</span>
+</div>
+</div>
+<div style="border:1px solid #F5C9C4;border-radius:10px;background:#FDE9E7;padding:12px 13px;display:flex;gap:10px">
+<span style="font-family:'Material Symbols Outlined';font-size:20px;color:#D83B35">emergency_home</span>
+<div><div style="font:700 13px/18px 'Instrument Sans';color:#B02A25">Allergy — peanut, severe</div><div style="font:500 12px/17px 'Instrument Sans';color:#8E2C28">Guest 2 · never collapsed on any surface</div></div>
+</div>
+<div style="border:1px solid #F0DCB6;border-radius:10px;background:#FFF1D9;padding:12px 13px;display:flex;gap:10px">
+<span style="font-family:'Material Symbols Outlined';font-size:20px;color:#B0700F">published_with_changes</span>
+<div><div style="font:700 13px/18px 'Instrument Sans';color:#8A5A0D">Changed after kitchen receipt</div><div style="font:500 12px/17px 'Instrument Sans';color:#8A5A0D">20:26 · Imane K.</div></div>
+</div>
+<div style="font:600 12px/16px 'Instrument Sans';color:#6F6764;letter-spacing:.04em">ITEMS · 4</div>
+<div style="display:flex;flex-direction:column;gap:9px">
+<sc-for list="{{ mobileItems }}" as="it" hint-placeholder-count="4">
+<div style="display:flex;align-items:center;gap:11px;padding:11px 12px;border:1px solid #E7DDD7;border-radius:10px;background:#FFFCFA">
+<div style="width:28px;height:28px;border-radius:7px;background:#FFF1EB;font:700 13px/28px 'Instrument Sans';color:#B95035;text-align:center">{{it.qty}}</div>
+<div style="flex:1;min-width:0"><div style="font:600 14px/19px 'Instrument Sans'">{{it.name}}</div><div style="font:500 12px/16px 'Instrument Sans';color:#6F6764">{{it.opts}}</div></div>
+<div style="display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:7px;background:{{it.bg}}">
+<div style="width:7px;height:7px;border-radius:4px;background:{{it.c}}"></div>
+<span style="font:600 11px/15px 'Instrument Sans';color:{{it.c}}">{{it.state}}</span>
+</div>
+</div>
+</sc-for>
+</div>
+<div style="flex:1"></div>
+<div style="display:flex;justify-content:space-between;align-items:flex-end">
+<div style="font:500 13px/18px 'Instrument Sans';color:#6F6764">Order total · unpaid</div>
+<div style="font:700 24px/30px 'Instrument Sans'">DA 4,820</div>
+</div>
+</div>
+<div style="border-top:1px solid #E7DDD7;background:#FFFFFF;padding:14px 18px 22px;display:flex;flex-direction:column;gap:10px">
+<button type="button" style="height:52px;border:none;border-radius:9px;background:#D96F4B;color:#FFF;font:600 15px/20px 'Instrument Sans';display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer">
+<span style="font-family:'Material Symbols Outlined';font-size:21px">room_service</span>Mark ready to serve</button>
+<div style="display:flex;gap:10px">
+<button type="button" style="flex:1;height:48px;border:1px solid #E7DDD7;border-radius:9px;background:#FFFCFA;color:#6F6764;font:600 14px/20px 'Instrument Sans';cursor:pointer">Add items</button>
+<button type="button" style="flex:1;height:48px;border:1px solid #E7DDD7;border-radius:9px;background:#FFFCFA;color:#6F6764;font:600 14px/20px 'Instrument Sans';cursor:pointer">History</button>
+</div>
+</div>
+</div>
+<div style="font:500 13px/18px 'Instrument Sans';color:#6F6764;text-align:center">Order detail — full page, sticky action</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px">
+<div style="width:390px;height:844px;background:#FBF7F4;border:1px solid #E0D3CB;border-radius:34px;overflow:hidden;display:flex;flex-direction:column">
+<div style="background:#C96042;padding:14px 18px 16px;display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:center;font:600 12px/16px 'Instrument Sans';color:rgba(255,255,255,.9)">
+<div>21:04</div><div style="flex:1"></div><div>Hydra · online</div>
+</div>
+<div style="display:flex;align-items:center;gap:10px">
+<div style="font:700 24px/30px 'Instrument Sans';color:#FFF">Kitchen</div>
+<div style="flex:1"></div>
+<div style="height:36px;padding:0 12px;border-radius:9px;background:rgba(255,255,255,.16);display:flex;align-items:center;gap:7px">
+<span style="font-family:'Material Symbols Outlined';font-size:19px;color:#FFF">outdoor_grill</span>
+<div style="font:600 13px/18px 'Instrument Sans';color:#FFF">Grill</div>
+<span style="font-family:'Material Symbols Outlined';font-size:19px;color:rgba(255,255,255,.8)">expand_more</span>
+</div>
+</div>
+</div>
+<div style="display:flex;gap:8px;padding:14px 18px 12px">
+<sc-for list="{{ mobileLanes }}" as="l" hint-placeholder-count="4">
+<div style="flex:1;height:52px;border-radius:10px;border:1px solid {{l.line}};background:{{l.bg}};display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px">
+<div style="font:700 17px/22px 'Instrument Sans';color:{{l.fg}}">{{l.n}}</div>
+<div style="font:600 10px/14px 'Instrument Sans';color:{{l.fg}}">{{l.label}}</div>
+</div>
+</sc-for>
+</div>
+<div style="flex:1;min-height:0;padding:4px 18px;display:flex;flex-direction:column;gap:12px">
+<sc-for list="{{ mobileTickets }}" as="k" hint-placeholder-count="2">
+<div style="border:1px solid #E7DDD7;border-top:3px solid {{k.top}};border-radius:12px;background:#FFFCFA;padding:14px;display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:9px">
+<div style="flex:1;font:700 18px/24px 'Instrument Sans'">{{k.ref}}</div>
+<div style="display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:7px;background:{{k.elBg}}">
+<span style="font-family:'Material Symbols Outlined';font-size:16px;color:{{k.elC}}">timer</span>
+<span style="font:700 13px/17px 'Instrument Sans';color:{{k.elC}}">{{k.el}}</span>
+</div>
+</div>
+<div style="font:600 13px/18px 'Instrument Sans';color:#6F6764">{{k.table}}</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<sc-for list="{{ k.items }}" as="ki" hint-placeholder-count="2">
+<div style="display:flex;gap:10px">
+<div style="width:24px;height:24px;border-radius:6px;background:#FFF1EB;font:700 13px/24px 'Instrument Sans';color:#B95035;text-align:center">{{ki.q}}</div>
+<div style="flex:1;min-width:0"><div style="font:600 15px/20px 'Instrument Sans'">{{ki.name}}</div><div style="font:500 12px/16px 'Instrument Sans';color:#6F6764">{{ki.opt}}</div></div>
+</div>
+</sc-for>
+</div>
+<sc-if value="{{ k.allergy }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;align-items:center;gap:7px;padding:8px 10px;border-radius:8px;background:#FDE9E7;border:1px solid #F5C9C4">
+<span style="font-family:'Material Symbols Outlined';font-size:18px;color:#D83B35">emergency_home</span>
+<div style="font:700 12px/16px 'Instrument Sans';color:#B02A25">{{k.allergy}}</div>
+</div>
+</sc-if>
+<button type="button" style="height:52px;border:none;border-radius:9px;background:{{k.btnBg}};color:{{k.btnFg}};font:600 15px/20px 'Instrument Sans';display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer">
+<span style="font-family:'Material Symbols Outlined';font-size:21px">{{k.btnIcon}}</span>{{k.btn}}</button>
+</div>
+</sc-for>
+</div>
+<div style="flex:0 0 78px;border-top:1px solid #E7DDD7;background:#FFFCFA;display:flex;align-items:center;padding:0 8px 8px">
+<sc-for list="{{ bottomNavKitchen }}" as="b" hint-placeholder-count="5">
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding-top:10px">
+<span style="font-family:'Material Symbols Outlined';font-size:24px;color:{{b.c}}">{{b.icon}}</span>
+<div style="font:600 11px/15px 'Instrument Sans';color:{{b.c}}">{{b.label}}</div>
+</div>
+</sc-for>
+</div>
+</div>
+<div style="font:500 13px/18px 'Instrument Sans';color:#6F6764;text-align:center">Kitchen — one lane per state</div>
+</div>
+</div>
+</div>
+
+<div id="1h" style="display:flex;flex-direction:column;gap:12px;scroll-margin:40px">
+<div style="display:flex;align-items:baseline;gap:10px">
+<span style="font:600 12px/1 'Instrument Sans';letter-spacing:.06em;color:#FFFCFA;background:#C96042;padding:6px 9px;border-radius:6px">1h</span>
+<span style="font:600 15px/1.2 'Instrument Sans'">Required states</span>
+<span style="font:400 13px/1.2 'Instrument Sans';color:#938A86">stale connection · destructive confirmation with reason</span>
+</div>
+<div style="display:flex;gap:28px;flex-wrap:wrap">
+
+<div style="width:840px;background:#FBF7F4;border:1px solid #E7DDD7;border-radius:16px;box-shadow:0 4px 18px rgba(74,48,38,.06);padding:24px;display:flex;flex-direction:column;gap:14px">
+<div style="font:600 14px/19px 'Instrument Sans';color:#6F6764">Stale connection — the context bar drops the fresh state and the workspace warns before any action is trusted</div>
+<div style="height:86px;background:#C96042;border-radius:14px;display:flex;align-items:center;padding:0 20px">
+<div style="font:700 27px/34px 'Instrument Sans';color:#FFFFFF;letter-spacing:-.015em">Orders</div>
+<div style="width:1px;height:46px;background:rgba(255,255,255,.24);margin:0 20px"></div>
+<div style="display:flex;align-items:center;gap:8px">
+<span style="font-family:'Material Symbols Outlined';font-size:20px;color:rgba(255,255,255,.85)">storefront</span>
+<div style="font:600 15px/20px 'Instrument Sans';color:#FFFFFF">Hydra Branch</div>
+</div>
+<div style="width:1px;height:46px;background:rgba(255,255,255,.24);margin:0 20px"></div>
+<div style="display:flex;align-items:center;gap:9px">
+<div style="width:9px;height:9px;border-radius:5px;background:#FFD79A"></div>
+<div><div style="font:700 15px/19px 'Instrument Sans';color:#FFFFFF">Dinner service</div><div style="font:500 12px/16px 'Instrument Sans';color:rgba(255,255,255,.78)">State not confirmed</div></div>
+</div>
+<div style="flex:1"></div>
+<div style="display:flex;align-items:center;gap:8px;height:44px;padding:0 13px;border-radius:10px;background:#FFF1D9">
+<span style="font-family:'Material Symbols Outlined';font-size:20px;color:#8A5A0D">cloud_off</span>
+<div><div style="font:700 13px/17px 'Instrument Sans';color:#8A5A0D">Not updating</div><div style="font:500 11px/15px 'Instrument Sans';color:#8A5A0D">Last confirmed 20:38</div></div>
+</div>
+<div style="width:1px;height:46px;background:rgba(255,255,255,.24);margin:0 16px"></div>
+<div style="display:flex;align-items:center;gap:10px">
+<div style="width:38px;height:38px;border-radius:19px;background:#B95035;border:1px solid rgba(255,255,255,.35);font:600 13px/38px 'Instrument Sans';color:#FFF6F1;text-align:center">IK</div>
+<div><div style="font:600 14px/18px 'Instrument Sans';color:#FFF">Imane K.</div><div style="font:500 12px/16px 'Instrument Sans';color:rgba(255,255,255,.78)">Server · Floor 1</div></div>
+</div>
+</div>
+<div style="border:1px solid #F0DCB6;border-radius:12px;background:#FFF1D9;padding:16px 18px;display:flex;align-items:center;gap:14px">
+<span style="font-family:'Material Symbols Outlined';font-size:26px;color:#B0700F">cloud_off</span>
+<div style="flex:1">
+<div style="font:700 15px/20px 'Instrument Sans';color:#8A5A0D">Showing data from 20:38 — 4 minutes old</div>
+<div style="font:500 13px/19px 'Instrument Sans';color:#8A5A0D">Order states, table states and balances may have changed. Anything you submitted in the last 4 minutes is not confirmed; do not assume a payment or a kitchen hand-off was recorded.</div>
+</div>
+<button type="button" style="height:42px;padding:0 18px;border:1px solid #D9B471;border-radius:8px;background:#FFFCFA;color:#8A5A0D;font:600 14px/20px 'Instrument Sans';display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer">
+<span style="font-family:'Material Symbols Outlined';font-size:20px">refresh</span>Retry now</button>
+</div>
+<div style="display:flex;gap:12px;opacity:.62">
+<div style="flex:1;height:66px;border:1px solid #E7DDD7;border-radius:12px;background:#FFFCFA;display:flex;align-items:center;padding:0 16px;gap:12px">
+<div style="width:96px"><div style="font:700 14px/19px 'Instrument Sans'">#A-1042</div><div style="font:500 11px/15px 'Instrument Sans';color:#938A86">20:14</div></div>
+<div style="font:600 14px/19px 'Instrument Sans'">T7</div>
+<div style="display:inline-flex;align-items:center;gap:6px;padding:4px 9px;border-radius:7px;background:#F0EDEB;margin-left:14px">
+<span style="font-family:'Material Symbols Outlined';font-size:16px;color:#7B8187">help</span>
+<span style="font:600 12px/16px 'Instrument Sans';color:#7B8187">State unconfirmed</span>
+</div>
+<div style="flex:1"></div>
+<div style="font:500 13px/18px 'Instrument Sans';color:#938A86">Actions disabled until data is confirmed</div>
+</div>
+</div>
+</div>
+
+<div style="width:840px;background:#FBF7F4;border:1px solid #E7DDD7;border-radius:16px;box-shadow:0 4px 18px rgba(74,48,38,.06);padding:24px;display:flex;flex-direction:column;gap:14px">
+<div style="font:600 14px/19px 'Instrument Sans';color:#6F6764">Destructive confirmation — reason required, recorded in audit history, never brand-coloured</div>
+<div style="position:relative;height:496px;border-radius:14px;overflow:hidden;background:#FFFCFA;border:1px solid #E7DDD7">
+<div style="position:absolute;inset:0;background:rgba(74,48,38,.42)"></div>
+<div style="position:absolute;left:0;right:0;top:0;height:60px;background:#F6F0EC;border-bottom:1px solid #E7DDD7"></div>
+<div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:500px;background:#FFFFFF;border-radius:14px;box-shadow:0 10px 30px rgba(74,48,38,.22);padding:22px;display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;gap:13px">
+<div style="width:42px;height:42px;border-radius:11px;background:#FDE9E7;display:flex;align-items:center;justify-content:center;flex:0 0 42px">
+<span style="font-family:'Material Symbols Outlined';font-size:23px;color:#D83B35">cancel</span>
+</div>
+<div>
+<div style="font:700 20px/26px 'Instrument Sans'">Cancel order #A-1040?</div>
+<div style="font:400 13px/19px 'Instrument Sans';color:#6F6764;margin-top:3px">Table 2 · 6 items · DA 7,410. The kitchen has already started two items. Cancelling notifies the Grill and Cold stations and keeps the order in history.</div>
+</div>
+</div>
+<div>
+<div style="font:600 12px/16px 'Instrument Sans';color:#252122;margin-bottom:8px">Reason <span style="color:#D83B35">· required</span></div>
+<div style="display:flex;flex-wrap:wrap;gap:8px">
+<sc-for list="{{ reasons }}" as="r" hint-placeholder-count="4">
+<div style="height:34px;padding:0 12px;border-radius:8px;border:1px solid {{r.line}};background:{{r.bg}};display:flex;align-items:center;font:600 13px/18px 'Instrument Sans';color:{{r.fg}}">{{r.label}}</div>
+</sc-for>
+</div>
+</div>
+<div>
+<div style="font:600 12px/16px 'Instrument Sans';color:#252122;margin-bottom:8px">Detail for the audit record</div>
+<div style="height:74px;border:1px solid #E7DDD7;border-radius:8px;background:#FFFCFA;padding:11px 13px;font:400 13px/19px 'Instrument Sans';color:#252122">Guest left before service. Table 2 released, no charge applied.</div>
+</div>
+<div style="display:flex;align-items:center;gap:9px;padding:11px 13px;border-radius:10px;background:#F6F0EC">
+<span style="font-family:'Material Symbols Outlined';font-size:19px;color:#6F6764">history</span>
+<div style="font:500 12px/17px 'Instrument Sans';color:#6F6764">Recorded as <strong style="font-weight:700;color:#252122">Imane K. · 21:04 · Hydra branch</strong> and visible in Audit. Cancelled amounts stay separate from sales.</div>
+</div>
+<div style="display:flex;gap:10px;margin-top:2px">
+<button type="button" style="flex:1;height:46px;border:1px solid #E7DDD7;border-radius:8px;background:#FFFCFA;color:#252122;font:600 14px/20px 'Instrument Sans';cursor:pointer">Keep order</button>
+<button type="button" style="flex:1;height:46px;border:none;border-radius:8px;background:#D83B35;color:#FFF;font:600 14px/20px 'Instrument Sans';display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer">
+<span style="font-family:'Material Symbols Outlined';font-size:20px">cancel</span>Cancel order</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+</div>
+</section>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;photos&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Spec rules&quot;},&quot;stationAssignment&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Spec rules&quot;},&quot;paymentScope&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Per table session&quot;,&quot;Per order&quot;],&quot;default&quot;:&quot;Per table session&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Spec rules&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const C = {b700:'#B95035',b600:'#C96042',b500:'#D96F4B',b100:'#F8DED3',b050:'#FFF1EB',border:'#E7DDD7',text:'#252122',muted:'#6F6764',subtle:'#938A86',ok:'#3F8F55',okS:'#E7F3E9',warn:'#D98A17',warnS:'#FFF1D9',bad:'#D83B35',badS:'#FDE9E7',neu:'#7B8187',neuS:'#F0EDEB'};
+
+    const photos = this.props.photos ?? true;
+    const stationAssignment = this.props.stationAssignment ?? true;
+    const paymentScope = this.props.paymentScope ?? 'Per table session';
+    const payNote = paymentScope === 'Per order'
+      ? 'Unpaid · payment collected on this order'
+      : 'Unpaid · payment collected on the table session';
+
+    const navBase = [
+      ['space_dashboard','dashboard',0,''],
+      ['receipt_long','orders',0,'3'],
+      ['table_restaurant','tables',0,''],
+      ['soup_kitchen','kitchen',0,''],
+      ['restaurant_menu','menu',20,''],
+      ['inventory_2','inventory',0,''],
+      ['badge','staff',0,''],
+      ['monitoring','reports',20,''],
+      ['settings','settings',0,''],
+      ['history','audit',0,'']
+    ];
+    const nav = k => navBase.map(([icon,key,mt,badge]) => ({
+      icon, badge,
+      mt: (mt || 6) + 'px',
+      bg: key === k ? '#FFFCFA' : 'transparent',
+      fg: key === k ? C.b600 : 'rgba(255,255,255,0.82)'
+    }));
+
+    const TS = {
+      a: [C.ok, C.okS, 'Available'],
+      o: [C.b600, C.b050, 'Occupied'],
+      r: [C.warn, C.warnS, 'Reserved'],
+      c: [C.neu, C.neuS, 'Cleaning'],
+      p: [C.b700, C.b100, 'Awaiting payment']
+    };
+    const mkTables = spec => spec.map(([n, sh, st, seats, meta, sel]) => ({
+      n: 'T' + n,
+      seats: seats + ' seats',
+      meta: meta || '',
+      shape: sh === 'r' ? '50%' : '14px',
+      line: TS[st][0],
+      bg: TS[st][1],
+      label: TS[st][2],
+      cellBg: sel ? C.b050 : 'transparent',
+      ring: sel ? 'inset 0 0 0 2px ' + C.b500 : 'none'
+    }));
+
+    const tables = mkTables([
+      [1,'r','a',2],[2,'r','o',4],[3,'r','a',2],[4,'s','a',4],
+      [5,'s','a',4],[6,'r','r',4],[7,'s','o',4],[8,'r','a',2],
+      [9,'r','c',6],[10,'r','a',4],[11,'s','r',4],[12,'s','p',6,'',true]
+    ]);
+
+    const floor15 = mkTables([
+      [1,'r','a',2,'Free 12 min'],[2,'r','o',4,'#A-1040'],[3,'r','a',2,'Free 4 min'],[4,'s','a',4,'Free 26 min'],[5,'s','o',4,'#A-1039'],
+      [6,'r','r',4,'20:30 Belkacem'],[7,'s','o',4,'#A-1042'],[8,'r','a',2,'Free 9 min'],[9,'r','c',6,'Since 20:52'],[10,'r','p',4,'DA 2,180'],
+      [11,'s','r',4,'21:15 Haddad'],[12,'s','p',6,'DA 3,461',true],[13,'r','a',4,'Free 31 min'],[14,'s','o',6,'#A-1043'],[15,'r','a',2,'Free 2 min']
+    ]);
+
+    const legend = [
+      {c: C.ok, label: 'Available'}, {c: C.b600, label: 'Occupied'},
+      {c: C.warn, label: 'Reserved'}, {c: C.neu, label: 'Cleaning'}
+    ];
+    const legendFull = [
+      {c: C.ok, label: 'Available', n: '5'}, {c: C.b600, label: 'Occupied', n: '4'},
+      {c: C.warn, label: 'Reserved', n: '2'}, {c: C.b700, label: 'Awaiting payment', n: '2'},
+      {c: C.neu, label: 'Cleaning', n: '1'}
+    ];
+
+    const attention = [
+      {icon: 'schedule', label: 'Delayed order', sub: 'Longest 24 min · Table 7', n: '3', c: C.bad, bg: C.badS},
+      {icon: 'receipt', label: 'Bill requested', sub: 'Table 10, Table 3', n: '2', c: C.warn, bg: C.warnS},
+      {icon: 'room_service', label: 'Ready to serve', sub: 'Oldest waiting 6 min', n: '5', c: C.ok, bg: C.okS},
+      {icon: 'notifications_active', label: 'Assistance', sub: 'Table 6 · 2 min ago', n: '1', c: C.neu, bg: C.neuS}
+    ];
+
+    const exceptions = [
+      {ref: '#A-1042', table: 'Table 7 · 4 covers', status: 'Delayed', icon: 'schedule', meta: 'Preparing · 24 min elapsed', action: 'Open order', c: C.bad, bg: C.badS},
+      {ref: '#A-1041', table: 'Table 12 · 6 covers', status: 'Ready', icon: 'room_service', meta: 'Waiting to run · 6 min', action: 'Mark served', c: C.ok, bg: C.okS},
+      {ref: 'Table 10', table: 'Session #S-311 · 2 covers', status: 'Bill requested', icon: 'receipt', meta: 'Balance DA 2,180', action: 'Record payment', c: C.warn, bg: C.warnS},
+      {ref: 'Table 6', table: 'Session #S-316 · 4 covers', status: 'Assistance', icon: 'notifications_active', meta: 'Requested 2 min ago', action: 'Acknowledge', c: C.neu, bg: C.neuS}
+    ];
+
+    const popular = [
+      {id: 'chorba', name: 'Chorba frik', orders: '24 orders · DA 480', slot: 'chorba bowl · 4:3', cat: 'Starter'},
+      {id: 'dorade', name: 'Grilled dorade', orders: '22 orders · DA 1,980', slot: 'whole fish · 4:3', cat: 'Grill'},
+      {id: 'rechta', name: 'Rechta with merguez', orders: '18 orders · DA 1,450', slot: 'rechta plate · 4:3', cat: 'Grill'},
+      {id: 'bourek', name: 'Bourek cheese', orders: '16 orders · DA 520', slot: 'bourek rolls · 4:3', cat: 'Starter'}
+    ];
+
+    const paceVals = [6, 12, 22, 38, 47, 55, 53, 40, 15];
+    const paceLabels = ['12','2','4','6','8','9','10','11','12'];
+    const paceBars = paceVals.map((v, i) => ({
+      h: Math.round((v / 60) * 100) + '%',
+      c: v >= 47 ? C.b500 : '#F1CDBC',
+      label: paceLabels[i]
+    }));
+
+    const areaTabs = [
+      {label: 'Main hall', bg: C.b100, line: C.b100, fg: C.b700},
+      {label: 'Terrace', bg: 'transparent', line: C.border, fg: C.muted},
+      {label: 'Mezzanine', bg: 'transparent', line: C.border, fg: C.muted}
+    ];
+
+    const cats = [
+      ['Starters','14',1],['Grill','22',0],['Tagines','11',0],['Pasta','8',0],['Desserts','9',0],['Drinks','26',0]
+    ].map(([label, count, on]) => ({
+      label, count,
+      bg: on ? C.b100 : 'transparent',
+      line: on ? C.b100 : C.border,
+      fg: on ? C.b700 : C.muted,
+      countFg: on ? C.b700 : C.subtle
+    }));
+
+    const dishes = [
+      ['chorba','Chorba frik','Starter · lamb, freekeh','DA 480',1],
+      ['bourek','Bourek cheese','Starter · 4 pieces','DA 520',1],
+      ['mechouia','Salade mechouia','Starter · vegan','DA 620',1],
+      ['dorade','Grilled dorade','Grill · whole, 400g','DA 1,980',1],
+      ['merguez','Rechta with merguez','Grill · house pasta','DA 1,450',1],
+      ['mechoui','Lamb mechoui','Grill · 45 min','DA 2,350',0],
+      ['zitoune','Tagine zitoune','Tagine · olives, chicken','DA 1,750',1],
+      ['makroud','Makroud','Dessert · 3 pieces','DA 380',1]
+    ].map(([id, name, sub, price, avail]) => ({
+      id, name, sub, price,
+      cat: sub.split(' · ')[0],
+      slot: name.toLowerCase() + ' · 4:3',
+      op: avail ? '1' : '0.66',
+      btnBg: avail ? C.b500 : '#F3EEEB',
+      btnLine: avail ? C.b500 : C.border,
+      btnFg: avail ? '#FFFFFF' : C.subtle,
+      btnIcon: avail ? 'add' : 'block',
+      btnLabel: avail ? 'Add' : 'Unavailable'
+    }));
+
+    const orderLines = [
+      {qty: '2', name: 'Chorba frik', opts: 'No lemon · extra bread', price: 'DA 960', flag: ''},
+      {qty: '1', name: 'Grilled dorade', opts: 'Well done · side of mechouia', price: 'DA 1,980', flag: ''},
+      {qty: '1', name: 'Rechta with merguez', opts: 'No harissa', price: 'DA 1,450', flag: 'Peanut allergy — guest 2'}
+    ];
+
+    const OS = {
+      submitted: ['Submitted', 'inbox', C.neu, C.neuS],
+      preparing: ['Preparing', 'outdoor_grill', C.b700, C.b050],
+      part: ['Part ready', 'hourglass_bottom', C.warn, C.warnS],
+      ready: ['Ready', 'room_service', C.ok, C.okS],
+      served: ['Served', 'check', C.neu, C.neuS],
+      await: ['Awaiting payment', 'payments', C.b700, C.b100],
+      paid: ['Paid', 'task_alt', C.ok, C.okS],
+      cancelled: ['Cancelled', 'cancel', C.bad, C.badS]
+    };
+    const PS = {
+      unpaid: ['Unpaid', C.warn, C.warnS],
+      partial: ['Partial', C.warn, C.warnS],
+      paid: ['Paid', C.ok, C.okS],
+      refunded: ['Refunded', C.neu, C.neuS]
+    };
+
+    const orders = [
+      ['#A-1042','20:14','T7','preparing','24 min','past 18 min target','4 · dorade, chorba, rechta…','Allergy — peanut','DA 4,820','unpaid',1,1],
+      ['#A-1041','20:31','T12','ready','11 min','waiting to run','3 · zitoune, bourek, makroud','','DA 3,150','unpaid',0,0],
+      ['#A-1040','20:26','T2','part','16 min','2 of 6 items ready','6 · mechoui, rechta, chorba…','Changed after kitchen receipt','DA 7,410','unpaid',0,1],
+      ['#A-1039','20:02','T5','served','32 min','served 20:41','4 · dorade, mechouia, makroud','','DA 5,260','partial',0,0],
+      ['#A-1038','19:48','T10','await','41 min','bill requested 20:58','2 · zitoune, bourek','','DA 2,180','unpaid',0,0],
+      ['#A-1037','19:33','T3','paid','56 min','closed 20:44','5 · merguez, chorba, drinks…','','DA 6,940','paid',0,0],
+      ['#A-1036','19:20','T9','cancelled','1 h 04','cancelled 19:29 · Nadia M.','3 · mechoui, bourek, tea','Reason: guest left','DA 0','refunded',0,0]
+    ].map(([ref, time, table, st, elapsed, elNote, items, note, total, pay, sel, alert]) => ({
+      ref, time, table, elapsed, elNote, items, note, total,
+      status: OS[st][0], icon: OS[st][1], c: OS[st][2], bg: OS[st][3],
+      pay: PS[pay][0], payC: PS[pay][1], payBg: PS[pay][2],
+      elC: alert ? C.bad : C.text,
+      noteC: note.indexOf('Allergy') === 0 ? C.bad : (note.indexOf('Changed') === 0 ? C.warn : C.subtle),
+      rowBg: sel ? C.b050 : 'transparent',
+      rowMark: sel ? 'inset 3px 0 0 ' + C.b500 : 'none'
+    }));
+
+    const orderFilters = [
+      ['All orders','24',1,C.b100,C.b700],['Delayed','3',0,C.badS,C.bad],['Ready','5',0,C.okS,C.ok],
+      ['Unpaid','8',0,C.warnS,C.warn],['Changed','1',0,C.warnS,C.warn]
+    ].map(([label, n, on, pillBg, pillFg]) => ({
+      label, n,
+      bg: on ? C.b100 : 'transparent',
+      line: on ? C.b100 : C.border,
+      fg: on ? C.b700 : C.muted,
+      pillBg: on ? '#FFFFFF' : pillBg,
+      pillFg: on ? C.b700 : pillFg
+    }));
+
+    const stepper = [
+      ['Submitted', 2], ['Preparing', 1], ['Ready', 0], ['Served', 0], ['Paid', 0]
+    ].map(([label, s], i, arr) => ({
+      label,
+      dotBg: s === 2 ? C.b500 : (s === 1 ? '#FFFFFF' : '#FFFFFF'),
+      dotLine: s ? C.b500 : C.border,
+      bar: i === 0 ? 'transparent' : (s ? C.b500 : C.border),
+      fg: s ? C.b700 : C.subtle
+    }));
+
+    const inspectorItems = [
+      ['1','Grilled dorade','Well done · side of mechouia','ready','DA 1,980'],
+      ['2','Chorba frik','No lemon','ready','DA 960'],
+      ['1','Rechta with merguez','No harissa · peanut-free line','preparing','DA 1,450'],
+      ['1','Salade mechouia','Added 20:26','preparing','DA 620']
+    ].map(([qty, name, opts, st, price]) => ({
+      qty, name, opts, price,
+      state: OS[st][0], c: OS[st][2], bg: OS[st][3]
+    }));
+
+    const stations = [
+      ['All stations','restaurant','9',1],['Grill','outdoor_grill','5',0],['Cold','ac_unit','2',0],
+      ['Tagine','soup_kitchen','1',0],['Pastry','cake','1',0]
+    ].map(([label, icon, n, on]) => ({
+      label, icon, n,
+      bg: on ? C.b100 : '#FFFCFA',
+      line: on ? C.b100 : C.border,
+      fg: on ? C.b700 : C.muted,
+      pillBg: on ? '#FFFFFF' : '#F6F0EC',
+      pillFg: on ? C.b700 : C.muted
+    }));
+
+    const mkTicket = t => ({
+      ref: t.ref, table: t.table, el: t.el, items: t.items,
+      allergy: t.allergy || '', changed: t.changed || '',
+      station: t.station, stIcon: t.stIcon || 'outdoor_grill', who: t.who,
+      top: t.late ? C.bad : (t.top || C.border),
+      elC: t.late ? C.bad : C.muted,
+      elBg: t.late ? C.badS : '#F6F0EC',
+      btn: t.btn, btnIcon: t.btnIcon,
+      btnBg: t.primary ? C.b500 : '#FFF1EB',
+      btnFg: t.primary ? '#FFFFFF' : C.b700
+    });
+
+    const prepSecond = mkTicket({ref: '#A-1045', table: 'Table 5 · 4 covers · 20:52', el: '12 min', items: [{q: '2', name: 'Grilled dorade', opt: 'One well done'}], station: 'Grill', who: 'Sofiane A.', btn: 'Mark items ready', btnIcon: 'done_all', primary: true});
+
+    const lanes = [
+      {
+        title: 'New', n: '2', c: C.neu, headBg: '#F6F0EC', more: '',
+        tickets: [
+          mkTicket({ref: '#A-1044', table: 'Table 14 · 6 covers · 21:03', el: '1 min', items: [{q: '2', name: 'Chorba frik', opt: 'No lemon'}, {q: '1', name: 'Bourek cheese', opt: 'Standard'}], station: 'Cold', stIcon: 'ac_unit', who: 'Unassigned', btn: 'Start preparing', btnIcon: 'play_arrow', primary: true}),
+          mkTicket({ref: '#A-1043', table: 'Table 8 · 2 covers · 21:01', el: '3 min', items: [{q: '1', name: 'Tagine zitoune', opt: 'Extra olives'}], station: 'Tagine', stIcon: 'soup_kitchen', who: 'Unassigned', btn: 'Start preparing', btnIcon: 'play_arrow', primary: true})
+        ]
+      },
+      {
+        title: 'Preparing', n: '3', c: C.b700, headBg: C.b050, more: '2 more preparing',
+        tickets: [
+          mkTicket({ref: '#A-1042', table: 'Table 7 · 4 covers · 20:14', el: '24 min', late: true, items: [{q: '1', name: 'Rechta with merguez', opt: 'No harissa · separate pan'}, {q: '1', name: 'Salade mechouia', opt: 'Added 20:26'}], allergy: 'Peanut allergy — severe · guest 2', changed: 'CHANGED 20:26 — item added after receipt', station: 'Grill', who: 'Karim T.', btn: 'Mark items ready', btnIcon: 'done_all', primary: true})
+        ]
+      },
+      {
+        title: 'Part ready', n: '2', c: C.warn, headBg: C.warnS, more: '',
+        tickets: [
+          mkTicket({ref: '#A-1040', table: 'Table 2 · 6 covers · 20:26', el: '16 min', items: [{q: '2', name: 'Chorba frik', opt: 'Ready 20:34'}, {q: '1', name: 'Lamb mechoui', opt: 'On the grill · 45 min dish'}], changed: 'CHANGED 20:41 — 1 × Bourek removed', station: 'Grill', who: 'Karim T.', btn: 'Mark rest ready', btnIcon: 'done_all', primary: true}),
+          mkTicket({ref: '#A-1039', table: 'Table 5 · 4 covers · 20:02', el: '32 min', items: [{q: '1', name: 'Makroud', opt: 'Plate for 2 · waiting on pastry'}], station: 'Pastry', stIcon: 'cake', who: 'Nadia M.', btn: 'Mark rest ready', btnIcon: 'done_all', primary: true})
+        ]
+      },
+      {
+        title: 'Ready to run', n: '2', c: C.ok, headBg: C.okS, more: '',
+        tickets: [
+          mkTicket({ref: '#A-1041', table: 'Table 12 · 6 covers · 20:31', el: '6 min', top: C.ok, items: [{q: '1', name: 'Tagine zitoune', opt: 'Ready 20:58'}, {q: '2', name: 'Bourek cheese', opt: 'Ready 20:58'}], station: 'Tagine', stIcon: 'soup_kitchen', who: 'Passed to Imane K.', btn: 'Handed to server', btnIcon: 'room_service'}),
+          mkTicket({ref: '#A-1037', table: 'Table 3 · 2 covers · 20:44', el: '2 min', top: C.ok, items: [{q: '2', name: 'Mint tea', opt: 'Pot · ready 21:02'}], station: 'Cold', stIcon: 'ac_unit', who: 'Waiting for a runner', btn: 'Handed to server', btnIcon: 'room_service'})
+        ]
+      }
+    ];
+
+    const health = [
+      {k: 'Average prep time', v: '14 min', c: C.text},
+      {k: 'Longest open ticket', v: '24 min', c: C.bad},
+      {k: 'Past target', v: '3', c: C.bad},
+      {k: 'On time tonight', v: '86%', c: C.ok}
+    ];
+
+    const methods = [
+      {label: 'Cash', icon: 'payments', bg: C.b100, line: C.b500, fg: C.b700},
+      {label: 'Card', icon: 'credit_card', bg: '#FFFCFA', line: C.border, fg: C.muted},
+      {label: 'Mobile', icon: 'smartphone', bg: '#FFFCFA', line: C.border, fg: C.muted}
+    ];
+
+    const sessionOrders = [
+      {ref: '#A-1041', meta: '3 items · 20:31 · Imane K.', status: 'Ready', c: C.ok, bg: C.okS, total: 'DA 3,150'},
+      {ref: '#A-1030', meta: '4 items · 19:52 · Yacine B.', status: 'Paid', c: C.ok, bg: C.okS, total: 'DA 3,311'}
+    ];
+
+    const reasons = [
+      {label: 'Guest left', on: 1}, {label: 'Ordered by mistake', on: 0},
+      {label: 'Item unavailable', on: 0}, {label: 'Long wait', on: 0}, {label: 'Other', on: 0}
+    ].map(r => ({
+      label: r.label,
+      bg: r.on ? C.badS : '#FFFCFA',
+      line: r.on ? C.bad : C.border,
+      fg: r.on ? '#B02A25' : C.muted
+    }));
+
+    const mobileFilters = [
+      ['Mine','6',1],['Delayed','3',0],['Ready','5',0],['Unpaid','8',0]
+    ].map(([label, n, on]) => ({
+      label, n,
+      bg: on ? C.b100 : 'transparent',
+      line: on ? C.b100 : C.border,
+      fg: on ? C.b700 : C.muted
+    }));
+
+    const mobileOrders = [
+      ['#A-1042','T7','preparing','24 min','Unpaid','DA 4,820',1,1,'Mark ready to serve'],
+      ['#A-1041','T12','ready','11 min','Unpaid','DA 3,150',0,0,'Mark served'],
+      ['#A-1038','T10','await','41 min','Bill requested','DA 2,180',0,0,'Record payment']
+    ].map(([ref, table, st, elapsed, pay, total, sel, late, btn]) => ({
+      ref, table, elapsed, pay, total, btn,
+      status: OS[st][0], icon: OS[st][1], c: OS[st][2], bg: OS[st][3],
+      elC: late ? C.bad : C.muted,
+      mark: sel ? 'inset 3px 0 0 ' + C.b500 : 'none',
+      btnBg: sel ? C.b500 : '#FFF1EB',
+      btnFg: sel ? '#FFFFFF' : C.b700,
+      btnLine: sel ? C.b500 : '#EBCFC3'
+    }));
+
+    const mobileItems = inspectorItems.slice(0, 4);
+
+    const bottomNav = [
+      ['receipt_long','Orders',1],['table_restaurant','Tables',0],['soup_kitchen','Kitchen',0],['space_dashboard','Floor',0],['more_horiz','More',0]
+    ].map(([icon, label, on]) => ({icon, label, c: on ? C.b600 : C.subtle}));
+    const bottomNavKitchen = [
+      ['receipt_long','Orders',0],['table_restaurant','Tables',0],['soup_kitchen','Kitchen',1],['space_dashboard','Floor',0],['more_horiz','More',0]
+    ].map(([icon, label, on]) => ({icon, label, c: on ? C.b600 : C.subtle}));
+
+    const mobileLanes = [
+      ['New','2',0,C.neu],['Preparing','3',1,C.b700],['Part ready','2',0,C.warn],['Ready','2',0,C.ok]
+    ].map(([label, n, on, c]) => ({
+      label, n,
+      bg: on ? C.b100 : '#FFFCFA',
+      line: on ? C.b100 : C.border,
+      fg: on ? C.b700 : c
+    }));
+
+    const mobileTickets = [lanes[1].tickets[0], prepSecond];
+
+    return {
+      photos, noPhotos: !photos, stationAssignment, payNote,
+      navDash: nav('dashboard'), navOrders: nav('orders'), navTables: nav('tables'), navKitchen: nav('kitchen'),
+      tables, floor15, legend, legendFull, attention, exceptions, popular, paceBars, areaTabs,
+      cats, dishes, orderLines, orders, orderFilters, stepper, inspectorItems,
+      stations, lanes, health, methods, sessionOrders, reasons,
+      mobileFilters, mobileOrders, mobileItems, bottomNav, bottomNavKitchen, mobileLanes, mobileTickets
+    };
+  }
+}
+
+</script>
+</body>
+</html>

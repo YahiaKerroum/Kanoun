@@ -1,0 +1,59 @@
+document:
+  id: MVP-SLICES
+  status: approved
+  version: "1.0"
+  owner: product-and-technical-lead
+  last_reviewed: 2026-07-27
+
+slices:
+  - id: SLICE-001
+    name: application_bootstrap
+    depends_on: []
+    exit:
+      - Node.js, Express, TypeScript, package-manager, validation, database, migration, and test-tool versions pinned
+      - Express workspace matches docs/architecture/express-implementation-guide.md
+      - executable projects and exact commands added to AGENTS.md
+      - PostgreSQL migration pipeline works
+      - architecture dependency tests run in CI
+
+  - id: SLICE-002
+    name: tenant_branch_and_owner_bootstrap
+    depends_on: [SLICE-001]
+    implements: [US-A01, US-A02, US-A04, US-R01, US-R02, US-R03, US-R04]
+    exit: [tenant isolation proven, owner cannot remove last administrator]
+
+  - id: SLICE-003
+    name: employees_permissions_and_configuration
+    depends_on: [SLICE-002]
+    implements: [US-B01, US-B02, US-B03, US-B04, US-C01, US-C02, US-C03, US-C04, US-C06, US-C07, US-C08, US-R05]
+    exit: [delegation and cache/session invalidation tested]
+
+  - id: SLICE-004
+    name: menu_tables_and_qr
+    depends_on: [SLICE-002]
+    implements: [US-D01, US-D02, US-D03, US-D04, US-E01, US-E02, US-E03, US-E04, US-F01, US-F02]
+    exit: [revoked QR rejected, guest session scoped, menu branch overrides work]
+
+  - id: SLICE-005
+    name: order_submission
+    depends_on: [SLICE-003, SLICE-004]
+    implements: [US-D05, US-F05, US-G01, US-G02, US-G03, US-G04, US-G05, US-G06, US-H02, US-H03]
+    exit: [snapshots immutable, idempotency and table concurrency tested]
+
+  - id: SLICE-006
+    name: kitchen_and_serving
+    depends_on: [SLICE-005]
+    implements: [US-I01, US-I03, US-I04, US-J01, US-J03]
+    exit: [order readiness derived from all work items, reconnect recovers state]
+
+  - id: SLICE-007
+    name: payment_completion_and_correction
+    depends_on: [SLICE-006]
+    implements: [US-F04, US-H04, US-H05, US-K01, US-K02, US-K03, US-K04]
+    exit: [append-only financial history and completion guards tested]
+
+  - id: SLICE-008
+    name: notifications_reporting_and_audit
+    depends_on: [SLICE-005, SLICE-007]
+    implements: [US-A03, US-O01, US-O02, US-O03, US-P01, US-P02, US-Q01, US-Q02]
+    exit: [outbox recovery, currency grouping, support audit, and projection rebuild tested]

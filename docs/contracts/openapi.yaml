@@ -1,0 +1,515 @@
+openapi: 3.1.0
+info:
+  title: Restaurant Management System API
+  version: 0.1.0
+  description: Proposed MVP contract for the Express/TypeScript implementation. It becomes implementation-authoritative as Slice 001 generates and verifies server/client contract bindings.
+servers:
+  - url: /api
+tags:
+  - {name: Public}
+  - {name: Orders}
+  - {name: Kitchen}
+  - {name: Payments}
+  - {name: Realtime}
+
+paths:
+  /v1/public/qr/{qrToken}/session:
+    post:
+      tags: [Public]
+      operationId: exchangeTableQr
+      summary: Exchange a table QR token for a scoped guest session.
+      parameters:
+        - $ref: "#/components/parameters/QrToken"
+      responses:
+        "201":
+          description: Guest session created; secure cookie is set.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/GuestSession"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "429": {$ref: "#/components/responses/RateLimited"}
+
+  /v1/public/menu:
+    get:
+      tags: [Public]
+      operationId: getGuestMenu
+      security: [{guestCookie: []}]
+      responses:
+        "200":
+          description: Current branch menu.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Menu"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+
+  /v1/public/orders:
+    post:
+      tags: [Public, Orders]
+      operationId: submitGuestOrder
+      security: [{guestCookie: []}]
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/SubmitOrderRequest"}
+      responses:
+        "201":
+          description: Order submitted and automatically accepted.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Order"}
+        "409": {$ref: "#/components/responses/Conflict"}
+        "422": {$ref: "#/components/responses/ValidationFailed"}
+        "429": {$ref: "#/components/responses/RateLimited"}
+
+  /v1/public/orders/{orderId}:
+    get:
+      tags: [Public, Orders]
+      operationId: getGuestOrder
+      security: [{guestCookie: []}]
+      parameters:
+        - $ref: "#/components/parameters/OrderId"
+      responses:
+        "200":
+          description: Order created by the current guest session.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Order"}
+        "404": {$ref: "#/components/responses/NotFound"}
+
+  /v1/public/orders/{orderId}/cancellation-requests:
+    post:
+      tags: [Public, Orders]
+      operationId: requestGuestOrderCancellation
+      security: [{guestCookie: []}]
+      parameters:
+        - $ref: "#/components/parameters/OrderId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason: {type: string, minLength: 1, maxLength: 500}
+      responses:
+        "202": {description: Cancellation request recorded.}
+        "409": {$ref: "#/components/responses/Conflict"}
+        "404": {$ref: "#/components/responses/NotFound"}
+
+  /v1/public/orders/{orderId}/bill-requests:
+    post:
+      tags: [Public, Orders]
+      operationId: requestGuestOrderBill
+      security: [{guestCookie: []}]
+      parameters:
+        - $ref: "#/components/parameters/OrderId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      responses:
+        "202": {description: Bill request recorded and relevant branch staff notified.}
+        "409": {$ref: "#/components/responses/Conflict"}
+        "404": {$ref: "#/components/responses/NotFound"}
+
+  /v1/staff/orders:
+    get:
+      tags: [Orders]
+      operationId: listStaffOrders
+      security: [{staffCookie: []}]
+      parameters:
+        - {name: branchId, in: query, required: true, schema: {type: string, format: uuid}}
+        - {name: closure, in: query, schema: {type: string, enum: [active, completed, cancelled]}}
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/PageSize"
+      responses:
+        "200":
+          description: Permission- and branch-scoped orders.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items: {type: array, items: {$ref: "#/components/schemas/Order"}}
+                  nextCursor: {type: [string, "null"]}
+        "403": {$ref: "#/components/responses/Forbidden"}
+    post:
+      tags: [Orders]
+      operationId: createStaffOrder
+      security: [{staffCookie: []}]
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "#/components/schemas/SubmitOrderRequest"
+                - type: object
+                  required: [tableId]
+                  properties:
+                    tableId: {type: string, format: uuid}
+      responses:
+        "201":
+          description: Staff-created order.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Order"}
+        "409": {$ref: "#/components/responses/Conflict"}
+        "422": {$ref: "#/components/responses/ValidationFailed"}
+
+  /v1/staff/orders/{orderId}/served:
+    post:
+      tags: [Orders]
+      operationId: markOrderServed
+      security: [{staffCookie: []}]
+      parameters:
+        - $ref: "#/components/parameters/OrderId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/ExpectedVersion"
+      responses:
+        "200":
+          description: Updated order.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Order"}
+        "409": {$ref: "#/components/responses/Conflict"}
+
+  /v1/staff/orders/{orderId}/payments:
+    post:
+      tags: [Payments]
+      operationId: recordOrderPayment
+      security: [{staffCookie: []}]
+      parameters:
+        - $ref: "#/components/parameters/OrderId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/RecordPaymentRequest"}
+      responses:
+        "201":
+          description: Immutable payment record created.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Payment"}
+        "409": {$ref: "#/components/responses/Conflict"}
+        "422": {$ref: "#/components/responses/ValidationFailed"}
+
+  /v1/staff/orders/{orderId}/completion:
+    post:
+      tags: [Orders]
+      operationId: completeOrder
+      security: [{staffCookie: []}]
+      parameters:
+        - $ref: "#/components/parameters/OrderId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/ExpectedVersion"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                unpaidOverrideReason: {type: [string, "null"], maxLength: 500}
+      responses:
+        "200":
+          description: Completed order.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Order"}
+        "409": {$ref: "#/components/responses/Conflict"}
+
+  /v1/staff/kitchen/queue:
+    get:
+      tags: [Kitchen]
+      operationId: getKitchenQueue
+      security: [{staffCookie: []}]
+      parameters:
+        - {name: branchId, in: query, required: true, schema: {type: string, format: uuid}}
+      responses:
+        "200":
+          description: Current authoritative kitchen queue.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: "#/components/schemas/KitchenWorkItem"}
+
+  /v1/staff/kitchen/items/{workItemId}/start:
+    post:
+      tags: [Kitchen]
+      operationId: startKitchenWorkItem
+      security: [{staffCookie: []}]
+      parameters:
+        - $ref: "#/components/parameters/WorkItemId"
+        - $ref: "#/components/parameters/ExpectedVersion"
+      responses:
+        "200":
+          description: Work item started.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/KitchenWorkItem"}
+        "409": {$ref: "#/components/responses/Conflict"}
+
+  /v1/staff/kitchen/items/{workItemId}/ready:
+    post:
+      tags: [Kitchen]
+      operationId: markKitchenWorkItemReady
+      security: [{staffCookie: []}]
+      parameters:
+        - $ref: "#/components/parameters/WorkItemId"
+        - $ref: "#/components/parameters/ExpectedVersion"
+      responses:
+        "200":
+          description: Work item ready.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/KitchenWorkItem"}
+        "409": {$ref: "#/components/responses/Conflict"}
+
+  /v1/staff/events:
+    get:
+      tags: [Realtime]
+      operationId: streamStaffEvents
+      security: [{staffCookie: []}]
+      parameters:
+        - {name: branchId, in: query, required: true, schema: {type: string, format: uuid}}
+        - {name: Last-Event-ID, in: header, schema: {type: string}}
+      responses:
+        "200":
+          description: Server-Sent Events stream. Gaps require snapshot reload.
+          content:
+            text/event-stream:
+              schema: {type: string}
+
+components:
+  securitySchemes:
+    staffCookie:
+      type: apiKey
+      in: cookie
+      name: rms_staff_session
+    guestCookie:
+      type: apiKey
+      in: cookie
+      name: rms_guest_session
+
+  parameters:
+    QrToken:
+      name: qrToken
+      in: path
+      required: true
+      schema: {type: string, minLength: 32, maxLength: 256}
+    OrderId:
+      name: orderId
+      in: path
+      required: true
+      schema: {type: string, format: uuid}
+    WorkItemId:
+      name: workItemId
+      in: path
+      required: true
+      schema: {type: string, format: uuid}
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema: {type: string, minLength: 16, maxLength: 128}
+    ExpectedVersion:
+      name: If-Match
+      in: header
+      required: true
+      description: Quoted integer aggregate version.
+      schema: {type: string, pattern: '^"[0-9]+"$'}
+    Cursor:
+      name: cursor
+      in: query
+      schema: {type: string}
+    PageSize:
+      name: pageSize
+      in: query
+      schema: {type: integer, minimum: 1, maximum: 100, default: 50}
+
+  responses:
+    Unauthorized:
+      description: Authentication required.
+      content: {application/problem+json: {schema: {$ref: "#/components/schemas/Problem"}}}
+    Forbidden:
+      description: Authenticated but not authorized.
+      content: {application/problem+json: {schema: {$ref: "#/components/schemas/Problem"}}}
+    NotFound:
+      description: Resource absent or not visible in the current scope.
+      content: {application/problem+json: {schema: {$ref: "#/components/schemas/Problem"}}}
+    Conflict:
+      description: State, version, menu, table, payment, or idempotency conflict.
+      content: {application/problem+json: {schema: {$ref: "#/components/schemas/Problem"}}}
+    ValidationFailed:
+      description: Request validation failed.
+      content: {application/problem+json: {schema: {$ref: "#/components/schemas/Problem"}}}
+    RateLimited:
+      description: Rate limit exceeded.
+      headers:
+        Retry-After: {schema: {type: integer}}
+      content: {application/problem+json: {schema: {$ref: "#/components/schemas/Problem"}}}
+
+  schemas:
+    GuestSession:
+      type: object
+      required: [branchId, tableId, expiresAt]
+      properties:
+        branchId: {type: string, format: uuid}
+        tableId: {type: string, format: uuid}
+        expiresAt: {type: string, format: date-time}
+
+    Menu:
+      type: object
+      required: [version, currency, categories]
+      properties:
+        version: {type: string}
+        currency: {type: string, pattern: "^[A-Z]{3}$"}
+        categories:
+          type: array
+          items:
+            type: object
+            required: [id, name, dishes]
+            properties:
+              id: {type: string, format: uuid}
+              name: {type: string}
+              dishes:
+                type: array
+                items: {$ref: "#/components/schemas/Dish"}
+
+    Dish:
+      type: object
+      required: [id, name, unitPrice, available]
+      properties:
+        id: {type: string, format: uuid}
+        name: {type: string}
+        description: {type: [string, "null"]}
+        unitPrice: {$ref: "#/components/schemas/Money"}
+        available: {type: boolean}
+        optionGroups:
+          type: array
+          items: {$ref: "#/components/schemas/OptionGroup"}
+
+    OptionGroup:
+      type: object
+      required: [id, name, minimum, maximum, options]
+      properties:
+        id: {type: string, format: uuid}
+        name: {type: string}
+        minimum: {type: integer, minimum: 0}
+        maximum: {type: integer, minimum: 1}
+        options:
+          type: array
+          items:
+            type: object
+            required: [id, name, priceDelta]
+            properties:
+              id: {type: string, format: uuid}
+              name: {type: string}
+              priceDelta: {$ref: "#/components/schemas/Money"}
+
+    SubmitOrderRequest:
+      type: object
+      required: [menuVersion, items]
+      properties:
+        menuVersion: {type: string}
+        customerName: {type: [string, "null"], maxLength: 100}
+        items:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items:
+            type: object
+            required: [dishId, quantity, optionIds]
+            properties:
+              dishId: {type: string, format: uuid}
+              quantity: {type: integer, minimum: 1, maximum: 99}
+              optionIds: {type: array, uniqueItems: true, items: {type: string, format: uuid}}
+              note: {type: [string, "null"], maxLength: 500}
+
+    Order:
+      type: object
+      required: [id, reference, version, approval, fulfilment, financial, closure, total, items]
+      properties:
+        id: {type: string, format: uuid}
+        reference: {type: string}
+        version: {type: integer, minimum: 1}
+        approval: {type: string, enum: [submitted, accepted, rejected]}
+        fulfilment: {type: string, enum: [not_started, preparing, ready, served]}
+        financial: {type: string, enum: [unpaid, paid, partially_refunded, refunded]}
+        closure: {type: string, enum: [active, completed, cancelled]}
+        total: {$ref: "#/components/schemas/Money"}
+        items:
+          type: array
+          items:
+            type: object
+            required: [name, quantity, unitPrice, total]
+            properties:
+              name: {type: string}
+              quantity: {type: integer}
+              unitPrice: {$ref: "#/components/schemas/Money"}
+              total: {$ref: "#/components/schemas/Money"}
+              note: {type: [string, "null"]}
+
+    KitchenWorkItem:
+      type: object
+      required: [id, version, orderId, orderReference, itemName, quantity, state]
+      properties:
+        id: {type: string, format: uuid}
+        version: {type: integer}
+        orderId: {type: string, format: uuid}
+        orderReference: {type: string}
+        itemName: {type: string}
+        quantity: {type: integer}
+        note: {type: [string, "null"]}
+        state: {type: string, enum: [queued, preparing, ready, cancelled]}
+
+    RecordPaymentRequest:
+      type: object
+      required: [amount, method]
+      properties:
+        amount: {$ref: "#/components/schemas/Money"}
+        method: {type: string, enum: [cash, card]}
+        externalReference: {type: [string, "null"], maxLength: 100}
+
+    Payment:
+      type: object
+      required: [id, orderId, amount, method, recordedAt]
+      properties:
+        id: {type: string, format: uuid}
+        orderId: {type: string, format: uuid}
+        amount: {$ref: "#/components/schemas/Money"}
+        method: {type: string, enum: [cash, card]}
+        recordedAt: {type: string, format: date-time}
+
+    Money:
+      type: object
+      required: [amount, currency]
+      properties:
+        amount: {type: string, pattern: "^-?[0-9]+(\\.[0-9]{1,2})?$"}
+        currency: {type: string, pattern: "^[A-Z]{3}$"}
+
+    Problem:
+      type: object
+      required: [type, title, status, code, correlationId]
+      properties:
+        type: {type: string, format: uri-reference}
+        title: {type: string}
+        status: {type: integer}
+        code:
+          type: string
+          enum: [validation_error, authentication_required, permission_denied, feature_disabled, resource_not_found, invalid_state_transition, concurrency_conflict, menu_changed, dish_unavailable, table_unavailable, payment_conflict, idempotency_conflict, rate_limited, unexpected_error]
+        detail: {type: [string, "null"]}
+        correlationId: {type: string}
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items: {type: string}

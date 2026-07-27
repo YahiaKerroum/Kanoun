@@ -1,0 +1,201 @@
+document:
+  id: DOMAIN-WORKFLOWS
+  status: approved
+  version: "1.0"
+  owner: domain
+  last_reviewed: 2026-07-27
+
+rules:
+  client_may_assign_state: false
+  active_records_store_configuration_version: true
+  transition_records_actor_and_utc_time: true
+
+state_machines:
+  order_approval:
+    owner: ordering
+    initial: submitted
+    states: [submitted, accepted, rejected]
+    mvp_strategy: automatic_acceptance
+    transitions:
+      - id: TR-APPROVAL-001
+        from: submitted
+        to: accepted
+        trigger: accept_order
+        actor: system_or_staff
+        permission: orders.accept
+        guards: [branch_accepting_orders, table_claim_valid, all_items_available]
+        effects: [create_kitchen_work]
+        events: [EVT-ORDER-ACCEPTED]
+      - id: TR-APPROVAL-002
+        from: submitted
+        to: rejected
+        trigger: reject_order
+        actor: staff
+        permission: orders.reject
+        guards: [reason_present]
+        effects: [release_pending_table_claim]
+        events: [EVT-ORDER-REJECTED]
+
+  order_fulfilment:
+    owner: ordering_projection
+    source_of_truth: kitchen_and_serving_events
+    initial: not_started
+    states: [not_started, preparing, ready, served]
+    transitions:
+      - id: TR-FULFIL-001
+        from: not_started
+        to: preparing
+        trigger: first_kitchen_item_started
+        actor: system
+        events: [EVT-ORDER-PREPARING]
+      - id: TR-FULFIL-002
+        from: preparing
+        to: ready
+        trigger: all_required_kitchen_items_ready
+        actor: system
+        events: [EVT-ORDER-READY]
+      - id: TR-FULFIL-003
+        from: ready
+        to: served
+        trigger: mark_order_served
+        actor: staff
+        permission: orders.serve
+        events: [EVT-ORDER-SERVED]
+
+  order_financial:
+    owner: payments
+    initial: unpaid
+    states: [unpaid, paid, partially_refunded, refunded]
+    transitions:
+      - id: TR-FIN-001
+        from: unpaid
+        to: paid
+        trigger: record_full_payment
+        actor: staff
+        permission: payments.record
+        guards: [payment_equals_outstanding_balance, supported_payment_method]
+        events: [EVT-PAYMENT-RECORDED, EVT-ORDER-PAID]
+      - id: TR-FIN-002
+        from: paid
+        to: partially_refunded
+        trigger: record_partial_refund
+        actor: staff
+        permission: payments.refund
+        guards: [reason_present, refund_not_greater_than_paid_amount]
+        events: [EVT-PAYMENT-REFUNDED]
+      - id: TR-FIN-003
+        from: [paid, partially_refunded]
+        to: refunded
+        trigger: refund_remaining_paid_amount
+        actor: staff
+        permission: payments.refund
+        guards: [reason_present]
+        events: [EVT-PAYMENT-REFUNDED]
+
+  order_closure:
+    owner: ordering
+    initial: active
+    states: [active, completed, cancelled]
+    transitions:
+      - id: TR-CLOSE-001
+        from: active
+        to: completed
+        trigger: complete_order
+        actor: staff
+        permission: orders.complete
+        guards: [fulfilment_is_served, financial_is_paid]
+        events: [EVT-ORDER-COMPLETED]
+      - id: TR-CLOSE-002
+        from: active
+        to: completed
+        trigger: complete_order_with_unpaid_override
+        actor: staff
+        permission: orders.complete_unpaid
+        guards: [fulfilment_is_served, reason_present]
+        events: [EVT-ORDER-COMPLETED-WITH-OVERRIDE]
+      - id: TR-CLOSE-003
+        from: active
+        to: cancelled
+        trigger: cancel_order
+        actor: staff
+        permission: orders.cancel
+        guards: [reason_present, cancellation_policy_allows]
+        effects: [cancel_unstarted_kitchen_work, preserve_prepared_waste_history, resolve_recorded_payment]
+        events: [EVT-ORDER-CANCELLED]
+
+  kitchen_work_item:
+    owner: kitchen
+    initial: queued
+    states: [queued, preparing, ready, cancelled]
+    transitions:
+      - id: TR-KITCHEN-001
+        from: queued
+        to: preparing
+        trigger: start_preparation
+        actor: staff
+        permission: kitchen.update
+        events: [EVT-KITCHEN-ITEM-STARTED]
+      - id: TR-KITCHEN-002
+        from: preparing
+        to: ready
+        trigger: mark_item_ready
+        actor: staff
+        permission: kitchen.update
+        events: [EVT-KITCHEN-ITEM-READY]
+      - id: TR-KITCHEN-003
+        from: queued
+        to: cancelled
+        trigger: cancel_unstarted_item
+        actor: system_or_staff
+        events: [EVT-KITCHEN-ITEM-CANCELLED]
+
+  table_session:
+    owner: tables
+    initial: open
+    states: [open, closed]
+    transitions:
+      - id: TR-TABLE-001
+        from: open
+        to: closed
+        trigger: close_table_session
+        actor: staff_or_system
+        permission: tables.close_session
+        guards: [all_orders_terminal, no_unresolved_operational_requests]
+        effects: [make_table_available]
+        events: [EVT-TABLE-SESSION-CLOSED]
+    commands_without_state_change:
+      - id: CMD-TABLE-MOVE
+        trigger: move_table_session
+        actor: staff
+        permission: tables.assign
+        guards: [destination_table_available, same_branch]
+        events: [EVT-TABLE-SESSION-MOVED]
+
+  bill_request:
+    owner: ordering
+    initial: open
+    states: [open, resolved]
+    creation:
+      trigger: request_bill
+      actor: guest_or_staff
+      guards: [order_active, no_open_bill_request]
+      events: [EVT-BILL-REQUESTED]
+    transitions:
+      - id: TR-BILL-001
+        from: open
+        to: resolved
+        trigger: payment_recorded_or_staff_resolution
+        actor: system_or_staff
+        permission: payments.view
+        events: [EVT-BILL-REQUEST-RESOLVED]
+
+derived_table_state:
+  precedence:
+    - inactive
+    - out_of_service
+    - occupied
+    - available
+  rules:
+    occupied: an_open_table_session_exists
+    available: active_and_no_open_session_or_restriction
+  reserved_supported_in_mvp: false

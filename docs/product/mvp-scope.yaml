@@ -1,0 +1,94 @@
+document:
+  id: MVP-SCOPE
+  status: approved
+  version: "1.0"
+  owner: product
+  last_reviewed: 2026-07-27
+
+statuses:
+  ready: approved for implementation
+  later: retained for a post-MVP release
+  blocked: requires an unresolved decision
+
+stories:
+  US-A01: {release: mvp, status: ready}
+  US-A02: {release: mvp, status: ready}
+  US-A03: {release: mvp, status: ready, obeys: [PD-019]}
+  US-A04: {release: mvp, status: ready, obeys: [PD-035]}
+  US-B01: {release: mvp, status: ready, obeys: [PD-026]}
+  US-B02: {release: mvp, status: ready, note: "Only options enabled in features.yaml"}
+  US-B03: {release: mvp, status: ready}
+  US-B04: {release: mvp, status: ready, obeys: [PD-026]}
+  US-C01: {release: mvp, status: ready, obeys: [PD-027]}
+  US-C02: {release: mvp, status: ready, obeys: [PD-004]}
+  US-C03: {release: mvp, status: ready}
+  US-C04: {release: mvp, status: ready, obeys: [PD-005]}
+  US-C05: {release: post_mvp, status: later}
+  US-C06: {release: mvp, status: ready, obeys: [PD-004]}
+  US-C07: {release: mvp, status: ready, obeys: [PD-027]}
+  US-C08: {release: mvp, status: ready}
+  US-D01: {release: mvp, status: ready}
+  US-D02: {release: mvp, status: ready}
+  US-D03: {release: mvp, status: ready}
+  US-D04: {release: mvp, status: ready}
+  US-D05: {release: mvp, status: ready}
+  US-E01: {release: mvp, status: ready, obeys: [PD-007]}
+  US-E02: {release: mvp, status: ready}
+  US-E03: {release: mvp, status: ready, obeys: [PD-008, PD-010]}
+  US-E04: {release: mvp, status: ready, obeys: [PD-006]}
+  US-F01: {release: mvp, status: ready}
+  US-F02: {release: mvp, status: ready, obeys: [PD-007]}
+  US-F03: {release: post_mvp, status: later}
+  US-F04: {release: mvp, status: ready, obeys: [PD-012]}
+  US-F05: {release: mvp, status: ready, obeys: [PD-008, PD-015, PD-034]}
+  US-G01: {release: mvp, status: ready}
+  US-G02: {release: mvp, status: ready, obeys: [PD-033]}
+  US-G03: {release: mvp, status: ready, note: "Always creates a new order in the same table session"}
+  US-G04: {release: mvp, status: ready}
+  US-G05: {release: mvp, status: ready, obeys: [PD-009]}
+  US-G06: {release: mvp, status: ready, note: "Staff order entry"}
+  US-H01: {release: post_mvp, status: later, note: "Manual acceptance; MVP auto-accepts"}
+  US-H02: {release: mvp, status: ready, obeys: [PD-013, PD-029]}
+  US-H03: {release: mvp, status: ready}
+  US-H04: {release: mvp, status: ready, obeys: [PD-009]}
+  US-H05: {release: mvp, status: ready}
+  US-I01: {release: mvp, status: ready}
+  US-I02: {release: post_mvp, status: later}
+  US-I03: {release: mvp, status: ready}
+  US-I04: {release: mvp, status: ready}
+  US-I05: {release: post_mvp, status: later, note: "Partial serving disabled"}
+  US-J01: {release: mvp, status: ready}
+  US-J02: {release: post_mvp, status: later}
+  US-J03: {release: mvp, status: ready}
+  US-J04: {release: post_mvp, status: later}
+  US-K01: {release: mvp, status: ready, obeys: [PD-015]}
+  US-K02: {release: mvp, status: ready, obeys: [PD-015, PD-017, PD-032]}
+  US-K03: {release: mvp, status: ready, obeys: [PD-016]}
+  US-K04: {release: mvp, status: ready, obeys: [PD-032]}
+  US-L01: {release: post_mvp, status: later, obeys: [PD-021]}
+  US-L02: {release: post_mvp, status: later, obeys: [PD-021]}
+  US-M01: {release: post_mvp, status: later, obeys: [PD-020]}
+  US-M02: {release: post_mvp, status: later, obeys: [PD-020]}
+  US-M03: {release: post_mvp, status: later, obeys: [PD-020]}
+  US-M04: {release: post_mvp, status: later, obeys: [PD-020]}
+  US-M05: {release: post_mvp, status: later, obeys: [PD-020]}
+  US-M06: {release: post_mvp, status: later, obeys: [PD-020]}
+  US-M07: {release: post_mvp, status: later, obeys: [PD-020]}
+  US-M08: {release: post_mvp, status: later, obeys: [PD-020]}
+  US-N01: {release: post_mvp, status: later}
+  US-N02: {release: post_mvp, status: later}
+  US-N03: {release: post_mvp, status: later}
+  US-O01: {release: mvp, status: ready}
+  US-O02: {release: mvp, status: ready}
+  US-O03: {release: mvp, status: ready}
+  US-P01: {release: mvp, status: ready}
+  US-P02: {release: mvp, status: ready, obeys: [PD-019]}
+  US-P03: {release: post_mvp, status: later}
+  US-P04: {release: post_mvp, status: later}
+  US-Q01: {release: mvp, status: ready}
+  US-Q02: {release: mvp, status: ready, obeys: [PD-032]}
+  US-R01: {release: mvp, status: ready, note: "Owner bootstrap and staff invitation"}
+  US-R02: {release: mvp, status: ready, note: "Login, logout, and session revocation"}
+  US-R03: {release: mvp, status: ready, note: "Credential recovery"}
+  US-R04: {release: mvp, status: ready, note: "Last administrator protection"}
+  US-R05: {release: mvp, status: ready, obeys: [PD-028], note: "Platform support break-glass"}

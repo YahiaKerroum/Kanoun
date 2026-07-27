@@ -1,0 +1,136 @@
+document:
+  id: EVENT-CATALOG
+  status: approved
+  version: "1.0"
+  owner: architecture
+  last_reviewed: 2026-07-27
+
+delivery:
+  mode: at_least_once
+  ordering: per_aggregate
+  transport_mvp: postgresql_outbox
+  idempotency: event_id_per_handler
+  retry: bounded_exponential_backoff_with_jitter
+  exhausted: quarantine_and_alert
+
+envelope:
+  required:
+    - event_id
+    - event_type
+    - schema_version
+    - business_account_id
+    - aggregate_id
+    - aggregate_version
+    - occurred_at_utc
+    - correlation_id
+    - causation_id
+    - payload
+  optional: [restaurant_id, branch_id, actor_id, trace_context]
+  pii_policy: minimum_required_and_redacted
+
+events:
+  EVT-ORDER-SUBMITTED:
+    type: ordering.order_submitted.v1
+    owner: ordering
+    aggregate: order
+    consumers: [notifications, reporting]
+  EVT-ORDER-ACCEPTED:
+    type: ordering.order_accepted.v1
+    owner: ordering
+    aggregate: order
+    consumers: [notifications, reporting]
+  EVT-ORDER-REJECTED:
+    type: ordering.order_rejected.v1
+    owner: ordering
+    aggregate: order
+    consumers: [notifications, reporting]
+  EVT-ORDER-PREPARING:
+    type: ordering.order_preparing.v1
+    owner: ordering
+    aggregate: order
+    consumers: [notifications]
+  EVT-ORDER-READY:
+    type: ordering.order_ready.v1
+    owner: ordering
+    aggregate: order
+    consumers: [notifications, reporting]
+  EVT-ORDER-SERVED:
+    type: ordering.order_served.v1
+    owner: ordering
+    aggregate: order
+    consumers: [notifications, reporting]
+  EVT-ORDER-CANCELLED:
+    type: ordering.order_cancelled.v1
+    owner: ordering
+    aggregate: order
+    consumers: [notifications, reporting]
+  EVT-ORDER-COMPLETED:
+    type: ordering.order_completed.v1
+    owner: ordering
+    aggregate: order
+    consumers: [reporting, tables]
+  EVT-ORDER-COMPLETED-WITH-OVERRIDE:
+    type: ordering.order_completed_with_override.v1
+    owner: ordering
+    aggregate: order
+    consumers: [reporting, tables]
+  EVT-KITCHEN-ITEM-STARTED:
+    type: kitchen.item_started.v1
+    owner: kitchen
+    aggregate: kitchen_work_item
+    consumers: [ordering, reporting]
+  EVT-KITCHEN-ITEM-READY:
+    type: kitchen.item_ready.v1
+    owner: kitchen
+    aggregate: kitchen_work_item
+    consumers: [ordering, reporting]
+  EVT-KITCHEN-ITEM-CANCELLED:
+    type: kitchen.item_cancelled.v1
+    owner: kitchen
+    aggregate: kitchen_work_item
+    consumers: [ordering, reporting]
+  EVT-PAYMENT-RECORDED:
+    type: payments.payment_recorded.v1
+    owner: payments
+    aggregate: payment
+    consumers: [reporting, notifications]
+  EVT-PAYMENT-REFUNDED:
+    type: payments.payment_refunded.v1
+    owner: payments
+    aggregate: refund
+    consumers: [reporting, notifications]
+  EVT-ORDER-PAID:
+    type: payments.order_paid.v1
+    owner: payments
+    aggregate: order_balance
+    consumers: [ordering, notifications]
+  EVT-TABLE-SESSION-OPENED:
+    type: tables.session_opened.v1
+    owner: tables
+    aggregate: table_session
+    consumers: [reporting, notifications]
+  EVT-TABLE-SESSION-MOVED:
+    type: tables.session_moved.v1
+    owner: tables
+    aggregate: table_session
+    consumers: [ordering, notifications, reporting]
+  EVT-TABLE-SESSION-CLOSED:
+    type: tables.session_closed.v1
+    owner: tables
+    aggregate: table_session
+    consumers: [reporting, notifications]
+  EVT-MENU-AVAILABILITY-CHANGED:
+    type: menu.availability_changed.v1
+    owner: menu
+    aggregate: dish
+    consumers: [notifications]
+  EVT-BILL-REQUESTED:
+    type: ordering.bill_requested.v1
+    owner: ordering
+    aggregate: bill_request
+    consumers: [notifications, reporting]
+  EVT-BILL-REQUEST-RESOLVED:
+    type: ordering.bill_request_resolved.v1
+    owner: ordering
+    aggregate: bill_request
+    consumers: [notifications, reporting]

@@ -1,0 +1,202 @@
+document:
+  id: MODULE-CATALOG
+  status: approved
+  version: "1.0"
+  owner: architecture
+  last_reviewed: 2026-07-27
+
+rules:
+  foreign_table_writes: prohibited
+  internal_types_are_contracts: false
+  circular_module_dependencies: prohibited
+  cross_module_orchestration: application_composition_layer
+  runtime: nodejs
+  language: strict_typescript
+  http_framework: express
+  physical_packaging: express_implementation_guide
+  domain_or_application_imports_express: prohibited
+
+composition_layer:
+  name: ServiceWorkflow
+  owns_data: false
+  purpose: Coordinate critical use cases through public module contracts and one local database transaction.
+
+modules:
+  identity_access:
+    owns:
+      - user_credentials
+      - staff_sessions
+      - permission_grants
+      - permission_templates
+      - support_access_grants
+    exposes:
+      - authenticate_staff
+      - revoke_sessions
+      - resolve_authorization
+      - manage_permission_grants
+    never_owns: [employee_profile, restaurant_configuration]
+
+  restaurant_configuration:
+    owns:
+      - business_accounts
+      - restaurants
+      - branches
+      - branch_operating_hours
+      - employee_profiles
+      - employee_branch_employment
+      - feature_configuration_versions
+    exposes:
+      - resolve_tenant_and_branch
+      - can_branch_accept_orders
+      - get_effective_configuration
+      - get_employee_reference
+
+  menu:
+    owns:
+      - menus
+      - categories
+      - dishes
+      - option_groups
+      - options
+      - branch_price_overrides
+      - branch_availability_overrides
+    exposes:
+      - get_customer_menu
+      - resolve_order_item_snapshots
+      - validate_menu_version
+    publishes: [EVT-MENU-AVAILABILITY-CHANGED]
+
+  tables:
+    owns:
+      - tables
+      - table_qr_codes
+      - table_sessions
+      - table_session_movements
+    exposes:
+      - exchange_table_qr
+      - claim_or_join_table_session
+      - validate_table_session
+      - move_table_session
+      - close_table_session
+    publishes: [EVT-TABLE-SESSION-OPENED, EVT-TABLE-SESSION-MOVED, EVT-TABLE-SESSION-CLOSED]
+
+  ordering:
+    owns:
+      - customer_sessions
+      - orders
+      - order_items
+      - order_item_snapshots
+      - cancellation_requests
+      - bill_requests
+      - order_corrections
+      - fulfilment_projection
+    exposes:
+      - create_guest_session
+      - submit_order
+      - create_staff_order
+      - get_order
+      - request_cancellation
+      - request_bill
+      - correct_order
+      - cancel_order
+      - mark_served
+      - complete_order
+      - get_order_bill_snapshot
+    publishes:
+      - EVT-ORDER-SUBMITTED
+      - EVT-ORDER-ACCEPTED
+      - EVT-ORDER-READY
+      - EVT-ORDER-SERVED
+      - EVT-ORDER-CANCELLED
+      - EVT-ORDER-COMPLETED
+
+  kitchen:
+    owns:
+      - kitchen_work_items
+      - preparation_state
+      - preparation_timestamps
+    exposes:
+      - create_work_for_order
+      - get_kitchen_queue
+      - start_item
+      - mark_item_ready
+      - cancel_unstarted_item
+    publishes: [EVT-KITCHEN-ITEM-STARTED, EVT-KITCHEN-ITEM-READY, EVT-KITCHEN-ITEM-CANCELLED]
+
+  payments:
+    owns:
+      - payments
+      - refunds
+      - payment_reversals
+      - order_balance_projection
+    exposes:
+      - record_payment
+      - record_refund
+      - get_order_balance
+      - verify_order_paid
+    publishes: [EVT-PAYMENT-RECORDED, EVT-PAYMENT-REFUNDED, EVT-ORDER-PAID]
+
+  notifications:
+    owns:
+      - notification_inbox
+      - read_and_acknowledgement_state
+      - notification_delivery_attempts
+    subscribes:
+      - EVT-ORDER-SUBMITTED
+      - EVT-ORDER-READY
+      - EVT-ORDER-CANCELLED
+      - EVT-TABLE-SESSION-MOVED
+      - EVT-BILL-REQUESTED
+    exposes: [get_notification_inbox, acknowledge_notification, stream_notifications]
+
+  reporting:
+    owns:
+      - operational_projections
+      - daily_sales_projections
+      - projection_checkpoints
+      - export_jobs
+    subscribes:
+      - EVT-ORDER-ACCEPTED
+      - EVT-ORDER-SERVED
+      - EVT-ORDER-CANCELLED
+      - EVT-ORDER-COMPLETED
+      - EVT-PAYMENT-RECORDED
+      - EVT-PAYMENT-REFUNDED
+      - EVT-BILL-REQUESTED
+      - EVT-BILL-REQUEST-RESOLVED
+    exposes: [get_branch_dashboard, get_sales_report]
+
+  audit:
+    owns:
+      - audit_events
+      - audit_retention
+      - audit_queries
+    exposes:
+      - append_audit_event_in_transaction
+      - search_audit_events
+
+  inventory:
+    lifecycle: post_mvp
+    owns: [ingredients, recipes, stock_movements, restock_requests]
+
+  reviews:
+    lifecycle: post_mvp
+    owns: [review_eligibility, reviews]
+
+  operations:
+    lifecycle: post_mvp
+    owns: [assistance_requests, cleaning_tasks]
+
+allowed_synchronous_dependencies:
+  ServiceWorkflow:
+    - identity_access
+    - restaurant_configuration
+    - menu
+    - tables
+    - ordering
+    - kitchen
+    - payments
+    - audit
+  ordering: [restaurant_configuration, menu, tables]
+  notifications: [identity_access]
+  reporting: [identity_access]

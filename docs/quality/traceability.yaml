@@ -1,0 +1,90 @@
+document:
+  id: TRACEABILITY
+  status: approved
+  version: "1.0"
+  owner: quality
+  last_reviewed: 2026-07-27
+
+vertical_slices:
+  tenant_and_configuration:
+    implements: [US-A01, US-A02, US-A03, US-A04, US-B01, US-B02, US-B03, US-B04]
+    obeys: [PD-001, PD-002, PD-003, PD-019, PD-026, PD-035, BR-001, BR-003, BR-006, BR-007]
+    modules: [restaurant_configuration, audit]
+    tests: [TEST-TENANT-001, TEST-CONFIG-001, TEST-HOURS-001]
+
+  identity_and_access:
+    implements: [US-C01, US-C02, US-C03, US-C04, US-C06, US-C07, US-C08, US-R01, US-R02, US-R03, US-R04, US-R05]
+    obeys: [PD-004, PD-005, PD-027, PD-028, BR-002, BR-003, BR-004, BR-005, BR-025]
+    modules: [identity_access, restaurant_configuration, audit]
+    tests: [TEST-AUTH-001, TEST-PERM-001, TEST-PERM-002, TEST-SUPPORT-001]
+
+  menu:
+    implements: [US-D01, US-D02, US-D03, US-D04, US-D05]
+    obeys: [PD-003, PD-018, PD-033, BR-011, BR-012, BR-013, BR-014]
+    modules: [menu, audit]
+    tests: [TEST-MENU-001, TEST-MENU-002, TEST-SNAPSHOT-001]
+
+  guest_qr_and_tables:
+    implements: [US-E01, US-E02, US-E03, US-E04, US-F01, US-F02, US-F04, US-F05]
+    obeys: [PD-006, PD-007, PD-008, PD-010, PD-011, PD-012, PD-034, BR-008, BR-009, BR-010, BR-019]
+    modules: [tables, ordering, audit]
+    tests: [TEST-QR-001, TEST-GUEST-001, TEST-TABLE-001, TEST-TABLE-002]
+
+  ordering:
+    implements: [US-G01, US-G02, US-G03, US-G04, US-G05, US-G06, US-H02, US-H03, US-H04, US-H05]
+    obeys: [PD-009, PD-013, PD-029, PD-030, PD-033, BR-007, BR-011, BR-012, BR-022]
+    modules: [ordering, menu, tables, kitchen, audit]
+    operations: [submitGuestOrder, createStaffOrder, getGuestOrder]
+    tests: [TEST-ORDER-001, TEST-ORDER-002, TEST-ORDER-003, TEST-IDEMPOTENCY-001, TEST-CONCURRENCY-001]
+
+  kitchen_and_serving:
+    implements: [US-I01, US-I03, US-I04, US-J01, US-J03]
+    obeys: [PD-013, PD-014, PD-023, PD-029, BR-017, BR-023]
+    modules: [kitchen, ordering, notifications]
+    operations: [getKitchenQueue, startKitchenWorkItem, markKitchenWorkItemReady, markOrderServed]
+    tests: [TEST-KITCHEN-001, TEST-KITCHEN-002, TEST-SERVE-001]
+
+  payments_and_completion:
+    implements: [US-K01, US-K02, US-K03, US-K04]
+    obeys: [PD-015, PD-016, PD-017, PD-018, PD-032, BR-013, BR-015, BR-016, BR-017, BR-018]
+    modules: [payments, ordering, audit]
+    operations: [requestGuestOrderBill, recordOrderPayment, completeOrder]
+    tests: [TEST-PAYMENT-001, TEST-PAYMENT-002, TEST-REFUND-001, TEST-COMPLETE-001]
+
+  notifications:
+    implements: [US-O01, US-O02, US-O03]
+    obeys: [BR-023]
+    modules: [notifications]
+    tests: [TEST-NOTIFY-001, TEST-REALTIME-001]
+
+  reporting:
+    implements: [US-P01, US-P02]
+    obeys: [PD-019, PD-025, BR-020, BR-021]
+    modules: [reporting]
+    tests: [TEST-REPORT-001, TEST-REPORT-002]
+
+  audit_and_deactivation:
+    implements: [US-Q01, US-Q02]
+    obeys: [PD-032, BR-024, BR-025]
+    modules: [audit]
+    tests: [TEST-AUDIT-001, TEST-DEACTIVATE-001]
+
+nfr_verification:
+  NFR-01: [TEST-E2E-SETUP-001, TEST-UX-001]
+  NFR-02: [TEST-RESPONSIVE-001]
+  NFR-03: [TEST-A11Y-001]
+  NFR-04: [TEST-PERF-001, TEST-PERF-002]
+  NFR-05: [TEST-AVAILABILITY-001]
+  NFR-06: [TEST-IDEMPOTENCY-001, TEST-CONCURRENCY-001, TEST-PAYMENT-001]
+  NFR-07: [TEST-AUTH-001, TEST-PERM-001, TEST-SECURITY-001]
+  NFR-08: [TEST-TENANT-001, TEST-TENANT-REALTIME-001]
+  NFR-09: [TEST-PRIVACY-001]
+  NFR-10: [TEST-AUDIT-001]
+  NFR-11: [TEST-LOAD-001]
+  NFR-12: [TEST-ARCH-001, TEST-CONTRACT-001]
+  NFR-13: [TEST-OBS-001]
+  NFR-14: [TEST-RESTORE-001]
+  NFR-15: [TEST-I18N-001]
+  NFR-16: [TEST-RECONNECT-001]
+  NFR-17: [TEST-BROWSER-001]
+  NFR-18: [TEST-SNAPSHOT-001, TEST-REFUND-001]

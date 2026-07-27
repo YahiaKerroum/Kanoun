@@ -1,0 +1,178 @@
+document:
+  id: FEATURE-CATALOG
+  status: approved
+  version: "1.0"
+  owner: product
+  last_reviewed: 2026-07-27
+
+kinds: [core_module, optional_module, capability, strategy, integration]
+scopes: [platform, restaurant, branch]
+
+features:
+  restaurant_configuration:
+    id: CFG-001
+    kind: core_module
+    scope: restaurant
+    mvp: true
+    default: enabled
+    disable_policy: prohibited
+
+  identity_access:
+    id: CFG-002
+    kind: core_module
+    scope: restaurant
+    mvp: true
+    default: enabled
+    disable_policy: prohibited
+
+  menu:
+    id: CFG-003
+    kind: core_module
+    scope: restaurant
+    branch_override: [dish_price, dish_visibility, dish_availability]
+    mvp: true
+    default: enabled
+    disable_policy: prohibit_while_branch_active
+
+  qr_menu:
+    id: CFG-004
+    kind: capability
+    scope: branch
+    depends_on: [menu]
+    mvp: true
+    default: enabled
+    disable_policy: stop_new_sessions_grandfather_active
+
+  ordering:
+    id: CFG-005
+    kind: core_module
+    scope: branch
+    depends_on: [menu, qr_menu, tables]
+    mvp: true
+    default: enabled
+    disable_policy: stop_new_orders_grandfather_active
+
+  tables:
+    id: CFG-006
+    kind: core_module
+    scope: branch
+    mvp: true
+    default: enabled
+    disable_policy: prohibit_while_open_sessions_exist
+
+  kitchen:
+    id: CFG-007
+    kind: core_module
+    scope: branch
+    depends_on: [ordering]
+    mvp: true
+    default: enabled
+    disable_policy: prohibit_while_open_work_exists
+
+  order_acceptance:
+    id: CFG-008
+    kind: strategy
+    scope: branch
+    depends_on: [ordering]
+    mvp: true
+    supported_values: [automatic]
+    post_mvp_values: [manual]
+    default: automatic
+
+  kitchen_assignment:
+    id: CFG-009
+    kind: capability
+    scope: branch
+    depends_on: [kitchen]
+    mvp: false
+    default: disabled
+
+  partial_serving:
+    id: CFG-010
+    kind: capability
+    scope: branch
+    depends_on: [kitchen]
+    mvp: false
+    default: disabled
+
+  payments:
+    id: CFG-011
+    kind: core_module
+    scope: branch
+    depends_on: [ordering]
+    mvp: true
+    default: enabled
+    supported_methods: [cash, card]
+    disable_policy: prohibit_while_unsettled_orders_exist
+
+  online_payments:
+    id: CFG-012
+    kind: integration
+    scope: platform
+    depends_on: [payments]
+    mvp: false
+    default: unavailable
+
+  notifications:
+    id: CFG-013
+    kind: core_module
+    scope: branch
+    mvp: true
+    default: enabled
+    disable_policy: in_app_delivery_may_disable_but_source_tasks_remain_queryable
+
+  reporting:
+    id: CFG-014
+    kind: core_module
+    scope: restaurant
+    mvp: true
+    default: enabled
+    disable_policy: hide_queries_preserve_projections
+
+  audit:
+    id: CFG-015
+    kind: core_module
+    scope: platform
+    mvp: true
+    default: enabled
+    disable_policy: prohibited
+
+  inventory:
+    id: CFG-016
+    kind: optional_module
+    scope: branch
+    mvp: false
+    default: unavailable
+
+  cleaning:
+    id: CFG-017
+    kind: optional_module
+    scope: branch
+    mvp: false
+    default: unavailable
+
+  reviews:
+    id: CFG-018
+    kind: optional_module
+    scope: restaurant
+    mvp: false
+    default: unavailable
+
+  customer_assistance:
+    id: CFG-019
+    kind: capability
+    scope: branch
+    mvp: false
+    default: disabled
+
+resolution_order:
+  - platform_availability
+  - restaurant_configuration
+  - explicit_branch_override
+  - workflow_strategy
+
+change_rules:
+  validate_dependency_cycles: true
+  increment_configuration_version: true
+  audit_every_change: true
+  existing_records_use_stored_version: true

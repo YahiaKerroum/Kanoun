@@ -1,0 +1,59 @@
+document:
+  id: PERMISSION-CATALOG
+  status: approved
+  version: "1.0"
+  owner: security-and-domain
+  last_reviewed: 2026-07-27
+
+resolution:
+  model: grants_only
+  default: deny
+  branch_scoped_grants: true
+  templates: copy_on_apply
+
+permissions:
+  restaurant.view: {id: PERM-001, module: restaurant_configuration, scope: restaurant, risk: low}
+  restaurant.edit: {id: PERM-002, module: restaurant_configuration, scope: restaurant, risk: high, audit: true}
+  branches.view: {id: PERM-003, module: restaurant_configuration, scope: restaurant, risk: low}
+  branches.manage: {id: PERM-004, module: restaurant_configuration, scope: restaurant, risk: high, audit: true}
+  features.manage: {id: PERM-005, module: restaurant_configuration, scope: restaurant, risk: high, audit: true}
+  employees.view: {id: PERM-006, module: restaurant_configuration, scope: restaurant, risk: medium}
+  employees.manage: {id: PERM-007, module: restaurant_configuration, scope: restaurant, risk: high, audit: true}
+  employees.manage_permissions: {id: PERM-008, module: identity_access, scope: restaurant, risk: critical, delegable_subset_only: true, audit: true}
+  menu.view: {id: PERM-009, module: menu, scope: branch, risk: low}
+  menu.manage: {id: PERM-010, module: menu, scope: restaurant, risk: medium, audit: true}
+  menu.manage_prices: {id: PERM-011, module: menu, scope: branch, risk: high, audit: true}
+  menu.manage_availability: {id: PERM-012, module: menu, scope: branch, risk: medium, audit: true}
+  qr.manage: {id: PERM-013, module: tables, scope: branch, risk: high, audit: true}
+  tables.view: {id: PERM-014, module: tables, scope: branch, risk: low}
+  tables.manage: {id: PERM-015, module: tables, scope: branch, risk: medium, audit: true}
+  tables.assign: {id: PERM-016, module: tables, scope: branch, risk: medium, audit: true}
+  tables.close_session: {id: PERM-017, module: tables, scope: branch, risk: high, audit: true}
+  orders.view: {id: PERM-018, module: ordering, scope: branch, risk: low}
+  orders.create: {id: PERM-019, module: ordering, scope: branch, risk: medium}
+  orders.accept: {id: PERM-020, module: ordering, scope: branch, risk: medium}
+  orders.reject: {id: PERM-021, module: ordering, scope: branch, risk: medium, audit: true}
+  orders.modify: {id: PERM-022, module: ordering, scope: branch, risk: high, audit: true}
+  orders.cancel: {id: PERM-023, module: ordering, scope: branch, risk: high, audit: true}
+  orders.serve: {id: PERM-024, module: ordering, scope: branch, risk: medium}
+  orders.complete: {id: PERM-025, module: ordering, scope: branch, risk: high, audit: true}
+  orders.complete_unpaid: {id: PERM-026, module: ordering, scope: branch, risk: critical, reason_required: true, audit: true}
+  kitchen.view: {id: PERM-027, module: kitchen, scope: branch, risk: low}
+  kitchen.update: {id: PERM-028, module: kitchen, scope: branch, risk: medium}
+  payments.view: {id: PERM-029, module: payments, scope: branch, risk: high}
+  payments.record: {id: PERM-030, module: payments, scope: branch, risk: high, audit: true}
+  payments.refund: {id: PERM-031, module: payments, scope: branch, risk: critical, reason_required: true, audit: true}
+  reports.view: {id: PERM-032, module: reporting, scope: branch, risk: medium}
+  reports.view_cross_branch: {id: PERM-033, module: reporting, scope: restaurant, risk: high}
+  audit.view: {id: PERM-034, module: audit, scope: restaurant, risk: critical, audit: true}
+  support.break_glass: {id: PERM-035, module: identity_access, scope: platform, risk: critical, reason_required: true, time_limited: true, audit: true}
+
+templates:
+  administrator:
+    grants: [restaurant.view, restaurant.edit, branches.view, branches.manage, features.manage, employees.view, employees.manage, employees.manage_permissions, menu.view, menu.manage, menu.manage_prices, menu.manage_availability, qr.manage, tables.view, tables.manage, tables.assign, tables.close_session, orders.view, orders.create, orders.accept, orders.reject, orders.modify, orders.cancel, orders.serve, orders.complete, kitchen.view, kitchen.update, payments.view, payments.record, payments.refund, reports.view, reports.view_cross_branch, audit.view]
+  general_staff:
+    grants: [menu.view, tables.view, tables.assign, orders.view, orders.create, orders.serve, kitchen.view, kitchen.update]
+  cashier:
+    grants: [tables.view, orders.view, orders.create, orders.complete, payments.view, payments.record]
+  kitchen_staff:
+    grants: [orders.view, kitchen.view, kitchen.update]
