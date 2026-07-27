@@ -4,17 +4,29 @@ import { appendOutboxMessage } from "@rms/building-blocks";
 import {
   administratorPermissionKeys,
   ApplicationError,
+  featureDefinitionById,
+  featureDefinitions,
   hasPermission,
+  permissionDefinitionByKey,
+  permissionTemplateCatalog,
   type Address,
   type AuditWriter,
   type BranchRecord,
   type ContactInformation,
+  type EmployeeReference,
+  type FeatureConfiguration,
+  type FeatureState,
   type IdentityAccessStore,
   type IdentitySecurity,
   type OpeningPeriod,
+  type PermissionGrant,
+  type PermissionKey,
+  type PermissionSet,
+  type PermissionTemplate,
   type RestaurantConfigurationStore,
   type RestaurantRecord,
   type StaffRequestContext,
+  type SupportTenantSnapshot,
 } from "@rms/modules";
 import type { PostgresServiceWorkflow } from "./postgres-service-workflow.js";
 
@@ -64,6 +76,18 @@ export interface CredentialTokenDelivery {
     readonly token: string;
     readonly expiresAtUtc: Date;
   }): Promise<void>;
+}
+
+export interface SupportAccessInput {
+  readonly businessAccountId: string;
+  readonly operatorId: string;
+  readonly approverId: string;
+  readonly approvalReference: string;
+  readonly reason: string;
+  readonly permissionKeys: readonly PermissionKey[];
+  readonly restaurantIds: readonly string[];
+  readonly branchIds: readonly string[];
+  readonly expiresAtUtc: Date;
 }
 
 export interface TenantOwnerServiceDependencies {
@@ -118,6 +142,32 @@ function requireRecentAuthentication(
       "Sign in again before changing administrator access.",
     );
   }
+}
+
+function grantIdentity(grant: PermissionGrant): string {
+  return [
+    grant.permissionKey,
+    grant.restaurantId ?? "*",
+    grant.branchId ?? "*",
+  ].join(":");
+}
+
+function uniqueGrants(grants: readonly PermissionGrant[]): PermissionGrant[] {
+  return [
+    ...new Map(grants.map((grant) => [grantIdentity(grant), grant])).values(),
+  ];
+}
+
+function uniqueValues<Value>(values: readonly Value[]): Value[] {
+  return [...new Set(values)];
+}
+
+function grantsContainAdministrator(
+  grants: readonly PermissionGrant[],
+): boolean {
+  return administratorPermissionKeys.every((permissionKey) =>
+    grants.some((grant) => grant.permissionKey === permissionKey),
+  );
 }
 
 function assertOpeningHoursDoNotOverlap(
@@ -748,6 +798,1060 @@ export class TenantOwnerService {
     });
   }
 
+  public async listEmployees(
+    context: StaffRequestContext,
+    restaurantId: string,
+  ) {
+    requirePermission(context, "employees.view", restaurantId);
+    return this.dependencies.restaurantConfiguration.listEmployees(
+      this.dependencies.databasePool,
+      context.businessAccountId,
+      restaurantId,
+    );
+  }
+
+  public async getEmployee(context: StaffRequestContext, employeeId: string) {
+    const employee =
+      await this.dependencies.restaurantConfiguration.getEmployee(
+        this.dependencies.databasePool,
+        context.businessAccountId,
+        employeeId,
+      );
+    if (!employee) {
+      throw new ApplicationError(
+        "resource_not_found",
+        404,
+        "Employee not found",
+      );
+    }
+    requirePermission(context, "employees.view", employee.restaurantId);
+    return employee;
+  }
+
+  public async createEmployee(
+    context: StaffRequestContext,
+    input: {
+      readonly restaurantId: string;
+      readonly displayName: string;
+      readonly email: string;
+      readonly branchIds: readonly string[];
+    },
+    metadata: RequestMetadata,
+  ) {
+    requirePermission(context, "employees.manage", input.restaurantId);
+    await this.validateDelegableBranches(
+      context,
+      input.restaurantId,
+      input.branchIds,
+    );
+    const now = nowFrom(metadata);
+    const employeeId = randomUUID();
+    return this.dependencies.workflow.run(async (transaction) => {
+      const employee =
+        await this.dependencies.restaurantConfiguration.createEmployee(
+          transaction,
+          {
+            id: employeeId,
+            businessAccountId: context.businessAccountId,
+            restaurantId: input.restaurantId,
+            displayName: input.displayName,
+            email: input.email,
+            branchIds: input.branchIds,
+            now,
+          },
+        );
+      await this.dependencies.identityAccess.initializePermissionSet(
+        transaction,
+        context.businessAccountId,
+        employee.id,
+        now,
+      );
+      await this.appendAudit(transaction, {
+        businessAccountId: context.businessAccountId,
+        restaurantId: employee.restaurantId,
+        actorUserId: context.userId,
+        action: "employee.created",
+        targetType: "employee",
+        targetId: employee.id,
+        outcome: "succeeded",
+        correlationId: metadata.correlationId,
+        afterData: employee,
+        now,
+      });
+      await this.appendEvent(transaction, {
+        eventType: "restaurant.employee_created.v1",
+        businessAccountId: context.businessAccountId,
+        restaurantId: employee.restaurantId,
+        aggregateId: employee.id,
+        aggregateVersion: employee.version,
+        actorId: context.userId,
+        payload: { branch_ids: [...employee.branchIds] },
+        metadata,
+        now,
+      });
+      return employee;
+    });
+  }
+
+  public async updateEmployeeProfile(
+    context: StaffRequestContext,
+    input: {
+      readonly employeeId: string;
+      readonly expectedVersion: number;
+      readonly displayName?: string;
+      readonly email?: string;
+      readonly status?: "active";
+    },
+    metadata: RequestMetadata,
+  ) {
+    const before = await this.getEmployee(context, input.employeeId);
+    requirePermission(context, "employees.manage", before.restaurantId);
+    const now = nowFrom(metadata);
+    return this.dependencies.workflow.run(async (transaction) => {
+      const employee =
+        await this.dependencies.restaurantConfiguration.updateEmployee(
+          transaction,
+          {
+            businessAccountId: context.businessAccountId,
+            employeeId: input.employeeId,
+            expectedVersion: input.expectedVersion,
+            ...(input.displayName !== undefined
+              ? { displayName: input.displayName }
+              : {}),
+            ...(input.email !== undefined ? { email: input.email } : {}),
+            ...(input.status !== undefined ? { status: input.status } : {}),
+            now,
+          },
+        );
+      if (!employee) {
+        throw new ApplicationError(
+          "concurrency_conflict",
+          409,
+          "Employee changed",
+          "Reload the employee and retry the change.",
+          before.version,
+        );
+      }
+      await this.appendAudit(transaction, {
+        businessAccountId: context.businessAccountId,
+        restaurantId: employee.restaurantId,
+        actorUserId: context.userId,
+        action:
+          before.status === "inactive" && employee.status === "active"
+            ? "employee.activated"
+            : "employee.updated",
+        targetType: "employee",
+        targetId: employee.id,
+        outcome: "succeeded",
+        correlationId: metadata.correlationId,
+        beforeData: before,
+        afterData: employee,
+        now,
+      });
+      await this.appendEvent(transaction, {
+        eventType: "restaurant.employee_updated.v1",
+        businessAccountId: context.businessAccountId,
+        restaurantId: employee.restaurantId,
+        aggregateId: employee.id,
+        aggregateVersion: employee.version,
+        actorId: context.userId,
+        payload: { status: employee.status },
+        metadata,
+        now,
+      });
+      return employee;
+    });
+  }
+
+  public async replaceEmployeeBranches(
+    context: StaffRequestContext,
+    employeeId: string,
+    expectedVersion: number,
+    branchIds: readonly string[],
+    reason: string,
+    metadata: RequestMetadata,
+  ) {
+    const now = nowFrom(metadata);
+    requireRecentAuthentication(context, now);
+    const before = await this.getEmployee(context, employeeId);
+    requirePermission(context, "employees.manage", before.restaurantId);
+    await this.validateDelegableBranches(
+      context,
+      before.restaurantId,
+      branchIds,
+    );
+
+    return this.dependencies.workflow.run(async (transaction) => {
+      const permissionSet =
+        await this.dependencies.identityAccess.getPermissionSet(
+          transaction.sql,
+          context.businessAccountId,
+          employeeId,
+        );
+      const employee =
+        await this.dependencies.restaurantConfiguration.replaceEmployeeBranchAccess(
+          transaction,
+          {
+            businessAccountId: context.businessAccountId,
+            employeeId,
+            expectedVersion,
+            branchIds,
+            now,
+          },
+        );
+      if (!employee) {
+        throw new ApplicationError(
+          "concurrency_conflict",
+          409,
+          "Employee changed",
+          "Reload the employee and retry the scope change.",
+          before.version,
+        );
+      }
+      if (permissionSet) {
+        const grants = permissionSet.grants.filter(
+          (grant) => !grant.branchId || branchIds.includes(grant.branchId),
+        );
+        const replaced =
+          await this.dependencies.identityAccess.replacePermissionSet(
+            transaction,
+            {
+              businessAccountId: context.businessAccountId,
+              employeeId,
+              expectedVersion: permissionSet.version,
+              grants,
+              grantedByUserId: context.userId,
+              now,
+            },
+          );
+        if (!replaced) {
+          throw new ApplicationError(
+            "concurrency_conflict",
+            409,
+            "Employee permissions changed",
+            "Reload permissions and retry the scope change.",
+          );
+        }
+      }
+      await this.revokeEmployeeSessions(
+        transaction,
+        context.businessAccountId,
+        employeeId,
+        "branch_scope_changed",
+        now,
+      );
+      await this.appendAudit(transaction, {
+        businessAccountId: context.businessAccountId,
+        restaurantId: employee.restaurantId,
+        actorUserId: context.userId,
+        action: "employee.branch_scope_replaced",
+        targetType: "employee",
+        targetId: employee.id,
+        outcome: "succeeded",
+        reason,
+        correlationId: metadata.correlationId,
+        beforeData: { branchIds: before.branchIds },
+        afterData: { branchIds: employee.branchIds },
+        now,
+      });
+      await this.appendEvent(transaction, {
+        eventType: "restaurant.employee_branch_scope_changed.v1",
+        businessAccountId: context.businessAccountId,
+        restaurantId: employee.restaurantId,
+        aggregateId: employee.id,
+        aggregateVersion: employee.version,
+        actorId: context.userId,
+        payload: {
+          branch_ids: [...employee.branchIds],
+          sessions_revoked: true,
+        },
+        metadata,
+        now,
+      });
+      return employee;
+    });
+  }
+
+  public async getEmployeePermissions(
+    context: StaffRequestContext,
+    employeeId: string,
+  ): Promise<PermissionSet> {
+    const employee = await this.getEmployee(context, employeeId);
+    requirePermission(
+      context,
+      "employees.manage_permissions",
+      employee.restaurantId,
+    );
+    const result = await this.dependencies.identityAccess.getPermissionSet(
+      this.dependencies.databasePool,
+      context.businessAccountId,
+      employeeId,
+    );
+    if (!result) {
+      throw new ApplicationError(
+        "resource_not_found",
+        404,
+        "Employee permissions not found",
+      );
+    }
+    return result;
+  }
+
+  public async replaceEmployeePermissions(
+    context: StaffRequestContext,
+    employeeId: string,
+    expectedVersion: number,
+    requestedGrants: readonly PermissionGrant[],
+    reason: string,
+    metadata: RequestMetadata,
+  ): Promise<PermissionSet> {
+    const now = nowFrom(metadata);
+    requireRecentAuthentication(context, now);
+    const employee = await this.getEmployee(context, employeeId);
+    requirePermission(
+      context,
+      "employees.manage_permissions",
+      employee.restaurantId,
+    );
+    const grants = uniqueGrants(requestedGrants);
+    this.validateDelegableGrants(context, employee, grants);
+
+    const result = await this.dependencies.workflow.run(async (transaction) => {
+      const before = await this.dependencies.identityAccess.getPermissionSet(
+        transaction.sql,
+        context.businessAccountId,
+        employeeId,
+      );
+      if (before?.version !== expectedVersion) {
+        return { kind: "conflict" as const, currentVersion: before?.version };
+      }
+      const wasAdministrator =
+        await this.dependencies.identityAccess.isEffectiveAdministrator(
+          transaction.sql,
+          context.businessAccountId,
+          employeeId,
+          administratorPermissionKeys,
+        );
+      if (wasAdministrator && !grantsContainAdministrator(grants)) {
+        const count =
+          await this.dependencies.identityAccess.countEffectiveAdministratorsForUpdate(
+            transaction,
+            context.businessAccountId,
+            administratorPermissionKeys,
+          );
+        if (count <= 1) {
+          await this.appendAudit(transaction, {
+            businessAccountId: context.businessAccountId,
+            restaurantId: employee.restaurantId,
+            actorUserId: context.userId,
+            action: "identity.last_administrator_permission_change_blocked",
+            targetType: "employee",
+            targetId: employeeId,
+            outcome: "failed",
+            reason,
+            correlationId: metadata.correlationId,
+            now,
+          });
+          return { kind: "last_administrator" as const };
+        }
+      }
+      const permissionSet =
+        await this.dependencies.identityAccess.replacePermissionSet(
+          transaction,
+          {
+            businessAccountId: context.businessAccountId,
+            employeeId,
+            expectedVersion,
+            grants,
+            grantedByUserId: context.userId,
+            now,
+          },
+        );
+      if (!permissionSet) {
+        return { kind: "conflict" as const };
+      }
+      await this.revokeEmployeeSessions(
+        transaction,
+        context.businessAccountId,
+        employeeId,
+        "permissions_changed",
+        now,
+      );
+      await this.appendAudit(transaction, {
+        businessAccountId: context.businessAccountId,
+        restaurantId: employee.restaurantId,
+        actorUserId: context.userId,
+        action: "identity.permissions_replaced",
+        targetType: "employee",
+        targetId: employeeId,
+        outcome: "succeeded",
+        reason,
+        correlationId: metadata.correlationId,
+        beforeData: before,
+        afterData: permissionSet,
+        now,
+      });
+      await this.appendEvent(transaction, {
+        eventType: "identity.permissions_changed.v1",
+        businessAccountId: context.businessAccountId,
+        restaurantId: employee.restaurantId,
+        aggregateId: employeeId,
+        aggregateVersion: permissionSet.version,
+        actorId: context.userId,
+        payload: { sessions_revoked: true },
+        metadata,
+        now,
+      });
+      return { kind: "updated" as const, permissionSet };
+    });
+    if (result.kind === "last_administrator") {
+      throw new ApplicationError(
+        "invalid_state_transition",
+        409,
+        "The final administrator cannot lose required access",
+        "Activate a replacement administrator before retrying.",
+      );
+    }
+    if (result.kind === "conflict") {
+      throw new ApplicationError(
+        "concurrency_conflict",
+        409,
+        "Employee permissions changed",
+        "Reload permissions and retry the change.",
+        result.currentVersion,
+      );
+    }
+    return result.permissionSet;
+  }
+
+  public async listPermissionTemplates(
+    context: StaffRequestContext,
+  ): Promise<readonly PermissionTemplate[]> {
+    requirePermission(
+      context,
+      "employees.manage_permissions",
+      context.restaurantId,
+    );
+    return this.dependencies.identityAccess.listPermissionTemplates(
+      this.dependencies.databasePool,
+    );
+  }
+
+  public async applyPermissionTemplate(
+    context: StaffRequestContext,
+    employeeId: string,
+    templateKey: keyof typeof permissionTemplateCatalog,
+    expectedVersion: number,
+    reason: string,
+    metadata: RequestMetadata,
+  ): Promise<PermissionSet> {
+    const employee = await this.getEmployee(context, employeeId);
+    const current = await this.getEmployeePermissions(context, employeeId);
+    const template = permissionTemplateCatalog[templateKey];
+    const copied: PermissionGrant[] = [];
+    for (const permissionKey of template.permissionKeys) {
+      const permission = permissionDefinitionByKey.get(permissionKey);
+      if (permission?.scope === "branch") {
+        for (const branchId of employee.branchIds) {
+          copied.push({
+            permissionKey,
+            restaurantId: employee.restaurantId,
+            branchId,
+          });
+        }
+      } else {
+        copied.push({
+          permissionKey,
+          restaurantId: employee.restaurantId,
+        });
+      }
+    }
+    return this.replaceEmployeePermissions(
+      context,
+      employeeId,
+      expectedVersion,
+      uniqueGrants([...current.grants, ...copied]),
+      reason,
+      metadata,
+    );
+  }
+
+  public async getFeatureConfiguration(
+    context: StaffRequestContext,
+    branchId: string,
+  ): Promise<{
+    readonly configuration: FeatureConfiguration;
+    readonly catalog: typeof featureDefinitions;
+  }> {
+    const branch = await this.getBranch(context, branchId);
+    requirePermission(context, "features.manage", branch.restaurantId);
+    const configuration =
+      await this.dependencies.restaurantConfiguration.getFeatureConfiguration(
+        this.dependencies.databasePool,
+        context.businessAccountId,
+        branchId,
+      );
+    if (!configuration) {
+      throw new ApplicationError(
+        "resource_not_found",
+        404,
+        "Feature configuration not found",
+      );
+    }
+    return { configuration, catalog: featureDefinitions };
+  }
+
+  public async getRestaurantFeatureConfiguration(
+    context: StaffRequestContext,
+    restaurantId: string,
+  ): Promise<{
+    readonly configuration: FeatureConfiguration;
+    readonly catalog: typeof featureDefinitions;
+  }> {
+    requirePermission(context, "features.manage", restaurantId);
+    const restaurant =
+      await this.dependencies.restaurantConfiguration.getRestaurant(
+        this.dependencies.databasePool,
+        context.businessAccountId,
+        restaurantId,
+      );
+    if (!restaurant) {
+      throw new ApplicationError(
+        "resource_not_found",
+        404,
+        "Restaurant not found",
+      );
+    }
+    const configuration =
+      await this.dependencies.restaurantConfiguration.getRestaurantFeatureConfiguration(
+        this.dependencies.databasePool,
+        context.businessAccountId,
+        restaurantId,
+      );
+    if (!configuration) {
+      throw new ApplicationError(
+        "resource_not_found",
+        404,
+        "Feature configuration not found",
+      );
+    }
+    return { configuration, catalog: featureDefinitions };
+  }
+
+  public async getPortalCapabilities(
+    context: StaffRequestContext,
+    branchId: string,
+  ): Promise<{
+    readonly branchId: string;
+    readonly permissions: readonly PermissionKey[];
+    readonly enabledFeatures: readonly string[];
+    readonly configurationVersion: number;
+  }> {
+    if (!context.authorizedBranchIds.includes(branchId)) {
+      throw new ApplicationError("resource_not_found", 404, "Branch not found");
+    }
+    const branch = await this.dependencies.restaurantConfiguration.getBranch(
+      this.dependencies.databasePool,
+      context.businessAccountId,
+      branchId,
+    );
+    if (!branch) {
+      throw new ApplicationError("resource_not_found", 404, "Branch not found");
+    }
+    const configuration =
+      await this.dependencies.restaurantConfiguration.getFeatureConfiguration(
+        this.dependencies.databasePool,
+        context.businessAccountId,
+        branchId,
+      );
+    if (!configuration) {
+      throw new ApplicationError(
+        "resource_not_found",
+        404,
+        "Feature configuration not found",
+      );
+    }
+    const restaurantConfiguration =
+      await this.dependencies.restaurantConfiguration.getRestaurantFeatureConfiguration(
+        this.dependencies.databasePool,
+        context.businessAccountId,
+        branch.restaurantId,
+      );
+    const effectiveValues = {
+      ...(restaurantConfiguration?.values ?? {}),
+      ...configuration.values,
+    };
+    const permissions = uniqueValues(
+      context.grants
+        .filter(
+          (grant) =>
+            (!grant.restaurantId ||
+              grant.restaurantId === branch.restaurantId) &&
+            (!grant.branchId || grant.branchId === branchId),
+        )
+        .map((grant) => grant.permissionKey),
+    );
+    return {
+      branchId,
+      permissions,
+      enabledFeatures: featureDefinitions
+        .filter((feature) => {
+          const state = effectiveValues[feature.id];
+          return (
+            feature.mvp &&
+            (state === "enabled" ||
+              state === "automatic" ||
+              (state === undefined && feature.defaultState === "enabled"))
+          );
+        })
+        .map((feature) => feature.key),
+      configurationVersion: configuration.version,
+    };
+  }
+
+  public async updateFeatureConfiguration(
+    context: StaffRequestContext,
+    input: {
+      readonly branchId: string;
+      readonly expectedVersion: number;
+      readonly changes: Readonly<Record<string, FeatureState>>;
+      readonly confirmAffectedWorkflows: boolean;
+      readonly reason: string;
+    },
+    metadata: RequestMetadata,
+  ): Promise<FeatureConfiguration> {
+    const now = nowFrom(metadata);
+    requireRecentAuthentication(context, now);
+    const before = await this.getFeatureConfiguration(context, input.branchId);
+    const branch = await this.getBranch(context, input.branchId);
+    const values = { ...before.configuration.values };
+    for (const [featureId, value] of Object.entries(input.changes)) {
+      const definition = featureDefinitionById.get(featureId);
+      if (
+        definition?.scope !== "branch" ||
+        !definition.mvp ||
+        !definition.mutableInMvp ||
+        !["enabled", "disabled"].includes(value)
+      ) {
+        throw new ApplicationError(
+          "validation_error",
+          422,
+          "Unsupported feature change",
+          `${featureId} is not configurable in the MVP.`,
+        );
+      }
+      values[featureId] = value;
+    }
+    if (
+      Object.values(input.changes).includes("disabled") &&
+      !input.confirmAffectedWorkflows
+    ) {
+      throw new ApplicationError(
+        "validation_error",
+        422,
+        "Feature impact confirmation required",
+        "Confirm that preserved data and active workflow behavior were reviewed.",
+      );
+    }
+    this.validateFeatureDependencies(values);
+
+    return this.dependencies.workflow.run(async (transaction) => {
+      const configuration =
+        await this.dependencies.restaurantConfiguration.appendFeatureConfiguration(
+          transaction,
+          {
+            businessAccountId: context.businessAccountId,
+            restaurantId: branch.restaurantId,
+            branchId: branch.id,
+            expectedVersion: input.expectedVersion,
+            values,
+            createdByUserId: context.userId,
+            reason: input.reason,
+            now,
+          },
+        );
+      if (!configuration) {
+        throw new ApplicationError(
+          "concurrency_conflict",
+          409,
+          "Feature configuration changed",
+          "Reload configuration and retry the change.",
+          before.configuration.version,
+        );
+      }
+      await this.appendAudit(transaction, {
+        businessAccountId: context.businessAccountId,
+        restaurantId: branch.restaurantId,
+        branchId: branch.id,
+        actorUserId: context.userId,
+        action: "configuration.features_changed",
+        targetType: "feature_configuration",
+        targetId: configuration.id,
+        outcome: "succeeded",
+        reason: input.reason,
+        correlationId: metadata.correlationId,
+        beforeData: before.configuration,
+        afterData: configuration,
+        now,
+      });
+      await this.appendEvent(transaction, {
+        eventType: "restaurant.feature_configuration_changed.v1",
+        businessAccountId: context.businessAccountId,
+        restaurantId: branch.restaurantId,
+        branchId: branch.id,
+        aggregateId: configuration.id,
+        aggregateVersion: configuration.version,
+        actorId: context.userId,
+        payload: { changes: input.changes, cache_invalidation_required: true },
+        metadata,
+        now,
+      });
+      return configuration;
+    });
+  }
+
+  public async updateRestaurantFeatureConfiguration(
+    context: StaffRequestContext,
+    input: {
+      readonly restaurantId: string;
+      readonly expectedVersion: number;
+      readonly changes: Readonly<Record<string, FeatureState>>;
+      readonly confirmAffectedWorkflows: boolean;
+      readonly reason: string;
+    },
+    metadata: RequestMetadata,
+  ): Promise<FeatureConfiguration> {
+    const now = nowFrom(metadata);
+    requireRecentAuthentication(context, now);
+    const before = await this.getRestaurantFeatureConfiguration(
+      context,
+      input.restaurantId,
+    );
+    const values = { ...before.configuration.values };
+    for (const [featureId, value] of Object.entries(input.changes)) {
+      const definition = featureDefinitionById.get(featureId);
+      if (
+        definition?.scope !== "restaurant" ||
+        !definition.mvp ||
+        !definition.mutableInMvp ||
+        !["enabled", "disabled"].includes(value)
+      ) {
+        throw new ApplicationError(
+          "validation_error",
+          422,
+          "Unsupported feature change",
+          `${featureId} is not configurable in the MVP.`,
+        );
+      }
+      values[featureId] = value;
+    }
+    if (
+      Object.values(input.changes).includes("disabled") &&
+      !input.confirmAffectedWorkflows
+    ) {
+      throw new ApplicationError(
+        "validation_error",
+        422,
+        "Feature impact confirmation required",
+      );
+    }
+    return this.dependencies.workflow.run(async (transaction) => {
+      const configuration =
+        await this.dependencies.restaurantConfiguration.appendRestaurantFeatureConfiguration(
+          transaction,
+          {
+            businessAccountId: context.businessAccountId,
+            restaurantId: input.restaurantId,
+            expectedVersion: input.expectedVersion,
+            values,
+            createdByUserId: context.userId,
+            reason: input.reason,
+            now,
+          },
+        );
+      if (!configuration) {
+        throw new ApplicationError(
+          "concurrency_conflict",
+          409,
+          "Feature configuration changed",
+          "Reload configuration and retry the change.",
+          before.configuration.version,
+        );
+      }
+      await this.appendAudit(transaction, {
+        businessAccountId: context.businessAccountId,
+        restaurantId: input.restaurantId,
+        actorUserId: context.userId,
+        action: "configuration.restaurant_features_changed",
+        targetType: "feature_configuration",
+        targetId: configuration.id,
+        outcome: "succeeded",
+        reason: input.reason,
+        correlationId: metadata.correlationId,
+        beforeData: before.configuration,
+        afterData: configuration,
+        now,
+      });
+      await this.appendEvent(transaction, {
+        eventType: "restaurant.feature_configuration_changed.v1",
+        businessAccountId: context.businessAccountId,
+        restaurantId: input.restaurantId,
+        aggregateId: configuration.id,
+        aggregateVersion: configuration.version,
+        actorId: context.userId,
+        payload: { changes: input.changes, cache_invalidation_required: true },
+        metadata,
+        now,
+      });
+      return configuration;
+    });
+  }
+
+  public async createSupportAccess(
+    input: SupportAccessInput,
+    metadata: RequestMetadata,
+  ): Promise<{
+    readonly grantId: string;
+    readonly accessToken: string;
+    readonly expiresAtUtc: Date;
+  }> {
+    const now = nowFrom(metadata);
+    if (
+      input.operatorId === input.approverId ||
+      input.approvalReference.trim().length < 8 ||
+      input.expiresAtUtc <= now ||
+      input.expiresAtUtc.getTime() - now.getTime() > 4 * 60 * 60_000
+    ) {
+      throw new ApplicationError(
+        "validation_error",
+        422,
+        "Invalid support authorization",
+      );
+    }
+    const allowedSupportPermissions = new Set<PermissionKey>([
+      "restaurant.view",
+      "branches.view",
+    ]);
+    if (
+      !input.permissionKeys.includes("restaurant.view") ||
+      input.permissionKeys.some((key) => !allowedSupportPermissions.has(key))
+    ) {
+      throw new ApplicationError(
+        "permission_denied",
+        403,
+        "Support scope exceeds read-only break-glass authority",
+      );
+    }
+    const snapshot =
+      await this.dependencies.restaurantConfiguration.getSupportTenantSnapshot(
+        this.dependencies.databasePool,
+        input.businessAccountId,
+      );
+    if (!snapshot) {
+      throw new ApplicationError("resource_not_found", 404, "Tenant not found");
+    }
+    const restaurantIds = new Set(snapshot.restaurants.map((item) => item.id));
+    const branchIds = new Set(snapshot.branches.map((item) => item.id));
+    if (
+      input.restaurantIds.some((id) => !restaurantIds.has(id)) ||
+      input.branchIds.some((id) => !branchIds.has(id))
+    ) {
+      throw new ApplicationError(
+        "resource_not_found",
+        404,
+        "Support scope not found",
+      );
+    }
+    if (
+      (input.branchIds.length > 0 &&
+        !input.permissionKeys.includes("branches.view")) ||
+      (input.restaurantIds.length > 0 &&
+        input.branchIds.some((branchId) => {
+          const branch = snapshot.branches.find((item) => item.id === branchId);
+          return (
+            branch !== undefined &&
+            !input.restaurantIds.includes(branch.restaurantId)
+          );
+        }))
+    ) {
+      throw new ApplicationError(
+        "permission_denied",
+        403,
+        "Support resource scope exceeds approved read authority",
+      );
+    }
+    const grantId = randomUUID();
+    const token = this.dependencies.identitySecurity.createToken();
+    await this.dependencies.workflow.run(async (transaction) => {
+      await this.dependencies.identityAccess.createSupportAccessGrant(
+        transaction,
+        {
+          id: grantId,
+          businessAccountId: input.businessAccountId,
+          operatorId: input.operatorId,
+          approverId: input.approverId,
+          approvalReference: input.approvalReference,
+          reason: input.reason,
+          scope: {
+            permissionKeys: uniqueValues(input.permissionKeys),
+            restaurantIds: uniqueValues(input.restaurantIds),
+            branchIds: uniqueValues(input.branchIds),
+          },
+          tokenHash: token.hash,
+          now,
+          expiresAtUtc: input.expiresAtUtc,
+        },
+      );
+      await this.appendAudit(transaction, {
+        businessAccountId: input.businessAccountId,
+        actorUserId: input.operatorId,
+        action: "support.break_glass_granted",
+        targetType: "support_access_grant",
+        targetId: grantId,
+        outcome: "succeeded",
+        reason: input.reason,
+        correlationId: metadata.correlationId,
+        afterData: {
+          approverId: input.approverId,
+          approvalReference: input.approvalReference,
+          permissionKeys: input.permissionKeys,
+          expiresAtUtc: input.expiresAtUtc,
+        },
+        now,
+      });
+      await this.appendEvent(transaction, {
+        eventType: "identity.support_access_granted.v1",
+        businessAccountId: input.businessAccountId,
+        aggregateId: grantId,
+        aggregateVersion: 1,
+        actorId: input.operatorId,
+        payload: { expires_at_utc: input.expiresAtUtc.toISOString() },
+        metadata,
+        now,
+      });
+    });
+    return {
+      grantId,
+      accessToken: token.raw,
+      expiresAtUtc: input.expiresAtUtc,
+    };
+  }
+
+  public async inspectTenantWithSupportAccess(
+    accessToken: string,
+    businessAccountId: string,
+    metadata: RequestMetadata,
+  ): Promise<SupportTenantSnapshot> {
+    const now = nowFrom(metadata);
+    return this.dependencies.workflow.run(async (transaction) => {
+      const grant =
+        await this.dependencies.identityAccess.getSupportAccessGrant(
+          transaction.sql,
+          this.dependencies.identitySecurity.hashToken(accessToken),
+          now,
+        );
+      if (
+        grant?.businessAccountId !== businessAccountId ||
+        !grant.scope.permissionKeys.includes("restaurant.view")
+      ) {
+        throw new ApplicationError(
+          "authentication_required",
+          401,
+          "Valid support access required",
+        );
+      }
+      const snapshot =
+        await this.dependencies.restaurantConfiguration.getSupportTenantSnapshot(
+          transaction.sql,
+          businessAccountId,
+        );
+      if (!snapshot) {
+        throw new ApplicationError(
+          "resource_not_found",
+          404,
+          "Tenant not found",
+        );
+      }
+      const filtered: SupportTenantSnapshot = {
+        ...snapshot,
+        restaurants:
+          grant.scope.restaurantIds.length === 0
+            ? snapshot.restaurants
+            : snapshot.restaurants.filter((item) =>
+                grant.scope.restaurantIds.includes(item.id),
+              ),
+        branches: !grant.scope.permissionKeys.includes("branches.view")
+          ? []
+          : grant.scope.branchIds.length === 0
+            ? snapshot.branches
+            : snapshot.branches.filter((item) =>
+                grant.scope.branchIds.includes(item.id),
+              ),
+      };
+      await this.appendAudit(transaction, {
+        businessAccountId,
+        actorUserId: grant.operatorId,
+        action: "support.tenant_context_viewed",
+        targetType: "business_account",
+        targetId: businessAccountId,
+        outcome: "succeeded",
+        reason: grant.reason,
+        correlationId: metadata.correlationId,
+        afterData: { supportAccessGrantId: grant.id },
+        now,
+      });
+      return filtered;
+    });
+  }
+
+  public async revokeSupportAccess(
+    grantId: string,
+    operatorId: string,
+    reason: string,
+    metadata: RequestMetadata,
+  ): Promise<void> {
+    const now = nowFrom(metadata);
+    const grant = await this.dependencies.workflow.run(async (transaction) => {
+      const revoked =
+        await this.dependencies.identityAccess.revokeSupportAccessGrant(
+          transaction,
+          { grantId, operatorId, reason, now },
+        );
+      if (!revoked) {
+        return undefined;
+      }
+      await this.appendAudit(transaction, {
+        businessAccountId: revoked.businessAccountId,
+        actorUserId: operatorId,
+        action: "support.break_glass_revoked",
+        targetType: "support_access_grant",
+        targetId: grantId,
+        outcome: "succeeded",
+        reason,
+        correlationId: metadata.correlationId,
+        now,
+      });
+      await this.appendEvent(transaction, {
+        eventType: "identity.support_access_revoked.v1",
+        businessAccountId: revoked.businessAccountId,
+        aggregateId: grantId,
+        aggregateVersion: 2,
+        actorId: operatorId,
+        payload: { access_token_invalidated: true },
+        metadata,
+        now,
+      });
+      return revoked;
+    });
+    if (!grant) {
+      throw new ApplicationError(
+        "resource_not_found",
+        404,
+        "Support access grant not found",
+      );
+    }
+  }
+
   public async inviteStaff(
     context: StaffRequestContext,
     employeeId: string,
@@ -1352,6 +2456,164 @@ export class TenantOwnerService {
         "Reload the employee and retry the change.",
       );
     }
+  }
+
+  private async validateDelegableBranches(
+    context: StaffRequestContext,
+    restaurantId: string,
+    branchIds: readonly string[],
+  ): Promise<void> {
+    if (
+      branchIds.length === 0 ||
+      uniqueValues(branchIds).length !== branchIds.length
+    ) {
+      throw new ApplicationError(
+        "validation_error",
+        422,
+        "At least one unique branch assignment is required",
+      );
+    }
+    for (const branchId of branchIds) {
+      if (!context.authorizedBranchIds.includes(branchId)) {
+        throw new ApplicationError(
+          "permission_denied",
+          403,
+          "Branch scope cannot be delegated",
+        );
+      }
+      const branch = await this.dependencies.restaurantConfiguration.getBranch(
+        this.dependencies.databasePool,
+        context.businessAccountId,
+        branchId,
+      );
+      if (branch?.restaurantId !== restaurantId) {
+        throw new ApplicationError(
+          "resource_not_found",
+          404,
+          "Branch not found",
+        );
+      }
+    }
+  }
+
+  private validateDelegableGrants(
+    context: StaffRequestContext,
+    employee: EmployeeReference,
+    grants: readonly PermissionGrant[],
+  ): void {
+    for (const grant of grants) {
+      const permission = permissionDefinitionByKey.get(grant.permissionKey);
+      if (!permission || permission.scope === "platform") {
+        throw new ApplicationError(
+          "permission_denied",
+          403,
+          "Permission cannot be delegated",
+        );
+      }
+      if (permission.scope === "restaurant") {
+        if (
+          grant.branchId ||
+          (grant.restaurantId !== undefined &&
+            grant.restaurantId !== employee.restaurantId)
+        ) {
+          throw new ApplicationError(
+            "validation_error",
+            422,
+            "Invalid restaurant permission scope",
+          );
+        }
+        if (grant.restaurantId === undefined) {
+          const tenantWide = context.grants.some(
+            (actorGrant) =>
+              actorGrant.permissionKey === grant.permissionKey &&
+              actorGrant.restaurantId === undefined &&
+              actorGrant.branchId === undefined,
+          );
+          if (!tenantWide) {
+            throw new ApplicationError(
+              "permission_denied",
+              403,
+              "Permission scope exceeds delegable authority",
+            );
+          }
+        } else if (
+          !hasPermission(context, grant.permissionKey, employee.restaurantId)
+        ) {
+          throw new ApplicationError(
+            "permission_denied",
+            403,
+            "Permission exceeds delegable authority",
+          );
+        }
+        continue;
+      }
+      if (
+        !grant.branchId ||
+        !employee.branchIds.includes(grant.branchId) ||
+        (grant.restaurantId !== undefined &&
+          grant.restaurantId !== employee.restaurantId) ||
+        !hasPermission(
+          context,
+          grant.permissionKey,
+          employee.restaurantId,
+          grant.branchId,
+        )
+      ) {
+        throw new ApplicationError(
+          "permission_denied",
+          403,
+          "Branch permission exceeds delegable authority",
+        );
+      }
+    }
+  }
+
+  private validateFeatureDependencies(
+    values: Readonly<Record<string, FeatureState>>,
+  ): void {
+    for (const feature of featureDefinitions) {
+      if (values[feature.id] !== "enabled") {
+        continue;
+      }
+      for (const dependency of feature.dependsOn) {
+        const dependencyState = values[dependency];
+        if (
+          dependencyState !== undefined &&
+          dependencyState !== "enabled" &&
+          dependencyState !== "automatic"
+        ) {
+          throw new ApplicationError(
+            "invalid_state_transition",
+            409,
+            "Feature dependency would be invalid",
+            `${feature.id} requires ${dependency} to remain enabled.`,
+          );
+        }
+      }
+    }
+  }
+
+  private async revokeEmployeeSessions(
+    transaction: TransactionContext,
+    businessAccountId: string,
+    employeeId: string,
+    reason: string,
+    now: Date,
+  ): Promise<number> {
+    const user = await this.dependencies.identityAccess.userForEmployee(
+      transaction.sql,
+      businessAccountId,
+      employeeId,
+    );
+    return user
+      ? this.dependencies.identityAccess.revokeUserSessions(
+          transaction,
+          businessAccountId,
+          user.id,
+          reason,
+          now,
+        )
+      : 0;
   }
 
   private appendAudit(

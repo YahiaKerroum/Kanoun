@@ -24,13 +24,25 @@ vertical_slices:
     implements: [US-A01, US-A02, US-A03, US-A04, US-B01, US-B02, US-B03, US-B04]
     obeys: [PD-001, PD-002, PD-003, PD-019, PD-026, PD-035, BR-001, BR-003, BR-006, BR-007]
     modules: [restaurant_configuration, audit]
-    tests: [TEST-TENANT-001, TEST-CONFIG-001, TEST-HOURS-001]
+    operations: [getFeatureConfiguration, updateFeatureConfiguration, getRestaurantFeatureConfiguration, updateRestaurantFeatureConfiguration, getPortalCapabilities]
+    tests: [TEST-TENANT-001, TEST-CONFIG-001, TEST-CONFIG-DEPENDENCY-001, TEST-CONFIG-CONCURRENCY-001, TEST-CONFIG-HTTP-001, TEST-PORTAL-001, TEST-HOURS-001]
+    slice_003_verified_acceptance: [AC-US-B01-01, AC-US-B01-02, AC-US-B01-04, AC-US-B01-05, AC-US-B01-06, AC-US-B02-01, AC-US-B03-01, AC-US-B03-02, AC-US-B03-03, AC-US-B03-04, AC-US-B04-01, AC-US-B04-02]
+    cross_slice_acceptance:
+      AC-US-B01-02: Customer navigation is verified when its owning customer slices implement normal navigation.
+      AC-US-B01-03: Downstream automatic actions and notifications are verified in the slices that implement those consumers; Slice 003 emits configuration-change outbox evidence but does not claim the consumers exist.
+      AC-US-B04-03: Active-order completion safety is verified when ordering persists and enforces the stored configuration version.
 
   identity_and_access:
     implements: [US-C01, US-C02, US-C03, US-C04, US-C06, US-C07, US-C08, US-R01, US-R02, US-R03, US-R04, US-R05]
     obeys: [PD-004, PD-005, PD-027, PD-028, BR-002, BR-003, BR-004, BR-005, BR-025]
     modules: [identity_access, restaurant_configuration, audit]
-    tests: [TEST-AUTH-001, TEST-PERM-001, TEST-PERM-002, TEST-SUPPORT-001]
+    operations: [listEmployees, createEmployee, getEmployee, updateEmployee, replaceEmployeeBranches, getEmployeePermissions, replaceEmployeePermissions, listPermissionTemplates, applyPermissionTemplate, createSupportAccessGrant, inspectTenantWithSupportAccess, revokeSupportAccessGrant]
+    tests: [TEST-AUTH-001, TEST-EMPLOYEE-001, TEST-EMPLOYEE-EMAIL-001, TEST-PERM-001, TEST-PERM-002, TEST-PERM-SESSION-001, TEST-LAST-ADMIN-001, TEST-SUPPORT-001, TEST-SUPPORT-HTTP-001, TEST-SUPPORT-REVOCATION-001, TEST-PORTAL-001, TEST-A11Y-ADMIN-001, TEST-A11Y-STAFF-001]
+    slice_003_verified_acceptance: [AC-US-C01-01, AC-US-C01-02, AC-US-C01-03, AC-US-C01-04, AC-US-C02-01, AC-US-C02-02, AC-US-C02-03, AC-US-C02-04, AC-US-C02-05, AC-US-C03-01, AC-US-C03-02, AC-US-C03-03, AC-US-C04-01, AC-US-C04-02, AC-US-C04-03, AC-US-C04-04, AC-US-C06-01, AC-US-C06-02, AC-US-C06-03, AC-US-C07-03, AC-US-C08-01, AC-US-C08-02, AC-US-C08-03, AC-US-R05-01, AC-US-R05-02, AC-US-R05-03, AC-US-R05-04]
+    cross_slice_acceptance:
+      AC-US-C07-01: Slice 003 creates stable loginless employee references; assignment and reporting use is verified only when those modules exist.
+      AC-US-C07-02: Updating task-module work on a loginless employee's behalf is not implemented or claimed by Slice 003.
+      AC-US-R05-04: The implemented direct grant token expires and revokes immediately; the private adapter creates no derived support session or real-time subscription to terminate.
 
   menu:
     implements: [US-D01, US-D02, US-D03, US-D04, US-D05]

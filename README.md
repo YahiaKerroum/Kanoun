@@ -77,9 +77,12 @@ restaurant-management-system-architecture.md
 
 No secret or local environment file is committed. Copy `.env.example` to `.env`,
 keep the example local credentials for an isolated development database only,
-and replace `SESSION_SECRET` with at least 32 random characters. The API, worker,
-and migration configuration load the root `.env` file when it is present;
-already-defined process variables take precedence.
+and replace `SESSION_SECRET`, `BOOTSTRAP_SECRET`, and
+`SUPPORT_ACCESS_SECRET` with separate random values of at least 32 characters.
+The support secret authenticates only the private grant-issuance adapter; it
+does not itself permit tenant reads. The API, worker, and migration
+configuration load the root `.env` file when it is present; already-defined
+process variables take precedence.
 
 ### First run
 

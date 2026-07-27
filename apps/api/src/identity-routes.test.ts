@@ -49,6 +49,22 @@ function createTestApplication(overrides?: Partial<IdentityHttpUseCases>) {
     removeAdministrator: vi.fn().mockResolvedValue(undefined),
     transferAdministrator: vi.fn().mockResolvedValue(undefined),
     deactivateEmployee: vi.fn().mockResolvedValue(undefined),
+    getEmployeePermissions: vi.fn().mockResolvedValue({
+      employeeId: context.employeeId,
+      version: 1,
+      grants: [],
+    }),
+    replaceEmployeePermissions: vi.fn().mockResolvedValue({
+      employeeId: context.employeeId,
+      version: 2,
+      grants: [],
+    }),
+    listPermissionTemplates: vi.fn().mockResolvedValue([]),
+    applyPermissionTemplate: vi.fn().mockResolvedValue({
+      employeeId: context.employeeId,
+      version: 2,
+      grants: [],
+    }),
     ...overrides,
   } satisfies IdentityHttpUseCases;
   const sessionDependencies = {

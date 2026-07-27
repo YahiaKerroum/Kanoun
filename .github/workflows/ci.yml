@@ -37,6 +37,7 @@ jobs:
       LOG_LEVEL: silent
       SESSION_SECRET: ci-only-session-secret-with-at-least-32-characters
       BOOTSTRAP_SECRET: ci-only-bootstrap-secret-with-at-least-32-characters
+      SUPPORT_ACCESS_SECRET: ci-only-support-secret-with-at-least-32-characters
       SESSION_COOKIE_SECURE: "false"
       WEB_ORIGIN: http://127.0.0.1:5175
 

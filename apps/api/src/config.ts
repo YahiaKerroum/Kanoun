@@ -18,6 +18,7 @@ const configSchema = z
     DATABASE_URL: z.url().startsWith("postgresql://"),
     SESSION_SECRET: z.string().min(32),
     BOOTSTRAP_SECRET: z.string().min(32),
+    SUPPORT_ACCESS_SECRET: z.string().min(32),
     SESSION_COOKIE_SECURE: booleanFromString.default(false),
     WEB_ORIGIN: z.url(),
     RECOVERY_DELIVERY_URL: z.url().optional(),
@@ -51,6 +52,7 @@ export interface ApiConfig {
   readonly databaseUrl: string;
   readonly sessionSecret: string;
   readonly bootstrapSecret: string;
+  readonly supportAccessSecret: string;
   readonly sessionCookieSecure: boolean;
   readonly webOrigin: string;
   readonly recoveryDeliveryUrl?: string;
@@ -76,6 +78,7 @@ export function loadApiConfig(environment: NodeJS.ProcessEnv): ApiConfig {
     databaseUrl: result.data.DATABASE_URL,
     sessionSecret: result.data.SESSION_SECRET,
     bootstrapSecret: result.data.BOOTSTRAP_SECRET,
+    supportAccessSecret: result.data.SUPPORT_ACCESS_SECRET,
     sessionCookieSecure: result.data.SESSION_COOKIE_SECURE,
     webOrigin: result.data.WEB_ORIGIN,
     ...(result.data.RECOVERY_DELIVERY_URL

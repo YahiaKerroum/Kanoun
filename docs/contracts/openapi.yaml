@@ -44,6 +44,81 @@ paths:
         "422": {$ref: "#/components/responses/ValidationFailed"}
         "429": {$ref: "#/components/responses/RateLimited"}
 
+  /v1/platform/support-access-grants:
+    post:
+      tags: [Platform]
+      operationId: createSupportAccessGrant
+      summary: Create a two-person-approved, read-only, time-limited tenant support grant.
+      description: >
+        Private system-to-system adapter. The caller is a trusted platform
+        control plane that authenticates operator and approver identities and
+        supplies its approval reference. This adapter enforces recent operator
+        authentication, a distinct approver, least-privilege scope, and a
+        four-hour maximum. The MVP exposes no emergency-policy bypass.
+      security: [{supportSecret: []}]
+      parameters:
+        - {name: X-Support-Operator-Id, in: header, required: true, schema: {type: string, format: uuid}}
+        - {name: X-Support-Authenticated-At, in: header, required: true, schema: {type: string, format: date-time}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/CreateSupportAccessGrant"}
+      responses:
+        "201":
+          description: Raw support access token returned once.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/SupportAccessGrantResult"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "403": {$ref: "#/components/responses/Forbidden"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "422": {$ref: "#/components/responses/ValidationFailed"}
+        "429": {$ref: "#/components/responses/RateLimited"}
+
+  /v1/platform/support-access-grants/{grantId}:
+    delete:
+      tags: [Platform]
+      operationId: revokeSupportAccessGrant
+      summary: Revoke support access and immediately terminate use of its token.
+      security: [{supportSecret: []}]
+      parameters:
+        - {name: grantId, in: path, required: true, schema: {type: string, format: uuid}}
+        - {name: X-Support-Operator-Id, in: header, required: true, schema: {type: string, format: uuid}}
+        - {name: X-Support-Authenticated-At, in: header, required: true, schema: {type: string, format: date-time}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/Reason"}
+      responses:
+        "204":
+          description: >
+            Grant token invalidated. This adapter creates no derived support
+            session or real-time subscription.
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "422": {$ref: "#/components/responses/ValidationFailed"}
+        "429": {$ref: "#/components/responses/RateLimited"}
+
+  /v1/platform/support-access/tenants/{businessAccountId}:
+    get:
+      tags: [Platform]
+      operationId: inspectTenantWithSupportAccess
+      summary: Read the least-privilege tenant context permitted by a break-glass grant.
+      security: [{supportBearer: []}]
+      parameters:
+        - {name: businessAccountId, in: path, required: true, schema: {type: string, format: uuid}}
+      responses:
+        "200":
+          description: Scoped tenant context; this access is audited.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/SupportTenantSnapshot"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "429": {$ref: "#/components/responses/RateLimited"}
+
   /v1/auth/login:
     post:
       tags: [Identity]
@@ -348,6 +423,309 @@ paths:
                 properties:
                   invitationToken: {type: string, writeOnly: true}
                   expiresAt: {type: string, format: date-time}
+        "404": {$ref: "#/components/responses/NotFound"}
+
+  /v1/staff/employees:
+    get:
+      tags: [Configuration]
+      operationId: listEmployees
+      summary: List tenant-scoped employee profiles for an authorized restaurant.
+      security: [{staffCookie: []}]
+      parameters:
+        - {name: restaurantId, in: query, required: true, schema: {type: string, format: uuid}}
+      responses:
+        "200":
+          description: Employee profiles.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items: {type: array, items: {$ref: "#/components/schemas/Employee"}}
+        "403": {$ref: "#/components/responses/Forbidden"}
+    post:
+      tags: [Configuration]
+      operationId: createEmployee
+      summary: Create an employee profile with delegated branch employment.
+      security: [{staffCookie: [], csrfHeader: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/CreateEmployee"}
+      responses:
+        "201":
+          description: Employee created without implicitly creating login credentials.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Employee"}
+        "409":
+          description: An employee in this restaurant already uses the normalized email address.
+          content: {application/problem+json: {schema: {$ref: "#/components/schemas/Problem"}}}
+        "403": {$ref: "#/components/responses/Forbidden"}
+        "422": {$ref: "#/components/responses/ValidationFailed"}
+
+  /v1/staff/employees/{employeeId}:
+    get:
+      tags: [Configuration]
+      operationId: getEmployee
+      summary: Get an authorized employee profile.
+      security: [{staffCookie: []}]
+      parameters:
+        - $ref: "#/components/parameters/EmployeeId"
+      responses:
+        "200":
+          description: Employee profile.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Employee"}
+        "404": {$ref: "#/components/responses/NotFound"}
+    patch:
+      tags: [Configuration]
+      operationId: updateEmployee
+      summary: Edit or reactivate an employee profile with optimistic concurrency.
+      security: [{staffCookie: [], csrfHeader: []}]
+      parameters:
+        - $ref: "#/components/parameters/EmployeeId"
+        - $ref: "#/components/parameters/ExpectedVersion"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/UpdateEmployee"}
+      responses:
+        "200":
+          description: Updated employee profile.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Employee"}
+        "409":
+          description: Stale employee version or normalized email already in use.
+          content: {application/problem+json: {schema: {$ref: "#/components/schemas/Problem"}}}
+
+  /v1/staff/employees/{employeeId}/branches:
+    put:
+      tags: [Configuration]
+      operationId: replaceEmployeeBranches
+      summary: Replace delegated branch employment and revoke affected sessions.
+      security: [{staffCookie: [], csrfHeader: []}]
+      parameters:
+        - $ref: "#/components/parameters/EmployeeId"
+        - $ref: "#/components/parameters/ExpectedVersion"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "#/components/schemas/Reason"
+                - type: object
+                  required: [branchIds]
+                  properties:
+                    branchIds: {type: array, minItems: 1, maxItems: 100, uniqueItems: true, items: {type: string, format: uuid}}
+      responses:
+        "200":
+          description: Updated employee branch scope.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Employee"}
+        "409": {$ref: "#/components/responses/Conflict"}
+
+  /v1/staff/permission-templates:
+    get:
+      tags: [Identity]
+      operationId: listPermissionTemplates
+      summary: List the four immutable MVP permission templates.
+      security: [{staffCookie: []}]
+      responses:
+        "200":
+          description: Copy-on-apply templates.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items, catalog]
+                properties:
+                  items: {type: array, items: {$ref: "#/components/schemas/PermissionTemplate"}}
+                  catalog: {type: array, items: {$ref: "#/components/schemas/PermissionDefinition"}}
+        "403": {$ref: "#/components/responses/Forbidden"}
+
+  /v1/staff/employees/{employeeId}/permissions:
+    get:
+      tags: [Identity]
+      operationId: getEmployeePermissions
+      summary: Get the current versioned grants-only permission set.
+      security: [{staffCookie: []}]
+      parameters:
+        - $ref: "#/components/parameters/EmployeeId"
+      responses:
+        "200":
+          description: Current permission set.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/PermissionSet"}
+        "404": {$ref: "#/components/responses/NotFound"}
+    put:
+      tags: [Identity]
+      operationId: replaceEmployeePermissions
+      summary: Replace grants within the actor's delegable subset and revoke affected sessions.
+      security: [{staffCookie: [], csrfHeader: []}]
+      parameters:
+        - $ref: "#/components/parameters/EmployeeId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [expectedVersion, grants, reason]
+              properties:
+                expectedVersion: {type: integer, minimum: 1}
+                grants: {type: array, maxItems: 500, items: {$ref: "#/components/schemas/PermissionGrant"}}
+                reason: {type: string, minLength: 8, maxLength: 500}
+      responses:
+        "200":
+          description: Updated permission set.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/PermissionSet"}
+        "409": {$ref: "#/components/responses/Conflict"}
+        "403": {$ref: "#/components/responses/Forbidden"}
+
+  /v1/staff/employees/{employeeId}/permission-template:
+    post:
+      tags: [Identity]
+      operationId: applyPermissionTemplate
+      summary: Copy a predefined template into an employee's current grants.
+      security: [{staffCookie: [], csrfHeader: []}]
+      parameters:
+        - $ref: "#/components/parameters/EmployeeId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [templateKey, expectedVersion, reason]
+              properties:
+                templateKey: {type: string, enum: [administrator, general_staff, cashier, kitchen_staff]}
+                expectedVersion: {type: integer, minimum: 1}
+                reason: {type: string, minLength: 8, maxLength: 500}
+      responses:
+        "200":
+          description: Template grants copied into the employee permission set.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/PermissionSet"}
+        "409": {$ref: "#/components/responses/Conflict"}
+
+  /v1/staff/branches/{branchId}/features:
+    get:
+      tags: [Configuration]
+      operationId: getFeatureConfiguration
+      summary: Get the immutable current feature version and authoritative catalog metadata.
+      security: [{staffCookie: []}]
+      parameters:
+        - $ref: "#/components/parameters/BranchId"
+      responses:
+        "200":
+          description: Feature configuration.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/FeatureConfigurationResult"}
+        "404": {$ref: "#/components/responses/NotFound"}
+    patch:
+      tags: [Configuration]
+      operationId: updateFeatureConfiguration
+      summary: Append a dependency-valid feature configuration version.
+      security: [{staffCookie: [], csrfHeader: []}]
+      parameters:
+        - $ref: "#/components/parameters/BranchId"
+        - $ref: "#/components/parameters/ExpectedVersion"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [changes, confirmAffectedWorkflows, reason]
+              properties:
+                changes:
+                  type: object
+                  minProperties: 1
+                  additionalProperties: {type: string, enum: [enabled, disabled]}
+                confirmAffectedWorkflows: {type: boolean}
+                reason: {type: string, minLength: 8, maxLength: 500}
+      responses:
+        "200":
+          description: Appended feature configuration version.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/FeatureConfiguration"}
+        "409": {$ref: "#/components/responses/Conflict"}
+        "422": {$ref: "#/components/responses/ValidationFailed"}
+
+  /v1/staff/restaurants/{restaurantId}/features:
+    get:
+      tags: [Configuration]
+      operationId: getRestaurantFeatureConfiguration
+      summary: Get the immutable current restaurant-scoped feature version.
+      security: [{staffCookie: []}]
+      parameters:
+        - $ref: "#/components/parameters/RestaurantId"
+      responses:
+        "200":
+          description: Restaurant feature configuration.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/FeatureConfigurationResult"}
+        "404": {$ref: "#/components/responses/NotFound"}
+    patch:
+      tags: [Configuration]
+      operationId: updateRestaurantFeatureConfiguration
+      summary: Append a dependency-valid restaurant feature version.
+      security: [{staffCookie: [], csrfHeader: []}]
+      parameters:
+        - $ref: "#/components/parameters/RestaurantId"
+        - $ref: "#/components/parameters/ExpectedVersion"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [changes, confirmAffectedWorkflows, reason]
+              properties:
+                changes:
+                  type: object
+                  minProperties: 1
+                  additionalProperties: {type: string, enum: [enabled, disabled]}
+                confirmAffectedWorkflows: {type: boolean}
+                reason: {type: string, minLength: 8, maxLength: 500}
+      responses:
+        "200":
+          description: Appended restaurant feature configuration version.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/FeatureConfiguration"}
+        "409": {$ref: "#/components/responses/Conflict"}
+        "422": {$ref: "#/components/responses/ValidationFailed"}
+
+  /v1/staff/branches/{branchId}/capabilities:
+    get:
+      tags: [Configuration]
+      operationId: getPortalCapabilities
+      summary: Resolve the authenticated employee's permission- and feature-aware portal capabilities.
+      security: [{staffCookie: []}]
+      parameters:
+        - $ref: "#/components/parameters/BranchId"
+      responses:
+        "200":
+          description: Effective branch capabilities for navigation and action disclosure.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/PortalCapabilities"}
         "404": {$ref: "#/components/responses/NotFound"}
 
   /v1/staff/administrators/{employeeId}/removal:
@@ -709,6 +1087,14 @@ components:
       type: apiKey
       in: header
       name: X-Bootstrap-Secret
+    supportSecret:
+      type: apiKey
+      in: header
+      name: X-Support-Secret
+    supportBearer:
+      type: http
+      scheme: bearer
+      bearerFormat: opaque
     csrfHeader:
       type: apiKey
       in: header
@@ -801,12 +1187,183 @@ components:
   schemas:
     StaffSession:
       type: object
-      required: [employeeId, activeBranchId, expiresAt]
+      required: [employeeId, activeBranchId, authorizedBranchIds, grants, expiresAt]
       properties:
         employeeId: {type: string, format: uuid}
         activeBranchId: {type: [string, "null"], format: uuid}
         authorizedBranchIds: {type: array, items: {type: string, format: uuid}}
+        grants: {type: array, items: {$ref: "#/components/schemas/PermissionGrant"}}
         expiresAt: {type: string, format: date-time}
+
+    Employee:
+      type: object
+      required: [id, businessAccountId, restaurantId, displayName, email, status, version, branchIds]
+      properties:
+        id: {type: string, format: uuid}
+        businessAccountId: {type: string, format: uuid}
+        restaurantId: {type: string, format: uuid}
+        displayName: {type: string}
+        email: {type: string, format: email}
+        status: {type: string, enum: [active, inactive]}
+        version: {type: integer, minimum: 1}
+        branchIds: {type: array, uniqueItems: true, items: {type: string, format: uuid}}
+
+    CreateEmployee:
+      type: object
+      required: [restaurantId, displayName, email, branchIds]
+      properties:
+        restaurantId: {type: string, format: uuid}
+        displayName: {type: string, minLength: 1, maxLength: 160}
+        email: {type: string, format: email, maxLength: 320}
+        branchIds: {type: array, minItems: 1, maxItems: 100, uniqueItems: true, items: {type: string, format: uuid}}
+
+    UpdateEmployee:
+      type: object
+      minProperties: 1
+      properties:
+        displayName: {type: string, minLength: 1, maxLength: 160}
+        email: {type: string, format: email, maxLength: 320}
+        status: {type: string, enum: [active]}
+
+    PermissionKey:
+      type: string
+      enum: [restaurant.view, restaurant.edit, branches.view, branches.manage, features.manage, employees.view, employees.manage, employees.manage_permissions, menu.view, menu.manage, menu.manage_prices, menu.manage_availability, qr.manage, tables.view, tables.manage, tables.assign, tables.close_session, orders.view, orders.create, orders.accept, orders.reject, orders.modify, orders.cancel, orders.serve, orders.complete, orders.complete_unpaid, kitchen.view, kitchen.update, payments.view, payments.record, payments.refund, reports.view, reports.view_cross_branch, audit.view, support.break_glass]
+
+    PermissionGrant:
+      type: object
+      required: [permissionKey]
+      properties:
+        permissionKey: {$ref: "#/components/schemas/PermissionKey"}
+        restaurantId: {type: string, format: uuid}
+        branchId: {type: string, format: uuid}
+
+    PermissionSet:
+      type: object
+      required: [employeeId, version, grants]
+      properties:
+        employeeId: {type: string, format: uuid}
+        version: {type: integer, minimum: 1}
+        grants: {type: array, items: {$ref: "#/components/schemas/PermissionGrant"}}
+
+    PermissionTemplate:
+      type: object
+      required: [key, displayName, permissionKeys, version]
+      properties:
+        key: {type: string, enum: [administrator, general_staff, cashier, kitchen_staff]}
+        displayName: {type: string}
+        permissionKeys: {type: array, items: {$ref: "#/components/schemas/PermissionKey"}}
+        version: {type: integer, minimum: 1}
+
+    PermissionDefinition:
+      type: object
+      required: [key, id, module, scope, risk]
+      properties:
+        key: {$ref: "#/components/schemas/PermissionKey"}
+        id: {type: string, pattern: "^PERM-[0-9]{3}$"}
+        module: {type: string}
+        scope: {type: string, enum: [platform, restaurant, branch]}
+        risk: {type: string, enum: [low, medium, high, critical]}
+        delegableSubsetOnly: {type: boolean}
+
+    FeatureConfiguration:
+      type: object
+      required: [id, businessAccountId, restaurantId, version, values, createdAtUtc]
+      properties:
+        id: {type: string, format: uuid}
+        businessAccountId: {type: string, format: uuid}
+        restaurantId: {type: string, format: uuid}
+        branchId: {type: string, format: uuid}
+        version: {type: integer, minimum: 1}
+        values:
+          type: object
+          additionalProperties: {type: string, enum: [enabled, disabled, automatic, unavailable]}
+        createdAtUtc: {type: string, format: date-time}
+
+    FeatureDefinition:
+      type: object
+      required: [id, key, kind, scope, mvp, defaultState, dependsOn, mutableInMvp]
+      properties:
+        id: {type: string, pattern: "^CFG-[0-9]{3}$"}
+        key: {type: string}
+        kind: {type: string, enum: [core_module, optional_module, capability, strategy, integration]}
+        scope: {type: string, enum: [platform, restaurant, branch]}
+        mvp: {type: boolean}
+        defaultState: {type: string, enum: [enabled, disabled, automatic, unavailable]}
+        dependsOn: {type: array, items: {type: string}}
+        mutableInMvp: {type: boolean}
+        disablePolicy: {type: string}
+
+    FeatureConfigurationResult:
+      type: object
+      required: [configuration, catalog]
+      properties:
+        configuration: {$ref: "#/components/schemas/FeatureConfiguration"}
+        catalog: {type: array, items: {$ref: "#/components/schemas/FeatureDefinition"}}
+
+    PortalCapabilities:
+      type: object
+      required: [branchId, permissions, enabledFeatures, configurationVersion]
+      properties:
+        branchId: {type: string, format: uuid}
+        permissions: {type: array, items: {$ref: "#/components/schemas/PermissionKey"}}
+        enabledFeatures: {type: array, items: {type: string}}
+        configurationVersion: {type: integer, minimum: 1}
+
+    CreateSupportAccessGrant:
+      type: object
+      required: [businessAccountId, approvalMode, approverId, approvalReference, reason, permissionKeys, expiresAt]
+      properties:
+        businessAccountId: {type: string, format: uuid}
+        approvalMode:
+          type: string
+          enum: [two_person]
+          description: The private MVP adapter has no emergency-policy bypass.
+        approverId: {type: string, format: uuid}
+        approvalReference: {type: string, minLength: 8, maxLength: 160}
+        reason: {type: string, minLength: 8, maxLength: 500}
+        permissionKeys:
+          type: array
+          minItems: 1
+          maxItems: 2
+          uniqueItems: true
+          items: {type: string, enum: [restaurant.view, branches.view]}
+        restaurantIds: {type: array, maxItems: 100, items: {type: string, format: uuid}}
+        branchIds: {type: array, maxItems: 500, items: {type: string, format: uuid}}
+        expiresAt: {type: string, format: date-time}
+
+    SupportAccessGrantResult:
+      type: object
+      required: [grantId, accessToken, expiresAt]
+      properties:
+        grantId: {type: string, format: uuid}
+        accessToken: {type: string, minLength: 32, maxLength: 256, writeOnly: true}
+        expiresAt: {type: string, format: date-time}
+
+    SupportTenantSnapshot:
+      type: object
+      required: [businessAccountId, businessName, restaurants, branches]
+      properties:
+        businessAccountId: {type: string, format: uuid}
+        businessName: {type: string}
+        restaurants:
+          type: array
+          items:
+            type: object
+            required: [id, name, status]
+            properties:
+              id: {type: string, format: uuid}
+              name: {type: string}
+              status: {type: string}
+        branches:
+          type: array
+          items:
+            type: object
+            required: [id, restaurantId, name, status]
+            properties:
+              id: {type: string, format: uuid}
+              restaurantId: {type: string, format: uuid}
+              name: {type: string}
+              status: {type: string}
 
     TokenAndPassword:
       type: object

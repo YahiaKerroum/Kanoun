@@ -23,6 +23,7 @@ import {
   useState,
   type ComponentType,
 } from "react";
+import { z } from "zod";
 import { checkApiReadiness, type Readiness } from "./health.js";
 
 type Section =
@@ -41,20 +42,174 @@ interface NavigationItem {
   readonly label: Section;
   readonly icon: ComponentType<LucideProps>;
   readonly group: "service" | "maintain" | "review";
+  readonly requiredFeature?: string;
+  readonly permissionPrefixes?: readonly string[];
+  readonly permissions?: readonly string[];
 }
 
 const navigationItems: readonly NavigationItem[] = [
   { label: "Home", icon: House, group: "service" },
-  { label: "Orders", icon: ClipboardList, group: "service" },
-  { label: "Tables", icon: TableProperties, group: "service" },
-  { label: "Kitchen", icon: ChefHat, group: "service" },
-  { label: "Menu", icon: MenuIcon, group: "maintain" },
-  { label: "Stock", icon: PackageOpen, group: "maintain" },
-  { label: "Staff", icon: Users, group: "maintain" },
-  { label: "Reports", icon: MonitorCheck, group: "review" },
-  { label: "Setup", icon: Settings, group: "review" },
-  { label: "Audit", icon: History, group: "review" },
+  {
+    label: "Orders",
+    icon: ClipboardList,
+    group: "service",
+    requiredFeature: "ordering",
+    permissionPrefixes: ["orders."],
+  },
+  {
+    label: "Tables",
+    icon: TableProperties,
+    group: "service",
+    requiredFeature: "tables",
+    permissionPrefixes: ["tables."],
+  },
+  {
+    label: "Kitchen",
+    icon: ChefHat,
+    group: "service",
+    requiredFeature: "kitchen",
+    permissionPrefixes: ["kitchen."],
+  },
+  {
+    label: "Menu",
+    icon: MenuIcon,
+    group: "maintain",
+    requiredFeature: "menu",
+    permissionPrefixes: ["menu."],
+  },
+  {
+    label: "Stock",
+    icon: PackageOpen,
+    group: "maintain",
+    requiredFeature: "inventory",
+  },
+  {
+    label: "Staff",
+    icon: Users,
+    group: "maintain",
+    requiredFeature: "identity_access",
+    permissionPrefixes: ["employees."],
+  },
+  {
+    label: "Reports",
+    icon: MonitorCheck,
+    group: "review",
+    requiredFeature: "reporting",
+    permissionPrefixes: ["reports."],
+  },
+  {
+    label: "Setup",
+    icon: Settings,
+    group: "review",
+    requiredFeature: "restaurant_configuration",
+    permissions: ["restaurant.edit", "branches.manage", "features.manage"],
+  },
+  {
+    label: "Audit",
+    icon: History,
+    group: "review",
+    requiredFeature: "audit",
+    permissions: ["audit.view"],
+  },
 ];
+
+const sessionSchema = z.object({
+  employeeId: z.uuid(),
+  activeBranchId: z.uuid().nullable(),
+  authorizedBranchIds: z.array(z.uuid()),
+  grants: z.array(
+    z.object({
+      permissionKey: z.string(),
+      restaurantId: z.uuid().optional(),
+      branchId: z.uuid().optional(),
+    }),
+  ),
+  expiresAt: z.iso.datetime(),
+});
+
+const capabilitiesSchema = z.object({
+  branchId: z.uuid(),
+  permissions: z.array(z.string()),
+  enabledFeatures: z.array(z.string()),
+  configurationVersion: z.number().int().positive(),
+});
+
+type StaffSession = z.infer<typeof sessionSchema>;
+type PortalCapabilities = z.infer<typeof capabilitiesSchema>;
+
+type PortalState =
+  | { readonly kind: "loading" }
+  | { readonly kind: "signed-out" }
+  | {
+      readonly kind: "no-branch";
+      readonly session: StaffSession;
+    }
+  | {
+      readonly kind: "unavailable";
+      readonly reason: string;
+    }
+  | {
+      readonly kind: "ready";
+      readonly session: StaffSession;
+      readonly capabilities: PortalCapabilities;
+    };
+
+class PortalRequestError extends Error {
+  public constructor(
+    public readonly status: number,
+    message: string,
+  ) {
+    super(message);
+    this.name = "PortalRequestError";
+  }
+}
+
+async function requestJson<Output>(
+  path: string,
+  schema: z.ZodType<Output>,
+  signal: AbortSignal,
+): Promise<Output> {
+  const response = await fetch(path, {
+    credentials: "same-origin",
+    headers: { accept: "application/json" },
+    signal,
+  });
+  if (!response.ok) {
+    throw new PortalRequestError(
+      response.status,
+      response.status === 401
+        ? "Your staff session is no longer active."
+        : "The staff access boundary could not be loaded.",
+    );
+  }
+  return schema.parse(await response.json());
+}
+
+async function loadPortal(signal: AbortSignal): Promise<PortalState> {
+  try {
+    const session = await requestJson(
+      "/api/v1/auth/session",
+      sessionSchema,
+      signal,
+    );
+    const branchId =
+      session.activeBranchId ?? session.authorizedBranchIds[0] ?? null;
+    if (!branchId) {
+      return { kind: "no-branch", session };
+    }
+    const capabilities = await requestJson(
+      `/api/v1/staff/branches/${branchId}/capabilities`,
+      capabilitiesSchema,
+      signal,
+    );
+    return { kind: "ready", session, capabilities };
+  } catch (error) {
+    if (error instanceof PortalRequestError && error.status === 401) {
+      return { kind: "signed-out" };
+    }
+    throw error;
+  }
+}
 
 function formatCheckedAt(readiness: Readiness): string {
   if (readiness.kind === "checking") {
@@ -84,8 +239,38 @@ function ReadinessMark({ readiness }: { readonly readiness: Readiness }) {
   );
 }
 
+function isNavigationItemAvailable(
+  item: NavigationItem,
+  capabilities: PortalCapabilities,
+): boolean {
+  if (
+    item.requiredFeature &&
+    !capabilities.enabledFeatures.includes(item.requiredFeature)
+  ) {
+    return false;
+  }
+  const requiresPermission =
+    (item.permissions?.length ?? 0) > 0 ||
+    (item.permissionPrefixes?.length ?? 0) > 0;
+  if (!requiresPermission) {
+    return true;
+  }
+  return capabilities.permissions.some(
+    (permission) =>
+      item.permissions?.includes(permission) === true ||
+      item.permissionPrefixes?.some((prefix) =>
+        permission.startsWith(prefix),
+      ) === true,
+  );
+}
+
+function shortIdentifier(identifier: string): string {
+  return `…${identifier.slice(-8)}`;
+}
+
 export function App() {
   const [activeSection, setActiveSection] = useState<Section>("Home");
+  const [portal, setPortal] = useState<PortalState>({ kind: "loading" });
   const [readiness, setReadiness] = useState<Readiness>({ kind: "checking" });
   const [refreshSequence, setRefreshSequence] = useState(0);
   const statusId = useId();
@@ -93,22 +278,33 @@ export function App() {
   useEffect(() => {
     const abortController = new AbortController();
     setReadiness({ kind: "checking" });
+    setPortal({ kind: "loading" });
 
-    void checkApiReadiness(abortController.signal)
-      .then((result) => {
+    void Promise.all([
+      checkApiReadiness(abortController.signal).then((result) => {
         if (!abortController.signal.aborted) {
           setReadiness(result);
         }
-      })
-      .catch((error: unknown) => {
-        if (
-          !abortController.signal.aborted ||
-          !(error instanceof DOMException) ||
-          error.name !== "AbortError"
-        ) {
-          throw error;
+      }),
+      loadPortal(abortController.signal).then((result) => {
+        if (!abortController.signal.aborted) {
+          setPortal(result);
         }
+      }),
+    ]).catch((error: unknown) => {
+      if (abortController.signal.aborted) {
+        return;
+      }
+      setPortal({
+        kind: "unavailable",
+        reason:
+          error instanceof z.ZodError
+            ? "The server returned an invalid staff capability response."
+            : error instanceof Error
+              ? error.message
+              : "The staff access boundary could not be loaded.",
       });
+    });
 
     return () => abortController.abort();
   }, [refreshSequence]);
@@ -120,6 +316,19 @@ export function App() {
   const refresh = useCallback(() => {
     setRefreshSequence((sequence) => sequence + 1);
   }, []);
+
+  if (portal.kind !== "ready") {
+    return <AccessBoundary portal={portal} onRetry={refresh} />;
+  }
+
+  const availableNavigation = navigationItems.filter((item) =>
+    isNavigationItemAvailable(item, portal.capabilities),
+  );
+  const visibleSection = availableNavigation.some(
+    (item) => item.label === activeSection,
+  )
+    ? activeSection
+    : "Home";
 
   return (
     <>
@@ -143,11 +352,11 @@ export function App() {
               className="navigation-rail__items"
               aria-label="Staff navigation"
             >
-              {navigationItems.map((item, index) => {
+              {availableNavigation.map((item, index) => {
                 const Icon = item.icon;
-                const previousGroup = navigationItems[index - 1]?.group;
+                const previousGroup = availableNavigation[index - 1]?.group;
                 const startsGroup = index > 0 && previousGroup !== item.group;
-                const isActive = activeSection === item.label;
+                const isActive = visibleSection === item.label;
 
                 return (
                   <button
@@ -171,7 +380,7 @@ export function App() {
                 <UserRound size={19} />
               </span>
               <span className="visually-hidden">
-                Signed in user is not configured
+                Authenticated employee {portal.session.employeeId}
               </span>
             </div>
           </aside>
@@ -180,15 +389,20 @@ export function App() {
             <header className="context-bar">
               <div className="context-bar__title">
                 <p>Staff workspace</p>
-                <h1>{activeSection}</h1>
+                <h1>{visibleSection}</h1>
               </div>
               <div className="context-item">
                 <span className="context-item__label">Branch</span>
-                <strong>No branch selected</strong>
+                <strong title={portal.capabilities.branchId}>
+                  Assigned {shortIdentifier(portal.capabilities.branchId)}
+                </strong>
               </div>
               <div className="context-item">
-                <span className="context-item__label">Service</span>
-                <strong>Setup required</strong>
+                <span className="context-item__label">Access</span>
+                <strong>
+                  {availableNavigation.length} destination
+                  {availableNavigation.length === 1 ? "" : "s"}
+                </strong>
               </div>
               <div className="context-item context-item--connection">
                 <ReadinessMark readiness={readiness} />
@@ -199,7 +413,7 @@ export function App() {
               <button
                 className="icon-button"
                 type="button"
-                aria-label="Refresh API readiness"
+                aria-label="Refresh staff access and API readiness"
                 aria-describedby={statusId}
                 disabled={readiness.kind === "checking"}
                 onClick={refresh}
@@ -213,7 +427,7 @@ export function App() {
               <button
                 className="icon-button"
                 type="button"
-                aria-label="Notifications are not available in Slice 001"
+                aria-label="Notifications are not implemented yet"
                 disabled
               >
                 <Bell aria-hidden="true" size={20} />
@@ -221,10 +435,15 @@ export function App() {
             </header>
 
             <main id="workspace" className="workspace" tabIndex={-1}>
-              {activeSection === "Home" ? (
-                <HomeWorkspace readiness={readiness} statusId={statusId} />
+              {visibleSection === "Home" ? (
+                <HomeWorkspace
+                  capabilities={portal.capabilities}
+                  destinationCount={availableNavigation.length}
+                  readiness={readiness}
+                  statusId={statusId}
+                />
               ) : (
-                <DeferredWorkspace section={activeSection} />
+                <DeferredWorkspace section={visibleSection} />
               )}
             </main>
           </div>
@@ -234,10 +453,68 @@ export function App() {
   );
 }
 
+function AccessBoundary({
+  portal,
+  onRetry,
+}: {
+  readonly portal: Exclude<PortalState, { readonly kind: "ready" }>;
+  readonly onRetry: () => void;
+}) {
+  const content =
+    portal.kind === "loading"
+      ? {
+          eyebrow: "AUTHENTICATING STAFF ACCESS",
+          title: "Resolving your branch workspace…",
+          detail:
+            "Navigation appears only after the server resolves your current branch, permissions, and enabled features.",
+        }
+      : portal.kind === "signed-out"
+        ? {
+            eyebrow: "PROTECTED STAFF PORTAL",
+            title: "Staff access required",
+            detail:
+              "Sign in with an active staff account before opening branch tools. No tenant or branch is selected from browser input.",
+          }
+        : portal.kind === "no-branch"
+          ? {
+              eyebrow: "ASSIGNMENT REQUIRED",
+              title: "No branch workspace is assigned",
+              detail:
+                "An administrator must assign this employee to an active branch before operational navigation can be resolved.",
+            }
+          : {
+              eyebrow: "ACCESS COULD NOT BE VERIFIED",
+              title: "The staff workspace is unavailable",
+              detail: portal.reason,
+            };
+
+  return (
+    <div className="app-stage access-stage">
+      <main className="access-boundary" aria-live="polite">
+        <span className="brand-mark" aria-hidden="true">
+          <ChefHat size={23} />
+        </span>
+        <p className="eyebrow">{content.eyebrow}</p>
+        <h1>{content.title}</h1>
+        <p>{content.detail}</p>
+        {portal.kind === "unavailable" ? (
+          <button type="button" onClick={onRetry}>
+            Retry access check
+          </button>
+        ) : null}
+      </main>
+    </div>
+  );
+}
+
 function HomeWorkspace({
+  capabilities,
+  destinationCount,
   readiness,
   statusId,
 }: {
+  readonly capabilities: PortalCapabilities;
+  readonly destinationCount: number;
   readonly readiness: Readiness;
   readonly statusId: string;
 }) {
@@ -247,34 +524,36 @@ function HomeWorkspace({
     <div className="workspace__content">
       <section className="launch-banner" aria-labelledby="launch-title">
         <div>
-          <p className="eyebrow">SLICE 001 · APPLICATION BOOTSTRAP</p>
-          <h2 id="launch-title">Foundation first. Service flows next.</h2>
+          <p className="eyebrow">SLICE 003 · CAPABILITY-AWARE PORTAL</p>
+          <h2 id="launch-title">Your branch tools, resolved by access.</h2>
           <p>
-            The production workspace, contracts, and database foundation are
-            being verified before restaurant records or operational actions are
-            introduced.
+            This rail is the intersection of your effective branch permissions
+            and enabled MVP features. The server still authorizes every direct
+            API request.
           </p>
         </div>
         <div className="launch-banner__status" id={statusId} role="status">
           <ReadinessMark readiness={readiness} />
           <span>
             {apiReady
-              ? "API and PostgreSQL responded successfully."
+              ? "Capabilities and API readiness were verified."
               : readiness.kind === "checking"
-                ? "Verifying API and PostgreSQL."
-                : `${readiness.reason}. Start the API to verify the full stack.`}
+                ? "Refreshing access and API readiness."
+                : "Capabilities loaded, but API readiness is not verified."}
           </span>
         </div>
       </section>
 
       <div className="workspace-grid">
-        <section className="workspace-panel" aria-labelledby="readiness-title">
+        <section className="workspace-panel" aria-labelledby="access-title">
           <div className="panel-heading">
             <div>
-              <p className="eyebrow">Current increment</p>
-              <h2 id="readiness-title">System readiness</h2>
+              <p className="eyebrow">Effective branch access</p>
+              <h2 id="access-title">Portal boundary</h2>
             </div>
-            <span className="panel-count">3 checks</span>
+            <span className="panel-count">
+              v{capabilities.configurationVersion}
+            </span>
           </div>
           <ul className="check-list">
             <li>
@@ -282,70 +561,61 @@ function HomeWorkspace({
                 <Badge size={19} />
               </span>
               <div>
-                <strong>Contracts loaded</strong>
-                <span>OpenAPI and event catalog validation is configured.</span>
+                <strong>{destinationCount} visible destinations</strong>
+                <span>Unauthorized and disabled modules are omitted.</span>
               </div>
-              <span className="state-label state-label--ready">Ready</span>
+              <span className="state-label state-label--ready">Scoped</span>
             </li>
             <li>
-              <span
-                className={`check-icon check-icon--${apiReady ? "ready" : "waiting"}`}
-                aria-hidden="true"
-              >
-                <MonitorCheck size={19} />
-              </span>
-              <div>
-                <strong>API and database</strong>
-                <span>
-                  Readiness fails closed when PostgreSQL is unavailable.
-                </span>
-              </div>
-              <span
-                className={`state-label state-label--${
-                  apiReady ? "ready" : "waiting"
-                }`}
-              >
-                {apiReady ? "Ready" : "Verify"}
-              </span>
-            </li>
-            <li>
-              <span
-                className="check-icon check-icon--waiting"
-                aria-hidden="true"
-              >
+              <span className="check-icon check-icon--ready" aria-hidden="true">
                 <Users size={19} />
               </span>
               <div>
-                <strong>Restaurant context</strong>
+                <strong>{capabilities.permissions.length} permissions</strong>
                 <span>
-                  Tenant, branch, owner, and staff setup begins in Slice 002.
+                  Several responsibilities remain in one staff account.
                 </span>
               </div>
-              <span className="state-label state-label--waiting">Next</span>
+              <span className="state-label state-label--ready">Effective</span>
+            </li>
+            <li>
+              <span className="check-icon check-icon--ready" aria-hidden="true">
+                <Settings size={19} />
+              </span>
+              <div>
+                <strong>
+                  {capabilities.enabledFeatures.length} enabled features
+                </strong>
+                <span>Resolved from restaurant and branch configuration.</span>
+              </div>
+              <span className="state-label state-label--ready">Current</span>
             </li>
           </ul>
         </section>
 
-        <section className="workspace-panel" aria-labelledby="next-title">
+        <section className="workspace-panel" aria-labelledby="boundary-title">
           <div className="panel-heading">
             <div>
-              <p className="eyebrow">Next vertical slice</p>
-              <h2 id="next-title">Owner and branch bootstrap</h2>
+              <p className="eyebrow">Delivery boundary</p>
+              <h2 id="boundary-title">Navigation is ready</h2>
             </div>
-            <span className="slice-number">002</span>
+            <span className="slice-number">003</span>
           </div>
           <p className="panel-copy">
-            Establish the first protected owner, tenant, restaurant, branch,
-            operating hours, sessions, and last-administrator guard.
+            Employee access and feature configuration now shape this shell.
+            Order, table, menu, kitchen, payment, report, audit-query, and task
+            screens remain deferred to their owning slices.
           </p>
           <dl className="scope-list">
             <div>
-              <dt>Implements</dt>
-              <dd>US-A01, US-A02, US-A04, US-R01–R04</dd>
+              <dt>Implemented</dt>
+              <dd>Authenticated capability disclosure and endpoint guards</dd>
             </div>
             <div>
-              <dt>Proof required</dt>
-              <dd>Authorization, tenant isolation, session revocation</dd>
+              <dt>Not claimed</dt>
+              <dd>
+                Downstream tasks, automation, or operational module actions
+              </dd>
             </div>
           </dl>
         </section>
@@ -362,9 +632,9 @@ function HomeWorkspace({
             <ChefHat aria-hidden="true" size={26} />
           </div>
           <p className="panel-copy">
-            This shell follows the supplied v2 design artifact: saffron frame,
-            ivory working surface, compact context, restrained panels, and one
-            obvious next action.
+            Saffron frame, ivory working surface, compact context, restrained
+            panels, and a service-oriented navigation dock remain the visual
+            foundation.
           </p>
           <span className="working-name">Working product name</span>
         </section>
@@ -379,12 +649,16 @@ function DeferredWorkspace({ section }: { readonly section: Section }) {
       <span className="deferred-state__icon" aria-hidden="true">
         <ClipboardList size={28} />
       </span>
-      <p className="eyebrow">DELIVERY ORDER PROTECTED</p>
-      <h2 id="deferred-title">{section} is not implemented yet</h2>
+      <p className="eyebrow">
+        AUTHORIZED DESTINATION · DELIVERY ORDER PROTECTED
+      </p>
+      <h2 id="deferred-title">
+        {section} is available but not implemented here yet
+      </h2>
       <p>
-        This destination is part of the approved information architecture. Its
-        real data, permissions, states, and actions will arrive in the
-        requirement slice that owns them.
+        Your effective branch access permits this destination. Its real data,
+        states, automatic actions, and task workflows arrive only in the slice
+        that owns the module.
       </p>
     </section>
   );

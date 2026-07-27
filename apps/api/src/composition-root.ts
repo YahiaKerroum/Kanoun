@@ -21,6 +21,7 @@ import type { ApiConfig } from "./config.js";
 import { WebhookCredentialTokenDelivery } from "./credential-token-delivery.js";
 import { createLogger } from "./logging.js";
 import { createTenantBootstrapRouter } from "./platform-routes/tenant-bootstrap-router.js";
+import { createSupportAccessRouter } from "./platform-routes/support-access-router.js";
 
 export interface ApiComposition {
   readonly app: ReturnType<typeof createApp>;
@@ -75,13 +76,22 @@ export function composeApi(config: ApiConfig): ApiComposition {
     bootstrapTenant: (input, metadata) =>
       tenantOwnerService.bootstrapTenant(input, metadata),
   });
+  const supportAccessRouter = createSupportAccessRouter({
+    supportAccessSecret: config.supportAccessSecret,
+    useCases: tenantOwnerService,
+  });
 
   const app = createApp({
     logger,
     trustProxy: config.trustProxy,
     checkReadiness: () => pingDatabase(databasePool),
     staffSessionMiddleware: createStaffSessionMiddleware(sessionDependencies),
-    apiRouters: [bootstrapRouter, identityRouter, restaurantRouter],
+    apiRouters: [
+      bootstrapRouter,
+      supportAccessRouter,
+      identityRouter,
+      restaurantRouter,
+    ],
   });
 
   return {

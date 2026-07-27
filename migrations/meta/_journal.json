@@ -15,6 +15,13 @@
       "when": 1785161000000,
       "tag": "0001_tenant_owner_bootstrap",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1785171600000,
+      "tag": "0002_employees_permissions_configuration",
+      "breakpoints": true
     }
   ]
 }

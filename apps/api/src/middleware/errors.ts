@@ -64,6 +64,32 @@ export function createUnexpectedErrorHandler(
       typeof error.code === "string"
         ? error.code
         : undefined;
+    const databaseConstraint =
+      typeof error === "object" &&
+      error !== null &&
+      "constraint" in error &&
+      typeof error.constraint === "string"
+        ? error.constraint
+        : undefined;
+    if (
+      databaseCode === "23505" &&
+      databaseConstraint === "employees_restaurant_email_uidx"
+    ) {
+      const problem: ProblemDetails = {
+        type: "/problems/employee-email-conflict",
+        title: "An employee with this email already exists",
+        status: 409,
+        code: "validation_error",
+        correlationId: getRequestId(request.id),
+        detail:
+          "Use a different email or update the existing employee profile.",
+      };
+      response
+        .status(problem.status)
+        .type("application/problem+json")
+        .send(problem);
+      return;
+    }
     if (databaseCode === "23505") {
       const problem: ProblemDetails = {
         type: "/problems/concurrency-conflict",

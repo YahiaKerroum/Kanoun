@@ -101,3 +101,57 @@ export const expectedVersionSchema = z
   .string()
   .regex(/^"[1-9]\d*"$/)
   .transform((value) => Number(value.slice(1, -1)));
+
+export const employeeParametersSchema = z.object({
+  employeeId: z.uuid(),
+});
+
+export const employeeListQuerySchema = z.object({
+  restaurantId: z.uuid(),
+});
+
+const employeeEmailSchema = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .pipe(z.email().max(320));
+
+const uniqueBranchIdsSchema = z
+  .array(z.uuid())
+  .min(1)
+  .max(100)
+  .refine((branchIds) => new Set(branchIds).size === branchIds.length, {
+    message: "Branch assignments must be unique.",
+  });
+
+export const createEmployeeSchema = z.object({
+  restaurantId: z.uuid(),
+  displayName: z.string().trim().min(1).max(160),
+  email: employeeEmailSchema,
+  branchIds: uniqueBranchIdsSchema,
+});
+
+export const updateEmployeeSchema = z
+  .object({
+    displayName: z.string().trim().min(1).max(160).optional(),
+    email: employeeEmailSchema.optional(),
+    status: z.literal("active").optional(),
+  })
+  .refine((value) => Object.keys(value).length > 0, {
+    message: "At least one employee field is required.",
+  });
+
+export const replaceEmployeeBranchesSchema = z.object({
+  branchIds: uniqueBranchIdsSchema,
+  reason: z.string().trim().min(8).max(500),
+});
+
+export const updateFeatureConfigurationSchema = z.object({
+  changes: z
+    .record(z.string().regex(/^CFG-\d{3}$/), z.enum(["enabled", "disabled"]))
+    .refine((value) => Object.keys(value).length > 0, {
+      message: "At least one feature change is required.",
+    }),
+  confirmAffectedWorkflows: z.boolean(),
+  reason: z.string().trim().min(8).max(500),
+});

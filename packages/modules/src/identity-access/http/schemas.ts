@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { permissionKeys } from "../domain/permission-catalog.js";
 
 export const loginSchema = z.object({
   businessCode: z
@@ -59,6 +60,33 @@ export const administratorTransferSchema = z.object({
 });
 
 export const employeeDeactivationSchema = z.object({
+  expectedVersion: z.int().positive(),
+  reason: z.string().trim().min(8).max(500),
+});
+
+export const permissionGrantSchema = z
+  .object({
+    permissionKey: z.enum(permissionKeys),
+    restaurantId: z.uuid().optional(),
+    branchId: z.uuid().optional(),
+  })
+  .refine((value) => !value.branchId || value.restaurantId, {
+    message: "Branch grants must identify their restaurant.",
+  });
+
+export const replacePermissionsSchema = z.object({
+  expectedVersion: z.int().positive(),
+  grants: z.array(permissionGrantSchema).max(500),
+  reason: z.string().trim().min(8).max(500),
+});
+
+export const applyPermissionTemplateSchema = z.object({
+  templateKey: z.enum([
+    "administrator",
+    "general_staff",
+    "cashier",
+    "kitchen_staff",
+  ]),
   expectedVersion: z.int().positive(),
   reason: z.string().trim().min(8).max(500),
 });

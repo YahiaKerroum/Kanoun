@@ -4,10 +4,21 @@ export type {
   CreateEmployeeInput,
   CreateRestaurantInput,
   EmployeeReference,
+  FeatureConfiguration,
   RestaurantConfigurationStore,
+  SupportTenantSnapshot,
+  UpdateEmployeeInput,
   UpdateBranchInput,
   UpdateRestaurantInput,
 } from "./contracts/restaurant-configuration-store.js";
+export {
+  branchDefaultFeatureValues,
+  featureDefinitionById,
+  featureDefinitions,
+  restaurantDefaultFeatureValues,
+  type FeatureDefinition,
+  type FeatureState,
+} from "./domain/feature-catalog.js";
 export type {
   Address,
   BranchRecord,

@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { Router, type Request } from "express";
+import { rateLimit } from "express-rate-limit";
 import { z } from "zod";
 import { ApplicationError } from "../../shared/application-error.js";
 import {
@@ -9,14 +10,28 @@ import {
   type StaffRequestContext,
   type SessionMiddlewareDependencies,
 } from "../../identity-access/index.js";
+import type {
+  EmployeeReference,
+  FeatureConfiguration,
+} from "../contracts/restaurant-configuration-store.js";
+import type {
+  FeatureDefinition,
+  FeatureState,
+} from "../domain/feature-catalog.js";
 import type { BranchRecord, RestaurantRecord } from "../domain/models.js";
 import {
   branchParametersSchema,
   createBranchSchema,
+  createEmployeeSchema,
   createRestaurantSchema,
+  employeeListQuerySchema,
+  employeeParametersSchema,
   expectedVersionSchema,
+  replaceEmployeeBranchesSchema,
   restaurantParametersSchema,
   updateBranchSchema,
+  updateEmployeeSchema,
+  updateFeatureConfigurationSchema,
   updateRestaurantSchema,
 } from "./schemas.js";
 
@@ -64,6 +79,80 @@ export interface RestaurantConfigurationHttpUseCases {
     },
     metadata: RequestMetadata,
   ): Promise<BranchRecord>;
+  listEmployees(
+    context: StaffRequestContext,
+    restaurantId: string,
+  ): Promise<readonly EmployeeReference[]>;
+  getEmployee(
+    context: StaffRequestContext,
+    employeeId: string,
+  ): Promise<EmployeeReference>;
+  createEmployee(
+    context: StaffRequestContext,
+    input: z.infer<typeof createEmployeeSchema>,
+    metadata: RequestMetadata,
+  ): Promise<EmployeeReference>;
+  updateEmployeeProfile(
+    context: StaffRequestContext,
+    input: z.infer<typeof updateEmployeeSchema> & {
+      readonly employeeId: string;
+      readonly expectedVersion: number;
+    },
+    metadata: RequestMetadata,
+  ): Promise<EmployeeReference>;
+  replaceEmployeeBranches(
+    context: StaffRequestContext,
+    employeeId: string,
+    expectedVersion: number,
+    branchIds: readonly string[],
+    reason: string,
+    metadata: RequestMetadata,
+  ): Promise<EmployeeReference>;
+  getFeatureConfiguration(
+    context: StaffRequestContext,
+    branchId: string,
+  ): Promise<{
+    readonly configuration: FeatureConfiguration;
+    readonly catalog: readonly FeatureDefinition[];
+  }>;
+  updateFeatureConfiguration(
+    context: StaffRequestContext,
+    input: {
+      readonly branchId: string;
+      readonly expectedVersion: number;
+      readonly changes: Readonly<Record<string, FeatureState>>;
+      readonly confirmAffectedWorkflows: boolean;
+      readonly reason: string;
+    },
+    metadata: RequestMetadata,
+  ): Promise<FeatureConfiguration>;
+  getRestaurantFeatureConfiguration(
+    context: StaffRequestContext,
+    restaurantId: string,
+  ): Promise<{
+    readonly configuration: FeatureConfiguration;
+    readonly catalog: readonly FeatureDefinition[];
+  }>;
+  updateRestaurantFeatureConfiguration(
+    context: StaffRequestContext,
+    input: {
+      readonly restaurantId: string;
+      readonly expectedVersion: number;
+      readonly changes: Readonly<Record<string, FeatureState>>;
+      readonly confirmAffectedWorkflows: boolean;
+      readonly reason: string;
+    },
+    metadata: RequestMetadata,
+  ): Promise<FeatureConfiguration>;
+  getPortalCapabilities(
+    context: StaffRequestContext,
+    branchId: string,
+  ): Promise<{
+    readonly branchId: string;
+    readonly permissions: readonly string[];
+    readonly enabledFeatures: readonly string[];
+    readonly configurationVersion: number;
+  }>;
 }
 
 export interface RestaurantConfigurationRouterDependencies extends SessionMiddlewareDependencies {
@@ -106,6 +195,12 @@ export function createRestaurantConfigurationRouter(
 ): Router {
   const router = Router();
   const requireCsrf = createCsrfProtection(dependencies);
+  const criticalChangeLimiter = rateLimit({
+    windowMs: 15 * 60_000,
+    limit: 30,
+    standardHeaders: "draft-8",
+    legacyHeaders: false,
+  });
 
   router.use(requireStaffSession());
 
@@ -202,6 +297,186 @@ export function createRestaurantConfigurationRouter(
             expectedVersion,
           },
           metadata(request),
+        ),
+      );
+    },
+  );
+
+  router.get("/staff/employees", async (request, response) => {
+    const query = parse(employeeListQuerySchema, request.query);
+    response.send({
+      items: await dependencies.useCases.listEmployees(
+        context(request),
+        query.restaurantId,
+      ),
+    });
+  });
+
+  router.post(
+    "/staff/employees",
+    criticalChangeLimiter,
+    requireCsrf,
+    async (request, response) => {
+      const input = parse(createEmployeeSchema, request.body);
+      response
+        .status(201)
+        .send(
+          await dependencies.useCases.createEmployee(
+            context(request),
+            input,
+            metadata(request),
+          ),
+        );
+    },
+  );
+
+  router.get("/staff/employees/:employeeId", async (request, response) => {
+    const parameters = parse(employeeParametersSchema, request.params);
+    response.send(
+      await dependencies.useCases.getEmployee(
+        context(request),
+        parameters.employeeId,
+      ),
+    );
+  });
+
+  router.patch(
+    "/staff/employees/:employeeId",
+    criticalChangeLimiter,
+    requireCsrf,
+    async (request, response) => {
+      const parameters = parse(employeeParametersSchema, request.params);
+      const input = parse(updateEmployeeSchema, request.body);
+      const expectedVersion = parse(
+        expectedVersionSchema,
+        request.get("if-match"),
+      );
+      response.send(
+        await dependencies.useCases.updateEmployeeProfile(
+          context(request),
+          {
+            ...input,
+            employeeId: parameters.employeeId,
+            expectedVersion,
+          },
+          metadata(request),
+        ),
+      );
+    },
+  );
+
+  router.put(
+    "/staff/employees/:employeeId/branches",
+    criticalChangeLimiter,
+    requireCsrf,
+    async (request, response) => {
+      const parameters = parse(employeeParametersSchema, request.params);
+      const input = parse(replaceEmployeeBranchesSchema, request.body);
+      const expectedVersion = parse(
+        expectedVersionSchema,
+        request.get("if-match"),
+      );
+      response.send(
+        await dependencies.useCases.replaceEmployeeBranches(
+          context(request),
+          parameters.employeeId,
+          expectedVersion,
+          input.branchIds,
+          input.reason,
+          metadata(request),
+        ),
+      );
+    },
+  );
+
+  router.get(
+    "/staff/branches/:branchId/features",
+    async (request, response) => {
+      const parameters = parse(branchParametersSchema, request.params);
+      response.send(
+        await dependencies.useCases.getFeatureConfiguration(
+          context(request),
+          parameters.branchId,
+        ),
+      );
+    },
+  );
+
+  router.patch(
+    "/staff/branches/:branchId/features",
+    criticalChangeLimiter,
+    requireCsrf,
+    async (request, response) => {
+      const parameters = parse(branchParametersSchema, request.params);
+      const input = parse(updateFeatureConfigurationSchema, request.body);
+      const expectedVersion = parse(
+        expectedVersionSchema,
+        request.get("if-match"),
+      );
+      response.send(
+        await dependencies.useCases.updateFeatureConfiguration(
+          context(request),
+          {
+            branchId: parameters.branchId,
+            expectedVersion,
+            changes: input.changes,
+            confirmAffectedWorkflows: input.confirmAffectedWorkflows,
+            reason: input.reason,
+          },
+          metadata(request),
+        ),
+      );
+    },
+  );
+
+  router.get(
+    "/staff/restaurants/:restaurantId/features",
+    async (request, response) => {
+      const parameters = parse(restaurantParametersSchema, request.params);
+      response.send(
+        await dependencies.useCases.getRestaurantFeatureConfiguration(
+          context(request),
+          parameters.restaurantId,
+        ),
+      );
+    },
+  );
+
+  router.patch(
+    "/staff/restaurants/:restaurantId/features",
+    criticalChangeLimiter,
+    requireCsrf,
+    async (request, response) => {
+      const parameters = parse(restaurantParametersSchema, request.params);
+      const input = parse(updateFeatureConfigurationSchema, request.body);
+      const expectedVersion = parse(
+        expectedVersionSchema,
+        request.get("if-match"),
+      );
+      response.send(
+        await dependencies.useCases.updateRestaurantFeatureConfiguration(
+          context(request),
+          {
+            restaurantId: parameters.restaurantId,
+            expectedVersion,
+            changes: input.changes,
+            confirmAffectedWorkflows: input.confirmAffectedWorkflows,
+            reason: input.reason,
+          },
+          metadata(request),
+        ),
+      );
+    },
+  );
+
+  router.get(
+    "/staff/branches/:branchId/capabilities",
+    async (request, response) => {
+      const parameters = parse(branchParametersSchema, request.params);
+      response.send(
+        await dependencies.useCases.getPortalCapabilities(
+          context(request),
+          parameters.branchId,
         ),
       );
     },

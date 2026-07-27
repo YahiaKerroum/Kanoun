@@ -5,14 +5,22 @@ import type {
   OpeningPeriod,
   RestaurantRecord,
 } from "../domain/models.js";
+import {
+  branchDefaultFeatureValues,
+  restaurantDefaultFeatureValues,
+  type FeatureState,
+} from "../domain/feature-catalog.js";
 import type {
   CreateBranchInput,
   CreateBusinessAccountInput,
   CreateEmployeeInput,
   CreateRestaurantInput,
   EmployeeReference,
+  FeatureConfiguration,
   RestaurantConfigurationStore,
+  SupportTenantSnapshot,
   UpdateBranchInput,
+  UpdateEmployeeInput,
   UpdateRestaurantInput,
 } from "../contracts/restaurant-configuration-store.js";
 
@@ -77,7 +85,10 @@ function mapRestaurant(row: RestaurantRow): RestaurantRecord {
   };
 }
 
-function mapEmployee(row: EmployeeRow): EmployeeReference {
+function mapEmployee(
+  row: EmployeeRow,
+  branchIds: readonly string[],
+): EmployeeReference {
   return {
     id: row.id,
     businessAccountId: row.business_account_id,
@@ -86,7 +97,35 @@ function mapEmployee(row: EmployeeRow): EmployeeReference {
     email: row.email,
     status: row.status,
     version: row.version,
+    branchIds,
   };
+}
+
+async function readEmployeeBranchIds(
+  sql: SqlExecutor,
+  businessAccountId: string,
+  employeeId: string,
+): Promise<readonly string[]> {
+  const result = await sql.query<{ branch_id: string }>(
+    `
+      select branch_id
+      from restaurant.employee_branch_access
+      where business_account_id = $1 and employee_id = $2
+      order by branch_id
+    `,
+    [businessAccountId, employeeId],
+  );
+  return result.rows.map((row) => row.branch_id);
+}
+
+async function mapEmployeeWithBranches(
+  sql: SqlExecutor,
+  row: EmployeeRow,
+): Promise<EmployeeReference> {
+  return mapEmployee(
+    row,
+    await readEmployeeBranchIds(sql, row.business_account_id, row.id),
+  );
 }
 
 async function readOpeningHours(
@@ -219,8 +258,28 @@ export class PostgresRestaurantConfigurationStore implements RestaurantConfigura
         input.now,
       ],
     );
-
-    return mapRestaurant(requireReturnedRow(result.rows));
+    const restaurant = mapRestaurant(requireReturnedRow(result.rows));
+    await transaction.sql.query(
+      `
+        insert into restaurant.feature_configuration_versions (
+          id,
+          business_account_id,
+          restaurant_id,
+          version,
+          configuration,
+          created_at_utc
+        )
+        values ($1, $2, $3, 1, $4::jsonb, $5)
+      `,
+      [
+        randomUUID(),
+        input.businessAccountId,
+        input.id,
+        JSON.stringify(restaurantDefaultFeatureValues),
+        input.now,
+      ],
+    );
+    return restaurant;
   }
 
   public async createBranch(
@@ -284,6 +343,28 @@ export class PostgresRestaurantConfigurationStore implements RestaurantConfigura
       input.openingHours,
       input.now,
     );
+    await transaction.sql.query(
+      `
+        insert into restaurant.feature_configuration_versions (
+          id,
+          business_account_id,
+          restaurant_id,
+          branch_id,
+          version,
+          configuration,
+          created_at_utc
+        )
+        values ($1, $2, $3, $4, 1, $5::jsonb, $6)
+      `,
+      [
+        randomUUID(),
+        input.businessAccountId,
+        input.restaurantId,
+        input.id,
+        JSON.stringify(branchDefaultFeatureValues),
+        input.now,
+      ],
+    );
 
     return mapBranch(transaction.sql, requireReturnedRow(result.rows));
   }
@@ -337,7 +418,7 @@ export class PostgresRestaurantConfigurationStore implements RestaurantConfigura
       );
     }
 
-    return mapEmployee(requireReturnedRow(result.rows));
+    return mapEmployee(requireReturnedRow(result.rows), input.branchIds);
   }
 
   public async grantEmployeeBranchAccess(
@@ -574,7 +655,7 @@ export class PostgresRestaurantConfigurationStore implements RestaurantConfigura
       [businessAccountId, employeeId],
     );
     const row = result.rows[0];
-    return row ? mapEmployee(row) : undefined;
+    return row ? mapEmployeeWithBranches(sql, row) : undefined;
   }
 
   public async deactivateEmployee(
@@ -603,6 +684,401 @@ export class PostgresRestaurantConfigurationStore implements RestaurantConfigura
       [businessAccountId, employeeId, expectedVersion, now],
     );
     const row = result.rows[0];
-    return row ? mapEmployee(row) : undefined;
+    return row ? mapEmployeeWithBranches(transaction.sql, row) : undefined;
+  }
+
+  public async listEmployees(
+    sql: SqlExecutor,
+    businessAccountId: string,
+    restaurantId: string,
+  ): Promise<readonly EmployeeReference[]> {
+    const result = await sql.query<EmployeeRow>(
+      `
+        select
+          id,
+          business_account_id,
+          restaurant_id,
+          display_name,
+          email,
+          status,
+          version
+        from restaurant.employees
+        where business_account_id = $1 and restaurant_id = $2
+        order by display_name, id
+      `,
+      [businessAccountId, restaurantId],
+    );
+    return Promise.all(
+      result.rows.map((row) => mapEmployeeWithBranches(sql, row)),
+    );
+  }
+
+  public async updateEmployee(
+    transaction: TransactionContext,
+    input: UpdateEmployeeInput,
+  ): Promise<EmployeeReference | undefined> {
+    const result = await transaction.sql.query<EmployeeRow>(
+      `
+        update restaurant.employees
+        set
+          display_name = coalesce($4, display_name),
+          email = coalesce($5, email),
+          status = coalesce($6, status),
+          version = version + 1,
+          updated_at_utc = $7
+        where business_account_id = $1
+          and id = $2
+          and version = $3
+        returning
+          id,
+          business_account_id,
+          restaurant_id,
+          display_name,
+          email,
+          status,
+          version
+      `,
+      [
+        input.businessAccountId,
+        input.employeeId,
+        input.expectedVersion,
+        input.displayName ?? null,
+        input.email ?? null,
+        input.status ?? null,
+        input.now,
+      ],
+    );
+    const row = result.rows[0];
+    return row ? mapEmployeeWithBranches(transaction.sql, row) : undefined;
+  }
+
+  public async replaceEmployeeBranchAccess(
+    transaction: TransactionContext,
+    input: {
+      readonly businessAccountId: string;
+      readonly employeeId: string;
+      readonly expectedVersion: number;
+      readonly branchIds: readonly string[];
+      readonly now: Date;
+    },
+  ): Promise<EmployeeReference | undefined> {
+    const result = await transaction.sql.query<EmployeeRow>(
+      `
+        update restaurant.employees
+        set version = version + 1, updated_at_utc = $4
+        where business_account_id = $1
+          and id = $2
+          and version = $3
+        returning
+          id,
+          business_account_id,
+          restaurant_id,
+          display_name,
+          email,
+          status,
+          version
+      `,
+      [
+        input.businessAccountId,
+        input.employeeId,
+        input.expectedVersion,
+        input.now,
+      ],
+    );
+    const employee = result.rows[0];
+    if (!employee) {
+      return undefined;
+    }
+    await transaction.sql.query(
+      `
+        delete from restaurant.employee_branch_access
+        where business_account_id = $1 and employee_id = $2
+      `,
+      [input.businessAccountId, input.employeeId],
+    );
+    for (const branchId of input.branchIds) {
+      await transaction.sql.query(
+        `
+          insert into restaurant.employee_branch_access (
+            business_account_id, employee_id, branch_id, created_at_utc
+          )
+          values ($1, $2, $3, $4)
+        `,
+        [input.businessAccountId, input.employeeId, branchId, input.now],
+      );
+    }
+    return mapEmployee(employee, input.branchIds);
+  }
+
+  public async getFeatureConfiguration(
+    sql: SqlExecutor,
+    businessAccountId: string,
+    branchId: string,
+  ): Promise<FeatureConfiguration | undefined> {
+    const result = await sql.query<{
+      id: string;
+      business_account_id: string;
+      restaurant_id: string;
+      branch_id: string;
+      version: number;
+      configuration: Record<string, FeatureState>;
+      created_at_utc: Date;
+    }>(
+      `
+        select distinct on (branch_id)
+          id,
+          business_account_id,
+          restaurant_id,
+          branch_id,
+          version,
+          configuration,
+          created_at_utc
+        from restaurant.feature_configuration_versions
+        where business_account_id = $1 and branch_id = $2
+        order by branch_id, version desc
+      `,
+      [businessAccountId, branchId],
+    );
+    const row = result.rows[0];
+    return row
+      ? {
+          id: row.id,
+          businessAccountId: row.business_account_id,
+          restaurantId: row.restaurant_id,
+          ...(row.branch_id ? { branchId: row.branch_id } : {}),
+          version: row.version,
+          values: row.configuration,
+          createdAtUtc: row.created_at_utc,
+        }
+      : undefined;
+  }
+
+  public async appendFeatureConfiguration(
+    transaction: TransactionContext,
+    input: {
+      readonly businessAccountId: string;
+      readonly restaurantId: string;
+      readonly branchId: string;
+      readonly expectedVersion: number;
+      readonly values: Readonly<Record<string, FeatureState>>;
+      readonly createdByUserId: string;
+      readonly reason: string;
+      readonly now: Date;
+    },
+  ): Promise<FeatureConfiguration | undefined> {
+    const current = await transaction.sql.query<{ version: number }>(
+      `
+        select version
+        from restaurant.feature_configuration_versions
+        where business_account_id = $1 and branch_id = $2
+        order by version desc
+        limit 1
+        for update
+      `,
+      [input.businessAccountId, input.branchId],
+    );
+    if (current.rows[0]?.version !== input.expectedVersion) {
+      return undefined;
+    }
+    const nextVersion = input.expectedVersion + 1;
+    const id = randomUUID();
+    await transaction.sql.query(
+      `
+        insert into restaurant.feature_configuration_versions (
+          id,
+          business_account_id,
+          restaurant_id,
+          branch_id,
+          version,
+          configuration,
+          created_by_user_id,
+          reason,
+          created_at_utc
+        )
+        values ($1, $2, $3, $4, $5, $6::jsonb, $7, $8, $9)
+      `,
+      [
+        id,
+        input.businessAccountId,
+        input.restaurantId,
+        input.branchId,
+        nextVersion,
+        JSON.stringify(input.values),
+        input.createdByUserId,
+        input.reason,
+        input.now,
+      ],
+    );
+    return {
+      id,
+      businessAccountId: input.businessAccountId,
+      restaurantId: input.restaurantId,
+      branchId: input.branchId,
+      version: nextVersion,
+      values: input.values,
+      createdAtUtc: input.now,
+    };
+  }
+
+  public async getRestaurantFeatureConfiguration(
+    sql: SqlExecutor,
+    businessAccountId: string,
+    restaurantId: string,
+  ): Promise<FeatureConfiguration | undefined> {
+    const result = await sql.query<{
+      id: string;
+      business_account_id: string;
+      restaurant_id: string;
+      version: number;
+      configuration: Record<string, FeatureState>;
+      created_at_utc: Date;
+    }>(
+      `
+        select
+          id,
+          business_account_id,
+          restaurant_id,
+          version,
+          configuration,
+          created_at_utc
+        from restaurant.feature_configuration_versions
+        where business_account_id = $1
+          and restaurant_id = $2
+          and branch_id is null
+        order by version desc
+        limit 1
+      `,
+      [businessAccountId, restaurantId],
+    );
+    const row = result.rows[0];
+    return row
+      ? {
+          id: row.id,
+          businessAccountId: row.business_account_id,
+          restaurantId: row.restaurant_id,
+          version: row.version,
+          values: row.configuration,
+          createdAtUtc: row.created_at_utc,
+        }
+      : undefined;
+  }
+
+  public async appendRestaurantFeatureConfiguration(
+    transaction: TransactionContext,
+    input: {
+      readonly businessAccountId: string;
+      readonly restaurantId: string;
+      readonly expectedVersion: number;
+      readonly values: Readonly<Record<string, FeatureState>>;
+      readonly createdByUserId: string;
+      readonly reason: string;
+      readonly now: Date;
+    },
+  ): Promise<FeatureConfiguration | undefined> {
+    const current = await transaction.sql.query<{ version: number }>(
+      `
+        select version
+        from restaurant.feature_configuration_versions
+        where business_account_id = $1
+          and restaurant_id = $2
+          and branch_id is null
+        order by version desc
+        limit 1
+        for update
+      `,
+      [input.businessAccountId, input.restaurantId],
+    );
+    if (current.rows[0]?.version !== input.expectedVersion) {
+      return undefined;
+    }
+    const nextVersion = input.expectedVersion + 1;
+    const id = randomUUID();
+    await transaction.sql.query(
+      `
+        insert into restaurant.feature_configuration_versions (
+          id,
+          business_account_id,
+          restaurant_id,
+          version,
+          configuration,
+          created_by_user_id,
+          reason,
+          created_at_utc
+        )
+        values ($1, $2, $3, $4, $5::jsonb, $6, $7, $8)
+      `,
+      [
+        id,
+        input.businessAccountId,
+        input.restaurantId,
+        nextVersion,
+        JSON.stringify(input.values),
+        input.createdByUserId,
+        input.reason,
+        input.now,
+      ],
+    );
+    return {
+      id,
+      businessAccountId: input.businessAccountId,
+      restaurantId: input.restaurantId,
+      version: nextVersion,
+      values: input.values,
+      createdAtUtc: input.now,
+    };
+  }
+
+  public async getSupportTenantSnapshot(
+    sql: SqlExecutor,
+    businessAccountId: string,
+  ): Promise<SupportTenantSnapshot | undefined> {
+    const business = await sql.query<{ id: string; name: string }>(
+      `
+        select id, name
+        from restaurant.business_accounts
+        where id = $1
+      `,
+      [businessAccountId],
+    );
+    const account = business.rows[0];
+    if (!account) {
+      return undefined;
+    }
+    const [restaurants, branches] = await Promise.all([
+      sql.query<{ id: string; name: string; status: string }>(
+        `
+          select id, name, status
+          from restaurant.restaurants
+          where business_account_id = $1
+          order by name, id
+        `,
+        [businessAccountId],
+      ),
+      sql.query<{
+        id: string;
+        restaurant_id: string;
+        name: string;
+        status: string;
+      }>(
+        `
+          select id, restaurant_id, name, status
+          from restaurant.branches
+          where business_account_id = $1
+          order by name, id
+        `,
+        [businessAccountId],
+      ),
+    ]);
+    return {
+      businessAccountId,
+      businessName: account.name,
+      restaurants: restaurants.rows,
+      branches: branches.rows.map((row) => ({
+        id: row.id,
+        restaurantId: row.restaurant_id,
+        name: row.name,
+        status: row.status,
+      })),
+    };
   }
 }

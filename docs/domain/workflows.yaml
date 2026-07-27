@@ -21,6 +21,9 @@ state_machines:
     commands_without_state_change:
       - {id: CMD-IDENTITY-RECOVER, trigger: complete_credential_recovery, actor: staff, guards: [recovery_token_unexpired, recovery_token_unused], effects: [replace_adaptive_password_hash, revoke_all_sessions], events: [EVT-IDENTITY-CREDENTIALS-RECOVERED]}
       - {id: CMD-IDENTITY-TRANSFER-ADMIN, trigger: transfer_administrator, actor: administrator, permission: employees.manage_permissions, guards: [recent_authentication, replacement_identity_active], effects: [grant_replacement_before_removal, revoke_affected_sessions], events: [EVT-IDENTITY-ADMINISTRATOR-TRANSFERRED]}
+      - {id: CMD-IDENTITY-CHANGE-PERMISSIONS, trigger: replace_employee_permissions_or_apply_template, actor: administrator, permission: employees.manage_permissions, guards: [recent_authentication, delegable_subset_only, assigned_branch_scope, last_administrator_preserved, expected_version_matches], effects: [replace_grants_only_permission_set, revoke_affected_sessions], events: [EVT-IDENTITY-PERMISSIONS-CHANGED]}
+      - {id: CMD-IDENTITY-GRANT-SUPPORT-ACCESS, trigger: create_support_access_grant, actor: platform_operator, permission: support.break_glass, guards: [recent_authentication, distinct_approver, tenant_and_scope_present, least_privilege_scope, expiry_within_four_hours], effects: [store_hashed_access_token, append_tenant_audit], events: [EVT-IDENTITY-SUPPORT-ACCESS-GRANTED]}
+      - {id: CMD-IDENTITY-REVOKE-SUPPORT-ACCESS, trigger: revoke_or_expire_support_access, actor: platform_operator_or_system, permission: support.break_glass, effects: [invalidate_support_token, terminate_related_sessions_and_subscriptions, append_tenant_audit], events: [EVT-IDENTITY-SUPPORT-ACCESS-REVOKED]}
 
   restaurant_lifecycle:
     owner: restaurant_configuration

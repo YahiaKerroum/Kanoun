@@ -6,6 +6,7 @@ import type {
   OpeningPeriod,
   RestaurantRecord,
 } from "../domain/models.js";
+import type { FeatureState } from "../domain/feature-catalog.js";
 
 export interface CreateBusinessAccountInput {
   readonly id: string;
@@ -56,6 +57,43 @@ export interface EmployeeReference {
   readonly email: string;
   readonly status: "active" | "inactive";
   readonly version: number;
+  readonly branchIds: readonly string[];
+}
+
+export interface UpdateEmployeeInput {
+  readonly businessAccountId: string;
+  readonly employeeId: string;
+  readonly expectedVersion: number;
+  readonly displayName?: string;
+  readonly email?: string;
+  readonly status?: EmployeeReference["status"];
+  readonly now: Date;
+}
+
+export interface FeatureConfiguration {
+  readonly id: string;
+  readonly businessAccountId: string;
+  readonly restaurantId: string;
+  readonly branchId?: string;
+  readonly version: number;
+  readonly values: Readonly<Record<string, FeatureState>>;
+  readonly createdAtUtc: Date;
+}
+
+export interface SupportTenantSnapshot {
+  readonly businessAccountId: string;
+  readonly businessName: string;
+  readonly restaurants: readonly {
+    readonly id: string;
+    readonly name: string;
+    readonly status: string;
+  }[];
+  readonly branches: readonly {
+    readonly id: string;
+    readonly restaurantId: string;
+    readonly name: string;
+    readonly status: string;
+  }[];
 }
 
 export interface UpdateRestaurantInput {
@@ -148,4 +186,62 @@ export interface RestaurantConfigurationStore {
     expectedVersion: number,
     now: Date,
   ): Promise<EmployeeReference | undefined>;
+  listEmployees(
+    sql: SqlExecutor,
+    businessAccountId: string,
+    restaurantId: string,
+  ): Promise<readonly EmployeeReference[]>;
+  updateEmployee(
+    transaction: TransactionContext,
+    input: UpdateEmployeeInput,
+  ): Promise<EmployeeReference | undefined>;
+  replaceEmployeeBranchAccess(
+    transaction: TransactionContext,
+    input: {
+      readonly businessAccountId: string;
+      readonly employeeId: string;
+      readonly expectedVersion: number;
+      readonly branchIds: readonly string[];
+      readonly now: Date;
+    },
+  ): Promise<EmployeeReference | undefined>;
+  getFeatureConfiguration(
+    sql: SqlExecutor,
+    businessAccountId: string,
+    branchId: string,
+  ): Promise<FeatureConfiguration | undefined>;
+  appendFeatureConfiguration(
+    transaction: TransactionContext,
+    input: {
+      readonly businessAccountId: string;
+      readonly restaurantId: string;
+      readonly branchId: string;
+      readonly expectedVersion: number;
+      readonly values: Readonly<Record<string, FeatureState>>;
+      readonly createdByUserId: string;
+      readonly reason: string;
+      readonly now: Date;
+    },
+  ): Promise<FeatureConfiguration | undefined>;
+  getRestaurantFeatureConfiguration(
+    sql: SqlExecutor,
+    businessAccountId: string,
+    restaurantId: string,
+  ): Promise<FeatureConfiguration | undefined>;
+  appendRestaurantFeatureConfiguration(
+    transaction: TransactionContext,
+    input: {
+      readonly businessAccountId: string;
+      readonly restaurantId: string;
+      readonly expectedVersion: number;
+      readonly values: Readonly<Record<string, FeatureState>>;
+      readonly createdByUserId: string;
+      readonly reason: string;
+      readonly now: Date;
+    },
+  ): Promise<FeatureConfiguration | undefined>;
+  getSupportTenantSnapshot(
+    sql: SqlExecutor,
+    businessAccountId: string,
+  ): Promise<SupportTenantSnapshot | undefined>;
 }

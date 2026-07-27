@@ -4,6 +4,7 @@ export {
   type CredentialTokenDelivery,
   type LoginResult,
   type RequestMetadata,
+  type SupportAccessInput,
   type TenantBootstrapInput,
   type TenantBootstrapResult,
   type TenantOwnerServiceDependencies,

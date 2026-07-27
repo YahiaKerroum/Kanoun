@@ -69,6 +69,21 @@ events:
     owner: identity_access
     aggregate: employee_access
     consumers: [notifications]
+  EVT-IDENTITY-PERMISSIONS-CHANGED:
+    type: identity.permissions_changed.v1
+    owner: identity_access
+    aggregate: employee_access
+    consumers: [notifications]
+  EVT-IDENTITY-SUPPORT-ACCESS-GRANTED:
+    type: identity.support_access_granted.v1
+    owner: identity_access
+    aggregate: support_access_grant
+    consumers: [notifications]
+  EVT-IDENTITY-SUPPORT-ACCESS-REVOKED:
+    type: identity.support_access_revoked.v1
+    owner: identity_access
+    aggregate: support_access_grant
+    consumers: [notifications]
   EVT-RESTAURANT-CREATED:
     type: restaurant.restaurant_created.v1
     owner: restaurant_configuration
@@ -89,6 +104,26 @@ events:
     owner: restaurant_configuration
     aggregate: branch
     consumers: [reporting, notifications]
+  EVT-RESTAURANT-EMPLOYEE-CREATED:
+    type: restaurant.employee_created.v1
+    owner: restaurant_configuration
+    aggregate: employee
+    consumers: [reporting, notifications]
+  EVT-RESTAURANT-EMPLOYEE-UPDATED:
+    type: restaurant.employee_updated.v1
+    owner: restaurant_configuration
+    aggregate: employee
+    consumers: [reporting, notifications]
+  EVT-RESTAURANT-EMPLOYEE-BRANCH-SCOPE-CHANGED:
+    type: restaurant.employee_branch_scope_changed.v1
+    owner: restaurant_configuration
+    aggregate: employee
+    consumers: [notifications]
+  EVT-RESTAURANT-FEATURE-CONFIGURATION-CHANGED:
+    type: restaurant.feature_configuration_changed.v1
+    owner: restaurant_configuration
+    aggregate: feature_configuration
+    consumers: [notifications, reporting]
   EVT-ORDER-SUBMITTED:
     type: ordering.order_submitted.v1
     owner: ordering

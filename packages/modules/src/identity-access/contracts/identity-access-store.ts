@@ -63,6 +63,53 @@ export interface RecoveryTokenInput {
   readonly expiresAtUtc: Date;
 }
 
+export interface PermissionGrant {
+  readonly permissionKey: PermissionKey;
+  readonly restaurantId?: string;
+  readonly branchId?: string;
+}
+
+export interface PermissionSet {
+  readonly employeeId: string;
+  readonly version: number;
+  readonly grants: readonly PermissionGrant[];
+}
+
+export interface PermissionTemplate {
+  readonly key: string;
+  readonly displayName: string;
+  readonly permissionKeys: readonly PermissionKey[];
+  readonly version: number;
+}
+
+export interface CreateSupportAccessGrantInput {
+  readonly id: string;
+  readonly businessAccountId: string;
+  readonly operatorId: string;
+  readonly approverId: string;
+  readonly approvalReference: string;
+  readonly reason: string;
+  readonly scope: Readonly<{
+    permissionKeys: readonly PermissionKey[];
+    restaurantIds: readonly string[];
+    branchIds: readonly string[];
+  }>;
+  readonly tokenHash: string;
+  readonly now: Date;
+  readonly expiresAtUtc: Date;
+}
+
+export interface SupportAccessGrant {
+  readonly id: string;
+  readonly businessAccountId: string;
+  readonly operatorId: string;
+  readonly approverId: string;
+  readonly approvalReference: string;
+  readonly reason: string;
+  readonly scope: CreateSupportAccessGrantInput["scope"];
+  readonly expiresAtUtc: Date;
+}
+
 export interface IdentityAccessStore {
   createOwnerIdentity(
     transaction: TransactionContext,
@@ -168,4 +215,47 @@ export interface IdentityAccessStore {
     employeeId: string,
     now: Date,
   ): Promise<UserCredentialRecord | undefined>;
+  initializePermissionSet(
+    transaction: TransactionContext,
+    businessAccountId: string,
+    employeeId: string,
+    now: Date,
+  ): Promise<void>;
+  getPermissionSet(
+    sql: SqlExecutor,
+    businessAccountId: string,
+    employeeId: string,
+  ): Promise<PermissionSet | undefined>;
+  replacePermissionSet(
+    transaction: TransactionContext,
+    input: {
+      readonly businessAccountId: string;
+      readonly employeeId: string;
+      readonly expectedVersion: number;
+      readonly grants: readonly PermissionGrant[];
+      readonly grantedByUserId: string;
+      readonly now: Date;
+    },
+  ): Promise<PermissionSet | undefined>;
+  listPermissionTemplates(
+    sql: SqlExecutor,
+  ): Promise<readonly PermissionTemplate[]>;
+  createSupportAccessGrant(
+    transaction: TransactionContext,
+    input: CreateSupportAccessGrantInput,
+  ): Promise<void>;
+  getSupportAccessGrant(
+    sql: SqlExecutor,
+    tokenHash: string,
+    now: Date,
+  ): Promise<SupportAccessGrant | undefined>;
+  revokeSupportAccessGrant(
+    transaction: TransactionContext,
+    input: {
+      readonly grantId: string;
+      readonly operatorId: string;
+      readonly reason: string;
+      readonly now: Date;
+    },
+  ): Promise<SupportAccessGrant | undefined>;
 }

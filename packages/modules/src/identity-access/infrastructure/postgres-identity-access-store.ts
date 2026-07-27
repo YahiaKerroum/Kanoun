@@ -3,10 +3,15 @@ import type { SqlExecutor, TransactionContext } from "@rms/building-blocks";
 import type {
   CreateInvitationInput,
   CreateOwnerIdentityInput,
+  CreateSupportAccessGrantInput,
   CreateSessionInput,
   IdentityAccessStore,
   InvitationRecord,
+  PermissionGrant,
+  PermissionSet,
+  PermissionTemplate,
   RecoveryTokenInput,
+  SupportAccessGrant,
   UserCredentialRecord,
 } from "../contracts/identity-access-store.js";
 import {
@@ -94,6 +99,12 @@ export class PostgresIdentityAccessStore implements IdentityAccessStore {
       ],
     );
 
+    await this.initializePermissionSet(
+      transaction,
+      input.businessAccountId,
+      input.employeeId,
+      input.now,
+    );
     await this.grantAdministrator(
       transaction,
       input.businessAccountId,
@@ -679,8 +690,15 @@ export class PostgresIdentityAccessStore implements IdentityAccessStore {
     requiredPermissions: readonly PermissionKey[],
     now: Date,
   ): Promise<void> {
+    await this.initializePermissionSet(
+      transaction,
+      businessAccountId,
+      employeeId,
+      now,
+    );
+    let changed = false;
     for (const permissionKey of requiredPermissions) {
-      await transaction.sql.query(
+      const result = await transaction.sql.query(
         `
           insert into identity.permission_grants (
             id,
@@ -720,6 +738,17 @@ export class PostgresIdentityAccessStore implements IdentityAccessStore {
           now,
         ],
       );
+      changed = changed || (result.rowCount ?? 0) > 0;
+    }
+    if (changed) {
+      await transaction.sql.query(
+        `
+          update identity.employee_permission_sets
+          set version = version + 1, updated_at_utc = $3
+          where business_account_id = $1 and employee_id = $2
+        `,
+        [businessAccountId, employeeId, now],
+      );
     }
   }
 
@@ -741,6 +770,16 @@ export class PostgresIdentityAccessStore implements IdentityAccessStore {
       `,
       [businessAccountId, employeeId, [...requiredPermissions], now],
     );
+    if ((result.rowCount ?? 0) > 0) {
+      await transaction.sql.query(
+        `
+          update identity.employee_permission_sets
+          set version = version + 1, updated_at_utc = $3
+          where business_account_id = $1 and employee_id = $2
+        `,
+        [businessAccountId, employeeId, now],
+      );
+    }
     return result.rowCount ?? 0;
   }
 
@@ -775,5 +814,304 @@ export class PostgresIdentityAccessStore implements IdentityAccessStore {
     );
     const row = result.rows[0];
     return row ? mapCredential(row) : undefined;
+  }
+
+  public async initializePermissionSet(
+    transaction: TransactionContext,
+    businessAccountId: string,
+    employeeId: string,
+    now: Date,
+  ): Promise<void> {
+    await transaction.sql.query(
+      `
+        insert into identity.employee_permission_sets (
+          business_account_id, employee_id, version, updated_at_utc
+        )
+        values ($1, $2, 1, $3)
+        on conflict (business_account_id, employee_id) do nothing
+      `,
+      [businessAccountId, employeeId, now],
+    );
+  }
+
+  public async getPermissionSet(
+    sql: SqlExecutor,
+    businessAccountId: string,
+    employeeId: string,
+  ): Promise<PermissionSet | undefined> {
+    const versionResult = await sql.query<{ version: number }>(
+      `
+        select version
+        from identity.employee_permission_sets
+        where business_account_id = $1 and employee_id = $2
+      `,
+      [businessAccountId, employeeId],
+    );
+    const version = versionResult.rows[0]?.version;
+    if (version === undefined) {
+      return undefined;
+    }
+    const grantResult = await sql.query<GrantRow>(
+      `
+        select permission_key, restaurant_id, branch_id
+        from identity.permission_grants
+        where business_account_id = $1
+          and employee_id = $2
+          and revoked_at_utc is null
+        order by permission_key, restaurant_id nulls first, branch_id nulls first
+      `,
+      [businessAccountId, employeeId],
+    );
+    const grants: PermissionGrant[] = grantResult.rows.flatMap((row) =>
+      isPermissionKey(row.permission_key)
+        ? [
+            {
+              permissionKey: row.permission_key,
+              ...(row.restaurant_id ? { restaurantId: row.restaurant_id } : {}),
+              ...(row.branch_id ? { branchId: row.branch_id } : {}),
+            },
+          ]
+        : [],
+    );
+    return { employeeId, version, grants };
+  }
+
+  public async replacePermissionSet(
+    transaction: TransactionContext,
+    input: {
+      readonly businessAccountId: string;
+      readonly employeeId: string;
+      readonly expectedVersion: number;
+      readonly grants: readonly PermissionGrant[];
+      readonly grantedByUserId: string;
+      readonly now: Date;
+    },
+  ): Promise<PermissionSet | undefined> {
+    const versionResult = await transaction.sql.query<{ version: number }>(
+      `
+        update identity.employee_permission_sets
+        set version = version + 1, updated_at_utc = $4
+        where business_account_id = $1
+          and employee_id = $2
+          and version = $3
+        returning version
+      `,
+      [
+        input.businessAccountId,
+        input.employeeId,
+        input.expectedVersion,
+        input.now,
+      ],
+    );
+    const version = versionResult.rows[0]?.version;
+    if (version === undefined) {
+      return undefined;
+    }
+    await transaction.sql.query(
+      `
+        update identity.permission_grants
+        set revoked_at_utc = $3
+        where business_account_id = $1
+          and employee_id = $2
+          and revoked_at_utc is null
+      `,
+      [input.businessAccountId, input.employeeId, input.now],
+    );
+    for (const grant of input.grants) {
+      await transaction.sql.query(
+        `
+          insert into identity.permission_grants (
+            id,
+            business_account_id,
+            employee_id,
+            permission_key,
+            restaurant_id,
+            branch_id,
+            granted_by_user_id,
+            granted_at_utc
+          )
+          values ($1, $2, $3, $4, $5, $6, $7, $8)
+        `,
+        [
+          randomUUID(),
+          input.businessAccountId,
+          input.employeeId,
+          grant.permissionKey,
+          grant.restaurantId ?? null,
+          grant.branchId ?? null,
+          input.grantedByUserId,
+          input.now,
+        ],
+      );
+    }
+    return {
+      employeeId: input.employeeId,
+      version,
+      grants: input.grants,
+    };
+  }
+
+  public async listPermissionTemplates(
+    sql: SqlExecutor,
+  ): Promise<readonly PermissionTemplate[]> {
+    const result = await sql.query<{
+      template_key: string;
+      display_name: string;
+      permission_keys: unknown;
+      version: number;
+    }>(
+      `
+        select template_key, display_name, permission_keys, version
+        from identity.permission_templates
+        where active = true
+        order by template_key
+      `,
+    );
+    return result.rows.map((row) => ({
+      key: row.template_key,
+      displayName: row.display_name,
+      permissionKeys: Array.isArray(row.permission_keys)
+        ? row.permission_keys.filter(
+            (value): value is PermissionKey =>
+              typeof value === "string" && isPermissionKey(value),
+          )
+        : [],
+      version: row.version,
+    }));
+  }
+
+  public async createSupportAccessGrant(
+    transaction: TransactionContext,
+    input: CreateSupportAccessGrantInput,
+  ): Promise<void> {
+    await transaction.sql.query(
+      `
+        insert into identity.support_access_grants (
+          id,
+          business_account_id,
+          operator_id,
+          approver_id,
+          approval_reference,
+          reason,
+          scope,
+          token_hash,
+          created_at_utc,
+          expires_at_utc
+        )
+        values ($1, $2, $3, $4, $5, $6, $7::jsonb, $8, $9, $10)
+      `,
+      [
+        input.id,
+        input.businessAccountId,
+        input.operatorId,
+        input.approverId,
+        input.approvalReference,
+        input.reason,
+        JSON.stringify(input.scope),
+        input.tokenHash,
+        input.now,
+        input.expiresAtUtc,
+      ],
+    );
+  }
+
+  public async getSupportAccessGrant(
+    sql: SqlExecutor,
+    tokenHash: string,
+    now: Date,
+  ): Promise<SupportAccessGrant | undefined> {
+    const result = await sql.query<{
+      id: string;
+      business_account_id: string;
+      operator_id: string;
+      approver_id: string;
+      approval_reference: string;
+      reason: string;
+      scope: CreateSupportAccessGrantInput["scope"];
+      expires_at_utc: Date;
+    }>(
+      `
+        select
+          id,
+          business_account_id,
+          operator_id,
+          approver_id,
+          approval_reference,
+          reason,
+          scope,
+          expires_at_utc
+        from identity.support_access_grants
+        where token_hash = $1
+          and revoked_at_utc is null
+          and expires_at_utc > $2
+      `,
+      [tokenHash, now],
+    );
+    const row = result.rows[0];
+    return row
+      ? {
+          id: row.id,
+          businessAccountId: row.business_account_id,
+          operatorId: row.operator_id,
+          approverId: row.approver_id,
+          approvalReference: row.approval_reference,
+          reason: row.reason,
+          scope: row.scope,
+          expiresAtUtc: row.expires_at_utc,
+        }
+      : undefined;
+  }
+
+  public async revokeSupportAccessGrant(
+    transaction: TransactionContext,
+    input: {
+      readonly grantId: string;
+      readonly operatorId: string;
+      readonly reason: string;
+      readonly now: Date;
+    },
+  ): Promise<SupportAccessGrant | undefined> {
+    const result = await transaction.sql.query<{
+      id: string;
+      business_account_id: string;
+      operator_id: string;
+      approver_id: string;
+      approval_reference: string;
+      reason: string;
+      scope: CreateSupportAccessGrantInput["scope"];
+      expires_at_utc: Date;
+    }>(
+      `
+        update identity.support_access_grants
+        set
+          revoked_at_utc = $4,
+          revoked_by_operator_id = $2,
+          revocation_reason = $3
+        where id = $1 and revoked_at_utc is null
+        returning
+          id,
+          business_account_id,
+          operator_id,
+          approver_id,
+          approval_reference,
+          reason,
+          scope,
+          expires_at_utc
+      `,
+      [input.grantId, input.operatorId, input.reason, input.now],
+    );
+    const row = result.rows[0];
+    return row
+      ? {
+          id: row.id,
+          businessAccountId: row.business_account_id,
+          operatorId: row.operator_id,
+          approverId: row.approver_id,
+          approvalReference: row.approval_reference,
+          reason: row.reason,
+          scope: row.scope,
+          expiresAtUtc: row.expires_at_utc,
+        }
+      : undefined;
   }
 }

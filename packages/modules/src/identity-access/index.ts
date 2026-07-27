@@ -4,14 +4,23 @@ export type {
   CreateSessionInput,
   IdentityAccessStore,
   InvitationRecord,
+  PermissionGrant,
+  PermissionSet,
+  PermissionTemplate,
   RecoveryTokenInput,
+  SupportAccessGrant,
   UserCredentialRecord,
 } from "./contracts/identity-access-store.js";
 export { IdentitySecurity } from "./application/identity-security.js";
 export {
   administratorPermissionKeys,
+  permissionDefinitionByKey,
+  permissionDefinitions,
   permissionKeys,
+  permissionTemplateCatalog,
+  type PermissionDefinition,
   type PermissionKey,
+  type PermissionTemplateKey,
 } from "./domain/permission-catalog.js";
 export {
   hasPermission,

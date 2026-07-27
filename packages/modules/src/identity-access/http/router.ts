@@ -4,7 +4,14 @@ import { rateLimit } from "express-rate-limit";
 import { z } from "zod";
 import { ApplicationError } from "../../shared/application-error.js";
 import type { StaffRequestContext } from "../domain/session-context.js";
+import type {
+  PermissionGrant,
+  PermissionSet,
+  PermissionTemplate,
+} from "../contracts/identity-access-store.js";
+import { permissionDefinitions } from "../domain/permission-catalog.js";
 import {
+  applyPermissionTemplateSchema,
   administratorChangeSchema,
   administratorTransferSchema,
   branchSwitchSchema,
@@ -14,6 +21,7 @@ import {
   loginSchema,
   recoveryCompletionSchema,
   recoveryRequestSchema,
+  replacePermissionsSchema,
 } from "./schemas.js";
 import {
   createCsrfProtection,
@@ -84,6 +92,29 @@ export interface IdentityHttpUseCases {
     reason: string,
     metadata: RequestMetadata,
   ): Promise<void>;
+  getEmployeePermissions(
+    context: StaffRequestContext,
+    employeeId: string,
+  ): Promise<PermissionSet>;
+  replaceEmployeePermissions(
+    context: StaffRequestContext,
+    employeeId: string,
+    expectedVersion: number,
+    grants: readonly PermissionGrant[],
+    reason: string,
+    metadata: RequestMetadata,
+  ): Promise<PermissionSet>;
+  listPermissionTemplates(
+    context: StaffRequestContext,
+  ): Promise<readonly PermissionTemplate[]>;
+  applyPermissionTemplate(
+    context: StaffRequestContext,
+    employeeId: string,
+    templateKey: z.infer<typeof applyPermissionTemplateSchema>["templateKey"],
+    expectedVersion: number,
+    reason: string,
+    metadata: RequestMetadata,
+  ): Promise<PermissionSet>;
 }
 
 export interface IdentityRouterDependencies extends SessionMiddlewareDependencies {
@@ -152,6 +183,12 @@ export function createIdentityAccessRouter(
     standardHeaders: "draft-8",
     legacyHeaders: false,
   });
+  const permissionLimiter = rateLimit({
+    windowMs: 15 * 60_000,
+    limit: 30,
+    standardHeaders: "draft-8",
+    legacyHeaders: false,
+  });
   const requireCsrf = createCsrfProtection(dependencies);
 
   router.post("/auth/login", loginLimiter, async (request, response) => {
@@ -171,6 +208,8 @@ export function createIdentityAccessRouter(
     response.status(201).send({
       employeeId: result.context.employeeId,
       activeBranchId: result.context.activeBranchId ?? null,
+      authorizedBranchIds: result.context.authorizedBranchIds,
+      grants: result.context.grants,
       expiresAt: result.context.expiresAtUtc.toISOString(),
     });
   });
@@ -181,6 +220,7 @@ export function createIdentityAccessRouter(
       employeeId: context.employeeId,
       activeBranchId: context.activeBranchId ?? null,
       authorizedBranchIds: context.authorizedBranchIds,
+      grants: context.grants,
       expiresAt: context.expiresAtUtc.toISOString(),
     });
   });
@@ -325,6 +365,79 @@ export function createIdentityAccessRouter(
         metadata(request),
       );
       response.status(204).send();
+    },
+  );
+
+  router.get(
+    "/staff/permission-templates",
+    requireStaffSession(),
+    async (request, response) => {
+      response.send({
+        items: await dependencies.useCases.listPermissionTemplates(
+          requireContext(request),
+        ),
+        catalog: permissionDefinitions,
+      });
+    },
+  );
+
+  router.get(
+    "/staff/employees/:employeeId/permissions",
+    requireStaffSession(),
+    async (request, response) => {
+      const parameters = parse(employeeIdParametersSchema, request.params);
+      response.send(
+        await dependencies.useCases.getEmployeePermissions(
+          requireContext(request),
+          parameters.employeeId,
+        ),
+      );
+    },
+  );
+
+  router.put(
+    "/staff/employees/:employeeId/permissions",
+    permissionLimiter,
+    requireStaffSession(),
+    requireCsrf,
+    async (request, response) => {
+      const parameters = parse(employeeIdParametersSchema, request.params);
+      const input = parse(replacePermissionsSchema, request.body);
+      response.send(
+        await dependencies.useCases.replaceEmployeePermissions(
+          requireContext(request),
+          parameters.employeeId,
+          input.expectedVersion,
+          input.grants.map((grant) => ({
+            permissionKey: grant.permissionKey,
+            ...(grant.restaurantId ? { restaurantId: grant.restaurantId } : {}),
+            ...(grant.branchId ? { branchId: grant.branchId } : {}),
+          })),
+          input.reason,
+          metadata(request),
+        ),
+      );
+    },
+  );
+
+  router.post(
+    "/staff/employees/:employeeId/permission-template",
+    permissionLimiter,
+    requireStaffSession(),
+    requireCsrf,
+    async (request, response) => {
+      const parameters = parse(employeeIdParametersSchema, request.params);
+      const input = parse(applyPermissionTemplateSchema, request.body);
+      response.send(
+        await dependencies.useCases.applyPermissionTemplate(
+          requireContext(request),
+          parameters.employeeId,
+          input.templateKey,
+          input.expectedVersion,
+          input.reason,
+          metadata(request),
+        ),
+      );
     },
   );
 
