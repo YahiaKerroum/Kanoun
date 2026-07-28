@@ -36,9 +36,10 @@ export function createPublicMenuRouter(
     "/public/menu",
     requireGuestSession(),
     async (request, response) => {
-      response.send(
-        await dependencies.useCases.getGuestMenu(guestContext(request)),
+      const menu = await dependencies.useCases.getGuestMenu(
+        guestContext(request),
       );
+      response.send({ ...menu, version: String(menu.version) });
     },
   );
 

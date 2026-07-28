@@ -188,7 +188,7 @@ describe("public guest HTTP adapter", () => {
       .set("Cookie", `rms_guest_session=${guestSessionToken}`)
       .expect(200);
 
-    expect(response.body).toEqual(customerMenu);
+    expect(response.body).toEqual({ ...customerMenu, version: "1" });
     expect(menuUseCases.getGuestMenu).toHaveBeenCalledWith(guestContext);
   });
 
