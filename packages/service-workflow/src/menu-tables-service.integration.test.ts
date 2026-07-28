@@ -239,6 +239,63 @@ describeWithDatabase("menu, tables, and QR service against PostgreSQL", () => {
     return { category, dish };
   }
 
+  async function disableRestaurantFeature(
+    fixture: Fixture,
+    featureId: string,
+  ): Promise<void> {
+    const current =
+      await restaurantConfiguration.getRestaurantFeatureConfiguration(
+        databasePool,
+        fixture.tenant.businessAccountId,
+        fixture.tenant.restaurant.id,
+      );
+    if (!current) {
+      throw new Error("Expected restaurant feature configuration.");
+    }
+    const changed = await workflow.run((transaction) =>
+      restaurantConfiguration.appendRestaurantFeatureConfiguration(
+        transaction,
+        {
+          businessAccountId: fixture.tenant.businessAccountId,
+          restaurantId: fixture.tenant.restaurant.id,
+          expectedVersion: current.version,
+          values: { ...current.values, [featureId]: "disabled" },
+          createdByUserId: fixture.context.userId,
+          reason: `Disable ${featureId} for integration test`,
+          now: new Date(),
+        },
+      ),
+    );
+    expect(changed?.values[featureId]).toBe("disabled");
+  }
+
+  async function disableBranchFeature(
+    fixture: Fixture,
+    featureId: string,
+  ): Promise<void> {
+    const current = await restaurantConfiguration.getFeatureConfiguration(
+      databasePool,
+      fixture.tenant.businessAccountId,
+      fixture.tenant.branch.id,
+    );
+    if (!current) {
+      throw new Error("Expected branch feature configuration.");
+    }
+    const changed = await workflow.run((transaction) =>
+      restaurantConfiguration.appendFeatureConfiguration(transaction, {
+        businessAccountId: fixture.tenant.businessAccountId,
+        restaurantId: fixture.tenant.restaurant.id,
+        branchId: fixture.tenant.branch.id,
+        expectedVersion: current.version,
+        values: { ...current.values, [featureId]: "disabled" },
+        createdByUserId: fixture.context.userId,
+        reason: `Disable ${featureId} for integration test`,
+        now: new Date(),
+      }),
+    );
+    expect(changed?.values[featureId]).toBe("disabled");
+  }
+
   let first: Fixture;
   let second: Fixture;
 
@@ -616,6 +673,69 @@ describeWithDatabase("menu, tables, and QR service against PostgreSQL", () => {
     ).toBe(aggregateBeforeConflict?.version);
   });
 
+  it("rejects branch overrides when the branch belongs to another restaurant in the same tenant", async () => {
+    const fixture = await bootstrapFixture("override-restaurant-scope");
+    const { dish } = await createCategoryAndDish(fixture);
+    const siblingRestaurant = await tenantOwnerService.createRestaurant(
+      fixture.context,
+      { name: "Sibling restaurant" },
+      metadata(),
+    );
+    const siblingBranch = await tenantOwnerService.createBranch(
+      fixture.context,
+      {
+        restaurantId: siblingRestaurant.id,
+        name: "Sibling branch",
+        address: {
+          line1: "18 Sibling Street",
+          city: "Algiers",
+          countryCode: "DZ",
+        },
+        contact: {
+          email: `sibling-${fixture.code}@example.test`,
+        },
+        timeZone: "Africa/Algiers",
+        currency: "DZD",
+        openingHours: [],
+      },
+      metadata(),
+    );
+
+    const hidden = {
+      code: "resource_not_found",
+      status: 404,
+      title: "Branch dish override not found",
+    };
+    await expect(
+      menuTablesService.getBranchOverride(
+        fixture.context,
+        siblingBranch.id,
+        dish.id,
+      ),
+    ).rejects.toMatchObject(hidden);
+    await expect(
+      menuTablesService.upsertBranchOverride(
+        fixture.context,
+        siblingBranch.id,
+        dish.id,
+        { expectedVersion: 0, visible: false },
+        metadata(),
+      ),
+    ).rejects.toMatchObject(hidden);
+    expect(
+      await countRows(
+        `
+          select count(*)::integer as count
+          from menu.branch_dish_overrides
+          where business_account_id = $1
+            and branch_id = $2
+            and dish_id = $3
+        `,
+        [fixture.tenant.businessAccountId, siblingBranch.id, dish.id],
+      ),
+    ).toBe(0);
+  });
+
   it("appends a menu availability event only when availability actually changes", async () => {
     const fixture = await bootstrapFixture("availability");
     const { dish } = await createCategoryAndDish(fixture);
@@ -892,6 +1012,323 @@ describeWithDatabase("menu, tables, and QR service against PostgreSQL", () => {
         item.dishes.map((dish) => dish.id),
       ),
     ).not.toContain(hidden.id);
+  });
+
+  it("audits every menu and table mutation with before-and-after evidence", async () => {
+    const fixture = await bootstrapFixture("mutation-audit");
+    const restaurantId = fixture.tenant.restaurant.id;
+    const branchId = fixture.tenant.branch.id;
+    const category = await menuTablesService.createCategory(
+      fixture.context,
+      { restaurantId, name: "Small plates", displayOrder: 0 },
+      metadata(),
+    );
+    await menuTablesService.updateCategory(
+      fixture.context,
+      {
+        categoryId: category.id,
+        expectedVersion: category.version,
+        name: "Shared plates",
+      },
+      metadata(),
+    );
+    const dish = await menuTablesService.createDish(
+      fixture.context,
+      {
+        restaurantId,
+        categoryId: category.id,
+        name: "Borek",
+        basePrice: money("700.00"),
+        displayOrder: 0,
+      },
+      metadata(),
+    );
+    await menuTablesService.updateDish(
+      fixture.context,
+      {
+        dishId: dish.id,
+        expectedVersion: dish.version,
+        description: "Crisp pastry",
+      },
+      metadata(),
+    );
+    const group = await menuTablesService.createOptionGroup(
+      fixture.context,
+      {
+        dishId: dish.id,
+        name: "Sauce",
+        selectionType: "single",
+        isRequired: false,
+        minimumSelections: 0,
+        maximumSelections: 1,
+        displayOrder: 0,
+        options: [
+          { name: "Harissa", priceDelta: money("0.00"), displayOrder: 0 },
+        ],
+      },
+      metadata(),
+    );
+    await menuTablesService.updateOptionGroup(
+      fixture.context,
+      {
+        optionGroupId: group.id,
+        expectedVersion: group.version,
+        name: "Sauces",
+      },
+      metadata(),
+    );
+    await menuTablesService.replaceOptions(
+      fixture.context,
+      group.id,
+      {
+        options: [
+          {
+            name: "Harissa",
+            priceDelta: money("0.00"),
+            displayOrder: 0,
+            status: "active",
+          },
+          {
+            name: "Garlic",
+            priceDelta: money("50.00"),
+            displayOrder: 1,
+            status: "active",
+          },
+        ],
+      },
+      metadata(),
+    );
+    await menuTablesService.upsertBranchOverride(
+      fixture.context,
+      branchId,
+      dish.id,
+      { expectedVersion: 0, visible: false },
+      metadata(),
+    );
+    const table = await menuTablesService.createTable(
+      fixture.context,
+      branchId,
+      { code: "AUD-1" },
+      metadata(),
+    );
+    await menuTablesService.updateTable(
+      fixture.context,
+      table.id,
+      { expectedVersion: table.version, area: "Gallery" },
+      metadata(),
+    );
+
+    const events = await databasePool.query<{
+      action: string;
+      actor_user_id: string | null;
+      target_id: string;
+      before_data: unknown;
+      after_data: unknown;
+    }>(
+      `
+        select action, actor_user_id, target_id, before_data, after_data
+        from audit.audit_events
+        where business_account_id = $1
+          and (action like 'menu.%' or action like 'table.%')
+        order by occurred_at_utc, action
+      `,
+      [fixture.tenant.businessAccountId],
+    );
+    expect(events.rows.map((event) => event.action).sort()).toEqual(
+      [
+        "menu.branch_override.updated",
+        "menu.category.created",
+        "menu.category.updated",
+        "menu.dish.created",
+        "menu.dish.updated",
+        "menu.option_group.created",
+        "menu.option_group.updated",
+        "menu.options.replaced",
+        "table.created",
+        "table.updated",
+      ].sort(),
+    );
+    expect(
+      events.rows.every(
+        (event) =>
+          event.actor_user_id === fixture.context.userId &&
+          event.target_id.length > 0 &&
+          event.after_data !== null,
+      ),
+    ).toBe(true);
+    expect(
+      events.rows
+        .filter((event) => event.action.endsWith(".updated"))
+        .every((event) => event.before_data !== null),
+    ).toBe(true);
+  });
+
+  it("rolls back a menu mutation when its audit write fails", async () => {
+    const fixture = await bootstrapFixture("audit-rollback");
+    const failingAuditService = new MenuTablesService({
+      databasePool,
+      workflow,
+      menu,
+      tables,
+      ordering,
+      restaurantConfiguration,
+      audit: {
+        appendInTransaction() {
+          return Promise.reject(new Error("audit unavailable"));
+        },
+      },
+      guestAccessSecret,
+      customerWebOrigin,
+    });
+
+    await expect(
+      failingAuditService.createCategory(
+        fixture.context,
+        {
+          restaurantId: fixture.tenant.restaurant.id,
+          name: "Must roll back",
+          displayOrder: 0,
+        },
+        metadata(),
+      ),
+    ).rejects.toThrow("audit unavailable");
+    expect(
+      await countRows(
+        `
+          select count(*)::integer as count
+          from menu.categories
+          where business_account_id = $1
+        `,
+        [fixture.tenant.businessAccountId],
+      ),
+    ).toBe(0);
+  });
+
+  it("keeps menu reads available but blocks menu work when CFG-003 is disabled", async () => {
+    const fixture = await bootstrapFixture("menu-disabled");
+    const { category } = await createCategoryAndDish(fixture);
+    await disableRestaurantFeature(fixture, "CFG-003");
+
+    expect(
+      await menuTablesService.listCategories(
+        fixture.context,
+        fixture.tenant.restaurant.id,
+      ),
+    ).toMatchObject([{ id: category.id }]);
+    await expect(
+      menuTablesService.createCategory(
+        fixture.context,
+        {
+          restaurantId: fixture.tenant.restaurant.id,
+          name: "Blocked",
+          displayOrder: 1,
+        },
+        metadata(),
+      ),
+    ).rejects.toMatchObject({
+      code: "invalid_state_transition",
+      status: 409,
+      title: "Menu is disabled",
+    });
+    const guestContext: GuestRequestContext = {
+      guestSessionId: randomUUID(),
+      businessAccountId: fixture.tenant.businessAccountId,
+      restaurantId: fixture.tenant.restaurant.id,
+      branchId: fixture.tenant.branch.id,
+      expiresAtUtc: new Date(Date.now() + hourMs),
+    };
+    await expect(
+      menuTablesService.getGuestMenu(guestContext),
+    ).rejects.toMatchObject({
+      code: "resource_not_found",
+      status: 404,
+      title: "Resource not found",
+    });
+  });
+
+  it("stops new QR sessions but preserves QR history when CFG-004 is disabled", async () => {
+    const fixture = await bootstrapFixture("qr-disabled");
+    const issued = await menuTablesService.issueBranchQrCode(
+      fixture.context,
+      fixture.tenant.branch.id,
+      metadata(),
+    );
+    await disableBranchFeature(fixture, "CFG-004");
+
+    expect(
+      await menuTablesService.listQrCodes(
+        fixture.context,
+        fixture.tenant.branch.id,
+      ),
+    ).toMatchObject([{ id: issued.qrCode.id, status: "active" }]);
+    await expect(
+      menuTablesService.issueBranchQrCode(
+        fixture.context,
+        fixture.tenant.branch.id,
+        metadata(),
+      ),
+    ).rejects.toMatchObject({
+      code: "invalid_state_transition",
+      status: 409,
+      title: "QR menu is disabled",
+    });
+    await expect(
+      menuTablesService.exchangeTableQr(issued.rawToken, metadata()),
+    ).rejects.toMatchObject({
+      code: "resource_not_found",
+      status: 404,
+      title: "Resource not found",
+    });
+    await expect(
+      menuTablesService.revokeQrCode(
+        fixture.context,
+        issued.qrCode.id,
+        "Feature disabled",
+        metadata(),
+      ),
+    ).resolves.toMatchObject({ status: "revoked" });
+  });
+
+  it("keeps table reads available but blocks table work when CFG-006 is disabled", async () => {
+    const fixture = await bootstrapFixture("tables-disabled");
+    const table = await menuTablesService.createTable(
+      fixture.context,
+      fixture.tenant.branch.id,
+      { code: "CFG-6" },
+      metadata(),
+    );
+    await disableBranchFeature(fixture, "CFG-006");
+
+    expect(
+      await menuTablesService.listTables(
+        fixture.context,
+        fixture.tenant.branch.id,
+      ),
+    ).toMatchObject([{ id: table.id }]);
+    const disabled = {
+      code: "invalid_state_transition",
+      status: 409,
+      title: "Tables is disabled",
+    };
+    await expect(
+      menuTablesService.createTable(
+        fixture.context,
+        fixture.tenant.branch.id,
+        { code: "CFG-6B" },
+        metadata(),
+      ),
+    ).rejects.toMatchObject(disabled);
+    await expect(
+      menuTablesService.updateTable(
+        fixture.context,
+        table.id,
+        { expectedVersion: table.version, area: "Blocked" },
+        metadata(),
+      ),
+    ).rejects.toMatchObject(disabled);
+    await expect(
+      menuTablesService.issueTableQrCode(fixture.context, table.id, metadata()),
+    ).rejects.toMatchObject(disabled);
   });
 
   // -------------------------------------------------------------------

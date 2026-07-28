@@ -134,17 +134,38 @@ export class MenuTablesService {
     metadata: RequestMetadata,
   ): Promise<Category> {
     requirePermission(context, "menu.manage", input.restaurantId);
-    const now = nowFrom(metadata);
-    return this.dependencies.workflow.run((transaction) =>
-      this.dependencies.menu.createCategory(transaction, {
-        id: randomUUID(),
-        businessAccountId: context.businessAccountId,
-        restaurantId: input.restaurantId,
-        name: input.name,
-        displayOrder: input.displayOrder,
-        now,
-      }),
+    await this.requireRestaurantFeatureEnabled(
+      context.businessAccountId,
+      input.restaurantId,
+      "CFG-003",
+      "Menu",
     );
+    const now = nowFrom(metadata);
+    const categoryId = randomUUID();
+    return this.dependencies.workflow.run(async (transaction) => {
+      const category = await this.dependencies.menu.createCategory(
+        transaction,
+        {
+          id: categoryId,
+          businessAccountId: context.businessAccountId,
+          restaurantId: input.restaurantId,
+          name: input.name,
+          displayOrder: input.displayOrder,
+          now,
+        },
+      );
+      await this.appendMutationAudit(transaction, {
+        context,
+        restaurantId: input.restaurantId,
+        action: "menu.category.created",
+        targetType: "menu_category",
+        targetId: category.id,
+        afterData: category,
+        metadata,
+        now,
+      });
+      return category;
+    });
   }
 
   public async updateCategory(
@@ -167,19 +188,44 @@ export class MenuTablesService {
       notFound("Category");
     }
     requirePermission(context, "menu.manage", before.restaurantId);
+    await this.requireRestaurantFeatureEnabled(
+      context.businessAccountId,
+      before.restaurantId,
+      "CFG-003",
+      "Menu",
+    );
     const now = nowFrom(metadata);
-    const category = await this.dependencies.workflow.run((transaction) =>
-      this.dependencies.menu.updateCategory(transaction, {
-        businessAccountId: context.businessAccountId,
-        categoryId: input.categoryId,
-        expectedVersion: input.expectedVersion,
-        ...(input.name !== undefined ? { name: input.name } : {}),
-        ...(input.displayOrder !== undefined
-          ? { displayOrder: input.displayOrder }
-          : {}),
-        ...(input.status !== undefined ? { status: input.status } : {}),
-        now,
-      }),
+    const category = await this.dependencies.workflow.run(
+      async (transaction) => {
+        const updated = await this.dependencies.menu.updateCategory(
+          transaction,
+          {
+            businessAccountId: context.businessAccountId,
+            categoryId: input.categoryId,
+            expectedVersion: input.expectedVersion,
+            ...(input.name !== undefined ? { name: input.name } : {}),
+            ...(input.displayOrder !== undefined
+              ? { displayOrder: input.displayOrder }
+              : {}),
+            ...(input.status !== undefined ? { status: input.status } : {}),
+            now,
+          },
+        );
+        if (updated) {
+          await this.appendMutationAudit(transaction, {
+            context,
+            restaurantId: before.restaurantId,
+            action: "menu.category.updated",
+            targetType: "menu_category",
+            targetId: updated.id,
+            beforeData: before,
+            afterData: updated,
+            metadata,
+            now,
+          });
+        }
+        return updated;
+      },
     );
     if (!category) {
       throw new ApplicationError(
@@ -231,10 +277,17 @@ export class MenuTablesService {
     metadata: RequestMetadata,
   ): Promise<Dish> {
     requirePermission(context, "menu.manage", input.restaurantId);
+    await this.requireRestaurantFeatureEnabled(
+      context.businessAccountId,
+      input.restaurantId,
+      "CFG-003",
+      "Menu",
+    );
     const now = nowFrom(metadata);
-    return this.dependencies.workflow.run((transaction) =>
-      this.dependencies.menu.createDish(transaction, {
-        id: randomUUID(),
+    const dishId = randomUUID();
+    return this.dependencies.workflow.run(async (transaction) => {
+      const dish = await this.dependencies.menu.createDish(transaction, {
+        id: dishId,
         businessAccountId: context.businessAccountId,
         restaurantId: input.restaurantId,
         categoryId: input.categoryId,
@@ -244,8 +297,19 @@ export class MenuTablesService {
         basePrice: input.basePrice,
         displayOrder: input.displayOrder,
         now,
-      }),
-    );
+      });
+      await this.appendMutationAudit(transaction, {
+        context,
+        restaurantId: input.restaurantId,
+        action: "menu.dish.created",
+        targetType: "menu_dish",
+        targetId: dish.id,
+        afterData: dish,
+        metadata,
+        now,
+      });
+      return dish;
+    });
   }
 
   public async updateDish(
@@ -299,6 +363,12 @@ export class MenuTablesService {
         context.activeBranchId,
       );
     }
+    await this.requireRestaurantFeatureEnabled(
+      context.businessAccountId,
+      before.restaurantId,
+      "CFG-003",
+      "Menu",
+    );
     if (input.basePrice) {
       const groups = await this.dependencies.menu.listOptionGroups(
         this.dependencies.databasePool,
@@ -358,6 +428,19 @@ export class MenuTablesService {
           dishId: updated.id,
           aggregateVersion: updated.version,
           available: updated.available,
+          metadata,
+          now,
+        });
+      }
+      if (updated) {
+        await this.appendMutationAudit(transaction, {
+          context,
+          restaurantId: updated.restaurantId,
+          action: "menu.dish.updated",
+          targetType: "menu_dish",
+          targetId: updated.id,
+          beforeData: before,
+          afterData: updated,
           metadata,
           now,
         });
@@ -435,6 +518,12 @@ export class MenuTablesService {
       notFound("Dish");
     }
     requirePermission(context, "menu.manage", dish.restaurantId);
+    await this.requireRestaurantFeatureEnabled(
+      context.businessAccountId,
+      dish.restaurantId,
+      "CFG-003",
+      "Menu",
+    );
     if (
       !isPricingConfigurationValid(dish.basePrice, [
         {
@@ -453,26 +542,41 @@ export class MenuTablesService {
       );
     }
     const now = nowFrom(metadata);
-    return this.dependencies.workflow.run((transaction) =>
-      this.dependencies.menu.createOptionGroup(transaction, {
-        id: randomUUID(),
-        businessAccountId: context.businessAccountId,
-        dishId: input.dishId,
-        name: input.name,
-        selectionType: input.selectionType,
-        isRequired: input.isRequired,
-        minimumSelections: input.minimumSelections,
-        maximumSelections: input.maximumSelections,
-        displayOrder: input.displayOrder,
-        options: input.options.map((option) => ({
-          id: randomUUID(),
-          name: option.name,
-          priceDelta: option.priceDelta,
-          displayOrder: option.displayOrder,
-        })),
+    const optionGroupId = randomUUID();
+    return this.dependencies.workflow.run(async (transaction) => {
+      const group = await this.dependencies.menu.createOptionGroup(
+        transaction,
+        {
+          id: optionGroupId,
+          businessAccountId: context.businessAccountId,
+          dishId: input.dishId,
+          name: input.name,
+          selectionType: input.selectionType,
+          isRequired: input.isRequired,
+          minimumSelections: input.minimumSelections,
+          maximumSelections: input.maximumSelections,
+          displayOrder: input.displayOrder,
+          options: input.options.map((option) => ({
+            id: randomUUID(),
+            name: option.name,
+            priceDelta: option.priceDelta,
+            displayOrder: option.displayOrder,
+          })),
+          now,
+        },
+      );
+      await this.appendMutationAudit(transaction, {
+        context,
+        restaurantId: dish.restaurantId,
+        action: "menu.option_group.created",
+        targetType: "menu_option_group",
+        targetId: group.id,
+        afterData: group,
+        metadata,
         now,
-      }),
-    );
+      });
+      return group;
+    });
   }
 
   public async updateOptionGroup(
@@ -505,6 +609,12 @@ export class MenuTablesService {
       notFound("Dish");
     }
     requirePermission(context, "menu.manage", dish.restaurantId);
+    await this.requireRestaurantFeatureEnabled(
+      context.businessAccountId,
+      dish.restaurantId,
+      "CFG-003",
+      "Menu",
+    );
     if (input.minimumSelections !== undefined) {
       if (
         !isPricingConfigurationValid(dish.basePrice, [
@@ -522,27 +632,44 @@ export class MenuTablesService {
       }
     }
     const now = nowFrom(metadata);
-    const group = await this.dependencies.workflow.run((transaction) =>
-      this.dependencies.menu.updateOptionGroup(transaction, {
-        businessAccountId: context.businessAccountId,
-        optionGroupId: input.optionGroupId,
-        expectedVersion: input.expectedVersion,
-        ...(input.name !== undefined ? { name: input.name } : {}),
-        ...(input.isRequired !== undefined
-          ? { isRequired: input.isRequired }
-          : {}),
-        ...(input.minimumSelections !== undefined
-          ? { minimumSelections: input.minimumSelections }
-          : {}),
-        ...(input.maximumSelections !== undefined
-          ? { maximumSelections: input.maximumSelections }
-          : {}),
-        ...(input.displayOrder !== undefined
-          ? { displayOrder: input.displayOrder }
-          : {}),
-        now,
-      }),
-    );
+    const group = await this.dependencies.workflow.run(async (transaction) => {
+      const updated = await this.dependencies.menu.updateOptionGroup(
+        transaction,
+        {
+          businessAccountId: context.businessAccountId,
+          optionGroupId: input.optionGroupId,
+          expectedVersion: input.expectedVersion,
+          ...(input.name !== undefined ? { name: input.name } : {}),
+          ...(input.isRequired !== undefined
+            ? { isRequired: input.isRequired }
+            : {}),
+          ...(input.minimumSelections !== undefined
+            ? { minimumSelections: input.minimumSelections }
+            : {}),
+          ...(input.maximumSelections !== undefined
+            ? { maximumSelections: input.maximumSelections }
+            : {}),
+          ...(input.displayOrder !== undefined
+            ? { displayOrder: input.displayOrder }
+            : {}),
+          now,
+        },
+      );
+      if (updated) {
+        await this.appendMutationAudit(transaction, {
+          context,
+          restaurantId: dish.restaurantId,
+          action: "menu.option_group.updated",
+          targetType: "menu_option_group",
+          targetId: updated.id,
+          beforeData: before,
+          afterData: updated,
+          metadata,
+          now,
+        });
+      }
+      return updated;
+    });
     if (!group) {
       throw new ApplicationError(
         "concurrency_conflict",
@@ -588,6 +715,12 @@ export class MenuTablesService {
       notFound("Dish");
     }
     requirePermission(context, "menu.manage", dish.restaurantId);
+    await this.requireRestaurantFeatureEnabled(
+      context.businessAccountId,
+      dish.restaurantId,
+      "CFG-003",
+      "Menu",
+    );
     if (
       !isPricingConfigurationValid(dish.basePrice, [
         { minimumSelections: before.minimumSelections, options: input.options },
@@ -600,8 +733,8 @@ export class MenuTablesService {
       );
     }
     const now = nowFrom(metadata);
-    const group = await this.dependencies.workflow.run((transaction) =>
-      this.dependencies.menu.replaceOptions(transaction, {
+    const group = await this.dependencies.workflow.run(async (transaction) => {
+      const updated = await this.dependencies.menu.replaceOptions(transaction, {
         businessAccountId: context.businessAccountId,
         optionGroupId,
         options: input.options.map((option) => ({
@@ -612,8 +745,22 @@ export class MenuTablesService {
           status: option.status,
         })),
         now,
-      }),
-    );
+      });
+      if (updated) {
+        await this.appendMutationAudit(transaction, {
+          context,
+          restaurantId: dish.restaurantId,
+          action: "menu.options.replaced",
+          targetType: "menu_option_group",
+          targetId: updated.id,
+          beforeData: before,
+          afterData: updated,
+          metadata,
+          now,
+        });
+      }
+      return updated;
+    });
     if (!group) {
       notFound("Option group");
     }
@@ -636,6 +783,10 @@ export class MenuTablesService {
     );
     if (!dish) {
       notFound("Dish");
+    }
+    const branch = await this.requireBranch(context, branchId);
+    if (branch.restaurantId !== dish.restaurantId) {
+      notFound("Branch dish override");
     }
     requirePermission(context, "menu.view", dish.restaurantId, branchId);
     const override = await this.dependencies.menu.getBranchOverride(
@@ -673,6 +824,10 @@ export class MenuTablesService {
     if (!dish) {
       notFound("Dish");
     }
+    const branch = await this.requireBranch(context, branchId);
+    if (branch.restaurantId !== dish.restaurantId) {
+      notFound("Branch dish override");
+    }
     if (input.price !== undefined) {
       requirePermission(
         context,
@@ -697,6 +852,12 @@ export class MenuTablesService {
         branchId,
       );
     }
+    await this.requireRestaurantFeatureEnabled(
+      context.businessAccountId,
+      dish.restaurantId,
+      "CFG-003",
+      "Menu",
+    );
     const before = await this.dependencies.menu.getBranchOverride(
       this.dependencies.databasePool,
       context.businessAccountId,
@@ -747,6 +908,18 @@ export class MenuTablesService {
             now,
           });
         }
+        await this.appendMutationAudit(transaction, {
+          context,
+          restaurantId: dish.restaurantId,
+          branchId,
+          action: "menu.branch_override.updated",
+          targetType: "branch_dish_override",
+          targetId: dishId,
+          beforeData: before ?? { branchId, dishId, version: 0 },
+          afterData: updated,
+          metadata,
+          now,
+        });
         return updated;
       },
     );
@@ -768,6 +941,15 @@ export class MenuTablesService {
     if (!branch) {
       notFound("Branch");
     }
+    if (branch.restaurantId !== guestContext.restaurantId) {
+      notFound("Branch");
+    }
+    await this.requirePublicFeatureEnabled(
+      guestContext.businessAccountId,
+      guestContext.restaurantId,
+      undefined,
+      "CFG-003",
+    );
     return this.dependencies.menu.getCustomerMenu(
       this.dependencies.databasePool,
       guestContext.businessAccountId,
@@ -834,18 +1016,37 @@ export class MenuTablesService {
   ): Promise<Table> {
     const branch = await this.requireBranch(context, branchId);
     requirePermission(context, "tables.manage", branch.restaurantId, branchId);
+    await this.requireBranchFeatureEnabled(
+      context.businessAccountId,
+      branchId,
+      "CFG-006",
+      "Tables",
+    );
     const now = nowFrom(metadata);
+    const tableId = randomUUID();
     try {
-      return await this.dependencies.workflow.run((transaction) =>
-        this.dependencies.tables.createTable(transaction, {
-          id: randomUUID(),
+      return await this.dependencies.workflow.run(async (transaction) => {
+        const table = await this.dependencies.tables.createTable(transaction, {
+          id: tableId,
           businessAccountId: context.businessAccountId,
           branchId,
           code: input.code,
           area: input.area,
           now,
-        }),
-      );
+        });
+        await this.appendMutationAudit(transaction, {
+          context,
+          restaurantId: branch.restaurantId,
+          branchId,
+          action: "table.created",
+          targetType: "table",
+          targetId: table.id,
+          afterData: table,
+          metadata,
+          now,
+        });
+        return table;
+      });
     } catch (error: unknown) {
       rethrowTableCodeConflict(error);
     }
@@ -878,23 +1079,47 @@ export class MenuTablesService {
       branch.restaurantId,
       before.branchId,
     );
+    await this.requireBranchFeatureEnabled(
+      context.businessAccountId,
+      before.branchId,
+      "CFG-006",
+      "Tables",
+    );
     const now = nowFrom(metadata);
     let table: Table | undefined;
     try {
-      table = await this.dependencies.workflow.run((transaction) =>
-        this.dependencies.tables.updateTable(transaction, {
-          businessAccountId: context.businessAccountId,
-          tableId,
-          expectedVersion: input.expectedVersion,
-          ...(input.code !== undefined ? { code: input.code } : {}),
-          ...(input.area !== undefined ? { area: input.area } : {}),
-          ...(input.status !== undefined ? { status: input.status } : {}),
-          ...(input.outOfService !== undefined
-            ? { outOfService: input.outOfService }
-            : {}),
-          now,
-        }),
-      );
+      table = await this.dependencies.workflow.run(async (transaction) => {
+        const updated = await this.dependencies.tables.updateTable(
+          transaction,
+          {
+            businessAccountId: context.businessAccountId,
+            tableId,
+            expectedVersion: input.expectedVersion,
+            ...(input.code !== undefined ? { code: input.code } : {}),
+            ...(input.area !== undefined ? { area: input.area } : {}),
+            ...(input.status !== undefined ? { status: input.status } : {}),
+            ...(input.outOfService !== undefined
+              ? { outOfService: input.outOfService }
+              : {}),
+            now,
+          },
+        );
+        if (updated) {
+          await this.appendMutationAudit(transaction, {
+            context,
+            restaurantId: branch.restaurantId,
+            branchId: before.branchId,
+            action: "table.updated",
+            targetType: "table",
+            targetId: updated.id,
+            beforeData: before,
+            afterData: updated,
+            metadata,
+            now,
+          });
+        }
+        return updated;
+      });
     } catch (error: unknown) {
       rethrowTableCodeConflict(error);
     }
@@ -929,6 +1154,24 @@ export class MenuTablesService {
       "qr.manage",
       branch.restaurantId,
       table.branchId,
+    );
+    await this.requireRestaurantFeatureEnabled(
+      context.businessAccountId,
+      branch.restaurantId,
+      "CFG-003",
+      "Menu",
+    );
+    await this.requireBranchFeatureEnabled(
+      context.businessAccountId,
+      table.branchId,
+      "CFG-004",
+      "QR menu",
+    );
+    await this.requireBranchFeatureEnabled(
+      context.businessAccountId,
+      table.branchId,
+      "CFG-006",
+      "Tables",
     );
     const now = nowFrom(metadata);
     const rawToken = createOpaqueToken();
@@ -970,6 +1213,18 @@ export class MenuTablesService {
   ): Promise<IssuedQrCode> {
     const branch = await this.requireBranch(context, branchId);
     requirePermission(context, "qr.manage", branch.restaurantId, branchId);
+    await this.requireRestaurantFeatureEnabled(
+      context.businessAccountId,
+      branch.restaurantId,
+      "CFG-003",
+      "Menu",
+    );
+    await this.requireBranchFeatureEnabled(
+      context.businessAccountId,
+      branchId,
+      "CFG-004",
+      "QR menu",
+    );
     const now = nowFrom(metadata);
     const rawToken = createOpaqueToken();
     const tokenHash = hashOpaqueToken(
@@ -1091,6 +1346,26 @@ export class MenuTablesService {
         "Resource not found",
       );
     }
+    await this.requirePublicFeatureEnabled(
+      resolved.businessAccountId,
+      resolved.restaurantId,
+      undefined,
+      "CFG-003",
+    );
+    await this.requirePublicFeatureEnabled(
+      resolved.businessAccountId,
+      resolved.restaurantId,
+      resolved.branchId,
+      "CFG-004",
+    );
+    if (resolved.tableId) {
+      await this.requirePublicFeatureEnabled(
+        resolved.businessAccountId,
+        resolved.restaurantId,
+        resolved.branchId,
+        "CFG-006",
+      );
+    }
     const now = nowFrom(metadata);
     const rawSessionToken = createOpaqueToken();
     const sessionTokenHash = hashOpaqueToken(
@@ -1138,6 +1413,111 @@ export class MenuTablesService {
       notFound("Branch");
     }
     return branch;
+  }
+
+  private async requireRestaurantFeatureEnabled(
+    businessAccountId: string,
+    restaurantId: string,
+    featureId: string,
+    featureName: string,
+  ): Promise<void> {
+    const configuration =
+      await this.dependencies.restaurantConfiguration.getRestaurantFeatureConfiguration(
+        this.dependencies.databasePool,
+        businessAccountId,
+        restaurantId,
+      );
+    const state = configuration?.values[featureId];
+    if (state === "disabled" || state === "unavailable") {
+      throw new ApplicationError(
+        "invalid_state_transition",
+        409,
+        `${featureName} is disabled`,
+        `Enable ${featureName.toLowerCase()} in feature configuration before starting new work.`,
+      );
+    }
+  }
+
+  private async requireBranchFeatureEnabled(
+    businessAccountId: string,
+    branchId: string,
+    featureId: string,
+    featureName: string,
+  ): Promise<void> {
+    const configuration =
+      await this.dependencies.restaurantConfiguration.getFeatureConfiguration(
+        this.dependencies.databasePool,
+        businessAccountId,
+        branchId,
+      );
+    const state = configuration?.values[featureId];
+    if (state === "disabled" || state === "unavailable") {
+      throw new ApplicationError(
+        "invalid_state_transition",
+        409,
+        `${featureName} is disabled`,
+        `Enable ${featureName.toLowerCase()} in feature configuration before starting new work.`,
+      );
+    }
+  }
+
+  private async requirePublicFeatureEnabled(
+    businessAccountId: string,
+    restaurantId: string,
+    branchId: string | undefined,
+    featureId: string,
+  ): Promise<void> {
+    const configuration = branchId
+      ? await this.dependencies.restaurantConfiguration.getFeatureConfiguration(
+          this.dependencies.databasePool,
+          businessAccountId,
+          branchId,
+        )
+      : await this.dependencies.restaurantConfiguration.getRestaurantFeatureConfiguration(
+          this.dependencies.databasePool,
+          businessAccountId,
+          restaurantId,
+        );
+    const state = configuration?.values[featureId];
+    if (state === "disabled" || state === "unavailable") {
+      throw new ApplicationError(
+        "resource_not_found",
+        404,
+        "Resource not found",
+      );
+    }
+  }
+
+  private async appendMutationAudit(
+    transaction: TransactionContext,
+    input: {
+      readonly context: StaffRequestContext;
+      readonly restaurantId?: string;
+      readonly branchId?: string;
+      readonly action: string;
+      readonly targetType: string;
+      readonly targetId: string;
+      readonly beforeData?: unknown;
+      readonly afterData?: unknown;
+      readonly metadata: RequestMetadata;
+      readonly now: Date;
+    },
+  ): Promise<void> {
+    await this.dependencies.audit.appendInTransaction(transaction, {
+      id: randomUUID(),
+      businessAccountId: input.context.businessAccountId,
+      ...(input.restaurantId ? { restaurantId: input.restaurantId } : {}),
+      ...(input.branchId ? { branchId: input.branchId } : {}),
+      actorUserId: input.context.userId,
+      action: input.action,
+      targetType: input.targetType,
+      targetId: input.targetId,
+      outcome: "succeeded",
+      correlationId: input.metadata.correlationId,
+      ...(input.beforeData ? { beforeData: input.beforeData } : {}),
+      ...(input.afterData ? { afterData: input.afterData } : {}),
+      occurredAtUtc: input.now,
+    });
   }
 
   private async appendQrAudit(

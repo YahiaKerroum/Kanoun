@@ -828,6 +828,7 @@ paths:
           content:
             application/json:
               schema: {$ref: "#/components/schemas/Category"}
+        "409": {$ref: "#/components/responses/Conflict"}
         "422": {$ref: "#/components/responses/ValidationFailed"}
 
   /v1/staff/menu/categories/{categoryId}:
@@ -891,6 +892,7 @@ paths:
           content:
             application/json:
               schema: {$ref: "#/components/schemas/AdminDish"}
+        "409": {$ref: "#/components/responses/Conflict"}
         "422": {$ref: "#/components/responses/ValidationFailed"}
 
   /v1/staff/menu/dishes/{dishId}:
@@ -954,6 +956,7 @@ paths:
           content:
             application/json:
               schema: {$ref: "#/components/schemas/AdminOptionGroup"}
+        "409": {$ref: "#/components/responses/Conflict"}
         "422": {$ref: "#/components/responses/ValidationFailed"}
 
   /v1/staff/menu/option-groups/{optionGroupId}:
@@ -1000,6 +1003,7 @@ paths:
             application/json:
               schema: {$ref: "#/components/schemas/AdminOptionGroup"}
         "404": {$ref: "#/components/responses/NotFound"}
+        "409": {$ref: "#/components/responses/Conflict"}
         "422": {$ref: "#/components/responses/ValidationFailed"}
 
   /v1/staff/branches/{branchId}/menu/dishes/{dishId}/override:
@@ -1120,6 +1124,7 @@ paths:
             application/json:
               schema: {$ref: "#/components/schemas/IssuedQrCode"}
         "404": {$ref: "#/components/responses/NotFound"}
+        "409": {$ref: "#/components/responses/Conflict"}
 
   /v1/staff/branches/{branchId}/qr-codes:
     get:
@@ -1154,6 +1159,7 @@ paths:
             application/json:
               schema: {$ref: "#/components/schemas/IssuedQrCode"}
         "404": {$ref: "#/components/responses/NotFound"}
+        "409": {$ref: "#/components/responses/Conflict"}
 
   /v1/staff/qr-codes/{qrCodeId}/revocations:
     post:
@@ -1207,6 +1213,7 @@ paths:
             application/json:
               schema: {$ref: "#/components/schemas/Menu"}
         "401": {$ref: "#/components/responses/Unauthorized"}
+        "404": {$ref: "#/components/responses/NotFound"}
 
   /v1/public/orders:
     post:
