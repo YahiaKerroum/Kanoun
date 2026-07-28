@@ -5,36 +5,38 @@ owner: engineering
 last_reviewed: 2026-07-28
 ---
 
-# Slice 006 Verified Checkpoint
+# Slice 006 Publication Checkpoint
 
 ## Why this checkpoint exists
 
 The working context compacted after Slice 006 implementation and full
-verification completed but before the changes were committed or published.
-The user required an immediate stop, refreshed progress and handoff documents,
-and a standalone continuation prompt whenever compaction occurred.
+verification completed but before publication. The required checkpoint was
+recorded, and the user then explicitly authorized committing and pushing the
+feature branch. Slice 006 is now complete, verified, committed, and published
+on its feature branch.
 
-Do not redo or extend Slice 006. The remaining work is limited to reviewing
-the recorded working tree, committing only the intended Slice 006 files,
-publishing the existing feature branch, and recording the exact publication
-evidence.
+Do not redo or extend Slice 006.
 
 ## Repository state
 
 - Repository: `C:\Users\HP\Desktop\mvp`
 - Active branch: `slice-006-kitchen-and-serving`
-- `HEAD`: `f1300f64faeb9e0afdae7bc9cd65a25fb27399a1`
 - Slice 006 branch base:
   `f1300f64faeb9e0afdae7bc9cd65a25fb27399a1`
-- `origin/slice-006-kitchen-and-serving`: absent at this checkpoint
+- Verified Slice 006 implementation commit:
+  `e80e9608f375344903943bbafe5ed384651a65db`
+- Confirmed remote implementation ref:
+  `origin/slice-006-kitchen-and-serving` at
+  `e80e9608f375344903943bbafe5ed384651a65db`
 - Slice 005 implementation commit:
   `b01bef5638c43bd0298d2da4385c5a587e2055a0`
 - `origin/slice-005-order-submission`:
   `f1300f64faeb9e0afdae7bc9cd65a25fb27399a1`
 - `main` and `origin/main`:
   `ca641e3fd6479e38d473dad5e036f2659c8bcdb8`
-- Slice 006 changes are complete, fully verified, uncommitted, and
-  unpublished.
+- Slice 006 changes are complete, fully verified, committed, and published.
+- This publication-evidence update is a documentation-only follow-up commit
+  on the same feature branch.
 - No pull request was opened and no main integration was attempted.
 
 ## Delivered boundary
@@ -134,7 +136,16 @@ caused transient contrast blending in one full browser run. The affected
 accessibility test then passed twice, the full 19-test browser suite passed,
 and the final complete non-browser check passed again.
 
-## Publication constraints
+## Publication evidence and constraints
+
+The user explicitly authorized committing and pushing the Slice 006 feature
+branch. The implementation commit was pushed successfully, and
+`git ls-remote` confirmed the exact remote SHA
+`e80e9608f375344903943bbafe5ed384651a65db`.
+
+The repository workflow runs only for pushes to `main` and pull requests.
+This feature-branch push did not request or trigger a GitHub Actions
+verification run, so no CI success is claimed.
 
 - Do not integrate Slice 005 or Slice 006 into `main`.
 - Do not open a pull request.
@@ -150,8 +161,8 @@ and the final complete non-browser check passed again.
 ## Standalone continuation prompt
 
 ```text
-Continue from the fully implemented and verified, but uncommitted and
-unpublished, SLICE-006 checkpoint in C:\Users\HP\Desktop\mvp.
+Continue from the completed, verified, committed, and feature-branch-published
+SLICE-006 checkpoint in C:\Users\HP\Desktop\mvp.
 
 Read in full and in order:
 1. AGENTS.md
@@ -162,28 +173,28 @@ Read in full and in order:
 
 Expected state:
 - branch: slice-006-kitchen-and-serving
-- HEAD/base: f1300f64faeb9e0afdae7bc9cd65a25fb27399a1
-- origin/slice-006-kitchen-and-serving: absent
+- branch base: f1300f64faeb9e0afdae7bc9cd65a25fb27399a1
+- verified implementation commit:
+  e80e9608f375344903943bbafe5ed384651a65db
+- local branch and origin/slice-006-kitchen-and-serving include that commit
+  and the documentation-only publication-evidence follow-up
 - origin/slice-005-order-submission:
   f1300f64faeb9e0afdae7bc9cd65a25fb27399a1
 - main and origin/main:
   ca641e3fd6479e38d473dad5e036f2659c8bcdb8
-- Slice 006 changes are complete, verified, and uncommitted
-- only the two documented .cc-history files are unrelated untracked files
+- Slice 006 is complete, verified, committed, and feature-branch-published
+- only the two documented .cc-history files remain untracked
 - never stage or remove .cc-history or .tmp broadly
 
-Do not redo or extend Slice 006. Inspect the working tree and diff against this
-handoff. If the state matches, run a proportionate final formatting/status
-check, stage only the documented intended Slice 006 paths, commit them on
-slice-006-kitchen-and-serving, push that feature branch, verify its exact
-remote SHA, and update the Slice 006 handoff, implementation progress, and
-documentation index atomically with publication evidence. Preserve the two
-.cc-history files and .tmp.
+Do not redo or extend Slice 006. Inspect the working tree, recent history, and
+local/remote refs. Confirm the feature branch is clean apart from the two
+protected .cc-history files and that its local and remote SHAs match.
 
 Do not integrate into main, open a pull request, or begin Slice 007. A feature
-branch push is not expected to trigger GitHub Actions. If the actual repository
-state conflicts with this checkpoint, stop and report the discrepancy rather
-than silently changing the scope.
+branch push did not trigger GitHub Actions because the workflow runs only for
+main pushes and pull requests. If the actual repository state conflicts with
+this checkpoint, stop and report the discrepancy rather than silently changing
+the scope.
 
 Completed verification:
 - all six migrations applied from empty PostgreSQL 18.1

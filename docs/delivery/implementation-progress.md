@@ -10,8 +10,8 @@ last_reviewed: 2026-07-28
 
 ## Current slice
 
-`SLICE-006 — kitchen_and_serving` (complete and fully verified; uncommitted
-feature-branch publication checkpoint recorded after context compaction)
+`SLICE-006 — kitchen_and_serving` (complete, fully verified, committed, and
+published on its feature branch; not integrated)
 
 ## Slice status
 
@@ -22,8 +22,9 @@ feature-branch publication checkpoint recorded after context compaction)
 - `SLICE-005 — order_submission`: complete, verified locally, committed, and
   pushed to `origin/slice-005-order-submission`; not integrated into `main`.
 - `SLICE-006 — kitchen_and_serving`: complete and verified on
-  `slice-006-kitchen-and-serving`; changes remain uncommitted and unpublished
-  because the required context-compaction handoff boundary was reached.
+  `slice-006-kitchen-and-serving`; implementation commit
+  `e80e9608f375344903943bbafe5ed384651a65db` was confirmed on the remote
+  feature branch.
 - `SLICE-007 — payment_completion_and_correction`: not started.
 - `SLICE-008 — notifications_reporting_and_audit`: not started.
 
@@ -109,15 +110,18 @@ feature-branch publication checkpoint recorded after context compaction)
   modules and 224 dependencies, OpenAPI and 41 event contracts, every
   production build, all 19 browser/WCAG tests, formatting, lint, strict
   TypeScript, frozen install, and the production dependency audit.
+- Slice 006 implementation commit
+  `e80e9608f375344903943bbafe5ed384651a65db` was published to
+  `origin/slice-006-kitchen-and-serving` and verified with `git ls-remote`.
 
 ## In progress
 
-- No Slice 006 implementation or verification work remains. Commit and
-  feature-branch publication are paused at the context-compaction boundary.
+- No Slice 006 implementation, verification, commit, or feature-branch
+  publication work remains.
 - Active handoff:
   `docs/delivery/handoff-2026-07-28-slice-006-checkpoint.md`.
-- Slice 005 remains unintegrated; `main`, pull requests, and main publication
-  remain outside the user's authorization.
+- Slices 005 and 006 remain unintegrated; `main`, pull requests, and main
+  publication remain outside the user's authorization.
 
 ## Current limitations
 

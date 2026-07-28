@@ -47,8 +47,8 @@ source_of_truth_for:
 | Slice 003 implementation declaration | `docs/delivery/slice-003-employees-permissions-configuration.md` | Verified |
 | Slice 004 implementation declaration | `docs/delivery/slice-004-menu-tables-and-qr.md` | Verified |
 | Slice 005 implementation declaration | `docs/delivery/slice-005-order-submission.md` | Verified on feature branch; not integrated |
-| Slice 006 implementation declaration | `docs/delivery/slice-006-kitchen-and-serving.md` | Verified on feature branch; publication pending |
-| Current engineering handoff | `docs/delivery/handoff-2026-07-28-slice-006-checkpoint.md` | Slice 006 fully verified; uncommitted publication checkpoint |
+| Slice 006 implementation declaration | `docs/delivery/slice-006-kitchen-and-serving.md` | Verified and published on feature branch; not integrated |
+| Current engineering handoff | `docs/delivery/handoff-2026-07-28-slice-006-checkpoint.md` | Slice 006 feature branch published; main integration pending |
 | Slice 005 publication handoff | `docs/delivery/handoff-2026-07-28-slice-005-checkpoint.md` | Slice 005 feature branch published; main integration pending |
 | Slice 004 publication handoff | `docs/delivery/handoff-2026-07-28-slice-004-checkpoint.md` | Slice 004 published — historical baseline |
 | Prior Slice 004 checkpoint | `docs/delivery/handoff-2026-07-27-slice-004-checkpoint.md` | Superseded — historical only |
