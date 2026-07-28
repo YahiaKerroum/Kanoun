@@ -1367,18 +1367,26 @@ paths:
       tags: [Orders]
       operationId: markOrderServed
       summary: Mark a ready order as served.
-      security: [{staffCookie: []}]
+      security: [{staffCookie: [], csrfHeader: []}]
       parameters:
         - $ref: "#/components/parameters/OrderId"
         - $ref: "#/components/parameters/IdempotencyKey"
         - $ref: "#/components/parameters/ExpectedVersion"
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/EffectiveEmployeeAction"}
       responses:
         "200":
           description: Updated order.
           content:
             application/json:
               schema: {$ref: "#/components/schemas/Order"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "403": {$ref: "#/components/responses/Forbidden"}
+        "404": {$ref: "#/components/responses/NotFound"}
         "409": {$ref: "#/components/responses/Conflict"}
+        "422": {$ref: "#/components/responses/ValidationFailed"}
 
   /v1/staff/orders/{orderId}/payments:
     post:
@@ -1432,7 +1440,7 @@ paths:
     get:
       tags: [Kitchen]
       operationId: getKitchenQueue
-      summary: Get the authoritative branch kitchen queue.
+      summary: Get the authoritative branch kitchen queue or ready-for-service view.
       security: [{staffCookie: []}]
       parameters:
         - {name: branchId, in: query, required: true, schema: {type: string, format: uuid}}
@@ -1443,42 +1451,63 @@ paths:
             application/json:
               schema:
                 type: array
-                items: {$ref: "#/components/schemas/KitchenWorkItem"}
+                items: {$ref: "#/components/schemas/KitchenQueueItem"}
         "401": {$ref: "#/components/responses/Unauthorized"}
+        "403": {$ref: "#/components/responses/Forbidden"}
+        "409": {$ref: "#/components/responses/Conflict"}
+        "422": {$ref: "#/components/responses/ValidationFailed"}
 
   /v1/staff/kitchen/items/{workItemId}/start:
     post:
       tags: [Kitchen]
       operationId: startKitchenWorkItem
       summary: Start preparation of a kitchen work item.
-      security: [{staffCookie: []}]
+      security: [{staffCookie: [], csrfHeader: []}]
       parameters:
         - $ref: "#/components/parameters/WorkItemId"
         - $ref: "#/components/parameters/ExpectedVersion"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/EffectiveEmployeeAction"}
       responses:
         "200":
           description: Work item started.
           content:
             application/json:
               schema: {$ref: "#/components/schemas/KitchenWorkItem"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "403": {$ref: "#/components/responses/Forbidden"}
+        "404": {$ref: "#/components/responses/NotFound"}
         "409": {$ref: "#/components/responses/Conflict"}
+        "422": {$ref: "#/components/responses/ValidationFailed"}
 
   /v1/staff/kitchen/items/{workItemId}/ready:
     post:
       tags: [Kitchen]
       operationId: markKitchenWorkItemReady
       summary: Mark a preparing kitchen work item as ready.
-      security: [{staffCookie: []}]
+      security: [{staffCookie: [], csrfHeader: []}]
       parameters:
         - $ref: "#/components/parameters/WorkItemId"
         - $ref: "#/components/parameters/ExpectedVersion"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/EffectiveEmployeeAction"}
       responses:
         "200":
           description: Work item ready.
           content:
             application/json:
               schema: {$ref: "#/components/schemas/KitchenWorkItem"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "403": {$ref: "#/components/responses/Forbidden"}
+        "404": {$ref: "#/components/responses/NotFound"}
         "409": {$ref: "#/components/responses/Conflict"}
+        "422": {$ref: "#/components/responses/ValidationFailed"}
 
   /v1/staff/events:
     get:
@@ -2242,7 +2271,7 @@ components:
 
     Order:
       type: object
-      required: [id, reference, version, branchId, tableSessionId, tableId, tableCode, creatorType, createdByEmployeeId, customerName, approval, fulfilment, financial, closure, customerSafeStatusReason, total, submittedAt, acceptedAt, cancellationRequested, items]
+      required: [id, reference, version, branchId, tableSessionId, tableId, tableCode, creatorType, createdByEmployeeId, customerName, approval, fulfilment, financial, closure, customerSafeStatusReason, total, submittedAt, acceptedAt, preparingAt, readyAt, servedAt, servedByEmployeeId, cancellationRequested, items]
       properties:
         id: {type: string, format: uuid}
         reference: {type: string}
@@ -2262,6 +2291,10 @@ components:
         total: {$ref: "#/components/schemas/Money"}
         submittedAt: {type: string, format: date-time}
         acceptedAt: {type: string, format: date-time}
+        preparingAt: {type: [string, "null"], format: date-time}
+        readyAt: {type: [string, "null"], format: date-time}
+        servedAt: {type: [string, "null"], format: date-time}
+        servedByEmployeeId: {type: [string, "null"], format: uuid}
         cancellationRequested: {type: boolean}
         items:
           type: array
@@ -2304,16 +2337,51 @@ components:
 
     KitchenWorkItem:
       type: object
-      required: [id, version, orderId, orderReference, itemName, quantity, state]
+      required: [id, version, orderId, orderReference, tableId, tableCode, itemName, quantity, selectedOptions, note, state, queuedAt, startedAt, startedByEmployeeId, readyAt, readyByEmployeeId]
       properties:
         id: {type: string, format: uuid}
-        version: {type: integer}
+        version: {type: integer, minimum: 1}
         orderId: {type: string, format: uuid}
         orderReference: {type: string}
+        tableId: {type: string, format: uuid}
+        tableCode: {type: string}
         itemName: {type: string}
-        quantity: {type: integer}
+        quantity: {type: integer, minimum: 1}
+        selectedOptions:
+          type: array
+          items:
+            type: object
+            required: [groupId, groupName, optionId, optionName]
+            properties:
+              groupId: {type: string, format: uuid}
+              groupName: {type: string}
+              optionId: {type: string, format: uuid}
+              optionName: {type: string}
         note: {type: [string, "null"]}
         state: {type: string, enum: [queued, preparing, ready, cancelled]}
+        queuedAt: {type: string, format: date-time}
+        startedAt: {type: [string, "null"], format: date-time}
+        startedByEmployeeId: {type: [string, "null"], format: uuid}
+        readyAt: {type: [string, "null"], format: date-time}
+        readyByEmployeeId: {type: [string, "null"], format: uuid}
+
+    KitchenQueueItem:
+      allOf:
+        - $ref: "#/components/schemas/KitchenWorkItem"
+        - type: object
+          required: [orderVersion, orderFulfilment, orderSubmittedAt]
+          properties:
+            orderVersion: {type: integer, minimum: 1}
+            orderFulfilment: {type: string, enum: [not_started, preparing, ready, served]}
+            orderSubmittedAt: {type: string, format: date-time}
+
+    EffectiveEmployeeAction:
+      type: object
+      properties:
+        effectiveEmployeeId:
+          type: string
+          format: uuid
+          description: Active branch employee on whose behalf the authenticated user acts; omitted for self.
 
     RecordPaymentRequest:
       type: object

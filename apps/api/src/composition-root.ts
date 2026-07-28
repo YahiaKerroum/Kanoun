@@ -7,6 +7,7 @@ import {
 import {
   createGuestSessionMiddleware,
   createIdentityAccessRouter,
+  createKitchenRouter,
   createMenuRouter,
   createOrderingRouter,
   createPublicMenuRouter,
@@ -24,6 +25,7 @@ import {
   PostgresTablesStore,
 } from "@rms/modules";
 import {
+  KitchenServingService,
   MenuTablesService,
   OrderSubmissionService,
   PostgresServiceWorkflow,
@@ -95,6 +97,15 @@ export function composeApi(config: ApiConfig): ApiComposition {
     audit,
     idempotencySecret: config.guestAccessSecret,
   });
+  const kitchenServingService = new KitchenServingService({
+    databasePool,
+    workflow,
+    restaurantConfiguration,
+    kitchen,
+    ordering,
+    audit,
+    idempotencySecret: config.guestAccessSecret,
+  });
   const sessionDependencies = {
     authenticateSession: (token: string) =>
       tenantOwnerService.authenticateSession(token),
@@ -136,6 +147,11 @@ export function composeApi(config: ApiConfig): ApiComposition {
     ...sessionDependencies,
     ...guestSessionDependencies,
     useCases: orderSubmissionService,
+    servingUseCases: kitchenServingService,
+  });
+  const kitchenRouter = createKitchenRouter({
+    ...sessionDependencies,
+    useCases: kitchenServingService,
   });
   const bootstrapRouter = createTenantBootstrapRouter({
     bootstrapSecret: config.bootstrapSecret,
@@ -165,6 +181,7 @@ export function composeApi(config: ApiConfig): ApiComposition {
       publicMenuRouter,
       publicTablesRouter,
       orderingRouter,
+      kitchenRouter,
     ],
   });
 

@@ -1,4 +1,5 @@
-import type { TransactionContext } from "@rms/building-blocks";
+import type { SqlExecutor, TransactionContext } from "@rms/building-blocks";
+import type { KitchenWorkItemRecord } from "../domain/models.js";
 
 export interface KitchenStore {
   createWorkForOrder(
@@ -8,14 +9,62 @@ export interface KitchenStore {
       readonly branchId: string;
       readonly orderId: string;
       readonly orderReference: string;
+      readonly tableId: string;
+      readonly tableCode: string;
       readonly items: readonly {
         readonly id: string;
         readonly orderItemId: string;
         readonly name: string;
         readonly quantity: number;
+        readonly selectedOptions: readonly {
+          readonly optionGroupId: string;
+          readonly optionGroupName: string;
+          readonly optionId: string;
+          readonly optionName: string;
+        }[];
         readonly note?: string | undefined;
       }[];
       readonly now: Date;
     },
   ): Promise<void>;
+  listQueue(
+    sql: SqlExecutor,
+    input: {
+      readonly businessAccountId: string;
+      readonly branchId: string;
+    },
+  ): Promise<readonly KitchenWorkItemRecord[]>;
+  getWorkItem(
+    sql: SqlExecutor,
+    businessAccountId: string,
+    workItemId: string,
+    lockForUpdate?: boolean,
+  ): Promise<KitchenWorkItemRecord | undefined>;
+  startItem(
+    transaction: TransactionContext,
+    input: {
+      readonly businessAccountId: string;
+      readonly workItemId: string;
+      readonly expectedVersion: number;
+      readonly actorUserId: string;
+      readonly effectiveEmployeeId: string;
+      readonly now: Date;
+    },
+  ): Promise<KitchenWorkItemRecord | undefined>;
+  markItemReady(
+    transaction: TransactionContext,
+    input: {
+      readonly businessAccountId: string;
+      readonly workItemId: string;
+      readonly expectedVersion: number;
+      readonly actorUserId: string;
+      readonly effectiveEmployeeId: string;
+      readonly now: Date;
+    },
+  ): Promise<KitchenWorkItemRecord | undefined>;
+  isOrderReady(
+    sql: SqlExecutor,
+    businessAccountId: string,
+    orderId: string,
+  ): Promise<boolean>;
 }

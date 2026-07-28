@@ -83,6 +83,32 @@ export interface OrderingStore {
     businessAccountId: string,
     orderId: string,
   ): Promise<OrderRecord | undefined>;
+  getOrderForUpdate(
+    transaction: TransactionContext,
+    businessAccountId: string,
+    orderId: string,
+  ): Promise<OrderRecord | undefined>;
+  transitionFulfilment(
+    transaction: TransactionContext,
+    input: {
+      readonly businessAccountId: string;
+      readonly orderId: string;
+      readonly from: "not_started" | "preparing";
+      readonly to: "preparing" | "ready";
+      readonly now: Date;
+    },
+  ): Promise<OrderRecord | undefined>;
+  markServed(
+    transaction: TransactionContext,
+    input: {
+      readonly businessAccountId: string;
+      readonly orderId: string;
+      readonly expectedVersion: number;
+      readonly actorUserId: string;
+      readonly effectiveEmployeeId: string;
+      readonly now: Date;
+    },
+  ): Promise<OrderRecord | undefined>;
   listStaffOrders(
     sql: SqlExecutor,
     input: {

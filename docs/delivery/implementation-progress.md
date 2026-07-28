@@ -10,8 +10,8 @@ last_reviewed: 2026-07-28
 
 ## Current slice
 
-`SLICE-005 — order_submission` (verified and pushed to its feature branch;
-not integrated)
+`SLICE-006 — kitchen_and_serving` (complete and fully verified; uncommitted
+feature-branch publication checkpoint recorded after context compaction)
 
 ## Slice status
 
@@ -21,7 +21,9 @@ not integrated)
 - `SLICE-004 — menu_tables_and_qr`: complete and published.
 - `SLICE-005 — order_submission`: complete, verified locally, committed, and
   pushed to `origin/slice-005-order-submission`; not integrated into `main`.
-- `SLICE-006 — kitchen_and_serving`: not started.
+- `SLICE-006 — kitchen_and_serving`: complete and verified on
+  `slice-006-kitchen-and-serving`; changes remain uncommitted and unpublished
+  because the required context-compaction handoff boundary was reached.
 - `SLICE-007 — payment_completion_and_correction`: not started.
 - `SLICE-008 — notifications_reporting_and_audit`: not started.
 
@@ -94,13 +96,28 @@ not integrated)
   the production dependency audit.
 - `PD-036` preserves the no-stations MVP strategy while defining the approved
   active-order filters and elapsed-time presentation.
+- Slice 006 Kitchen-owned display snapshots and versioned queued/preparing/
+  ready transitions, including UTC times and authenticated/effective actors.
+- Slice 006 first-start and all-items-ready Ordering projections, authoritative
+  whole-order serving guard, transactional audit/idempotency/outbox behavior,
+  and branch-scoped ready-order operational alert.
+- Slice 006 grouped staff kitchen display with item options, notes, elapsed
+  time, explicit new-state label, ready-order collection, two-second
+  authoritative refresh, stale-state preservation, and reconnect recovery.
+- Final isolated PostgreSQL 18.1 verification applied all six migrations from
+  empty and passed 173 tests across 22 files, architecture checks across 128
+  modules and 224 dependencies, OpenAPI and 41 event contracts, every
+  production build, all 19 browser/WCAG tests, formatting, lint, strict
+  TypeScript, frozen install, and the production dependency audit.
 
 ## In progress
 
-- No Slice 005 implementation work remains. The verified feature branch is
-  published. Main integration and a pull request remain unauthorized.
+- No Slice 006 implementation or verification work remains. Commit and
+  feature-branch publication are paused at the context-compaction boundary.
 - Active handoff:
-  `docs/delivery/handoff-2026-07-28-slice-005-checkpoint.md`.
+  `docs/delivery/handoff-2026-07-28-slice-006-checkpoint.md`.
+- Slice 005 remains unintegrated; `main`, pull requests, and main publication
+  remain outside the user's authorization.
 
 ## Current limitations
 
@@ -109,7 +126,7 @@ not integrated)
 - Menu and physical-table administration and the staff Orders workspace are
   present and their complete browser/WCAG suite passes. Table-session and
   queued kitchen records support Slice 005 submission, but kitchen processing,
-  payment, task, notification, reporting, and audit-query screens remain in
+  payment, durable notification, reporting, and audit-query screens remain in
   their owning later slices.
 - Slice 005 persists item notes and carries them into queued Kitchen work, but
   it does not claim completion of configurable free-text note policy or later
@@ -130,6 +147,6 @@ not integrated)
 
 ## Next slice
 
-`SLICE-006 — kitchen_and_serving`, after Slice 005 is intentionally integrated
-into `main` and the resulting CI run succeeds. Do not begin it from the
-feature branch.
+`SLICE-007 — payment_completion_and_correction` only after separate explicit
+authorization. Do not integrate Slice 005 or Slice 006 into `main` and do not
+open a pull request without explicit authorization.

@@ -26,6 +26,7 @@ import {
 import { z } from "zod";
 import { checkApiReadiness, type Readiness } from "./health.js";
 import { MenuWorkspace, TablesWorkspace } from "./OperationalWorkspaces.js";
+import { KitchenWorkspace } from "./KitchenWorkspace.js";
 import { OrdersWorkspace } from "./OrdersWorkspace.js";
 
 type Section =
@@ -71,6 +72,7 @@ const navigationItems: readonly NavigationItem[] = [
     group: "service",
     requiredFeature: "kitchen",
     permissionPrefixes: ["kitchen."],
+    permissions: ["orders.serve"],
   },
   {
     label: "Menu",
@@ -502,6 +504,19 @@ export function App() {
                   )}
                   canViewTables={portal.capabilities.permissions.includes(
                     "tables.view",
+                  )}
+                />
+              ) : visibleSection === "Kitchen" ? (
+                <KitchenWorkspace
+                  branchId={portal.capabilities.branchId}
+                  canView={portal.capabilities.permissions.includes(
+                    "kitchen.view",
+                  )}
+                  canUpdate={portal.capabilities.permissions.includes(
+                    "kitchen.update",
+                  )}
+                  canServe={portal.capabilities.permissions.includes(
+                    "orders.serve",
                   )}
                 />
               ) : visibleSection === "Menu" ? (

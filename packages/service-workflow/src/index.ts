@@ -1,5 +1,11 @@
 export { PostgresServiceWorkflow } from "./postgres-service-workflow.js";
 export {
+  KitchenServingService,
+  type KitchenQueueItem,
+  type KitchenRequestMetadata,
+  type KitchenServingServiceDependencies,
+} from "./kitchen-serving-service.js";
+export {
   OrderSubmissionService,
   type OrderRequestMetadata,
   type OrderSubmissionServiceDependencies,

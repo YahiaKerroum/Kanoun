@@ -24,9 +24,11 @@ import type {
 import {
   cancellationRequestSchema,
   createStaffOrderSchema,
+  expectedVersionSchema,
   idempotencyKeySchema,
   listStaffOrdersSchema,
   orderParametersSchema,
+  servingActionSchema,
   submitOrderSchema,
 } from "./schemas.js";
 
@@ -101,6 +103,16 @@ export interface OrderingHttpUseCases {
 export interface OrderingRouterDependencies
   extends SessionMiddlewareDependencies, GuestSessionMiddlewareDependencies {
   readonly useCases: OrderingHttpUseCases;
+  readonly servingUseCases: {
+    markOrderServed(
+      context: StaffRequestContext,
+      orderId: string,
+      expectedVersion: number,
+      effectiveEmployeeId: string | undefined,
+      idempotencyKey: string,
+      metadata: RequestMetadata,
+    ): Promise<OrderRecord>;
+  };
 }
 
 function parse<Input>(schema: z.ZodType<Input>, value: unknown): Input {
@@ -146,7 +158,7 @@ function staffContext(request: Request): StaffRequestContext {
   return context;
 }
 
-function presentOrder(order: OrderRecord): object {
+export function presentOrder(order: OrderRecord): object {
   return {
     id: order.id,
     reference: order.reference,
@@ -166,6 +178,10 @@ function presentOrder(order: OrderRecord): object {
     total: order.total,
     submittedAt: order.submittedAtUtc.toISOString(),
     acceptedAt: order.acceptedAtUtc.toISOString(),
+    preparingAt: order.preparingAtUtc?.toISOString() ?? null,
+    readyAt: order.readyAtUtc?.toISOString() ?? null,
+    servedAt: order.servedAtUtc?.toISOString() ?? null,
+    servedByEmployeeId: order.servedByEmployeeId ?? null,
     cancellationRequested: order.cancellationRequested,
     items: order.items.map((item) => ({
       id: item.id,
@@ -332,6 +348,37 @@ export function createOrderingRouter(
         metadata(request),
       );
       response.status(201).send(presentOrder(order));
+    },
+  );
+
+  router.post(
+    "/staff/orders/:orderId/served",
+    commandLimiter,
+    requireStaffSession(),
+    staffCsrf,
+    async (request, response) => {
+      const parameters = parse(orderParametersSchema, request.params);
+      const input = parse(servingActionSchema, request.body ?? {});
+      const expectedVersion = parse(
+        expectedVersionSchema,
+        request.get("if-match"),
+      );
+      const idempotencyKey = parse(
+        idempotencyKeySchema,
+        request.get("idempotency-key"),
+      );
+      response.send(
+        presentOrder(
+          await dependencies.servingUseCases.markOrderServed(
+            staffContext(request),
+            parameters.orderId,
+            expectedVersion,
+            input.effectiveEmployeeId,
+            idempotencyKey,
+            metadata(request),
+          ),
+        ),
+      );
     },
   );
 

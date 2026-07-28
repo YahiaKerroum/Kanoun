@@ -85,10 +85,16 @@ vertical_slices:
 
   kitchen_and_serving:
     implements: [US-I01, US-I03, US-I04, US-J01, US-J03]
-    obeys: [PD-013, PD-014, PD-023, PD-029, BR-017, BR-023]
-    modules: [kitchen, ordering, notifications]
+    obeys: [PD-013, PD-014, PD-022, PD-023, PD-029, PD-030, BR-001, BR-002, BR-003, BR-006, BR-007, BR-017, BR-021, BR-022, BR-023, BR-024]
+    modules: [kitchen, ordering, audit]
     operations: [getKitchenQueue, startKitchenWorkItem, markKitchenWorkItemReady, markOrderServed]
-    tests: [TEST-KITCHEN-001, TEST-KITCHEN-002, TEST-SERVE-001]
+    tests: [TEST-KITCHEN-001, TEST-KITCHEN-002, TEST-KITCHEN-HTTP-001, TEST-SERVE-001, TEST-IDEMPOTENCY-001, TEST-CONCURRENCY-001, TEST-PERM-001, TEST-TENANT-001, TEST-AUDIT-001, TEST-RECONNECT-001, TEST-A11Y-STAFF-001]
+    slice_006_verified_acceptance: [AC-US-I01-01, AC-US-I01-02, AC-US-I03-01, AC-US-I03-02, AC-US-I03-03, AC-US-I04-01, AC-US-I04-02, AC-US-I04-03, AC-US-J01-01, AC-US-J01-02, AC-US-J01-03, AC-US-J03-01, AC-US-J03-03]
+    cross_slice_acceptance:
+      AC-US-I01-03: New queued items are explicitly identified. Changed-item presentation is verified with the correction workflow in Slice 007 because submitted customer orders are immutable and correction is not yet implemented.
+      AC-US-I04-03: Slice 006 provides a branch-scoped live ready-order alert and emits ordering.order_ready.v1 transactionally. The durable general notification inbox and delivery attempts remain Slice 008.
+      AC-US-J01-02: Branch scope is enforced. Individual delivery assignment is post-MVP under PD-014.
+      AC-US-J03-02: Partial serving is post-MVP and disabled under PD-014 and CFG-010; Slice 006 serves only a whole ready order.
 
   payments_and_completion:
     implements: [US-F04, US-H04, US-H05, US-K01, US-K02, US-K03, US-K04]

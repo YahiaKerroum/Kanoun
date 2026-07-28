@@ -465,6 +465,222 @@ test("has no detectable WCAG A or AA violations in the capability-aware state", 
   expect(results.violations).toEqual([]);
 });
 
+test("processes the grouped kitchen queue and ready-order collection accessibly", async ({
+  page,
+  context,
+}) => {
+  await context.addCookies([
+    {
+      name: "rms_csrf",
+      value: "staff-csrf-token",
+      url: "http://127.0.0.1:5173",
+    },
+  ]);
+  await mockReadyPortal(page, {
+    permissions: [
+      "orders.view",
+      "orders.serve",
+      "kitchen.view",
+      "kitchen.update",
+    ],
+    enabledFeatures: ["ordering", "kitchen"],
+    grants: [
+      {
+        permissionKey: "kitchen.update",
+        restaurantId,
+        branchId,
+      },
+    ],
+  });
+  const workItemId = "00000000-0000-4000-8000-000000000091";
+  const kitchenOrderId = "00000000-0000-4000-8000-000000000092";
+  let state: "queued" | "preparing" | "ready" | "served" = "queued";
+  let version = 1;
+  let orderVersion = 2;
+  const queueItem = () => ({
+    id: workItemId,
+    version,
+    orderId: kitchenOrderId,
+    orderReference: "ORD-000091",
+    orderVersion,
+    orderFulfilment:
+      state === "ready" ? "ready" : state === "queued" ? "not_started" : state,
+    orderSubmittedAt: new Date(Date.now() - 8 * 60_000).toISOString(),
+    tableId: "00000000-0000-4000-8000-000000000093",
+    tableCode: "PATIO-4",
+    itemName: "Couscous royale",
+    quantity: 2,
+    selectedOptions: [
+      {
+        groupId: "00000000-0000-4000-8000-000000000094",
+        groupName: "Size",
+        optionId: "00000000-0000-4000-8000-000000000095",
+        optionName: "Large",
+      },
+    ],
+    note: "No parsley",
+    state,
+    queuedAt: new Date(Date.now() - 8 * 60_000).toISOString(),
+    startedAt:
+      state === "queued"
+        ? null
+        : new Date(Date.now() - 4 * 60_000).toISOString(),
+    startedByEmployeeId:
+      state === "queued" ? null : "00000000-0000-4000-8000-000000000096",
+    readyAt: state === "ready" ? new Date().toISOString() : null,
+    readyByEmployeeId:
+      state === "ready" ? "00000000-0000-4000-8000-000000000096" : null,
+  });
+  await page.route("**/api/v1/staff/kitchen/queue?*", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify(state === "served" ? [] : [queueItem()]),
+    }),
+  );
+  await page.route("**/api/v1/staff/kitchen/items/*/start", async (route) => {
+    expect(route.request().headers()["if-match"]).toBe('"1"');
+    expect(route.request().headers()["x-csrf-token"]).toBe("staff-csrf-token");
+    state = "preparing";
+    version = 2;
+    orderVersion = 3;
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify(queueItem()),
+    });
+  });
+  await page.route("**/api/v1/staff/kitchen/items/*/ready", async (route) => {
+    expect(route.request().headers()["if-match"]).toBe('"2"');
+    state = "ready";
+    version = 3;
+    orderVersion = 4;
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify(queueItem()),
+    });
+  });
+  await page.route("**/api/v1/staff/orders/*/served", async (route) => {
+    expect(route.request().headers()["if-match"]).toBe('"4"');
+    state = "served";
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        id: kitchenOrderId,
+        version: 5,
+        fulfilment: "served",
+      }),
+    });
+  });
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Kitchen" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Kitchen and serving" }),
+  ).toBeVisible();
+  await expect(page.getByText("2× Couscous royale")).toBeVisible();
+  await expect(page.getByText("Large")).toBeVisible();
+  await expect(page.getByText("Note: No parsley")).toBeVisible();
+  await expect(page.getByText("New · queued")).toBeVisible();
+  await page.getByRole("button", { name: "Start preparation" }).click();
+  await expect(page.getByText("preparing", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Mark ready" }).click();
+  await expect(
+    page.getByRole("button", { name: "Collect · mark served" }),
+  ).toBeVisible();
+
+  const results = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
+    .analyze();
+  expect(results.violations).toEqual([]);
+
+  await page.getByRole("button", { name: "Collect · mark served" }).click();
+  await expect(
+    page.getByText("No items waiting for preparation"),
+  ).toBeVisible();
+});
+
+test("preserves the last verified kitchen queue and recovers authoritative state after reconnect", async ({
+  page,
+}) => {
+  await mockReadyPortal(page, {
+    permissions: ["kitchen.view"],
+    enabledFeatures: ["kitchen"],
+    grants: [
+      {
+        permissionKey: "kitchen.view",
+        restaurantId,
+        branchId,
+      },
+    ],
+  });
+  let fail = false;
+  let recovered = false;
+  await page.route("**/api/v1/staff/kitchen/queue?*", (route) => {
+    if (fail) {
+      return route.fulfill({
+        status: 503,
+        contentType: "application/problem+json",
+        body: JSON.stringify({
+          title: "Queue unavailable",
+          detail: "Reconnect and reload the authoritative queue.",
+        }),
+      });
+    }
+    return route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify(
+        recovered
+          ? []
+          : [
+              {
+                id: "00000000-0000-4000-8000-000000000097",
+                version: 1,
+                orderId: "00000000-0000-4000-8000-000000000098",
+                orderReference: "ORD-000098",
+                orderVersion: 2,
+                orderFulfilment: "not_started",
+                orderSubmittedAt: new Date().toISOString(),
+                tableId: "00000000-0000-4000-8000-000000000099",
+                tableCode: "T-9",
+                itemName: "Soup",
+                quantity: 1,
+                selectedOptions: [],
+                note: null,
+                state: "queued",
+                queuedAt: new Date().toISOString(),
+                startedAt: null,
+                startedByEmployeeId: null,
+                readyAt: null,
+                readyByEmployeeId: null,
+              },
+            ],
+      ),
+    });
+  });
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Kitchen" }).click();
+  await expect(page.getByText("1× Soup")).toBeVisible();
+  fail = true;
+  await page.getByRole("button", { name: "Refresh queue" }).click();
+  await expect(
+    page.getByText(/last verified queue and may be stale/i),
+  ).toBeVisible();
+  await expect(page.getByText("1× Soup")).toBeVisible();
+
+  fail = false;
+  recovered = true;
+  await page.evaluate(() => window.dispatchEvent(new Event("online")));
+  await expect(
+    page.getByText("No items waiting for preparation"),
+  ).toBeVisible();
+  await expect(page.getByText(/may be stale/i)).toHaveCount(0);
+});
+
 test("keeps every authorized destination available in the tablet navigation dock", async ({
   page,
 }) => {

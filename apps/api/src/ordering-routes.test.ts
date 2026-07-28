@@ -47,6 +47,7 @@ const staffContext: StaffRequestContext & { readonly csrfTokenHash: string } = {
   grants: [
     { permissionKey: "orders.view", restaurantId, branchId },
     { permissionKey: "orders.create", restaurantId, branchId },
+    { permissionKey: "orders.serve", restaurantId, branchId },
   ],
   authenticatedAtUtc: new Date(),
   expiresAtUtc: new Date(Date.now() + 60_000),
@@ -135,15 +136,32 @@ function application(overrides?: Partial<OrderingHttpUseCases>) {
     webOrigin: staffOrigin,
     guestWebOrigin: guestOrigin,
   };
+  const servingUseCases = {
+    markOrderServed: vi.fn().mockResolvedValue({
+      ...order,
+      version: order.version + 1,
+      fulfilment: "served" as const,
+      servedAtUtc: new Date("2026-07-28T12:20:00.000Z"),
+      servedByUserId: userId,
+      servedByEmployeeId: employeeId,
+    }),
+  };
   return {
     useCases,
+    servingUseCases,
     app: createApp({
       logger,
       trustProxy: false,
       checkReadiness: () => Promise.resolve(),
       staffSessionMiddleware: createStaffSessionMiddleware(dependencies),
       guestSessionMiddleware: createGuestSessionMiddleware(dependencies),
-      apiRouters: [createOrderingRouter({ ...dependencies, useCases })],
+      apiRouters: [
+        createOrderingRouter({
+          ...dependencies,
+          useCases,
+          servingUseCases,
+        }),
+      ],
     }),
   };
 }
@@ -295,5 +313,31 @@ describe("ordering HTTP adapter", () => {
       .send({ ...submission, tableId })
       .expect(201);
     expect(useCases.createStaffOrder).toHaveBeenCalledOnce();
+  });
+
+  it("marks a ready order served with CSRF, idempotency, and version guards", async () => {
+    const { app, servingUseCases } = application();
+    const response = await request(app)
+      .post(`/api/v1/staff/orders/${orderId}/served`)
+      .set("Cookie", "rms_staff_session=staff-token")
+      .set("Origin", staffOrigin)
+      .set("X-CSRF-Token", "staff-csrf")
+      .set("Idempotency-Key", "serve-1234567890")
+      .set("If-Match", '"4"')
+      .send({})
+      .expect(200);
+    expect(response.body).toMatchObject({
+      id: orderId,
+      fulfilment: "served",
+      servedByEmployeeId: employeeId,
+    });
+    expect(servingUseCases.markOrderServed).toHaveBeenCalledWith(
+      staffContext,
+      orderId,
+      4,
+      undefined,
+      "serve-1234567890",
+      expect.any(Object),
+    );
   });
 });

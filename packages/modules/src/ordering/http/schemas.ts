@@ -30,6 +30,15 @@ export const orderParametersSchema = z.object({
   orderId: z.uuid(),
 });
 
+export const servingActionSchema = z.object({
+  effectiveEmployeeId: z.uuid().optional(),
+});
+
+export const expectedVersionSchema = z
+  .string()
+  .regex(/^"[1-9]\d*"$/)
+  .transform((value) => Number(value.slice(1, -1)));
+
 export const cancellationRequestSchema = z.object({
   reason: z.string().trim().min(1).max(500),
 });

@@ -69,6 +69,11 @@ export interface OrderRecord {
   readonly version: number;
   readonly submittedAtUtc: Date;
   readonly acceptedAtUtc: Date;
+  readonly preparingAtUtc?: Date | undefined;
+  readonly readyAtUtc?: Date | undefined;
+  readonly servedAtUtc?: Date | undefined;
+  readonly servedByUserId?: string | undefined;
+  readonly servedByEmployeeId?: string | undefined;
   readonly items: readonly OrderItemRecord[];
   readonly cancellationRequested: boolean;
 }

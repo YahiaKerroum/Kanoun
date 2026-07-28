@@ -56,6 +56,11 @@ interface OrderRow {
   readonly version: number;
   readonly submitted_at_utc: Date;
   readonly accepted_at_utc: Date;
+  readonly preparing_at_utc: Date | null;
+  readonly ready_at_utc: Date | null;
+  readonly served_at_utc: Date | null;
+  readonly served_by_user_id: string | null;
+  readonly served_by_employee_id: string | null;
   readonly cancellation_requested: boolean;
 }
 
@@ -90,7 +95,8 @@ const orderSelect = `
     o.configuration_version_id, o.configuration_version,
     o.approval_state, o.fulfilment_state, o.financial_state, o.closure_state,
     o.customer_safe_status_reason, o.total_amount, o.currency, o.version,
-    o.submitted_at_utc, o.accepted_at_utc,
+    o.submitted_at_utc, o.accepted_at_utc, o.preparing_at_utc, o.ready_at_utc,
+    o.served_at_utc, o.served_by_user_id, o.served_by_employee_id,
     exists (
       select 1 from ordering.cancellation_requests cr
       where cr.business_account_id = o.business_account_id
@@ -175,6 +181,11 @@ function mapOrder(
     version: row.version,
     submittedAtUtc: row.submitted_at_utc,
     acceptedAtUtc: row.accepted_at_utc,
+    preparingAtUtc: row.preparing_at_utc ?? undefined,
+    readyAtUtc: row.ready_at_utc ?? undefined,
+    servedAtUtc: row.served_at_utc ?? undefined,
+    servedByUserId: row.served_by_user_id ?? undefined,
+    servedByEmployeeId: row.served_by_employee_id ?? undefined,
     items,
     cancellationRequested: row.cancellation_requested,
   };
@@ -493,6 +504,86 @@ export class PostgresOrderingStore implements OrderingStore {
     return this.readOrder(sql, businessAccountId, orderId);
   }
 
+  public async getOrderForUpdate(
+    transaction: TransactionContext,
+    businessAccountId: string,
+    orderId: string,
+  ): Promise<OrderRecord | undefined> {
+    return this.readOrder(transaction.sql, businessAccountId, orderId, true);
+  }
+
+  public async transitionFulfilment(
+    transaction: TransactionContext,
+    input: Parameters<OrderingStore["transitionFulfilment"]>[1],
+  ): Promise<OrderRecord | undefined> {
+    const timestampColumn =
+      input.to === "preparing" ? "preparing_at_utc" : "ready_at_utc";
+    const updated = await transaction.sql.query(
+      `
+        update ordering.orders
+        set
+          fulfilment_state = $4,
+          version = version + 1,
+          ${timestampColumn} = $5,
+          updated_at_utc = $5
+        where business_account_id = $1
+          and id = $2
+          and fulfilment_state = $3
+          and closure_state = 'active'
+        returning id
+      `,
+      [input.businessAccountId, input.orderId, input.from, input.to, input.now],
+    );
+    if (updated.rowCount !== 1) {
+      return undefined;
+    }
+    return this.readOrder(
+      transaction.sql,
+      input.businessAccountId,
+      input.orderId,
+    );
+  }
+
+  public async markServed(
+    transaction: TransactionContext,
+    input: Parameters<OrderingStore["markServed"]>[1],
+  ): Promise<OrderRecord | undefined> {
+    const updated = await transaction.sql.query(
+      `
+        update ordering.orders
+        set
+          fulfilment_state = 'served',
+          version = version + 1,
+          served_at_utc = $5,
+          served_by_user_id = $3,
+          served_by_employee_id = $4,
+          updated_at_utc = $5
+        where business_account_id = $1
+          and id = $2
+          and fulfilment_state = 'ready'
+          and closure_state = 'active'
+          and version = $6
+        returning id
+      `,
+      [
+        input.businessAccountId,
+        input.orderId,
+        input.actorUserId,
+        input.effectiveEmployeeId,
+        input.now,
+        input.expectedVersion,
+      ],
+    );
+    if (updated.rowCount !== 1) {
+      return undefined;
+    }
+    return this.readOrder(
+      transaction.sql,
+      input.businessAccountId,
+      input.orderId,
+    );
+  }
+
   public async listStaffOrders(
     sql: SqlExecutor,
     input: Parameters<OrderingStore["listStaffOrders"]>[1],
@@ -602,10 +693,12 @@ export class PostgresOrderingStore implements OrderingStore {
     sql: SqlExecutor,
     businessAccountId: string,
     orderId: string,
+    lockForUpdate = false,
   ): Promise<OrderRecord | undefined> {
     const result = await sql.query<OrderRow>(
       `${orderSelect}
-       where o.business_account_id = $1 and o.id = $2`,
+       where o.business_account_id = $1 and o.id = $2
+       ${lockForUpdate ? "for update of o" : ""}`,
       [businessAccountId, orderId],
     );
     const row = result.rows[0];

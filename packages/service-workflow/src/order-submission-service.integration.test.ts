@@ -16,6 +16,7 @@ import {
   type StaffRequestContext,
 } from "@rms/modules";
 import { MenuTablesService } from "./menu-tables-service.js";
+import { KitchenServingService } from "./kitchen-serving-service.js";
 import { OrderSubmissionService } from "./order-submission-service.js";
 import { PostgresServiceWorkflow } from "./postgres-service-workflow.js";
 import {
@@ -88,6 +89,15 @@ describeWithDatabase("order submission service against PostgreSQL", () => {
     tables,
     ordering,
     kitchen,
+    audit,
+    idempotencySecret: guestSecret,
+  });
+  const kitchenService = new KitchenServingService({
+    databasePool,
+    workflow,
+    restaurantConfiguration,
+    kitchen,
+    ordering,
     audit,
     idempotencySecret: guestSecret,
   });
@@ -624,5 +634,214 @@ describeWithDatabase("order submission service against PostgreSQL", () => {
       code: "invalid_state_transition",
       status: 409,
     });
+  });
+
+  it("processes grouped kitchen work through all-items-ready and serving with separate actors", async () => {
+    const setup = await fixture("kitchen-flow");
+    const guest = await guestAtTable(setup, "K-1");
+    const order = await orderService.submitGuestOrder(
+      guest.context,
+      submission(setup),
+      `submit-${randomUUID()}`,
+      metadata(),
+    );
+    const item = (
+      await kitchenService.getKitchenQueue(setup.context, setup.branchId)
+    ).find((candidate) => candidate.orderId === order.id);
+    expect(item).toMatchObject({
+      orderReference: order.reference,
+      tableCode: "K-1",
+      itemName: "Couscous",
+      quantity: 2,
+      note: "No parsley",
+      state: "queued",
+      selectedOptions: [{ optionName: "Large" }],
+      orderFulfilment: "not_started",
+    });
+    if (!item) {
+      throw new Error("Expected queued kitchen work.");
+    }
+
+    const proxyEmployee = await tenantOwnerService.createEmployee(
+      setup.context,
+      {
+        restaurantId: setup.restaurantId,
+        displayName: "Loginless Cook",
+        email: `cook-${randomUUID()}@example.test`,
+        branchIds: [setup.branchId],
+      },
+      metadata(),
+    );
+    const startKey = `start-${randomUUID()}`;
+    const started = await kitchenService.startKitchenWorkItem(
+      setup.context,
+      item.id,
+      item.version,
+      proxyEmployee.id,
+      startKey,
+      metadata(),
+    );
+    expect(started).toMatchObject({
+      state: "preparing",
+      version: 2,
+      startedByUserId: setup.context.userId,
+      startedByEmployeeId: proxyEmployee.id,
+    });
+    const replay = await kitchenService.startKitchenWorkItem(
+      setup.context,
+      item.id,
+      item.version,
+      proxyEmployee.id,
+      startKey,
+      metadata(),
+    );
+    expect(replay.id).toBe(started.id);
+    expect(
+      await ordering.getOrder(databasePool, setup.businessAccountId, order.id),
+    ).toMatchObject({ fulfilment: "preparing", version: 3 });
+
+    await expect(
+      kitchenService.markKitchenWorkItemReady(
+        setup.context,
+        item.id,
+        item.version,
+        proxyEmployee.id,
+        `ready-${randomUUID()}`,
+        metadata(),
+      ),
+    ).rejects.toMatchObject({
+      code: "concurrency_conflict",
+      currentVersion: 2,
+    });
+    const ready = await kitchenService.markKitchenWorkItemReady(
+      setup.context,
+      started.id,
+      started.version,
+      proxyEmployee.id,
+      `ready-${randomUUID()}`,
+      metadata(),
+    );
+    expect(ready).toMatchObject({
+      state: "ready",
+      version: 3,
+      readyByUserId: setup.context.userId,
+      readyByEmployeeId: proxyEmployee.id,
+    });
+    const readyOrder = await ordering.getOrder(
+      databasePool,
+      setup.businessAccountId,
+      order.id,
+    );
+    expect(readyOrder).toMatchObject({ fulfilment: "ready", version: 4 });
+    if (!readyOrder) {
+      throw new Error("Expected a ready order.");
+    }
+
+    const served = await kitchenService.markOrderServed(
+      setup.context,
+      order.id,
+      readyOrder.version,
+      proxyEmployee.id,
+      `serve-${randomUUID()}`,
+      metadata(),
+    );
+    expect(served).toMatchObject({
+      fulfilment: "served",
+      version: 5,
+      servedByUserId: setup.context.userId,
+      servedByEmployeeId: proxyEmployee.id,
+    });
+    expect(
+      (
+        await kitchenService.getKitchenQueue(setup.context, setup.branchId)
+      ).some((candidate) => candidate.orderId === order.id),
+    ).toBe(false);
+
+    const eventTypes = await databasePool.query<{ event_type: string }>(
+      `
+        select event_type
+        from platform.outbox_messages
+        where business_account_id = $1 and aggregate_id in ($2, $3)
+      `,
+      [setup.businessAccountId, order.id, item.id],
+    );
+    expect(eventTypes.rows.map((row) => row.event_type)).toEqual(
+      expect.arrayContaining([
+        "kitchen.item_started.v1",
+        "ordering.order_preparing.v1",
+        "kitchen.item_ready.v1",
+        "ordering.order_ready.v1",
+        "ordering.order_served.v1",
+      ]),
+    );
+  });
+
+  it("enforces kitchen permission, branch scope, and atomic rollback", async () => {
+    const setup = await fixture("kitchen-guards");
+    const guest = await guestAtTable(setup, "K-2");
+    const order = await orderService.submitGuestOrder(
+      guest.context,
+      submission(setup),
+      `submit-${randomUUID()}`,
+      metadata(),
+    );
+    const item = (
+      await kitchenService.getKitchenQueue(setup.context, setup.branchId)
+    ).find((candidate) => candidate.orderId === order.id);
+    if (!item) {
+      throw new Error("Expected queued kitchen work.");
+    }
+    const withoutUpdate: StaffRequestContext = {
+      ...setup.context,
+      grants: setup.context.grants.filter(
+        (grant) => grant.permissionKey !== "kitchen.update",
+      ),
+    };
+    await expect(
+      kitchenService.startKitchenWorkItem(
+        withoutUpdate,
+        item.id,
+        item.version,
+        undefined,
+        `start-${randomUUID()}`,
+        metadata(),
+      ),
+    ).rejects.toMatchObject({ code: "permission_denied", status: 403 });
+    await expect(
+      kitchenService.getKitchenQueue(
+        { ...setup.context, authorizedBranchIds: [] },
+        setup.branchId,
+      ),
+    ).rejects.toMatchObject({ code: "permission_denied", status: 403 });
+
+    const failingService = new KitchenServingService({
+      databasePool,
+      workflow,
+      restaurantConfiguration,
+      kitchen,
+      ordering,
+      audit: {
+        appendInTransaction() {
+          return Promise.reject(new Error("audit unavailable"));
+        },
+      },
+      idempotencySecret: guestSecret,
+    });
+    await expect(
+      failingService.startKitchenWorkItem(
+        setup.context,
+        item.id,
+        item.version,
+        undefined,
+        `start-${randomUUID()}`,
+        metadata(),
+      ),
+    ).rejects.toThrow("audit unavailable");
+    expect(
+      await kitchen.getWorkItem(databasePool, setup.businessAccountId, item.id),
+    ).toMatchObject({ state: "queued", version: 1 });
+    expect(
+      await ordering.getOrder(databasePool, setup.businessAccountId, order.id),
+    ).toMatchObject({ fulfilment: "not_started", version: 2 });
   });
 });

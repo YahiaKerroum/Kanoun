@@ -30,6 +30,7 @@ export {
 } from "./http/guest-session-middleware.js";
 export {
   createOrderingRouter,
+  presentOrder,
   type OrderingHttpUseCases,
   type OrderingRouterDependencies,
 } from "./http/router.js";
