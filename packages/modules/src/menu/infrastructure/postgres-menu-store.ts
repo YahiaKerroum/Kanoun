@@ -27,6 +27,7 @@ import type {
   UpdateOptionGroupInput,
   UpsertBranchOverrideInput,
 } from "../contracts/menu-store.js";
+import { resolveOrderItemSnapshotsFromMenu } from "../domain/order-snapshots.js";
 
 function requireReturnedRow<T>(rows: readonly T[]): T {
   const row = rows[0];
@@ -901,5 +902,41 @@ export class PostgresMenuStore implements MenuStore {
       currency: branchCurrency,
       categories: [...categories.values()],
     };
+  }
+
+  public async resolveOrderItemSnapshots(
+    transaction: TransactionContext,
+    input: Parameters<MenuStore["resolveOrderItemSnapshots"]>[1],
+  ): ReturnType<MenuStore["resolveOrderItemSnapshots"]> {
+    await transaction.sql.query(
+      `
+        select id
+        from menu.menus
+        where business_account_id = $1 and restaurant_id = $2
+        for share
+      `,
+      [input.businessAccountId, input.restaurantId],
+    );
+    const versionMatches = await this.validateMenuVersion(
+      transaction.sql,
+      input.businessAccountId,
+      input.restaurantId,
+      input.expectedMenuVersion,
+    );
+    const menu = await this.getCustomerMenu(
+      transaction.sql,
+      input.businessAccountId,
+      input.restaurantId,
+      input.branchId,
+      input.branchCurrency,
+    );
+    if (!versionMatches) {
+      return { kind: "menu_changed", currentVersion: menu.version };
+    }
+    return resolveOrderItemSnapshotsFromMenu(
+      menu,
+      input.expectedMenuVersion,
+      input.items,
+    );
   }
 }

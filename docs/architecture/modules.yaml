@@ -113,6 +113,7 @@ modules:
     publishes:
       - EVT-ORDER-SUBMITTED
       - EVT-ORDER-ACCEPTED
+      - EVT-ORDER-CANCELLATION-REQUESTED
       - EVT-ORDER-READY
       - EVT-ORDER-SERVED
       - EVT-ORDER-CANCELLED
@@ -153,6 +154,7 @@ modules:
       - EVT-ORDER-SUBMITTED
       - EVT-ORDER-READY
       - EVT-ORDER-CANCELLED
+      - EVT-ORDER-CANCELLATION-REQUESTED
       - EVT-TABLE-SESSION-MOVED
       - EVT-BILL-REQUESTED
     exposes: [get_notification_inbox, acknowledge_notification, stream_notifications]

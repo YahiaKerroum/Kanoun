@@ -1,5 +1,13 @@
 export { PostgresServiceWorkflow } from "./postgres-service-workflow.js";
 export {
+  OrderSubmissionService,
+  type OrderRequestMetadata,
+  type OrderSubmissionServiceDependencies,
+  type StaffOrderListInput,
+  type StaffOrderPage,
+  type SubmitOrderInput,
+} from "./order-submission-service.js";
+export {
   MenuTablesService,
   type MenuTablesServiceDependencies,
   type RequestMetadata as MenuTablesRequestMetadata,

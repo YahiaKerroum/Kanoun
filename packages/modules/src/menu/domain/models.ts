@@ -103,3 +103,45 @@ export interface CustomerMenu {
   readonly currency: string;
   readonly categories: readonly CustomerMenuCategory[];
 }
+
+export interface OrderItemSelection {
+  readonly dishId: string;
+  readonly quantity: number;
+  readonly optionIds: readonly string[];
+  readonly note?: string | undefined;
+}
+
+export interface ResolvedOrderOptionSnapshot {
+  readonly optionGroupId: string;
+  readonly optionGroupName: string;
+  readonly optionId: string;
+  readonly optionName: string;
+  readonly priceDelta: Money;
+}
+
+export interface ResolvedOrderItemSnapshot {
+  readonly sourceDishId: string;
+  readonly sourceMenuVersion: number;
+  readonly dishName: string;
+  readonly basePrice: Money;
+  readonly unitPrice: Money;
+  readonly quantity: number;
+  readonly selectedOptions: readonly ResolvedOrderOptionSnapshot[];
+  readonly note?: string | undefined;
+  readonly taxInclusive: true;
+  readonly lineTotal: Money;
+}
+
+export type ResolveOrderItemSnapshotsResult =
+  | {
+      readonly kind: "resolved";
+      readonly items: readonly ResolvedOrderItemSnapshot[];
+      readonly total: Money;
+    }
+  | { readonly kind: "menu_changed"; readonly currentVersion: number }
+  | { readonly kind: "dish_unavailable"; readonly dishId: string }
+  | {
+      readonly kind: "invalid_options";
+      readonly dishId: string;
+      readonly detail: string;
+    };

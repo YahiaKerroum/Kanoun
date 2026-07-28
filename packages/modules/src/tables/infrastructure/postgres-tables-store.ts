@@ -7,6 +7,7 @@ import type {
   ResolvedQrToken,
   Table,
   TableQrCode,
+  TableSession,
 } from "../domain/models.js";
 import type {
   CreateTableInput,
@@ -86,6 +87,34 @@ function mapQrCode(row: QrCodeRow): TableQrCode {
     createdAtUtc: row.created_at_utc,
     revokedAtUtc: row.revoked_at_utc ?? undefined,
     revokedReason: row.revoked_reason ?? undefined,
+  };
+}
+
+interface TableSessionRow {
+  readonly id: string;
+  readonly business_account_id: string;
+  readonly branch_id: string;
+  readonly table_id: string;
+  readonly status: "open" | "closed";
+  readonly configuration_version_id: string | null;
+  readonly configuration_version: number | null;
+  readonly version: number;
+  readonly opened_at_utc: Date;
+  readonly closed_at_utc: Date | null;
+}
+
+function mapTableSession(row: TableSessionRow): TableSession {
+  return {
+    id: row.id,
+    businessAccountId: row.business_account_id,
+    branchId: row.branch_id,
+    tableId: row.table_id,
+    status: row.status,
+    configurationVersionId: row.configuration_version_id ?? undefined,
+    configurationVersion: row.configuration_version ?? undefined,
+    version: row.version,
+    openedAtUtc: row.opened_at_utc,
+    closedAtUtc: row.closed_at_utc ?? undefined,
   };
 }
 
@@ -334,5 +363,95 @@ export class PostgresTablesStore implements TablesStore {
           tableCode: row.table_code ?? undefined,
         }
       : undefined;
+  }
+
+  public async claimOrJoinTableSession(
+    transaction: TransactionContext,
+    input: Parameters<TablesStore["claimOrJoinTableSession"]>[1],
+  ): ReturnType<TablesStore["claimOrJoinTableSession"]> {
+    const table = await transaction.sql.query<{
+      readonly id: string;
+      readonly branch_id: string;
+      readonly status: "active" | "inactive";
+      readonly out_of_service: boolean;
+    }>(
+      `
+        select id, branch_id, status, out_of_service
+        from tables.tables
+        where business_account_id = $1 and id = $2
+        for update
+      `,
+      [input.businessAccountId, input.tableId],
+    );
+    const tableRow = table.rows[0];
+    if (
+      tableRow?.branch_id !== input.branchId ||
+      tableRow.status !== "active" ||
+      tableRow.out_of_service
+    ) {
+      return undefined;
+    }
+
+    const existing = await transaction.sql.query<TableSessionRow>(
+      `
+        select
+          id, business_account_id, branch_id, table_id, status,
+          configuration_version_id, configuration_version, version,
+          opened_at_utc, closed_at_utc
+        from tables.table_sessions
+        where business_account_id = $1 and table_id = $2 and status = 'open'
+      `,
+      [input.businessAccountId, input.tableId],
+    );
+    const existingRow = existing.rows[0];
+    if (existingRow) {
+      return { session: mapTableSession(existingRow), opened: false };
+    }
+
+    const created = await transaction.sql.query<TableSessionRow>(
+      `
+        insert into tables.table_sessions (
+          id, business_account_id, branch_id, table_id, status,
+          configuration_version_id, configuration_version, version,
+          opened_at_utc
+        )
+        values ($1, $2, $3, $4, 'open', $5, $6, 1, $7)
+        returning
+          id, business_account_id, branch_id, table_id, status,
+          configuration_version_id, configuration_version, version,
+          opened_at_utc, closed_at_utc
+      `,
+      [
+        input.id,
+        input.businessAccountId,
+        input.branchId,
+        input.tableId,
+        input.configurationVersionId,
+        input.configurationVersion,
+        input.now,
+      ],
+    );
+    const createdRow = requireReturnedRow(created.rows);
+    return { session: mapTableSession(createdRow), opened: true };
+  }
+
+  public async getOpenTableSessionById(
+    sql: SqlExecutor,
+    businessAccountId: string,
+    tableSessionId: string,
+  ): Promise<TableSession | undefined> {
+    const result = await sql.query<TableSessionRow>(
+      `
+        select
+          id, business_account_id, branch_id, table_id, status,
+          configuration_version_id, configuration_version, version,
+          opened_at_utc, closed_at_utc
+        from tables.table_sessions
+        where business_account_id = $1 and id = $2 and status = 'open'
+      `,
+      [businessAccountId, tableSessionId],
+    );
+    const row = result.rows[0];
+    return row ? mapTableSession(row) : undefined;
   }
 }

@@ -1,10 +1,12 @@
 import type { SqlExecutor, TransactionContext } from "@rms/building-blocks";
 import type {
+  ClaimedTableSession,
   EntityStatus,
   QrCodeKind,
   ResolvedQrToken,
   Table,
   TableQrCode,
+  TableSession,
 } from "../domain/models.js";
 
 export interface CreateTableInput {
@@ -89,4 +91,21 @@ export interface TablesStore {
     sql: SqlExecutor,
     tokenHash: string,
   ): Promise<ResolvedQrToken | undefined>;
+  claimOrJoinTableSession(
+    transaction: TransactionContext,
+    input: {
+      readonly id: string;
+      readonly businessAccountId: string;
+      readonly branchId: string;
+      readonly tableId: string;
+      readonly configurationVersionId: string;
+      readonly configurationVersion: number;
+      readonly now: Date;
+    },
+  ): Promise<ClaimedTableSession | undefined>;
+  getOpenTableSessionById(
+    sql: SqlExecutor,
+    businessAccountId: string,
+    tableSessionId: string,
+  ): Promise<TableSession | undefined>;
 }

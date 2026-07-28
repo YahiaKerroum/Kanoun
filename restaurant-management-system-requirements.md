@@ -685,6 +685,12 @@ Each story's release and readiness are defined in `docs/product/mvp-scope.yaml`.
 
 **As an authorized employee, I want to view active orders relevant to my responsibilities so that I know what requires attention.**
 
+**MVP resolution:** `PD-036` resolves the MVP scope of this story. Slice 005
+supports lifecycle-state, table, creating-employee, and submitted-time filters
+and displays elapsed time. Kitchen-station filtering and urgency/delay
+classification remain post-MVP until those concepts and thresholds are
+approved.
+
 #### Acceptance criteria
 
 - **AC-US-H03-01:** Orders can be filtered by state, table, employee, station, and time.

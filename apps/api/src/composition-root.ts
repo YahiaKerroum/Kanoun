@@ -1,5 +1,6 @@
 import {
   createDatabasePool,
+  hashOpaqueToken,
   pingDatabase,
   type DatabasePool,
 } from "@rms/building-blocks";
@@ -7,6 +8,7 @@ import {
   createGuestSessionMiddleware,
   createIdentityAccessRouter,
   createMenuRouter,
+  createOrderingRouter,
   createPublicMenuRouter,
   createPublicTablesRouter,
   createRestaurantConfigurationRouter,
@@ -16,12 +18,14 @@ import {
   PostgresAuditWriter,
   PostgresIdentityAccessStore,
   PostgresMenuStore,
+  PostgresKitchenStore,
   PostgresOrderingStore,
   PostgresRestaurantConfigurationStore,
   PostgresTablesStore,
 } from "@rms/modules";
 import {
   MenuTablesService,
+  OrderSubmissionService,
   PostgresServiceWorkflow,
   TenantOwnerService,
 } from "@rms/service-workflow";
@@ -49,6 +53,7 @@ export function composeApi(config: ApiConfig): ApiComposition {
   const menu = new PostgresMenuStore();
   const tables = new PostgresTablesStore();
   const ordering = new PostgresOrderingStore();
+  const kitchen = new PostgresKitchenStore();
   const audit = new PostgresAuditWriter();
   const workflow = new PostgresServiceWorkflow(databasePool);
   const credentialTokenDelivery = new WebhookCredentialTokenDelivery({
@@ -79,6 +84,17 @@ export function composeApi(config: ApiConfig): ApiComposition {
     guestAccessSecret: config.guestAccessSecret,
     customerWebOrigin: config.customerWebOrigin,
   });
+  const orderSubmissionService = new OrderSubmissionService({
+    databasePool,
+    workflow,
+    restaurantConfiguration,
+    menu,
+    tables,
+    ordering,
+    kitchen,
+    audit,
+    idempotencySecret: config.guestAccessSecret,
+  });
   const sessionDependencies = {
     authenticateSession: (token: string) =>
       tenantOwnerService.authenticateSession(token),
@@ -88,6 +104,9 @@ export function composeApi(config: ApiConfig): ApiComposition {
   const guestSessionDependencies = {
     authenticateGuestSession: (token: string) =>
       menuTablesService.authenticateGuestSession(token),
+    hashCsrfToken: (token: string) =>
+      hashOpaqueToken(token, config.guestAccessSecret),
+    guestWebOrigin: config.customerWebOrigin,
   };
   const identityRouter = createIdentityAccessRouter({
     ...sessionDependencies,
@@ -112,6 +131,11 @@ export function composeApi(config: ApiConfig): ApiComposition {
   const publicTablesRouter = createPublicTablesRouter({
     useCases: menuTablesService,
     secureCookies: config.sessionCookieSecure,
+  });
+  const orderingRouter = createOrderingRouter({
+    ...sessionDependencies,
+    ...guestSessionDependencies,
+    useCases: orderSubmissionService,
   });
   const bootstrapRouter = createTenantBootstrapRouter({
     bootstrapSecret: config.bootstrapSecret,
@@ -140,6 +164,7 @@ export function composeApi(config: ApiConfig): ApiComposition {
       tablesRouter,
       publicMenuRouter,
       publicTablesRouter,
+      orderingRouter,
     ],
   });
 

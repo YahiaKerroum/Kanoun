@@ -8,6 +8,12 @@ export {
   type OutboxMessage,
 } from "./database/outbox-writer.js";
 export {
+  beginIdempotentCommand,
+  completeIdempotentCommand,
+  type BeginIdempotentCommandInput,
+  type IdempotencyStart,
+} from "./database/idempotency.js";
+export {
   type SqlExecutor,
   type TransactionContext,
 } from "./database/sql-executor.js";

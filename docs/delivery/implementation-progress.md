@@ -10,7 +10,7 @@ last_reviewed: 2026-07-28
 
 ## Current slice
 
-`SLICE-005 — order_submission`
+`SLICE-005 — order_submission` (verified locally; unpublished)
 
 ## Slice status
 
@@ -18,7 +18,8 @@ last_reviewed: 2026-07-28
 - `SLICE-002 — tenant_branch_and_owner_bootstrap`: complete.
 - `SLICE-003 — employees_permissions_and_configuration`: complete.
 - `SLICE-004 — menu_tables_and_qr`: complete and published.
-- `SLICE-005 — order_submission`: not started.
+- `SLICE-005 — order_submission`: complete and verified locally; uncommitted
+  and unpublished.
 - `SLICE-006 — kitchen_and_serving`: not started.
 - `SLICE-007 — payment_completion_and_correction`: not started.
 - `SLICE-008 — notifications_reporting_and_audit`: not started.
@@ -71,19 +72,49 @@ last_reviewed: 2026-07-28
 - Slice 004 server-side permission, feature, tenant, restaurant, and branch
   enforcement with transactional audit/outbox evidence and revoked/unknown QR
   equivalence.
+- Slice 005 backend order-submission path: immutable server-priced item
+  snapshots, scoped idempotency, branch references, automatic acceptance,
+  table-session claim/join concurrency, queued Kitchen-owned work,
+  transactional audit/outbox writes, guest cancellation requests, and exact
+  permission-scoped staff creation/listing.
+- Slice 005 customer cart, review, submission, receipt, progress-refresh, and
+  cancellation-request UI.
+- Slice 005 staff active-order and order-entry workspace is implemented with
+  exact permission gates, approved filters, elapsed time, runtime validation,
+  CSRF, and idempotency. The React 19 event-lifetime defect was fixed across
+  seven filter callbacks and analogous callbacks were audited.
+- Visual review found and fixed stale dish option controls after adding a
+  draft item. The staff list, filters, and order-entry dialog were then
+  inspected at desktop and narrow widths.
+- Final isolated PostgreSQL 18.1 verification applied all five migrations from
+  empty and passed 167 tests across 21 files, architecture checks across 123
+  modules and 208 dependencies, OpenAPI and 41 event contracts, all production
+  builds, all 17 browser/WCAG tests, formatting, lint, strict TypeScript, and
+  the production dependency audit.
+- `PD-036` preserves the no-stations MVP strategy while defining the approved
+  active-order filters and elapsed-time presentation.
 
 ## In progress
 
-- No Slice 005 implementation has started.
+- No Slice 005 implementation work remains. The verified changes are
+  intentionally uncommitted and unpublished pending explicit user
+  authorization.
+- Active handoff:
+  `docs/delivery/handoff-2026-07-28-slice-005-checkpoint.md`.
 
 ## Current limitations
 
-- Customer web supports scoped QR exchange, explicit table confirmation, and
-  real branch menu browsing. It has no cart or order submission.
-- Menu and physical-table administration and read-only staff workspaces are
-  present. Operational order, table-session, kitchen, payment, task,
-  notification, reporting, and audit-query screens remain in their owning
-  later slices.
+- Customer web has scoped QR exchange, explicit table confirmation, real
+  branch menu browsing, and a browser/WCAG-tested cart/order journey.
+- Menu and physical-table administration and the staff Orders workspace are
+  present and their complete browser/WCAG suite passes. Table-session and
+  queued kitchen records support Slice 005 submission, but kitchen processing,
+  payment, task, notification, reporting, and audit-query screens remain in
+  their owning later slices.
+- Slice 005 persists item notes and carries them into queued Kitchen work, but
+  it does not claim completion of configurable free-text note policy or later
+  employee note presentation. Optional customer-name configuration also
+  remains incomplete and must not be overstated in final traceability.
 - Slice 003 does not claim `AC-US-B01-03` downstream automation or
   `AC-US-C07-02` task proxying. Slice 004 does not claim historical order
   snapshots, note persistence, table assignment, or fabricated occupancy.
@@ -99,4 +130,5 @@ last_reviewed: 2026-07-28
 
 ## Next slice
 
-`SLICE-005 — order_submission`
+`SLICE-006 — kitchen_and_serving`, after Slice 005 is intentionally committed
+and published. Do not begin it from the current uncommitted worktree.

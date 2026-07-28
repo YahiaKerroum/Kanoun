@@ -73,16 +73,16 @@ evidence is required.
 
 - `US-D04` remains in the approved Slice 004 delivery row, but its acceptance
   criteria require an order-item note producer and staff order consumer. Slice
-  004 exposes no fabricated note field. Free-text note configuration,
-  disclaimer, persistence, and staff presentation complete with Slice 005
-  order submission.
+  004 exposes no fabricated note field. Slice 005 adds the customer disclaimer,
+  note persistence, and queued Kitchen handoff. Configurable note policy and
+  later employee note presentation remain incomplete and are not claimed.
 - Category/dish deactivation and price changes preserve the mutable menu
   record. Historical-order preservation (`AC-US-D01-03`,
   `AC-US-D02-04`, and `US-D05`) is verified when Slice 005 persists immutable
   order-item snapshots.
 - The optional customer name is local to the browser in Slice 004 and is not
-  submitted to the server. Required/optional configuration and operational
-  order storage complete with Slice 005.
+  submitted to the server. Slice 005 adds optional operational order storage;
+  required-versus-optional customer-name configuration remains incomplete.
 - The `ordering` module is started narrowly with `customer_sessions` only.
   Carts, orders, order items, item snapshots, cancellation, bills, and order
   submission are absent.

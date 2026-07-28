@@ -10,6 +10,10 @@ import {
   restaurantDefaultFeatureValues,
   type FeatureState,
 } from "../domain/feature-catalog.js";
+import {
+  branchLocalDate,
+  isBranchAcceptingOrders,
+} from "../domain/branch-acceptance.js";
 import type {
   CreateBranchInput,
   CreateBusinessAccountInput,
@@ -534,6 +538,30 @@ export class PostgresRestaurantConfigurationStore implements RestaurantConfigura
     );
     const row = result.rows[0];
     return row ? mapBranch(sql, row) : undefined;
+  }
+
+  public async canBranchAcceptOrders(
+    sql: SqlExecutor,
+    businessAccountId: string,
+    branchId: string,
+    now: Date,
+  ): Promise<boolean> {
+    const branch = await this.getBranch(sql, businessAccountId, branchId);
+    if (!branch) {
+      return false;
+    }
+    const localDate = branchLocalDate(now, branch.timeZone);
+    const closure = await sql.query(
+      `
+        select 1
+        from restaurant.branch_closures
+        where business_account_id = $1
+          and branch_id = $2
+          and closure_date = $3::date
+      `,
+      [businessAccountId, branchId, localDate],
+    );
+    return isBranchAcceptingOrders(branch, now, (closure.rowCount ?? 0) > 0);
   }
 
   public async listAssignedBranches(

@@ -26,6 +26,7 @@ import {
 import { z } from "zod";
 import { checkApiReadiness, type Readiness } from "./health.js";
 import { MenuWorkspace, TablesWorkspace } from "./OperationalWorkspaces.js";
+import { OrdersWorkspace } from "./OrdersWorkspace.js";
 
 type Section =
   | "Home"
@@ -484,6 +485,24 @@ export function App() {
                   destinationCount={availableNavigation.length}
                   readiness={readiness}
                   statusId={statusId}
+                />
+              ) : visibleSection === "Orders" ? (
+                <OrdersWorkspace
+                  branchId={portal.capabilities.branchId}
+                  restaurantId={activeRestaurantId}
+                  employeeId={portal.session.employeeId}
+                  canView={portal.capabilities.permissions.includes(
+                    "orders.view",
+                  )}
+                  canCreate={portal.capabilities.permissions.includes(
+                    "orders.create",
+                  )}
+                  canViewMenu={portal.capabilities.permissions.includes(
+                    "menu.view",
+                  )}
+                  canViewTables={portal.capabilities.permissions.includes(
+                    "tables.view",
+                  )}
                 />
               ) : visibleSection === "Menu" ? (
                 <MenuWorkspace

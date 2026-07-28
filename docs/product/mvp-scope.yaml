@@ -49,7 +49,7 @@ stories:
   US-G06: {release: mvp, status: ready, note: "Staff order entry"}
   US-H01: {release: post_mvp, status: later, note: "Manual acceptance; MVP auto-accepts"}
   US-H02: {release: mvp, status: ready, obeys: [PD-013, PD-029]}
-  US-H03: {release: mvp, status: ready}
+  US-H03: {release: mvp, status: ready, obeys: [PD-036], note: "MVP filters lifecycle state, table, creating employee, and submitted time; displays elapsed time; station and urgency/delay classification are post-MVP"}
   US-H04: {release: mvp, status: ready, obeys: [PD-009]}
   US-H05: {release: mvp, status: ready}
   US-I01: {release: mvp, status: ready}

@@ -8,7 +8,11 @@ const dishId = "00000000-0000-4000-8000-000000000204";
 const unavailableDishId = "00000000-0000-4000-8000-000000000208";
 const optionGroupId = "00000000-0000-4000-8000-000000000205";
 const optionId = "00000000-0000-4000-8000-000000000206";
+const orderId = "00000000-0000-4000-8000-000000000209";
+const tableSessionId = "00000000-0000-4000-8000-000000000210";
+const orderItemId = "00000000-0000-4000-8000-000000000211";
 const activeToken = "active-table-token-00000000000000000001";
+const csrfToken = "customer-csrf-token-000000000000000001";
 
 async function expectNoWcagViolations(page: Page): Promise<void> {
   const results = await new AxeBuilder({ page })
@@ -30,6 +34,7 @@ test("confirms the detected table and browses the current branch menu accessibly
         tableId,
         tableCode: "T-12",
         expiresAt: "2026-07-29T02:00:00.000Z",
+        csrfToken,
       }),
     }),
   );
@@ -128,6 +133,206 @@ test("confirms the detected table and browses the current branch menu accessibly
   await expectNoWcagViolations(page);
 });
 
+test("builds, reviews, submits, tracks, and requests cancellation for an order", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.route(`**/api/v1/public/qr/${activeToken}/session`, (route) =>
+    route.fulfill({
+      status: 201,
+      contentType: "application/json",
+      body: JSON.stringify({
+        branchId,
+        tableId,
+        tableCode: "T-12",
+        expiresAt: "2026-07-29T02:00:00.000Z",
+        csrfToken,
+      }),
+    }),
+  );
+  await page.route("**/api/v1/public/menu", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        version: "4",
+        currency: "DZD",
+        categories: [
+          {
+            id: categoryId,
+            name: "Signature dishes",
+            dishes: [
+              {
+                id: dishId,
+                name: "Saffron chicken",
+                description: "Charred lemon and preserved pepper.",
+                unitPrice: { amount: "1750.00", currency: "DZD" },
+                available: true,
+                optionGroups: [
+                  {
+                    id: optionGroupId,
+                    name: "Sides",
+                    minimum: 0,
+                    maximum: 1,
+                    options: [
+                      {
+                        id: optionId,
+                        name: "Roasted potatoes",
+                        priceDelta: {
+                          amount: "250.00",
+                          currency: "DZD",
+                        },
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }),
+    }),
+  );
+
+  const acceptedOrder = {
+    id: orderId,
+    reference: "ORD-000012",
+    version: 2,
+    branchId,
+    tableSessionId,
+    tableId,
+    tableCode: "T-12",
+    creatorType: "guest",
+    createdByEmployeeId: null,
+    customerName: "Amel",
+    approval: "accepted",
+    fulfilment: "not_started",
+    financial: "unpaid",
+    closure: "active",
+    customerSafeStatusReason: null,
+    total: { amount: "4000.00", currency: "DZD" },
+    submittedAt: "2026-07-28T18:00:00.000Z",
+    acceptedAt: "2026-07-28T18:00:00.000Z",
+    cancellationRequested: false,
+    items: [
+      {
+        id: orderItemId,
+        dishId,
+        menuVersion: "4",
+        name: "Saffron chicken",
+        quantity: 2,
+        basePrice: { amount: "1750.00", currency: "DZD" },
+        unitPrice: { amount: "2000.00", currency: "DZD" },
+        selectedOptions: [
+          {
+            groupId: optionGroupId,
+            groupName: "Sides",
+            optionId,
+            optionName: "Roasted potatoes",
+            priceDelta: { amount: "250.00", currency: "DZD" },
+          },
+        ],
+        note: "No chilli",
+        taxInclusive: true,
+        total: { amount: "4000.00", currency: "DZD" },
+      },
+    ],
+  };
+
+  await page.route("**/api/v1/public/orders", async (route) => {
+    const request = route.request();
+    expect(request.method()).toBe("POST");
+    expect(request.headers()["x-csrf-token"]).toBe(csrfToken);
+    expect(request.headers()["idempotency-key"]?.length).toBeGreaterThanOrEqual(
+      16,
+    );
+    expect(request.postDataJSON()).toMatchObject({
+      menuVersion: "4",
+      customerName: "Amel",
+      items: [
+        {
+          dishId,
+          quantity: 2,
+          optionIds: [optionId],
+          note: "No chilli",
+        },
+      ],
+    });
+    await route.fulfill({
+      status: 201,
+      contentType: "application/json",
+      body: JSON.stringify(acceptedOrder),
+    });
+  });
+  await page.route(`**/api/v1/public/orders/${orderId}`, (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ ...acceptedOrder, fulfilment: "ready" }),
+    }),
+  );
+  await page.route(
+    `**/api/v1/public/orders/${orderId}/cancellation-requests`,
+    async (route) => {
+      expect(route.request().headers()["x-csrf-token"]).toBe(csrfToken);
+      expect(
+        route.request().headers()["idempotency-key"]?.length,
+      ).toBeGreaterThanOrEqual(16);
+      await route.fulfill({
+        status: 202,
+        contentType: "application/json",
+        body: JSON.stringify({
+          id: "00000000-0000-4000-8000-000000000212",
+          orderId,
+          status: "open",
+          reason: "Ordered the wrong dish",
+          createdAt: "2026-07-28T18:02:00.000Z",
+        }),
+      });
+    },
+  );
+
+  await page.goto(`http://127.0.0.1:5174/qr/${activeToken}`);
+  await page.getByLabel("Your name (optional)").fill("Amel");
+  await page.getByRole("button", { name: "Yes, show the menu" }).click();
+  await page.getByText("View choices").click();
+  await page.getByLabel("Roasted potatoes").check();
+  await page.getByLabel("Quantity").fill("2");
+  await page.getByLabel("Preparation note (optional)").fill("No chilli");
+  await page.getByRole("button", { name: "Add to order" }).click();
+
+  const reviewButton = page.getByRole("button", { name: "Review order" });
+  await reviewButton.click();
+  const dialog = page.getByRole("dialog", { name: "Your order" });
+  await expect(dialog).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Continue browsing" }),
+  ).toBeFocused();
+  await expect(dialog).toContainText("DZD 4,000");
+  await expectNoWcagViolations(page);
+
+  await page.keyboard.press("Escape");
+  await expect(dialog).toBeHidden();
+  await expect(reviewButton).toBeFocused();
+  await reviewButton.click();
+  await page.getByRole("button", { name: "Submit order" }).click();
+
+  await expect(
+    page.getByRole("heading", { name: "Order reference" }),
+  ).toBeVisible();
+  await expect(page.getByText("ORD-000012")).toBeVisible();
+  await expect(page.getByText("Received")).toBeVisible();
+  await page.getByRole("button", { name: "Refresh status" }).click();
+  await expect(page.getByText("Ready")).toBeVisible();
+
+  await page.getByLabel("Reason").fill("Ordered the wrong dish");
+  await page.getByRole("button", { name: "Send request" }).click();
+  await expect(
+    page.getByText("Cancellation requested. Staff can now review it."),
+  ).toBeVisible();
+  await expectNoWcagViolations(page);
+});
+
 test("keeps the customer critical flow usable at a 200 percent zoom equivalent", async ({
   page,
 }) => {
@@ -141,6 +346,7 @@ test("keeps the customer critical flow usable at a 200 percent zoom equivalent",
         tableId,
         tableCode: "T-12",
         expiresAt: "2026-07-29T02:00:00.000Z",
+        csrfToken,
       }),
     }),
   );

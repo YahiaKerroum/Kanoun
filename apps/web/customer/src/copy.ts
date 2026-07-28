@@ -22,7 +22,7 @@ export const copy = {
   browseBody:
     "This QR opens the branch menu without selecting a table. You can still view every available dish.",
   nameLabel: "Your name (optional)",
-  nameHint: "Saved only on this device for this visit.",
+  nameHint: "Optional. Shared with staff only for this restaurant visit.",
   namePlaceholder: "How should staff identify you?",
   confirmTable: "Yes, show the menu",
   continueBrowsing: "Show the menu",
@@ -42,7 +42,7 @@ export const copy = {
   oneChoice: "Choose 1",
   choiceRange: (minimum: number, maximum: number) =>
     `${minimum}–${maximum} choices`,
-  browseOnlyNotice: "Menu browsing only. Ordering is not available here yet.",
+  browseOnlyNotice: "Menu browsing only. Scan the QR at your table to order.",
   browseOnly: "Browse only",
   tableLabel: "Table",
   menuUpdated: "Live menu",
@@ -51,4 +51,45 @@ export const copy = {
   menuLoadErrorTitle: "The menu could not be loaded",
   menuLoadErrorBody: "Check your connection, then reload the current menu.",
   tableVerifiedAnnouncement: "Table link verified.",
+  addToOrder: "Add to order",
+  quantity: "Quantity",
+  noteLabel: "Preparation note (optional)",
+  notePlaceholder: "Allergies or preparation requests",
+  noteDisclaimer:
+    "Notes are requests only. They do not change price or declared availability and cannot be guaranteed.",
+  cartTitle: "Your order",
+  cartEmpty: "Choose a dish to begin your order.",
+  reviewOrder: "Review order",
+  closeReview: "Continue browsing",
+  removeItem: "Remove",
+  submitOrder: "Submit order",
+  submittingOrder: "Submitting…",
+  orderConflict:
+    "The menu changed. Reload the current menu, review your choices, and submit again.",
+  orderFailure:
+    "The order was not submitted. Check your connection and try again—the same retry will not create a duplicate.",
+  orderAccepted: "Order accepted",
+  orderReference: "Order reference",
+  orderProgress: "Order progress",
+  receivedStatus: "Received",
+  preparingStatus: "Preparing",
+  readyStatus: "Ready",
+  servedStatus: "Served",
+  cancelledStatus: "Cancelled",
+  rejectedStatus: "Not accepted",
+  addAnotherOrder: "Order more items",
+  cancellationTitle: "Request cancellation",
+  cancellationReason: "Reason",
+  cancellationPlaceholder: "Tell staff what needs to be corrected",
+  requestCancellation: "Send request",
+  cancellationPending: "Sending…",
+  cancellationSent: "Cancellation requested. Staff can now review it.",
+  cancellationFailure:
+    "The cancellation request was not sent. Check your connection and try again.",
+  refreshStatus: "Refresh status",
+  refreshingStatus: "Refreshing…",
+  statusUpdatesAutomatically:
+    "Status updates automatically while this page is open.",
+  statusMayBeStale:
+    "Status may be out of date. Check your connection, then refresh.",
 } as const;

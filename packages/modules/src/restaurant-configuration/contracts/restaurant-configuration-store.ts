@@ -165,6 +165,12 @@ export interface RestaurantConfigurationStore {
     businessAccountId: string,
     branchId: string,
   ): Promise<BranchRecord | undefined>;
+  canBranchAcceptOrders(
+    sql: SqlExecutor,
+    businessAccountId: string,
+    branchId: string,
+    now: Date,
+  ): Promise<boolean>;
   listAssignedBranches(
     sql: SqlExecutor,
     businessAccountId: string,

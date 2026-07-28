@@ -19,6 +19,7 @@ export * from "./restaurant-configuration/index.js";
 export * from "./ordering/index.js";
 export * from "./menu/index.js";
 export * from "./tables/index.js";
+export * from "./kitchen/index.js";
 export {
   ApplicationError,
   type ApplicationErrorCode,

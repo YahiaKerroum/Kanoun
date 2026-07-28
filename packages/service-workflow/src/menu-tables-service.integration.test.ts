@@ -977,6 +977,7 @@ describeWithDatabase("menu, tables, and QR service against PostgreSQL", () => {
       restaurantId,
       branchId,
       expiresAtUtc: new Date(Date.now() + hourMs),
+      csrfTokenHash: "csrf-token-hash",
     };
     const guestMenu = await menuTablesService.getGuestMenu(guestContext);
 
@@ -1236,6 +1237,7 @@ describeWithDatabase("menu, tables, and QR service against PostgreSQL", () => {
       restaurantId: fixture.tenant.restaurant.id,
       branchId: fixture.tenant.branch.id,
       expiresAtUtc: new Date(Date.now() + hourMs),
+      csrfTokenHash: "csrf-token-hash",
     };
     await expect(
       menuTablesService.getGuestMenu(guestContext),

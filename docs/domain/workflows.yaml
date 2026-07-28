@@ -144,6 +144,13 @@ state_machines:
         guards: [reason_present, cancellation_policy_allows]
         effects: [cancel_unstarted_kitchen_work, preserve_prepared_waste_history, resolve_recorded_payment]
         events: [EVT-ORDER-CANCELLED]
+    commands_without_state_change:
+      - id: CMD-ORDER-REQUEST-CANCELLATION
+        trigger: request_order_cancellation
+        actor: guest
+        guards: [guest_created_order, order_active, no_open_cancellation_request]
+        effects: [preserve_request_reason_and_history]
+        events: [EVT-ORDER-CANCELLATION-REQUESTED]
 
   kitchen_work_item:
     owner: kitchen

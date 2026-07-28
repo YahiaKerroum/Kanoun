@@ -26,6 +26,10 @@ export type {
   OpeningPeriod,
   RestaurantRecord,
 } from "./domain/models.js";
+export {
+  branchLocalDate,
+  isBranchAcceptingOrders,
+} from "./domain/branch-acceptance.js";
 export { PostgresRestaurantConfigurationStore } from "./infrastructure/postgres-restaurant-configuration-store.js";
 export {
   createRestaurantConfigurationRouter,

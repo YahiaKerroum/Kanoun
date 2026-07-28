@@ -9,7 +9,8 @@ export type ApplicationErrorCode =
   | "service_unavailable"
   | "menu_changed"
   | "dish_unavailable"
-  | "table_unavailable";
+  | "table_unavailable"
+  | "idempotency_conflict";
 
 export class ApplicationError extends Error {
   public constructor(

@@ -28,6 +28,7 @@ const guestContext: GuestRequestContext = {
   branchId,
   tableId,
   expiresAtUtc: new Date(Date.now() + 60 * 60_000),
+  csrfTokenHash: "csrf-token-hash",
 };
 
 const customerMenu = {
@@ -38,6 +39,7 @@ const customerMenu = {
 
 const browseOnlyExchangeResult: ExchangeQrResult = {
   sessionToken: "issued-guest-session-token-browse-only",
+  csrfToken: "issued-csrf-token-browse-only",
   branchId,
   tableId: undefined,
   tableCode: undefined,
@@ -46,6 +48,7 @@ const browseOnlyExchangeResult: ExchangeQrResult = {
 
 const dineInExchangeResult: ExchangeQrResult = {
   sessionToken: "issued-guest-session-token-dine-in",
+  csrfToken: "issued-csrf-token-dine-in",
   branchId,
   tableId,
   tableCode: "T5",
@@ -75,6 +78,8 @@ function createTestApplication(overrides?: {
     checkReadiness: () => Promise.resolve(),
     guestSessionMiddleware: createGuestSessionMiddleware({
       authenticateGuestSession,
+      hashCsrfToken: (token) => token,
+      guestWebOrigin: "https://customer.example.test",
     }),
     apiRouters: [
       createPublicMenuRouter({ useCases: menuUseCases }),
@@ -105,6 +110,7 @@ describe("public guest HTTP adapter", () => {
       tableId: null,
       tableCode: null,
       expiresAt: browseOnlyExchangeResult.expiresAtUtc.toISOString(),
+      csrfToken: browseOnlyExchangeResult.csrfToken,
     });
     expect(tablesUseCases.exchangeTableQr).toHaveBeenCalledWith(
       "valid-branch-qr-token-1234567890",
@@ -134,6 +140,7 @@ describe("public guest HTTP adapter", () => {
       tableId,
       tableCode: "T5",
       expiresAt: dineInExchangeResult.expiresAtUtc.toISOString(),
+      csrfToken: dineInExchangeResult.csrfToken,
     });
 
     const cookies = response.headers["set-cookie"] as unknown as string[];

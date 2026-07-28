@@ -9,9 +9,14 @@ export type {
   Dish,
   EntityStatus,
   MenuAggregate,
+  OrderItemSelection,
   Option,
   OptionGroup,
+  ResolveOrderItemSnapshotsResult,
+  ResolvedOrderItemSnapshot,
+  ResolvedOrderOptionSnapshot,
 } from "./domain/models.js";
+export { resolveOrderItemSnapshotsFromMenu } from "./domain/order-snapshots.js";
 export {
   isPricingConfigurationValid,
   worstCaseDishPrice,

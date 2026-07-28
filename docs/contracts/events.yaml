@@ -134,6 +134,11 @@ events:
     owner: ordering
     aggregate: order
     consumers: [notifications, reporting]
+  EVT-ORDER-CANCELLATION-REQUESTED:
+    type: ordering.cancellation_requested.v1
+    owner: ordering
+    aggregate: order
+    consumers: [notifications]
   EVT-ORDER-REJECTED:
     type: ordering.order_rejected.v1
     owner: ordering

@@ -13,6 +13,7 @@ interface RequestMetadata {
 
 export interface ExchangeQrResult {
   readonly sessionToken: string;
+  readonly csrfToken: string;
   readonly branchId: string;
   readonly tableId?: string | undefined;
   readonly tableCode?: string | undefined;
@@ -91,6 +92,7 @@ export function createPublicTablesRouter(
         tableId: result.tableId ?? null,
         tableCode: result.tableCode ?? null,
         expiresAt: result.expiresAtUtc.toISOString(),
+        csrfToken: result.csrfToken,
       });
     },
   );

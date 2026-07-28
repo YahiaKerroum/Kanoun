@@ -46,7 +46,9 @@ source_of_truth_for:
 | Slice 002 implementation declaration | `docs/delivery/slice-002-tenant-branch-owner-bootstrap.md` | Verified |
 | Slice 003 implementation declaration | `docs/delivery/slice-003-employees-permissions-configuration.md` | Verified |
 | Slice 004 implementation declaration | `docs/delivery/slice-004-menu-tables-and-qr.md` | Verified |
-| Current engineering handoff | `docs/delivery/handoff-2026-07-28-slice-004-checkpoint.md` | Slice 004 published; Slice 005 next |
+| Slice 005 implementation declaration | `docs/delivery/slice-005-order-submission.md` | Verified locally; unpublished |
+| Current engineering handoff | `docs/delivery/handoff-2026-07-28-slice-005-checkpoint.md` | Slice 005 verified locally; publication pending |
+| Slice 004 publication handoff | `docs/delivery/handoff-2026-07-28-slice-004-checkpoint.md` | Slice 004 published — historical baseline |
 | Prior Slice 004 checkpoint | `docs/delivery/handoff-2026-07-27-slice-004-checkpoint.md` | Superseded — historical only |
 | Prior engineering handoff (Slice 003 publication evidence) | `docs/delivery/handoff-2026-07-27.md` | Superseded — historical only |
 | Frontend quality | `docs/quality/frontend-quality.md` | Approved |

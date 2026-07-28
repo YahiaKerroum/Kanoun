@@ -1,10 +1,12 @@
 export type {
+  ClaimedTableSession,
   DerivedTableState,
   QrCodeKind,
   QrCodeStatus,
   ResolvedQrToken,
   Table,
   TableQrCode,
+  TableSession,
 } from "./domain/models.js";
 export { deriveTableState } from "./domain/table-state.js";
 export type {

@@ -10,7 +10,9 @@ import type {
   Dish,
   EntityStatus,
   MenuAggregate,
+  OrderItemSelection,
   OptionGroup,
+  ResolveOrderItemSnapshotsResult,
 } from "../domain/models.js";
 
 export interface CreateCategoryInput {
@@ -225,4 +227,15 @@ export interface MenuStore {
     branchId: string,
     branchCurrency: string,
   ): Promise<CustomerMenu>;
+  resolveOrderItemSnapshots(
+    transaction: TransactionContext,
+    input: {
+      readonly businessAccountId: string;
+      readonly restaurantId: string;
+      readonly branchId: string;
+      readonly branchCurrency: string;
+      readonly expectedMenuVersion: number;
+      readonly items: readonly OrderItemSelection[];
+    },
+  ): Promise<ResolveOrderItemSnapshotsResult>;
 }

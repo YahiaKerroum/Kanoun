@@ -52,11 +52,11 @@ vertical_slices:
     tests: [TEST-MENU-001, TEST-MENU-002, TEST-MENU-AUDIT-001, TEST-MENU-FEATURE-001, TEST-MENU-HTTP-001, TEST-MENU-BROWSER-001]
     slice_004_verified_acceptance: [AC-US-D01-01, AC-US-D01-02, AC-US-D02-01, AC-US-D02-02, AC-US-D02-03, AC-US-D03-01, AC-US-D03-02, AC-US-D03-03, AC-US-D03-04, AC-US-D03-05, AC-US-D03-06]
     cross_slice_acceptance:
-      AC-US-D01-03: Slice 004 deactivates without deleting menu records; preservation through historical order snapshots is verified with Slice 005 order persistence.
-      AC-US-D02-04: Slice 004 versions price changes; immutable submitted-order pricing is verified with Slice 005 order snapshots.
-      AC-US-D04-01: Customer notes require Slice 005 order-item persistence and staff order presentation; Slice 004 does not fabricate a note consumer.
-      AC-US-D04-02: Free-text note configuration is completed with the Slice 005 order-entry flow where the setting can be enforced.
-      AC-US-D04-03: The note disclaimer belongs with the Slice 005 order-entry control; Slice 004 exposes no non-functional note field.
+      AC-US-D01-03: Verified by Slice 005 immutable order-item snapshots after menu edits and deactivation-safe source references.
+      AC-US-D02-04: Verified by Slice 005 PostgreSQL evidence that later menu price changes do not rewrite submitted item prices.
+      AC-US-D04-01: Slice 005 persists notes and carries them into queued Kitchen work, but later employee note presentation is not implemented or claimed.
+      AC-US-D04-02: Free-text note enable/disable configuration remains incomplete after Slice 005.
+      AC-US-D04-03: Verified by the Slice 005 customer order-entry disclaimer and browser coverage.
 
   guest_qr_and_tables:
     implements: [US-E01, US-E02, US-E03, US-E04, US-F01, US-F02]
@@ -66,16 +66,22 @@ vertical_slices:
     tests: [TEST-QR-001, TEST-GUEST-001, TEST-TABLE-001, TEST-TABLE-002, TEST-QR-AUDIT-001, TEST-QR-FEATURE-001, TEST-PUBLIC-HTTP-001, TEST-CUSTOMER-BROWSER-001, TEST-CUSTOMER-A11Y-001]
     slice_004_verified_acceptance: [AC-US-E01-01, AC-US-E01-02, AC-US-E01-03, AC-US-E01-04, AC-US-E02-01, AC-US-E02-02, AC-US-E02-03, AC-US-E02-04, AC-US-E03-01, AC-US-E03-02, AC-US-E03-03, AC-US-E04-02, AC-US-F01-01, AC-US-F01-02, AC-US-F01-03, AC-US-F01-04, AC-US-F01-05, AC-US-F02-01, AC-US-F02-02, AC-US-F02-03]
     cross_slice_acceptance:
-      AC-US-E04-01: Customer name configuration is not implemented; requires Slice 005's order submission flow.
-      AC-US-E04-03: Slice 004 keeps the optional name local to the customer device and does not submit it; operational server storage is verified with Slice 005 order persistence.
+      AC-US-E04-01: Optional-versus-required customer-name configuration remains incomplete after Slice 005; the implemented MVP flow treats the name as optional under PD-006.
+      AC-US-E04-03: Verified by Slice 005 operational storage on the scoped guest session and created order only.
       AC-US-E03-04: Slice 004 rejects expired guest authorization; attempts to modify active or historical orders are verified when Slice 005 introduces guest order commands.
 
   ordering:
     implements: [US-D05, US-F05, US-G01, US-G02, US-G03, US-G04, US-G05, US-G06, US-H02, US-H03]
-    obeys: [PD-008, PD-009, PD-013, PD-029, PD-030, PD-033, PD-034, BR-007, BR-008, BR-010, BR-011, BR-012, BR-019, BR-022]
+    obeys: [PD-008, PD-009, PD-013, PD-029, PD-030, PD-033, PD-034, PD-036, BR-007, BR-008, BR-010, BR-011, BR-012, BR-019, BR-022]
     modules: [ordering, menu, tables, kitchen, audit]
-    operations: [submitGuestOrder, createStaffOrder, getGuestOrder]
-    tests: [TEST-ORDER-001, TEST-ORDER-002, TEST-ORDER-003, TEST-IDEMPOTENCY-001, TEST-CONCURRENCY-001]
+    operations: [submitGuestOrder, getGuestOrder, requestGuestOrderCancellation, listStaffOrders, createStaffOrder]
+    tests: [TEST-ORDER-001, TEST-ORDER-002, TEST-ORDER-003, TEST-IDEMPOTENCY-001, TEST-CONCURRENCY-001, TEST-AUTH-001, TEST-PERM-001, TEST-TENANT-001, TEST-SNAPSHOT-001, TEST-CONTRACT-001, TEST-CUSTOMER-BROWSER-001, TEST-CUSTOMER-A11Y-001, TEST-A11Y-STAFF-001]
+    slice_005_verified_acceptance: [AC-US-D05-01, AC-US-D05-02, AC-US-F05-01, AC-US-F05-03, AC-US-G01-01, AC-US-G01-02, AC-US-G01-03, AC-US-G02-01, AC-US-G02-02, AC-US-G02-03, AC-US-G02-04, AC-US-G03-01, AC-US-G03-02, AC-US-G03-03, AC-US-G04-01, AC-US-G04-02, AC-US-G04-03, AC-US-G05-01, AC-US-G05-02, AC-US-G05-03, AC-US-G05-04, AC-US-G06-01, AC-US-G06-02, AC-US-G06-03, AC-US-G06-04, AC-US-H02-01, AC-US-H02-02, AC-US-H02-03, AC-US-H02-04, AC-US-H02-05, AC-US-H02-06, AC-US-H03-02]
+    cross_slice_acceptance:
+      AC-US-F05-02: Per-order payment ownership is preserved by the order model and PD-015, but payment behavior is verified in Slice 007.
+      AC-US-G02-05: Slice 005 writes the transactional order outbox events; notification delivery and recipient configuration are verified in Slice 008.
+      AC-US-H03-01: PD-036 verifies the MVP subset of lifecycle-state, table, creating-employee, and submitted-time filters; station filtering remains post-MVP.
+      AC-US-H03-03: PD-036 replaces urgency/delay classification in the MVP with elapsed-time display; no urgency threshold or classification is claimed.
 
   kitchen_and_serving:
     implements: [US-I01, US-I03, US-I04, US-J01, US-J03]

@@ -62,6 +62,10 @@ export interface MenuHttpUseCases {
     context: StaffRequestContext,
     restaurantId: string,
   ): Promise<readonly Dish[]>;
+  getMenuVersion(
+    context: StaffRequestContext,
+    restaurantId: string,
+  ): Promise<number>;
   createDish(
     context: StaffRequestContext,
     input: z.infer<typeof createDishSchema> & { readonly restaurantId: string },
@@ -216,11 +220,17 @@ export function createMenuRouter(dependencies: MenuRouterDependencies): Router {
     "/staff/restaurants/:restaurantId/menu/dishes",
     async (request, response) => {
       const parameters = parse(restaurantParametersSchema, request.params);
-      response.send({
-        items: await dependencies.useCases.listDishes(
-          context(request),
+      const staffContext = context(request);
+      const [items, menuVersion] = await Promise.all([
+        dependencies.useCases.listDishes(staffContext, parameters.restaurantId),
+        dependencies.useCases.getMenuVersion(
+          staffContext,
           parameters.restaurantId,
         ),
+      ]);
+      response.send({
+        items,
+        menuVersion,
       });
     },
   );

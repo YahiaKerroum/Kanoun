@@ -1,4 +1,14 @@
-export type { GuestSessionRecord } from "./domain/models.js";
+export type {
+  CancellationRequestRecord,
+  GuestSessionRecord,
+  OrderApprovalState,
+  OrderClosureState,
+  OrderFinancialState,
+  OrderFulfilmentState,
+  OrderItemRecord,
+  OrderOptionSnapshot,
+  OrderRecord,
+} from "./domain/models.js";
 export {
   guestSessionAbsoluteTimeoutMs,
   guestSessionIdleTimeoutMs,
@@ -10,6 +20,7 @@ export type {
 } from "./contracts/ordering-store.js";
 export { PostgresOrderingStore } from "./infrastructure/postgres-ordering-store.js";
 export {
+  createGuestCsrfProtection,
   createGuestSessionMiddleware,
   guestSessionCookieName,
   requireGuestSession,
@@ -17,3 +28,8 @@ export {
   type GuestRequestContext,
   type GuestSessionMiddlewareDependencies,
 } from "./http/guest-session-middleware.js";
+export {
+  createOrderingRouter,
+  type OrderingHttpUseCases,
+  type OrderingRouterDependencies,
+} from "./http/router.js";

@@ -1,4 +1,5 @@
 import type { Request, RequestHandler } from "express";
+import { secretsMatch } from "@rms/building-blocks";
 import { ApplicationError } from "../../shared/application-error.js";
 
 export const guestSessionCookieName = "rms_guest_session";
@@ -11,6 +12,7 @@ export interface GuestRequestContext {
   readonly tableId?: string | undefined;
   readonly displayName?: string | undefined;
   readonly expiresAtUtc: Date;
+  readonly csrfTokenHash: string;
 }
 
 export interface GuestRequest extends Request {
@@ -40,6 +42,43 @@ export interface GuestSessionMiddlewareDependencies {
   readonly authenticateGuestSession: (
     rawSessionToken: string,
   ) => Promise<GuestRequestContext | undefined>;
+  readonly hashCsrfToken: (rawToken: string) => string;
+  readonly guestWebOrigin: string;
+}
+
+export function createGuestCsrfProtection(
+  dependencies: GuestSessionMiddlewareDependencies,
+): RequestHandler {
+  return (request, _response, next) => {
+    const context = (request as GuestRequest).guestContext;
+    if (!context) {
+      next(
+        new ApplicationError(
+          "authentication_required",
+          401,
+          "Authentication required",
+        ),
+      );
+      return;
+    }
+    const origin = request.get("origin");
+    const rawToken = request.get("x-csrf-token");
+    if (
+      origin !== dependencies.guestWebOrigin ||
+      !rawToken ||
+      !secretsMatch(dependencies.hashCsrfToken(rawToken), context.csrfTokenHash)
+    ) {
+      next(
+        new ApplicationError(
+          "permission_denied",
+          403,
+          "Request origin could not be verified",
+        ),
+      );
+      return;
+    }
+    next();
+  };
 }
 
 export function createGuestSessionMiddleware(

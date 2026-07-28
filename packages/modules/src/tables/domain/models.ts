@@ -36,3 +36,21 @@ export interface ResolvedQrToken {
   readonly tableId?: string | undefined;
   readonly tableCode?: string | undefined;
 }
+
+export interface TableSession {
+  readonly id: string;
+  readonly businessAccountId: string;
+  readonly branchId: string;
+  readonly tableId: string;
+  readonly status: "open" | "closed";
+  readonly configurationVersionId?: string | undefined;
+  readonly configurationVersion?: number | undefined;
+  readonly version: number;
+  readonly openedAtUtc: Date;
+  readonly closedAtUtc?: Date | undefined;
+}
+
+export interface ClaimedTableSession {
+  readonly session: TableSession;
+  readonly opened: boolean;
+}

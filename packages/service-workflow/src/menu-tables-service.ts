@@ -260,6 +260,27 @@ export class MenuTablesService {
     );
   }
 
+  public async getMenuVersion(
+    context: StaffRequestContext,
+    restaurantId: string,
+  ): Promise<number> {
+    requirePermission(
+      context,
+      "menu.view",
+      restaurantId,
+      context.activeBranchId,
+    );
+    const menu = await this.dependencies.menu.getMenu(
+      this.dependencies.databasePool,
+      context.businessAccountId,
+      restaurantId,
+    );
+    if (!menu) {
+      throw new ApplicationError("resource_not_found", 404, "Menu not found");
+    }
+    return menu.version;
+  }
+
   public async createDish(
     context: StaffRequestContext,
     input: {
@@ -988,6 +1009,7 @@ export class MenuTablesService {
       tableId: session.tableId,
       displayName: session.displayName,
       expiresAtUtc: session.expiresAtUtc,
+      csrfTokenHash: session.csrfTokenHash ?? "",
     };
   }
 
@@ -1368,6 +1390,7 @@ export class MenuTablesService {
     }
     const now = nowFrom(metadata);
     const rawSessionToken = createOpaqueToken();
+    const rawCsrfToken = createOpaqueToken();
     const sessionTokenHash = hashOpaqueToken(
       rawSessionToken,
       this.dependencies.guestAccessSecret,
@@ -1383,12 +1406,17 @@ export class MenuTablesService {
         branchId: resolved.branchId,
         tableId: resolved.tableId,
         tokenHash: sessionTokenHash,
+        csrfTokenHash: hashOpaqueToken(
+          rawCsrfToken,
+          this.dependencies.guestAccessSecret,
+        ),
         now,
         absoluteExpiresAtUtc,
       }),
     );
     return {
       sessionToken: rawSessionToken,
+      csrfToken: rawCsrfToken,
       branchId: resolved.branchId,
       tableId: resolved.tableId,
       tableCode: resolved.tableCode,

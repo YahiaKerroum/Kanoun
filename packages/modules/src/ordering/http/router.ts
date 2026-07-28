@@ -1,0 +1,339 @@
+import { randomUUID } from "node:crypto";
+import { Router, type Request } from "express";
+import { rateLimit } from "express-rate-limit";
+import { z } from "zod";
+import {
+  createCsrfProtection,
+  requireStaffSession,
+  type SessionMiddlewareDependencies,
+  type StaffRequest,
+  type StaffRequestContext,
+} from "../../identity-access/index.js";
+import { ApplicationError } from "../../shared/application-error.js";
+import {
+  createGuestCsrfProtection,
+  requireGuestSession,
+  type GuestRequest,
+  type GuestRequestContext,
+  type GuestSessionMiddlewareDependencies,
+} from "./guest-session-middleware.js";
+import type {
+  CancellationRequestRecord,
+  OrderRecord,
+} from "../domain/models.js";
+import {
+  cancellationRequestSchema,
+  createStaffOrderSchema,
+  idempotencyKeySchema,
+  listStaffOrdersSchema,
+  orderParametersSchema,
+  submitOrderSchema,
+} from "./schemas.js";
+
+interface RequestMetadata {
+  readonly correlationId: string;
+  readonly causationId: string;
+}
+
+export interface OrderingHttpUseCases {
+  submitGuestOrder(
+    context: GuestRequestContext,
+    input: {
+      readonly menuVersion: number;
+      readonly customerName?: string | undefined;
+      readonly items: readonly {
+        readonly dishId: string;
+        readonly quantity: number;
+        readonly optionIds: readonly string[];
+        readonly note?: string | undefined;
+      }[];
+    },
+    idempotencyKey: string,
+    metadata: RequestMetadata,
+  ): Promise<OrderRecord>;
+  createStaffOrder(
+    context: StaffRequestContext,
+    tableId: string,
+    input: {
+      readonly menuVersion: number;
+      readonly customerName?: string | undefined;
+      readonly items: readonly {
+        readonly dishId: string;
+        readonly quantity: number;
+        readonly optionIds: readonly string[];
+        readonly note?: string | undefined;
+      }[];
+    },
+    idempotencyKey: string,
+    metadata: RequestMetadata,
+  ): Promise<OrderRecord>;
+  getGuestOrder(
+    context: GuestRequestContext,
+    orderId: string,
+  ): Promise<OrderRecord>;
+  requestGuestCancellation(
+    context: GuestRequestContext,
+    orderId: string,
+    reason: string,
+    idempotencyKey: string,
+    metadata: RequestMetadata,
+  ): Promise<CancellationRequestRecord>;
+  listStaffOrders(
+    context: StaffRequestContext,
+    input: {
+      readonly branchId: string;
+      readonly approval?: OrderRecord["approval"] | undefined;
+      readonly fulfilment?: OrderRecord["fulfilment"] | undefined;
+      readonly closure?: OrderRecord["closure"] | undefined;
+      readonly tableId?: string | undefined;
+      readonly createdByEmployeeId?: string | undefined;
+      readonly submittedFromUtc?: Date | undefined;
+      readonly submittedToUtc?: Date | undefined;
+      readonly cursor?: string | undefined;
+      readonly pageSize: number;
+    },
+  ): Promise<{
+    readonly items: readonly OrderRecord[];
+    readonly nextCursor?: string | undefined;
+  }>;
+}
+
+export interface OrderingRouterDependencies
+  extends SessionMiddlewareDependencies, GuestSessionMiddlewareDependencies {
+  readonly useCases: OrderingHttpUseCases;
+}
+
+function parse<Input>(schema: z.ZodType<Input>, value: unknown): Input {
+  const result = schema.safeParse(value);
+  if (!result.success) {
+    throw new ApplicationError(
+      "validation_error",
+      422,
+      "Request validation failed",
+      z.prettifyError(result.error),
+    );
+  }
+  return result.data;
+}
+
+function metadata(request: Request): RequestMetadata {
+  const requestId = z.uuid().safeParse(request.get("x-request-id"));
+  const correlationId = requestId.success ? requestId.data : randomUUID();
+  return { correlationId, causationId: correlationId };
+}
+
+function guestContext(request: Request): GuestRequestContext {
+  const context = (request as GuestRequest).guestContext;
+  if (!context) {
+    throw new ApplicationError(
+      "authentication_required",
+      401,
+      "Authentication required",
+    );
+  }
+  return context;
+}
+
+function staffContext(request: Request): StaffRequestContext {
+  const context = (request as StaffRequest).staffContext;
+  if (!context) {
+    throw new ApplicationError(
+      "authentication_required",
+      401,
+      "Authentication required",
+    );
+  }
+  return context;
+}
+
+function presentOrder(order: OrderRecord): object {
+  return {
+    id: order.id,
+    reference: order.reference,
+    version: order.version,
+    branchId: order.branchId,
+    tableSessionId: order.tableSessionId,
+    tableId: order.tableId,
+    tableCode: order.tableCode,
+    creatorType: order.creatorType,
+    createdByEmployeeId: order.createdByEmployeeId ?? null,
+    customerName: order.customerDisplayName ?? null,
+    approval: order.approval,
+    fulfilment: order.fulfilment,
+    financial: order.financial,
+    closure: order.closure,
+    customerSafeStatusReason: order.customerSafeStatusReason ?? null,
+    total: order.total,
+    submittedAt: order.submittedAtUtc.toISOString(),
+    acceptedAt: order.acceptedAtUtc.toISOString(),
+    cancellationRequested: order.cancellationRequested,
+    items: order.items.map((item) => ({
+      id: item.id,
+      dishId: item.sourceDishId,
+      menuVersion: String(item.sourceMenuVersion),
+      name: item.name,
+      quantity: item.quantity,
+      basePrice: item.basePrice,
+      unitPrice: item.unitPrice,
+      selectedOptions: item.selectedOptions.map((option) => ({
+        groupId: option.optionGroupId,
+        groupName: option.optionGroupName,
+        optionId: option.optionId,
+        optionName: option.optionName,
+        priceDelta: option.priceDelta,
+      })),
+      note: item.note ?? null,
+      taxInclusive: item.taxInclusive,
+      total: item.total,
+    })),
+  };
+}
+
+export function createOrderingRouter(
+  dependencies: OrderingRouterDependencies,
+): Router {
+  const router = Router();
+  const guestCsrf = createGuestCsrfProtection(dependencies);
+  const staffCsrf = createCsrfProtection(dependencies);
+  const commandLimiter = rateLimit({
+    windowMs: 15 * 60_000,
+    limit: 60,
+    standardHeaders: "draft-8",
+    legacyHeaders: false,
+  });
+
+  router.post(
+    "/public/orders",
+    commandLimiter,
+    requireGuestSession(),
+    guestCsrf,
+    async (request, response) => {
+      const input = parse(submitOrderSchema, request.body);
+      const idempotencyKey = parse(
+        idempotencyKeySchema,
+        request.get("idempotency-key"),
+      );
+      const order = await dependencies.useCases.submitGuestOrder(
+        guestContext(request),
+        {
+          ...input,
+          customerName: input.customerName ?? undefined,
+          items: input.items.map((item) => ({
+            ...item,
+            note: item.note ?? undefined,
+          })),
+        },
+        idempotencyKey,
+        metadata(request),
+      );
+      response.status(201).send(presentOrder(order));
+    },
+  );
+
+  router.get(
+    "/public/orders/:orderId",
+    requireGuestSession(),
+    async (request, response) => {
+      const parameters = parse(orderParametersSchema, request.params);
+      response.send(
+        presentOrder(
+          await dependencies.useCases.getGuestOrder(
+            guestContext(request),
+            parameters.orderId,
+          ),
+        ),
+      );
+    },
+  );
+
+  router.post(
+    "/public/orders/:orderId/cancellation-requests",
+    commandLimiter,
+    requireGuestSession(),
+    guestCsrf,
+    async (request, response) => {
+      const parameters = parse(orderParametersSchema, request.params);
+      const input = parse(cancellationRequestSchema, request.body);
+      const idempotencyKey = parse(
+        idempotencyKeySchema,
+        request.get("idempotency-key"),
+      );
+      const cancellation = await dependencies.useCases.requestGuestCancellation(
+        guestContext(request),
+        parameters.orderId,
+        input.reason,
+        idempotencyKey,
+        metadata(request),
+      );
+      response.status(202).send({
+        id: cancellation.id,
+        orderId: cancellation.orderId,
+        status: cancellation.status,
+        reason: cancellation.reason,
+        createdAt: cancellation.createdAtUtc.toISOString(),
+      });
+    },
+  );
+
+  router.get(
+    "/staff/orders",
+    requireStaffSession(),
+    async (request, response) => {
+      const query = parse(listStaffOrdersSchema, request.query);
+      const page = await dependencies.useCases.listStaffOrders(
+        staffContext(request),
+        {
+          branchId: query.branchId,
+          ...(query.approval ? { approval: query.approval } : {}),
+          ...(query.fulfilment ? { fulfilment: query.fulfilment } : {}),
+          closure: query.closure,
+          ...(query.tableId ? { tableId: query.tableId } : {}),
+          ...(query.createdByEmployeeId
+            ? { createdByEmployeeId: query.createdByEmployeeId }
+            : {}),
+          ...(query.submittedFrom
+            ? { submittedFromUtc: query.submittedFrom }
+            : {}),
+          ...(query.submittedTo ? { submittedToUtc: query.submittedTo } : {}),
+          ...(query.cursor ? { cursor: query.cursor } : {}),
+          pageSize: query.pageSize,
+        },
+      );
+      response.send({
+        items: page.items.map(presentOrder),
+        nextCursor: page.nextCursor ?? null,
+      });
+    },
+  );
+
+  router.post(
+    "/staff/orders",
+    commandLimiter,
+    requireStaffSession(),
+    staffCsrf,
+    async (request, response) => {
+      const input = parse(createStaffOrderSchema, request.body);
+      const idempotencyKey = parse(
+        idempotencyKeySchema,
+        request.get("idempotency-key"),
+      );
+      const order = await dependencies.useCases.createStaffOrder(
+        staffContext(request),
+        input.tableId,
+        {
+          menuVersion: input.menuVersion,
+          customerName: input.customerName ?? undefined,
+          items: input.items.map((item) => ({
+            ...item,
+            note: item.note ?? undefined,
+          })),
+        },
+        idempotencyKey,
+        metadata(request),
+      );
+      response.status(201).send(presentOrder(order));
+    },
+  );
+
+  return router;
+}

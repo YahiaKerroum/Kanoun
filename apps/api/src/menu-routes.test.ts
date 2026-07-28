@@ -106,6 +106,7 @@ function createTestApplication(overrides?: Partial<MenuHttpUseCases>) {
     createCategory: vi.fn().mockResolvedValue(category),
     updateCategory: vi.fn().mockResolvedValue(category),
     listDishes: vi.fn().mockResolvedValue([dish]),
+    getMenuVersion: vi.fn().mockResolvedValue(7),
     createDish: vi.fn().mockResolvedValue(dish),
     updateDish: vi.fn().mockResolvedValue(dish),
     listOptionGroups: vi.fn().mockResolvedValue([optionGroup]),

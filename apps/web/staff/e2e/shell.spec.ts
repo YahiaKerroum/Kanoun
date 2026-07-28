@@ -8,6 +8,46 @@ const businessAccountId = "00000000-0000-4000-8000-000000000104";
 const categoryId = "00000000-0000-4000-8000-000000000105";
 const dishId = "00000000-0000-4000-8000-000000000106";
 const tableId = "00000000-0000-4000-8000-000000000107";
+const orderId = "00000000-0000-4000-8000-000000000108";
+const tableSessionId = "00000000-0000-4000-8000-000000000109";
+const orderItemId = "00000000-0000-4000-8000-000000000110";
+const optionGroupId = "00000000-0000-4000-8000-000000000111";
+const optionId = "00000000-0000-4000-8000-000000000112";
+
+const activeOrder = {
+  id: orderId,
+  reference: "ORD-000021",
+  version: 2,
+  branchId,
+  tableSessionId,
+  tableId,
+  tableCode: "T-12",
+  creatorType: "staff",
+  createdByEmployeeId: employeeId,
+  customerName: "Nadia",
+  approval: "accepted",
+  fulfilment: "ready",
+  financial: "unpaid",
+  closure: "active",
+  customerSafeStatusReason: null,
+  total: { amount: "21.00", currency: "USD" },
+  submittedAt: new Date(Date.now() - 12 * 60_000).toISOString(),
+  acceptedAt: new Date(Date.now() - 12 * 60_000).toISOString(),
+  cancellationRequested: false,
+  items: [
+    {
+      id: orderItemId,
+      dishId,
+      menuVersion: "7",
+      name: "Saffron chicken",
+      quantity: 1,
+      unitPrice: { amount: "21.00", currency: "USD" },
+      selectedOptions: [],
+      note: null,
+      total: { amount: "21.00", currency: "USD" },
+    },
+  ],
+};
 
 interface PortalOverrides {
   readonly permissions?: readonly string[];
@@ -107,6 +147,13 @@ test("shows only destinations allowed by both permissions and enabled features",
   page,
 }) => {
   await mockReadyPortal(page);
+  await page.route("**/api/v1/staff/orders?*", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ items: [], nextCursor: null }),
+    }),
+  );
   await page.goto("/");
 
   await expect(
@@ -129,11 +176,280 @@ test("shows only destinations allowed by both permissions and enabled features",
   await expect(page.getByRole("button", { name: "Setup" })).toHaveCount(0);
 
   await page.getByRole("button", { name: "Orders" }).click();
+  await expect(page.getByRole("heading", { name: "Order flow" })).toBeVisible();
   await expect(
     page.getByRole("heading", {
-      name: "Orders is available but not implemented here yet",
+      name: "No active orders match these filters",
     }),
   ).toBeVisible();
+});
+
+test("keeps order list and entry dependencies behind their exact permission gates", async ({
+  page,
+}) => {
+  let orderRequests = 0;
+  let dependencyRequests = 0;
+  await mockReadyPortal(page, {
+    permissions: ["orders.create"],
+    enabledFeatures: ["ordering"],
+    grants: [
+      {
+        permissionKey: "orders.create",
+        restaurantId,
+        branchId,
+      },
+    ],
+  });
+  await page.route("**/api/v1/staff/orders**", (route) => {
+    orderRequests += 1;
+    return route.fulfill({ status: 500 });
+  });
+  await page.route("**/api/v1/staff/**/menu/**", (route) => {
+    dependencyRequests += 1;
+    return route.fulfill({ status: 500 });
+  });
+  await page.route("**/api/v1/staff/branches/*/tables", (route) => {
+    dependencyRequests += 1;
+    return route.fulfill({ status: 500 });
+  });
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Orders" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Order view permission required" }),
+  ).toBeVisible();
+  expect(orderRequests).toBe(0);
+
+  await page.getByRole("button", { name: "Create order" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Order-entry data is unavailable" }),
+  ).toBeVisible();
+  expect(dependencyRequests).toBe(0);
+});
+
+test("filters active orders, displays elapsed time, and preserves stale results", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 768, height: 1024 });
+  await mockReadyPortal(page, {
+    permissions: ["orders.view"],
+    enabledFeatures: ["ordering"],
+    grants: [
+      {
+        permissionKey: "orders.view",
+        restaurantId,
+        branchId,
+      },
+    ],
+  });
+  let failReload = false;
+  let lastOrderUrl = "";
+  await page.route("**/api/v1/staff/orders?*", (route) => {
+    lastOrderUrl = route.request().url();
+    return failReload
+      ? route.fulfill({ status: 503 })
+      : route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            items: lastOrderUrl.includes("fulfilment=ready")
+              ? [activeOrder]
+              : [],
+            nextCursor: null,
+          }),
+        });
+  });
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Orders" }).click();
+  await expect(
+    page.getByRole("heading", {
+      name: "No active orders match these filters",
+    }),
+  ).toBeVisible();
+  await page.getByLabel("Fulfilment").selectOption("ready");
+  await page.getByRole("button", { name: "Created by me" }).click();
+  await page.getByRole("button", { name: "Apply filters" }).click();
+
+  await expect(page.getByText("ORD-000021")).toBeVisible();
+  await expect(page.getByText("T-12")).toBeVisible();
+  await expect(page.getByText(/\d+ min/)).toBeVisible();
+  expect(lastOrderUrl).toContain("fulfilment=ready");
+  expect(lastOrderUrl).toContain(
+    `createdByEmployeeId=${encodeURIComponent(employeeId)}`,
+  );
+  expect(lastOrderUrl).not.toContain("station");
+
+  failReload = true;
+  await page.getByRole("button", { name: "Reload", exact: true }).click();
+  await expect(page.getByText("may be stale")).toBeVisible();
+  await expect(page.getByText("ORD-000021")).toBeVisible();
+});
+
+test("creates a menu- and table-backed staff order with CSRF and idempotency", async ({
+  page,
+  context,
+}) => {
+  await page.setViewportSize({ width: 768, height: 1024 });
+  await context.addCookies([
+    {
+      name: "rms_csrf",
+      value: "staff-csrf-token",
+      url: "http://127.0.0.1:5173",
+    },
+  ]);
+  await mockReadyPortal(page, {
+    permissions: ["orders.view", "orders.create", "menu.view", "tables.view"],
+    enabledFeatures: ["ordering", "menu", "tables"],
+    grants: [
+      {
+        permissionKey: "orders.create",
+        restaurantId,
+        branchId,
+      },
+    ],
+  });
+  await page.route("**/api/v1/staff/orders?*", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ items: [], nextCursor: null }),
+    }),
+  );
+  await page.route(`**/api/v1/staff/branches/${branchId}/tables`, (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        items: [
+          {
+            id: tableId,
+            code: "T-12",
+            status: "active",
+            outOfService: false,
+            derivedState: "available",
+          },
+        ],
+      }),
+    }),
+  );
+  await page.route(
+    `**/api/v1/staff/restaurants/${restaurantId}/menu/dishes`,
+    (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          menuVersion: 7,
+          items: [
+            {
+              id: dishId,
+              name: "Saffron chicken",
+              basePrice: { amount: "18.50", currency: "USD" },
+              status: "active",
+              available: true,
+              displayOrder: 1,
+            },
+          ],
+        }),
+      }),
+  );
+  await page.route(
+    `**/api/v1/staff/menu/dishes/${dishId}/option-groups`,
+    (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          items: [
+            {
+              id: optionGroupId,
+              dishId,
+              name: "Sides",
+              minimum: 0,
+              maximum: 1,
+              options: [
+                {
+                  id: optionId,
+                  name: "Roasted potatoes",
+                  priceDelta: { amount: "2.50", currency: "USD" },
+                  displayOrder: 0,
+                  status: "active",
+                },
+              ],
+            },
+          ],
+        }),
+      }),
+  );
+  await page.route(
+    `**/api/v1/staff/branches/${branchId}/menu/dishes/${dishId}/override`,
+    (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          branchId,
+          dishId,
+          price: null,
+          available: null,
+          visible: true,
+        }),
+      }),
+  );
+  await page.route("**/api/v1/staff/orders", async (route) => {
+    const request = route.request();
+    expect(request.method()).toBe("POST");
+    expect(request.headers()["x-csrf-token"]).toBe("staff-csrf-token");
+    expect(request.headers()["idempotency-key"]?.length).toBeGreaterThanOrEqual(
+      16,
+    );
+    expect(request.postDataJSON()).toMatchObject({
+      tableId,
+      menuVersion: 7,
+      customerName: "Nadia",
+      items: [
+        {
+          dishId,
+          quantity: 1,
+          optionIds: [optionId],
+          note: "No chilli",
+        },
+      ],
+    });
+    await route.fulfill({
+      status: 201,
+      contentType: "application/json",
+      body: JSON.stringify(activeOrder),
+    });
+  });
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Orders" }).click();
+  const trigger = page.getByRole("button", { name: "Create order" });
+  await trigger.click();
+  await expect(
+    page.getByRole("button", { name: "Close order entry" }),
+  ).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(trigger).toBeFocused();
+  await trigger.click();
+
+  const dialog = page.getByRole("dialog", { name: "Create order" });
+  await dialog.getByLabel("Table").selectOption(tableId);
+  await dialog.getByLabel("Customer name (optional)").fill("Nadia");
+  await dialog.getByLabel("Dish").selectOption(dishId);
+  await dialog.getByLabel("Roasted potatoes").check();
+  await dialog.getByLabel("Preparation note (optional)").fill("No chilli");
+  await dialog.getByRole("button", { name: "Add item" }).click();
+  await expect(dialog.getByText("$21.00").first()).toBeVisible();
+  await dialog.getByRole("button", { name: "Submit order" }).click();
+  await expect(dialog.getByText("ORD-000021")).toBeVisible();
+
+  const results = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
+    .analyze();
+  expect(results.violations).toEqual([]);
 });
 
 test("has no detectable WCAG A or AA violations in the capability-aware state", async ({
