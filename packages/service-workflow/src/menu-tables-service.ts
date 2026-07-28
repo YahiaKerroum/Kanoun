@@ -72,6 +72,32 @@ function notFound(resource: string): never {
   );
 }
 
+function rethrowTableCodeConflict(error: unknown): never {
+  const code =
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    typeof error.code === "string"
+      ? error.code
+      : undefined;
+  const constraint =
+    typeof error === "object" &&
+    error !== null &&
+    "constraint" in error &&
+    typeof error.constraint === "string"
+      ? error.constraint
+      : undefined;
+  if (code === "23505" && constraint === "table_branch_code_uidx") {
+    throw new ApplicationError(
+      "validation_error",
+      409,
+      "Table code already exists",
+      "Use a different table code for this branch.",
+    );
+  }
+  throw error;
+}
+
 export class MenuTablesService {
   public constructor(
     private readonly dependencies: MenuTablesServiceDependencies,
@@ -271,8 +297,8 @@ export class MenuTablesService {
       }
     }
     const now = nowFrom(metadata);
-    const dish = await this.dependencies.workflow.run((transaction) =>
-      this.dependencies.menu.updateDish(transaction, {
+    const dish = await this.dependencies.workflow.run(async (transaction) => {
+      const updated = await this.dependencies.menu.updateDish(transaction, {
         businessAccountId: context.businessAccountId,
         dishId: input.dishId,
         expectedVersion: input.expectedVersion,
@@ -295,8 +321,24 @@ export class MenuTablesService {
           : {}),
         ...(input.status !== undefined ? { status: input.status } : {}),
         now,
-      }),
-    );
+      });
+      if (
+        updated &&
+        input.available !== undefined &&
+        input.available !== before.available
+      ) {
+        await this.appendMenuAvailabilityEvent(transaction, {
+          context,
+          restaurantId: updated.restaurantId,
+          dishId: updated.id,
+          aggregateVersion: updated.version,
+          available: updated.available,
+          metadata,
+          now,
+        });
+      }
+      return updated;
+    });
     if (!dish) {
       throw new ApplicationError(
         "concurrency_conflict",
@@ -304,19 +346,6 @@ export class MenuTablesService {
         "Dish changed",
         "Reload the dish and retry the change.",
         before.version,
-      );
-    }
-    if (input.available !== undefined && input.available !== before.available) {
-      await this.dependencies.workflow.run((transaction) =>
-        this.appendMenuAvailabilityEvent(transaction, {
-          context,
-          restaurantId: dish.restaurantId,
-          dishId: dish.id,
-          aggregateVersion: dish.version,
-          available: dish.available,
-          metadata,
-          now,
-        }),
       );
     }
     return dish;
@@ -599,45 +628,52 @@ export class MenuTablesService {
       dishId,
     );
     const now = nowFrom(metadata);
-    const override = await this.dependencies.workflow.run((transaction) =>
-      this.dependencies.menu.upsertBranchOverride(transaction, {
-        businessAccountId: context.businessAccountId,
-        branchId,
-        dishId,
-        expectedVersion: input.expectedVersion,
-        ...(input.price !== undefined ? { price: input.price } : {}),
-        ...(input.available !== undefined
-          ? { available: input.available }
-          : {}),
-        ...(input.visible !== undefined ? { visible: input.visible } : {}),
-        now,
-      }),
-    );
-    if (!override) {
-      throw new ApplicationError(
-        "concurrency_conflict",
-        409,
-        "Branch override changed",
-        "Reload the branch override and retry the change.",
-        before?.version ?? 0,
-      );
-    }
     const effectiveBefore = before?.available ?? dish.available;
-    const effectiveAfter = override.available ?? dish.available;
-    if (input.available !== undefined && effectiveBefore !== effectiveAfter) {
-      await this.dependencies.workflow.run((transaction) =>
-        this.appendMenuAvailabilityEvent(transaction, {
-          context,
-          restaurantId: dish.restaurantId,
-          branchId,
-          dishId,
-          aggregateVersion: override.version,
-          available: effectiveAfter,
-          metadata,
-          now,
-        }),
-      );
-    }
+    const override = await this.dependencies.workflow.run(
+      async (transaction) => {
+        const updated = await this.dependencies.menu.upsertBranchOverride(
+          transaction,
+          {
+            businessAccountId: context.businessAccountId,
+            branchId,
+            dishId,
+            expectedVersion: input.expectedVersion,
+            ...(input.price !== undefined ? { price: input.price } : {}),
+            ...(input.available !== undefined
+              ? { available: input.available }
+              : {}),
+            ...(input.visible !== undefined ? { visible: input.visible } : {}),
+            now,
+          },
+        );
+        if (!updated) {
+          throw new ApplicationError(
+            "concurrency_conflict",
+            409,
+            "Branch override changed",
+            "Reload the branch override and retry the change.",
+            before?.version ?? 0,
+          );
+        }
+        const effectiveAfter = updated.available ?? dish.available;
+        if (
+          input.available !== undefined &&
+          effectiveBefore !== effectiveAfter
+        ) {
+          await this.appendMenuAvailabilityEvent(transaction, {
+            context,
+            restaurantId: dish.restaurantId,
+            branchId,
+            dishId,
+            aggregateVersion: updated.version,
+            available: effectiveAfter,
+            metadata,
+            now,
+          });
+        }
+        return updated;
+      },
+    );
     return override;
   }
 
@@ -723,16 +759,20 @@ export class MenuTablesService {
     const branch = await this.requireBranch(context, branchId);
     requirePermission(context, "tables.manage", branch.restaurantId, branchId);
     const now = nowFrom(metadata);
-    return this.dependencies.workflow.run((transaction) =>
-      this.dependencies.tables.createTable(transaction, {
-        id: randomUUID(),
-        businessAccountId: context.businessAccountId,
-        branchId,
-        code: input.code,
-        area: input.area,
-        now,
-      }),
-    );
+    try {
+      return await this.dependencies.workflow.run((transaction) =>
+        this.dependencies.tables.createTable(transaction, {
+          id: randomUUID(),
+          businessAccountId: context.businessAccountId,
+          branchId,
+          code: input.code,
+          area: input.area,
+          now,
+        }),
+      );
+    } catch (error: unknown) {
+      rethrowTableCodeConflict(error);
+    }
   }
 
   public async updateTable(
@@ -763,20 +803,25 @@ export class MenuTablesService {
       before.branchId,
     );
     const now = nowFrom(metadata);
-    const table = await this.dependencies.workflow.run((transaction) =>
-      this.dependencies.tables.updateTable(transaction, {
-        businessAccountId: context.businessAccountId,
-        tableId,
-        expectedVersion: input.expectedVersion,
-        ...(input.code !== undefined ? { code: input.code } : {}),
-        ...(input.area !== undefined ? { area: input.area } : {}),
-        ...(input.status !== undefined ? { status: input.status } : {}),
-        ...(input.outOfService !== undefined
-          ? { outOfService: input.outOfService }
-          : {}),
-        now,
-      }),
-    );
+    let table: Table | undefined;
+    try {
+      table = await this.dependencies.workflow.run((transaction) =>
+        this.dependencies.tables.updateTable(transaction, {
+          businessAccountId: context.businessAccountId,
+          tableId,
+          expectedVersion: input.expectedVersion,
+          ...(input.code !== undefined ? { code: input.code } : {}),
+          ...(input.area !== undefined ? { area: input.area } : {}),
+          ...(input.status !== undefined ? { status: input.status } : {}),
+          ...(input.outOfService !== undefined
+            ? { outOfService: input.outOfService }
+            : {}),
+          now,
+        }),
+      );
+    } catch (error: unknown) {
+      rethrowTableCodeConflict(error);
+    }
     if (!table) {
       throw new ApplicationError(
         "concurrency_conflict",

@@ -19,12 +19,12 @@ import {
 const connectionString = process.env.TEST_DATABASE_URL;
 const describeWithDatabase = connectionString ? describe : describe.skip;
 
-function metadata() {
+function metadata(now = new Date()) {
   const correlationId = randomUUID();
   return {
     correlationId,
     causationId: correlationId,
-    now: new Date("2026-07-27T15:00:00.000Z"),
+    now,
   };
 }
 
@@ -1091,7 +1091,7 @@ describeWithDatabase("tenant, branch, and owner bootstrap", () => {
         permissionKeys: ["restaurant.view", "branches.view"],
         restaurantIds: [tenant.restaurant.id],
         branchIds: [tenant.branch.id],
-        expiresAtUtc: new Date("2026-07-27T16:00:00.000Z"),
+        expiresAtUtc: new Date(Date.now() + 60 * 60 * 1000),
       },
       metadata(),
     );
@@ -1150,7 +1150,7 @@ describeWithDatabase("tenant, branch, and owner bootstrap", () => {
           permissionKeys: ["restaurant.view"],
           restaurantIds: [tenant.restaurant.id],
           branchIds: [],
-          expiresAtUtc: new Date("2026-07-27T16:00:00.000Z"),
+          expiresAtUtc: new Date(Date.now() + 60 * 60 * 1000),
         },
         metadata(),
       ),

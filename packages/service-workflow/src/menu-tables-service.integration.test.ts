@@ -577,6 +577,11 @@ describeWithDatabase("menu, tables, and QR service against PostgreSQL", () => {
       version: 2,
       price: { amount: "950.00", currency: "DZD" },
     });
+    const aggregateBeforeConflict = await menu.getMenu(
+      databasePool,
+      fixture.tenant.businessAccountId,
+      fixture.tenant.restaurant.id,
+    );
 
     await expect(
       menuTablesService.upsertBranchOverride(
@@ -600,6 +605,15 @@ describeWithDatabase("menu, tables, and QR service against PostgreSQL", () => {
       [fixture.tenant.businessAccountId, branchId, dish.id],
     );
     expect(stored.rows[0]).toEqual({ price_amount: "950.00", version: 2 });
+    expect(
+      (
+        await menu.getMenu(
+          databasePool,
+          fixture.tenant.businessAccountId,
+          fixture.tenant.restaurant.id,
+        )
+      )?.version,
+    ).toBe(aggregateBeforeConflict?.version);
   });
 
   it("appends a menu availability event only when availability actually changes", async () => {
@@ -639,6 +653,25 @@ describeWithDatabase("menu, tables, and QR service against PostgreSQL", () => {
     );
     expect(enabled.available).toBe(true);
     expect(await outboxCount(businessAccountId, eventType)).toBe(2);
+
+    await expect(
+      menuTablesService.updateDish(
+        fixture.context,
+        { dishId: dish.id, expectedVersion: 5, available: false },
+        {
+          correlationId: "not-a-uuid",
+          causationId: "not-a-uuid",
+          now: new Date(),
+        },
+      ),
+    ).rejects.toMatchObject({ code: "22P02" });
+    expect(await outboxCount(businessAccountId, eventType)).toBe(2);
+    const rolledBack = await menu.getDish(
+      databasePool,
+      businessAccountId,
+      dish.id,
+    );
+    expect(rolledBack).toMatchObject({ available: true, version: 5 });
 
     const payloads = await databasePool.query<{
       payload: { dishId: string; available: boolean };
@@ -820,7 +853,7 @@ describeWithDatabase("menu, tables, and QR service against PostgreSQL", () => {
   // Tables & QR
   // -------------------------------------------------------------------
 
-  it("surfaces a duplicate table code inside a branch as a unique violation", async () => {
+  it("rejects a duplicate table code with an actionable branch-scoped conflict", async () => {
     const fixture = await bootstrapFixture("table-code");
     const branchId = fixture.tenant.branch.id;
     const code = `T-${randomUUID().slice(0, 4)}`;
@@ -847,15 +880,12 @@ describeWithDatabase("menu, tables, and QR service against PostgreSQL", () => {
         (error: unknown) => error,
       );
 
-    // Current behaviour: neither the store nor the service maps Postgres
-    // 23505 on `table_branch_code_uidx` into an ApplicationError. Only the
-    // HTTP error middleware translates it (to 409 concurrency_conflict), so
-    // at the service boundary the raw driver error surfaces unchanged.
-    expect(failure).toBeInstanceOf(Error);
-    expect(failure).not.toBeInstanceOf(ApplicationError);
+    expect(failure).toBeInstanceOf(ApplicationError);
     expect(failure).toMatchObject({
-      code: "23505",
-      constraint: "table_branch_code_uidx",
+      code: "validation_error",
+      status: 409,
+      title: "Table code already exists",
+      detail: "Use a different table code for this branch.",
     });
 
     expect(
@@ -868,6 +898,27 @@ describeWithDatabase("menu, tables, and QR service against PostgreSQL", () => {
         [fixture.tenant.businessAccountId, branchId, code],
       ),
     ).toBe(1);
+
+    const otherCode = `T-${randomUUID().slice(0, 4)}`;
+    const renamed = await menuTablesService.createTable(
+      fixture.context,
+      branchId,
+      { code: otherCode },
+      metadata(),
+    );
+    await expect(
+      menuTablesService.updateTable(
+        fixture.context,
+        renamed.id,
+        { expectedVersion: 1, code },
+        metadata(),
+      ),
+    ).rejects.toMatchObject({
+      code: "validation_error",
+      status: 409,
+      title: "Table code already exists",
+      detail: "Use a different table code for this branch.",
+    });
 
     // The same code in another tenant's branch is unaffected: the unique
     // index is scoped by business account and branch.
