@@ -75,6 +75,10 @@ export interface MenuHttpUseCases {
     },
     metadata: RequestMetadata,
   ): Promise<Dish>;
+  listOptionGroups(
+    context: StaffRequestContext,
+    dishId: string,
+  ): Promise<readonly OptionGroup[]>;
   createOptionGroup(
     context: StaffRequestContext,
     input: z.infer<typeof createOptionGroupSchema>,
@@ -94,6 +98,11 @@ export interface MenuHttpUseCases {
     input: z.infer<typeof replaceOptionsSchema>,
     metadata: RequestMetadata,
   ): Promise<OptionGroup>;
+  getBranchOverride(
+    context: StaffRequestContext,
+    branchId: string,
+    dishId: string,
+  ): Promise<BranchDishOverride>;
   upsertBranchOverride(
     context: StaffRequestContext,
     branchId: string,
@@ -216,6 +225,19 @@ export function createMenuRouter(dependencies: MenuRouterDependencies): Router {
     },
   );
 
+  router.get(
+    "/staff/menu/dishes/:dishId/option-groups",
+    async (request, response) => {
+      const parameters = parse(dishParametersSchema, request.params);
+      response.send({
+        items: await dependencies.useCases.listOptionGroups(
+          context(request),
+          parameters.dishId,
+        ),
+      });
+    },
+  );
+
   router.post(
     "/staff/restaurants/:restaurantId/menu/dishes",
     criticalChangeLimiter,
@@ -294,6 +316,20 @@ export function createMenuRouter(dependencies: MenuRouterDependencies): Router {
             expectedVersion,
           },
           metadata(request),
+        ),
+      );
+    },
+  );
+
+  router.get(
+    "/staff/branches/:branchId/menu/dishes/:dishId/override",
+    async (request, response) => {
+      const parameters = parse(branchDishParametersSchema, request.params);
+      response.send(
+        await dependencies.useCases.getBranchOverride(
+          context(request),
+          parameters.branchId,
+          parameters.dishId,
         ),
       );
     },

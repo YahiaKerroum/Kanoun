@@ -693,9 +693,15 @@ describeWithDatabase("menu, tables, and QR service against PostgreSQL", () => {
 
   it("denies menu commands and reads without the required permission", async () => {
     const fixture = await bootstrapFixture("menu-perm");
-    const { category } = await createCategoryAndDish(fixture);
+    const { category, dish } = await createCategoryAndDish(fixture);
     const withoutManage = contextWithout(fixture.context, ["menu.manage"]);
     const withoutView = contextWithout(fixture.context, ["menu.view"]);
+    const withoutPrices = contextWithout(fixture.context, [
+      "menu.manage_prices",
+    ]);
+    const withoutAvailability = contextWithout(fixture.context, [
+      "menu.manage_availability",
+    ]);
     const restaurantId = fixture.tenant.restaurant.id;
 
     await expect(
@@ -723,6 +729,45 @@ describeWithDatabase("menu, tables, and QR service against PostgreSQL", () => {
     ).rejects.toMatchObject({ code: "permission_denied", status: 403 });
     await expect(
       menuTablesService.listDishes(withoutView, restaurantId),
+    ).rejects.toMatchObject({ code: "permission_denied", status: 403 });
+    await expect(
+      menuTablesService.listOptionGroups(withoutView, dish.id),
+    ).rejects.toMatchObject({ code: "permission_denied", status: 403 });
+    await expect(
+      menuTablesService.getBranchOverride(
+        withoutView,
+        fixture.tenant.branch.id,
+        dish.id,
+      ),
+    ).rejects.toMatchObject({ code: "permission_denied", status: 403 });
+    await expect(
+      menuTablesService.updateDish(
+        withoutManage,
+        { dishId: dish.id, expectedVersion: dish.version, name: "Denied" },
+        metadata(),
+      ),
+    ).rejects.toMatchObject({ code: "permission_denied", status: 403 });
+    await expect(
+      menuTablesService.updateDish(
+        withoutPrices,
+        {
+          dishId: dish.id,
+          expectedVersion: dish.version,
+          basePrice: money("1400.00"),
+        },
+        metadata(),
+      ),
+    ).rejects.toMatchObject({ code: "permission_denied", status: 403 });
+    await expect(
+      menuTablesService.updateDish(
+        withoutAvailability,
+        {
+          dishId: dish.id,
+          expectedVersion: dish.version,
+          available: false,
+        },
+        metadata(),
+      ),
     ).rejects.toMatchObject({ code: "permission_denied", status: 403 });
   });
 

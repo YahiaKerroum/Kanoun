@@ -917,6 +917,26 @@ paths:
         "409": {$ref: "#/components/responses/Conflict"}
         "422": {$ref: "#/components/responses/ValidationFailed"}
 
+  /v1/staff/menu/dishes/{dishId}/option-groups:
+    get:
+      tags: [Menu]
+      operationId: listMenuOptionGroups
+      summary: List a dish's option groups and current options.
+      security: [{staffCookie: []}]
+      parameters:
+        - $ref: "#/components/parameters/DishId"
+      responses:
+        "200":
+          description: Option groups for the dish.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items: {type: array, items: {$ref: "#/components/schemas/AdminOptionGroup"}}
+        "404": {$ref: "#/components/responses/NotFound"}
+
   /v1/staff/menu/option-groups:
     post:
       tags: [Menu]
@@ -983,6 +1003,21 @@ paths:
         "422": {$ref: "#/components/responses/ValidationFailed"}
 
   /v1/staff/branches/{branchId}/menu/dishes/{dishId}/override:
+    get:
+      tags: [Menu]
+      operationId: getBranchDishOverride
+      summary: Get the current branch-specific override for a dish.
+      security: [{staffCookie: []}]
+      parameters:
+        - $ref: "#/components/parameters/BranchId"
+        - $ref: "#/components/parameters/DishId"
+      responses:
+        "200":
+          description: Current branch override.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/BranchDishOverride"}
+        "404": {$ref: "#/components/responses/NotFound"}
     put:
       tags: [Menu]
       operationId: upsertBranchDishOverride
@@ -1796,7 +1831,7 @@ components:
 
     TableQrCode:
       type: object
-      required: [id, businessAccountId, branchId, kind, status, createdAt]
+      required: [id, businessAccountId, branchId, kind, status, createdAtUtc]
       properties:
         id: {type: string, format: uuid}
         businessAccountId: {type: string, format: uuid}
@@ -1804,8 +1839,8 @@ components:
         tableId: {type: [string, "null"], format: uuid}
         kind: {type: string, enum: [table, branch]}
         status: {type: string, enum: [active, revoked]}
-        createdAt: {type: string, format: date-time}
-        revokedAt: {type: [string, "null"], format: date-time}
+        createdAtUtc: {type: string, format: date-time}
+        revokedAtUtc: {type: [string, "null"], format: date-time}
         revokedReason: {type: [string, "null"]}
 
     IssuedQrCode:

@@ -34,12 +34,14 @@ body {
 }
 button,
 input,
-select {
+select,
+textarea {
   font: inherit;
 }
 button:focus-visible,
 input:focus-visible,
 select:focus-visible,
+textarea:focus-visible,
 a:focus-visible {
   outline: 3px solid #6e4700;
   outline-offset: 3px;
@@ -467,6 +469,417 @@ a:focus-visible {
   max-width: 620px;
   margin: 24px 0 14px;
 }
+
+.section-detail,
+.subsection-heading p {
+  max-width: 720px;
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.operational-admin-section {
+  scroll-margin-top: 20px;
+}
+
+.operational-status {
+  position: sticky;
+  z-index: 5;
+  top: 0;
+  min-height: 34px;
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 9px;
+  background: #fff8e8;
+}
+
+.admin-loading,
+.admin-load-error {
+  display: grid;
+  min-height: 220px;
+  place-items: center;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.admin-load-error {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  flex-direction: column;
+}
+
+.admin-load-error h3 {
+  margin: 0;
+  font: 700 28px "Bricolage Grotesque";
+}
+
+.admin-load-error > p:not(.eyebrow) {
+  max-width: 620px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.admin-load-error button,
+.secondary-action,
+.qr-actions a,
+.qr-actions button {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #ddcfae;
+  border-radius: 10px;
+  padding: 0 14px;
+  color: var(--brown);
+  background: #fff8e8;
+  cursor: pointer;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+button:disabled,
+input:disabled,
+select:disabled,
+textarea:disabled {
+  cursor: not-allowed;
+  opacity: 0.56;
+}
+
+.feature-boundary {
+  margin: 0 0 24px;
+  border: 1px solid #f0b88f;
+  border-radius: 11px;
+  padding: 13px 15px;
+  color: #713000;
+  background: #ffe9dc;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.admin-subsection {
+  padding: 28px 0;
+  border-top: 1px solid var(--line);
+}
+
+.subsection-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 18px;
+}
+
+.subsection-heading h4,
+.issued-qr h5 {
+  margin: 0;
+  font: 700 21px "Bricolage Grotesque";
+}
+
+.subsection-heading > span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.compact-form,
+.record-editor,
+.option-editor {
+  display: grid;
+  align-items: end;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.compact-form--category {
+  grid-template-columns: minmax(200px, 1fr) 150px auto;
+}
+
+.compact-form--dish {
+  grid-template-columns: repeat(4, minmax(130px, 1fr)) auto;
+}
+
+.compact-form--table {
+  grid-template-columns: minmax(180px, 0.7fr) minmax(220px, 1fr) auto;
+}
+
+.compact-form label,
+.record-editor label,
+.option-editor label,
+.replace-options label,
+.issued-qr label,
+.qr-history label {
+  display: grid;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.compact-form input,
+.compact-form select,
+.record-editor input,
+.record-editor select,
+.record-editor textarea,
+.option-editor input,
+.option-editor select,
+.option-editor textarea,
+.replace-options textarea,
+.issued-qr input,
+.qr-history input {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0 11px;
+  color: #1e1b14;
+  background: var(--canvas);
+}
+
+.record-editor textarea,
+.option-editor textarea,
+.replace-options textarea {
+  min-height: 96px;
+  padding: 11px;
+  resize: vertical;
+}
+
+.compact-form button,
+.record-editor > button,
+.option-editor > button,
+.replace-options > button,
+.qr-history form button {
+  min-height: 44px;
+  border: 0;
+  border-radius: 10px;
+  padding: 0 15px;
+  color: #261b00;
+  background: var(--gold);
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.compact-form__wide {
+  grid-column: 1 / -2;
+}
+
+.configuration-rows {
+  border-bottom: 1px solid var(--line);
+}
+
+.configuration-row {
+  display: grid;
+  min-height: 68px;
+  grid-template-columns: minmax(200px, 1fr) 100px 130px auto;
+  align-items: end;
+  gap: 12px;
+  border-top: 1px solid var(--line);
+  padding: 11px 0;
+}
+
+.configuration-row label {
+  display: grid;
+  gap: 3px;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.configuration-row input,
+.configuration-row select {
+  width: 100%;
+  min-height: 38px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 0 9px;
+  color: #1e1b14;
+  background: transparent;
+}
+
+.configuration-row:hover input:not(:disabled),
+.configuration-row:hover select:not(:disabled),
+.configuration-row input:focus,
+.configuration-row select:focus {
+  border-color: var(--line);
+  background: var(--canvas);
+}
+
+.configuration-row button {
+  min-height: 38px;
+  border: 1px solid #ddcfae;
+  border-radius: 9px;
+  padding: 0 13px;
+  color: var(--brown);
+  background: #fff8e8;
+  font-weight: 800;
+}
+
+.record-selector {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--line);
+}
+
+.record-selector button {
+  display: flex;
+  min-height: 70px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  border: 0;
+  padding: 12px 14px;
+  color: #1e1b14;
+  background: white;
+  text-align: left;
+}
+
+.record-selector button:hover,
+.record-selector button.is-selected {
+  background: #fff4d6;
+}
+
+.record-selector button > span:first-child {
+  display: grid;
+  gap: 4px;
+}
+
+.record-selector small,
+.record-selector button > span:last-child {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.record-selector button > span:last-child {
+  text-align: right;
+  text-transform: capitalize;
+}
+
+.selected-record {
+  margin-top: 6px;
+  border-radius: 14px;
+  padding: 24px;
+  background: #fffdf8;
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+.record-editor {
+  grid-template-columns: repeat(4, minmax(125px, 1fr));
+}
+
+.record-editor__wide {
+  grid-column: 1 / -1;
+}
+
+.check-control {
+  display: flex !important;
+  min-height: 44px;
+  align-items: center;
+  grid-template-columns: auto 1fr;
+  gap: 8px !important;
+}
+
+.check-control input {
+  width: 20px;
+  min-height: 20px;
+}
+
+.nested-management {
+  margin-top: 28px;
+  border-top: 1px solid var(--line);
+  padding-top: 24px;
+}
+
+.option-editor {
+  grid-template-columns: repeat(5, minmax(100px, 1fr)) auto;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 20px;
+}
+
+.option-editor__wide {
+  grid-column: 1 / -2;
+}
+
+.option-group {
+  border-top: 1px solid var(--line);
+  padding: 18px 0 0;
+}
+
+.replace-options {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: end;
+  gap: 12px;
+  padding-bottom: 18px;
+}
+
+.issued-qr {
+  display: grid;
+  grid-template-columns: 1fr 240px;
+  align-items: center;
+  gap: 28px;
+  margin-bottom: 22px;
+  border: 2px solid var(--gold);
+  border-radius: 16px;
+  padding: 22px;
+  background: #fffaf0;
+}
+
+.issued-qr p:not(.eyebrow) {
+  max-width: 650px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.issued-qr img {
+  width: 240px;
+  height: 240px;
+  border: 10px solid white;
+}
+
+.qr-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.qr-history {
+  border-bottom: 1px solid var(--line);
+}
+
+.qr-history article {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.8fr) minmax(320px, 1.2fr);
+  align-items: center;
+  gap: 24px;
+  border-top: 1px solid var(--line);
+  padding: 14px 0;
+}
+
+.qr-history article > div {
+  display: grid;
+  gap: 4px;
+}
+
+.qr-history small {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.qr-history form {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: end;
+  gap: 10px;
+}
+
 @media (max-width: 760px) {
   .sign-in-stage {
     grid-template-columns: 1fr;
@@ -512,13 +925,47 @@ a:focus-visible {
     grid-template-columns: 1fr;
   }
   .inline-form,
-  .permission-groups {
+  .permission-groups,
+  .compact-form,
+  .record-editor,
+  .option-editor,
+  .replace-options,
+  .configuration-row,
+  .issued-qr,
+  .qr-history article,
+  .qr-history form {
     grid-template-columns: 1fr;
   }
   .section-heading,
+  .subsection-heading,
   .employee-list button,
   .feature-list li {
     align-items: flex-start;
+  }
+
+  .section-heading,
+  .subsection-heading {
+    flex-direction: column;
+  }
+
+  .record-selector {
+    grid-template-columns: 1fr;
+  }
+
+  .compact-form__wide,
+  .record-editor__wide,
+  .option-editor__wide {
+    grid-column: auto;
+  }
+
+  .selected-record {
+    margin-inline: -8px;
+    padding: 18px;
+  }
+
+  .issued-qr img {
+    width: min(240px, 100%);
+    height: auto;
   }
 }
 @media (prefers-reduced-motion: reduce) {

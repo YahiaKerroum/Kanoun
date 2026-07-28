@@ -273,7 +273,32 @@ export class MenuTablesService {
     if (!before) {
       notFound("Dish");
     }
-    requirePermission(context, "menu.manage", before.restaurantId);
+    if (
+      input.name !== undefined ||
+      input.description !== undefined ||
+      input.imageUrl !== undefined ||
+      input.categoryId !== undefined ||
+      input.displayOrder !== undefined ||
+      input.status !== undefined
+    ) {
+      requirePermission(context, "menu.manage", before.restaurantId);
+    }
+    if (input.basePrice !== undefined) {
+      requirePermission(
+        context,
+        "menu.manage_prices",
+        before.restaurantId,
+        context.activeBranchId,
+      );
+    }
+    if (input.available !== undefined) {
+      requirePermission(
+        context,
+        "menu.manage_availability",
+        before.restaurantId,
+        context.activeBranchId,
+      );
+    }
     if (input.basePrice) {
       const groups = await this.dependencies.menu.listOptionGroups(
         this.dependencies.databasePool,
@@ -354,6 +379,31 @@ export class MenuTablesService {
   // ---------------------------------------------------------------------
   // Menu — option groups & options
   // ---------------------------------------------------------------------
+
+  public async listOptionGroups(
+    context: StaffRequestContext,
+    dishId: string,
+  ): Promise<readonly OptionGroup[]> {
+    const dish = await this.dependencies.menu.getDish(
+      this.dependencies.databasePool,
+      context.businessAccountId,
+      dishId,
+    );
+    if (!dish) {
+      notFound("Dish");
+    }
+    requirePermission(
+      context,
+      "menu.view",
+      dish.restaurantId,
+      context.activeBranchId,
+    );
+    return this.dependencies.menu.listOptionGroups(
+      this.dependencies.databasePool,
+      context.businessAccountId,
+      dishId,
+    );
+  }
 
   public async createOptionGroup(
     context: StaffRequestContext,
@@ -573,6 +623,32 @@ export class MenuTablesService {
   // ---------------------------------------------------------------------
   // Menu — branch overrides
   // ---------------------------------------------------------------------
+
+  public async getBranchOverride(
+    context: StaffRequestContext,
+    branchId: string,
+    dishId: string,
+  ): Promise<BranchDishOverride> {
+    const dish = await this.dependencies.menu.getDish(
+      this.dependencies.databasePool,
+      context.businessAccountId,
+      dishId,
+    );
+    if (!dish) {
+      notFound("Dish");
+    }
+    requirePermission(context, "menu.view", dish.restaurantId, branchId);
+    const override = await this.dependencies.menu.getBranchOverride(
+      this.dependencies.databasePool,
+      context.businessAccountId,
+      branchId,
+      dishId,
+    );
+    if (!override) {
+      notFound("Branch dish override");
+    }
+    return override;
+  }
 
   public async upsertBranchOverride(
     context: StaffRequestContext,

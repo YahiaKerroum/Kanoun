@@ -7,6 +7,10 @@ import {
 } from "react";
 import { createRoot } from "react-dom/client";
 import { z } from "zod";
+import {
+  MenuTablesAdministration,
+  type MenuTablesPermissions,
+} from "./MenuTablesAdministration.js";
 import "./styles.css";
 
 const permissionGrantSchema = z.object({
@@ -601,6 +605,31 @@ function App() {
         (feature.scope === "branch" || feature.scope === "restaurant") &&
         feature.mvp,
     ) ?? [];
+  const activePermissionKeys = new Set(
+    state.session.grants
+      .filter(
+        (grant) =>
+          (!grant.restaurantId ||
+            grant.restaurantId === activeBranch?.restaurantId) &&
+          (!grant.branchId || grant.branchId === activeBranch?.id),
+      )
+      .map((grant) => grant.permissionKey),
+  );
+  const menuTablesPermissions: MenuTablesPermissions = {
+    menuView: activePermissionKeys.has("menu.view"),
+    menuManage: activePermissionKeys.has("menu.manage"),
+    menuManagePrices: activePermissionKeys.has("menu.manage_prices"),
+    menuManageAvailability: activePermissionKeys.has(
+      "menu.manage_availability",
+    ),
+    tablesView: activePermissionKeys.has("tables.view"),
+    tablesManage: activePermissionKeys.has("tables.manage"),
+    qrManage: activePermissionKeys.has("qr.manage"),
+  };
+  const persistedFeatureValues = {
+    ...(state.restaurantFeatures?.configuration.values ?? {}),
+    ...(state.features?.configuration.values ?? {}),
+  };
 
   return (
     <div className="admin-stage">
@@ -637,6 +666,8 @@ function App() {
           <a href="#context">Context</a>
           <a href="#employees">Employees</a>
           <a href="#permissions">Permissions</a>
+          <a href="#menu">Menu</a>
+          <a href="#tables">Tables &amp; QR</a>
           <a href="#features">Features</a>
         </nav>
         <section className="setup-content">
@@ -820,6 +851,19 @@ function App() {
               </>
             )}
           </section>
+
+          {activeBranch ? (
+            <MenuTablesAdministration
+              key={activeBranch.id}
+              branch={activeBranch}
+              permissions={menuTablesPermissions}
+              features={{
+                menu: persistedFeatureValues["CFG-003"] !== "disabled",
+                qrMenu: persistedFeatureValues["CFG-004"] !== "disabled",
+                tables: persistedFeatureValues["CFG-006"] !== "disabled",
+              }}
+            />
+          ) : null}
 
           <section id="features" className="admin-section">
             <div className="section-heading">

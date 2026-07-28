@@ -108,9 +108,11 @@ function createTestApplication(overrides?: Partial<MenuHttpUseCases>) {
     listDishes: vi.fn().mockResolvedValue([dish]),
     createDish: vi.fn().mockResolvedValue(dish),
     updateDish: vi.fn().mockResolvedValue(dish),
+    listOptionGroups: vi.fn().mockResolvedValue([optionGroup]),
     createOptionGroup: vi.fn().mockResolvedValue(optionGroup),
     updateOptionGroup: vi.fn().mockResolvedValue(optionGroup),
     replaceOptions: vi.fn().mockResolvedValue(optionGroup),
+    getBranchOverride: vi.fn().mockResolvedValue(branchDishOverride),
     upsertBranchOverride: vi.fn().mockResolvedValue(branchDishOverride),
     ...overrides,
   } satisfies MenuHttpUseCases;
@@ -302,6 +304,31 @@ describe("menu HTTP adapter", () => {
       dishId,
       { expectedVersion: 1, visible: false },
       expect.anything(),
+    );
+  });
+
+  it("returns option groups and the current branch override for administration", async () => {
+    const { app, useCases } = createTestApplication();
+
+    const groupsResponse = await authenticated(
+      request(app).get(`/api/v1/staff/menu/dishes/${dishId}/option-groups`),
+    ).expect(200);
+    expect(groupsResponse.body).toEqual({ items: [optionGroup] });
+    expect(useCases.listOptionGroups).toHaveBeenCalledWith(
+      expect.objectContaining(context),
+      dishId,
+    );
+
+    const overrideResponse = await authenticated(
+      request(app).get(
+        `/api/v1/staff/branches/${branchId}/menu/dishes/${dishId}/override`,
+      ),
+    ).expect(200);
+    expect(overrideResponse.body).toEqual(branchDishOverride);
+    expect(useCases.getBranchOverride).toHaveBeenCalledWith(
+      expect.objectContaining(context),
+      branchId,
+      dishId,
     );
   });
 
