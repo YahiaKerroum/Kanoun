@@ -152,9 +152,7 @@ describe("tables HTTP adapter", () => {
 
   it("parses a valid If-Match header into the expected version for table updates", async () => {
     const { app, useCases } = createTestApplication();
-    await authenticated(
-      request(app).patch(`/api/v1/staff/tables/${tableId}`),
-    )
+    await authenticated(request(app).patch(`/api/v1/staff/tables/${tableId}`))
       .set("If-Match", '"2"')
       .send({ code: "T5-renamed" })
       .expect(200);
@@ -170,23 +168,17 @@ describe("tables HTTP adapter", () => {
   it("rejects malformed or missing If-Match headers on the table PATCH route without calling the use case", async () => {
     const { app, useCases } = createTestApplication();
 
-    await authenticated(
-      request(app).patch(`/api/v1/staff/tables/${tableId}`),
-    )
+    await authenticated(request(app).patch(`/api/v1/staff/tables/${tableId}`))
       .set("If-Match", "2")
       .send({ code: "T5-renamed" })
       .expect(422);
 
-    await authenticated(
-      request(app).patch(`/api/v1/staff/tables/${tableId}`),
-    )
+    await authenticated(request(app).patch(`/api/v1/staff/tables/${tableId}`))
       .set("If-Match", '"abc"')
       .send({ code: "T5-renamed" })
       .expect(422);
 
-    await authenticated(
-      request(app).patch(`/api/v1/staff/tables/${tableId}`),
-    )
+    await authenticated(request(app).patch(`/api/v1/staff/tables/${tableId}`))
       .send({ code: "T5-renamed" })
       .expect(422);
 

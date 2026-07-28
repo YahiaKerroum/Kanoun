@@ -3,7 +3,7 @@ id: DOC-INDEX
 status: approved
 version: 1.0
 owner: product-and-architecture
-last_reviewed: 2026-07-27
+last_reviewed: 2026-07-28
 source_of_truth_for:
   - documentation-governance
 ---
@@ -45,7 +45,9 @@ source_of_truth_for:
 | Slice 001 implementation declaration | `docs/delivery/slice-001-application-bootstrap.md` | Verified |
 | Slice 002 implementation declaration | `docs/delivery/slice-002-tenant-branch-owner-bootstrap.md` | Verified |
 | Slice 003 implementation declaration | `docs/delivery/slice-003-employees-permissions-configuration.md` | Verified |
-| Current engineering handoff | `docs/delivery/handoff-2026-07-27-slice-004-checkpoint.md` | Slice 004 in progress |
+| Slice 004 implementation declaration | `docs/delivery/slice-004-menu-tables-and-qr.md` | Verified |
+| Current engineering handoff | `docs/delivery/handoff-2026-07-28-slice-004-checkpoint.md` | Slice 004 locally verified; publication pending |
+| Prior Slice 004 checkpoint | `docs/delivery/handoff-2026-07-27-slice-004-checkpoint.md` | Superseded — historical only |
 | Prior engineering handoff (Slice 003 publication evidence) | `docs/delivery/handoff-2026-07-27.md` | Superseded — historical only |
 | Frontend quality | `docs/quality/frontend-quality.md` | Approved |
 | Deployment and recovery | `docs/operations/deployment-and-recovery.md` | Proposed until hosting ADR |

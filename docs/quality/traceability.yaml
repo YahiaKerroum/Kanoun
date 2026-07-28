@@ -3,7 +3,7 @@ document:
   status: approved
   version: "1.0"
   owner: quality
-  last_reviewed: 2026-07-27
+  last_reviewed: 2026-07-28
 
 vertical_slices:
   application_bootstrap:
@@ -45,37 +45,34 @@ vertical_slices:
       AC-US-R05-04: The implemented direct grant token expires and revokes immediately; the private adapter creates no derived support session or real-time subscription to terminate.
 
   menu:
-    implements: [US-D01, US-D02, US-D03, US-D04, US-D05]
-    obeys: [PD-003, PD-018, PD-033, BR-011, BR-012, BR-013, BR-014]
+    implements: [US-D01, US-D02, US-D03, US-D04]
+    obeys: [PD-003, PD-018, PD-033, CFG-003, PERM-009, PERM-010, PERM-011, PERM-012, BR-001, BR-002, BR-003, BR-006, BR-011, BR-012, BR-013, BR-014]
     modules: [menu, audit]
-    operations: [listMenuCategories, createMenuCategory, updateMenuCategory, listMenuDishes, createMenuDish, updateMenuDish, createMenuOptionGroup, updateMenuOptionGroup, replaceMenuOptions, upsertBranchDishOverride, getGuestMenu]
-    tests: [TEST-MENU-001, TEST-MENU-002, TEST-SNAPSHOT-001]
-    slice_004_verified_acceptance: [AC-US-D01-03, AC-US-D02-03, AC-US-D03-03, AC-US-D03-05, AC-US-D03-06, AC-US-D04-01]
+    operations: [listMenuCategories, createMenuCategory, updateMenuCategory, listMenuDishes, createMenuDish, updateMenuDish, listMenuOptionGroups, createMenuOptionGroup, updateMenuOptionGroup, replaceMenuOptions, getBranchDishOverride, upsertBranchDishOverride, getGuestMenu]
+    tests: [TEST-MENU-001, TEST-MENU-002, TEST-MENU-AUDIT-001, TEST-MENU-FEATURE-001, TEST-MENU-HTTP-001, TEST-MENU-BROWSER-001]
+    slice_004_verified_acceptance: [AC-US-D01-01, AC-US-D01-02, AC-US-D02-01, AC-US-D02-02, AC-US-D02-03, AC-US-D03-01, AC-US-D03-02, AC-US-D03-03, AC-US-D03-04, AC-US-D03-05, AC-US-D03-06]
     cross_slice_acceptance:
-      AC-US-D05-01: Slice 004 implements menu management and guest browse; order-item snapshots require Slice 005's order submission and item persistence.
-      AC-US-D05-02: Slice 004 implements menu management and guest browse; order-item snapshots require Slice 005's order submission and item persistence.
+      AC-US-D01-03: Slice 004 deactivates without deleting menu records; preservation through historical order snapshots is verified with Slice 005 order persistence.
+      AC-US-D02-04: Slice 004 versions price changes; immutable submitted-order pricing is verified with Slice 005 order snapshots.
+      AC-US-D04-01: Customer notes require Slice 005 order-item persistence and staff order presentation; Slice 004 does not fabricate a note consumer.
+      AC-US-D04-02: Free-text note configuration is completed with the Slice 005 order-entry flow where the setting can be enforced.
+      AC-US-D04-03: The note disclaimer belongs with the Slice 005 order-entry control; Slice 004 exposes no non-functional note field.
 
   guest_qr_and_tables:
-    implements: [US-E01, US-E02, US-E03, US-E04, US-F01, US-F02, US-F04, US-F05]
-    obeys: [PD-006, PD-007, PD-008, PD-010, PD-011, PD-012, PD-034, BR-008, BR-009, BR-010, BR-019]
+    implements: [US-E01, US-E02, US-E03, US-E04, US-F01, US-F02]
+    obeys: [PD-006, PD-007, PD-008, PD-010, PD-011, CFG-003, CFG-004, CFG-006, PERM-013, PERM-014, PERM-015, BR-001, BR-002, BR-003, BR-006, BR-008, BR-009, BR-010, BR-024]
     modules: [tables, ordering, audit]
     operations: [listTables, createTable, updateTable, issueTableQrCode, issueBranchQrCode, revokeQrCode, listQrCodes, exchangeTableQr]
-    tests: [TEST-QR-001, TEST-GUEST-001, TEST-TABLE-001, TEST-TABLE-002]
-    slice_004_verified_acceptance: [AC-US-E01-01, AC-US-E01-02, AC-US-E01-03, AC-US-E01-04, AC-US-E02-01, AC-US-E02-02, AC-US-E02-03, AC-US-E02-04, AC-US-E03-01, AC-US-E03-02, AC-US-E03-03, AC-US-E03-04, AC-US-F01-01, AC-US-F01-02, AC-US-F01-03, AC-US-F01-04, AC-US-F01-05, AC-US-F02-01, AC-US-F02-02, AC-US-F02-03]
+    tests: [TEST-QR-001, TEST-GUEST-001, TEST-TABLE-001, TEST-TABLE-002, TEST-QR-AUDIT-001, TEST-QR-FEATURE-001, TEST-PUBLIC-HTTP-001, TEST-CUSTOMER-BROWSER-001, TEST-CUSTOMER-A11Y-001]
+    slice_004_verified_acceptance: [AC-US-E01-01, AC-US-E01-02, AC-US-E01-03, AC-US-E01-04, AC-US-E02-01, AC-US-E02-02, AC-US-E02-03, AC-US-E02-04, AC-US-E03-01, AC-US-E03-02, AC-US-E03-03, AC-US-E04-02, AC-US-F01-01, AC-US-F01-02, AC-US-F01-03, AC-US-F01-04, AC-US-F01-05, AC-US-F02-01, AC-US-F02-02, AC-US-F02-03]
     cross_slice_acceptance:
       AC-US-E04-01: Customer name configuration is not implemented; requires Slice 005's order submission flow.
-      AC-US-E04-02: Guest sessions without accounts are implemented; storing customer names in orders requires Slice 005.
-      AC-US-E04-03: Customer name storage requires Slice 005's order item persistence.
-      AC-US-F04-01: Employee table assignment is not implemented; requires Slice 005's order and table-session lifecycle.
-      AC-US-F04-02: Assignment recording is not implemented; requires Slice 005's order lifecycle.
-      AC-US-F04-03: Table conflict warnings are not implemented; requires Slice 005's order lifecycle.
-      AC-US-F05-01: Multiple orders per table require Slice 005's order persistence and lifecycle.
-      AC-US-F05-02: Multiple orders per table require Slice 005's order and table-session management.
-      AC-US-F05-03: Order isolation by customer and notes requires Slice 005's order persistence and lifecycle.
+      AC-US-E04-03: Slice 004 keeps the optional name local to the customer device and does not submit it; operational server storage is verified with Slice 005 order persistence.
+      AC-US-E03-04: Slice 004 rejects expired guest authorization; attempts to modify active or historical orders are verified when Slice 005 introduces guest order commands.
 
   ordering:
-    implements: [US-G01, US-G02, US-G03, US-G04, US-G05, US-G06, US-H02, US-H03, US-H04, US-H05]
-    obeys: [PD-009, PD-013, PD-029, PD-030, PD-033, BR-007, BR-011, BR-012, BR-022]
+    implements: [US-D05, US-F05, US-G01, US-G02, US-G03, US-G04, US-G05, US-G06, US-H02, US-H03]
+    obeys: [PD-008, PD-009, PD-013, PD-029, PD-030, PD-033, PD-034, BR-007, BR-008, BR-010, BR-011, BR-012, BR-019, BR-022]
     modules: [ordering, menu, tables, kitchen, audit]
     operations: [submitGuestOrder, createStaffOrder, getGuestOrder]
     tests: [TEST-ORDER-001, TEST-ORDER-002, TEST-ORDER-003, TEST-IDEMPOTENCY-001, TEST-CONCURRENCY-001]
@@ -88,8 +85,8 @@ vertical_slices:
     tests: [TEST-KITCHEN-001, TEST-KITCHEN-002, TEST-SERVE-001]
 
   payments_and_completion:
-    implements: [US-K01, US-K02, US-K03, US-K04]
-    obeys: [PD-015, PD-016, PD-017, PD-018, PD-032, BR-013, BR-015, BR-016, BR-017, BR-018]
+    implements: [US-F04, US-H04, US-H05, US-K01, US-K02, US-K03, US-K04]
+    obeys: [PD-012, PD-015, PD-016, PD-017, PD-018, PD-032, BR-008, BR-013, BR-015, BR-016, BR-017, BR-018, BR-019]
     modules: [payments, ordering, audit]
     operations: [requestGuestOrderBill, recordOrderPayment, completeOrder]
     tests: [TEST-PAYMENT-001, TEST-PAYMENT-002, TEST-REFUND-001, TEST-COMPLETE-001]
