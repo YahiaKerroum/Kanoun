@@ -25,6 +25,7 @@ import {
 } from "react";
 import { z } from "zod";
 import { checkApiReadiness, type Readiness } from "./health.js";
+import { MenuWorkspace, TablesWorkspace } from "./OperationalWorkspaces.js";
 
 type Section =
   | "Home"
@@ -268,6 +269,44 @@ function shortIdentifier(identifier: string): string {
   return `…${identifier.slice(-8)}`;
 }
 
+function resolveActiveRestaurantId(
+  session: StaffSession,
+  branchId: string,
+): string | null {
+  const exactBranchRestaurants = new Set(
+    session.grants
+      .filter(
+        (grant) =>
+          grant.branchId === branchId && grant.restaurantId !== undefined,
+      )
+      .map((grant) => grant.restaurantId)
+      .filter(
+        (restaurantId): restaurantId is string => restaurantId !== undefined,
+      ),
+  );
+  if (exactBranchRestaurants.size === 1) {
+    return [...exactBranchRestaurants][0] ?? null;
+  }
+  if (exactBranchRestaurants.size > 1) {
+    return null;
+  }
+
+  const restaurantScopedGrants = new Set(
+    session.grants
+      .filter(
+        (grant) =>
+          grant.branchId === undefined && grant.restaurantId !== undefined,
+      )
+      .map((grant) => grant.restaurantId)
+      .filter(
+        (restaurantId): restaurantId is string => restaurantId !== undefined,
+      ),
+  );
+  return restaurantScopedGrants.size === 1
+    ? ([...restaurantScopedGrants][0] ?? null)
+    : null;
+}
+
 export function App() {
   const [activeSection, setActiveSection] = useState<Section>("Home");
   const [portal, setPortal] = useState<PortalState>({ kind: "loading" });
@@ -329,6 +368,10 @@ export function App() {
   )
     ? activeSection
     : "Home";
+  const activeRestaurantId = resolveActiveRestaurantId(
+    portal.session,
+    portal.capabilities.branchId,
+  );
 
   return (
     <>
@@ -441,6 +484,20 @@ export function App() {
                   destinationCount={availableNavigation.length}
                   readiness={readiness}
                   statusId={statusId}
+                />
+              ) : visibleSection === "Menu" ? (
+                <MenuWorkspace
+                  restaurantId={activeRestaurantId}
+                  canView={portal.capabilities.permissions.includes(
+                    "menu.view",
+                  )}
+                />
+              ) : visibleSection === "Tables" ? (
+                <TablesWorkspace
+                  branchId={portal.capabilities.branchId}
+                  canView={portal.capabilities.permissions.includes(
+                    "tables.view",
+                  )}
                 />
               ) : (
                 <DeferredWorkspace section={visibleSection} />
