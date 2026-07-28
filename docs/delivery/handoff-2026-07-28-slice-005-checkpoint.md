@@ -1,26 +1,31 @@
 ---
 id: HANDOFF-2026-07-28-SLICE-005-CHECKPOINT
-status: slice-005-verified-unpublished
+status: slice-005-feature-branch-published
 owner: engineering
 last_reviewed: 2026-07-28
 supersedes_active_handoff: docs/delivery/handoff-2026-07-28-slice-004-checkpoint.md
 ---
 
-# Engineering Handoff — SLICE-005 verified locally (2026-07-28)
+# Engineering Handoff — SLICE-005 feature branch published (2026-07-28)
 
 ## Current state
 
-Slice 005 implementation and documentation are complete and verified locally.
-They remain intentionally uncommitted and unpublished because the user has not
-authorized a commit, integration into `main`, push, pull request, or GitHub
-Actions publication run.
+Slice 005 implementation and documentation are complete, verified locally,
+committed, and pushed to the feature branch. They are not integrated into
+`main`; no pull request was opened.
 
 - Workspace: `C:\Users\HP\Desktop\mvp`
 - Branch: `slice-005-order-submission`
-- `HEAD`, `main`, and `origin/main` at the verification boundary:
+- `main` and `origin/main` at the publication boundary:
   `ca641e3fd6479e38d473dad5e036f2659c8bcdb8`
-- Slice 005 commits: none.
-- All Slice 005 product and documentation work remains in the working tree.
+- Verified implementation commit:
+  `b01bef5638c43bd0298d2da4385c5a587e2055a0`
+  (`feat: implement order submission slice`).
+- Confirmed remote implementation ref:
+  `origin/slice-005-order-submission` at
+  `b01bef5638c43bd0298d2da4385c5a587e2055a0`.
+- This publication-evidence update is a documentation-only follow-up commit on
+  the same feature branch.
 - Two intentional untracked `.cc-history/` files remain preserved.
 - Never stage or remove `.cc-history/` or `.tmp/` broadly.
 
@@ -130,30 +135,26 @@ Only these exact targets were removed:
 All four were confirmed absent afterward. The `.tmp` root and both
 `.cc-history` files remain.
 
-## Publication boundary
+## Publication evidence and boundary
 
-Do not commit, merge, rebase, push, open a pull request, or start Slice 006
-without explicit user authorization.
+The user authorized committing and pushing the current feature branch. The
+implementation commit was pushed successfully and its remote SHA was verified
+with `git ls-remote`.
 
-If publication is later authorized:
+The repository CI workflow runs only for pushes to `main` and pull requests.
+Pushing this feature branch did not trigger a GitHub Actions verification run,
+and no CI success is claimed.
 
-1. Re-read `AGENTS.md`, `docs/index.md`, this handoff, and the Slice 005
-   declaration.
-2. Confirm branch/refs and run
-   `git status --short --untracked-files=all`.
-3. Review every tracked and untracked actionable file again. Exclude
-   `.cc-history/` and `.tmp/` explicitly; never stage them broadly.
-4. Re-run checks proportionate to any intervening change.
-5. Commit Slice 005 intentionally, integrate without destructive history
-   rewriting, push only the authorized ref, and verify the exact resulting
-   GitHub Actions run.
-6. Record publication evidence atomically in the declaration, progress,
-   index, traceability if needed, and this handoff.
+Do not integrate into `main`, open a pull request, or start Slice 006 without
+new explicit user authorization. If integration is later authorized, re-check
+the complete branch, fast-forward or otherwise integrate without destructive
+history rewriting, push only the authorized ref, wait for the exact resulting
+GitHub Actions run, and record that separate publication evidence.
 
 ## Standalone continuation prompt
 
 ```text
-Continue from the verified, unpublished SLICE-005 checkpoint in
+Continue from the verified, feature-branch-published SLICE-005 checkpoint in
 C:\Users\HP\Desktop\mvp.
 
 Read in full and in order:
@@ -165,8 +166,10 @@ Read in full and in order:
 
 Then inspect the branch, recent history, HEAD/main/origin/main, and every
 tracked and untracked change. Expected branch:
-slice-005-order-submission. Expected refs at the local verification boundary:
-ca641e3fd6479e38d473dad5e036f2659c8bcdb8. No Slice 005 commits exist.
+slice-005-order-submission. The verified implementation commit is
+b01bef5638c43bd0298d2da4385c5a587e2055a0 and was confirmed on
+origin/slice-005-order-submission. main and origin/main remain at
+ca641e3fd6479e38d473dad5e036f2659c8bcdb8.
 
 Slice 005 is fully verified locally: all five migrations applied from empty;
 167 tests across 21 files passed; architecture, OpenAPI and 41 events, builds,
@@ -175,12 +178,11 @@ dependency audit passed. Both exact Slice 005 PostgreSQL clusters/logs were
 stopped and removed. Preserve the two intentional .cc-history files and never
 stage or remove .cc-history or .tmp broadly.
 
-Do not change application behavior or begin Slice 006. Do not commit,
-integrate, push, open a PR, or trigger publication unless the user explicitly
-authorizes that action. If publication is authorized, review the complete
-worktree, exclude protected artifacts, commit intentionally, integrate safely,
-push only the authorized ref, verify the exact GitHub Actions run, and record
-publication evidence atomically.
+Do not change application behavior or begin Slice 006. Do not integrate into
+main or open a PR unless the user explicitly authorizes that action. If main
+integration is authorized, review the complete branch, exclude protected
+artifacts, integrate safely, push only the authorized ref, verify the exact
+GitHub Actions run, and record main-publication evidence atomically.
 
 If working context compacts, stop immediately, refresh the handoff and
 implementation progress, and produce a new standalone continuation prompt.

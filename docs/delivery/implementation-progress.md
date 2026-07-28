@@ -10,7 +10,8 @@ last_reviewed: 2026-07-28
 
 ## Current slice
 
-`SLICE-005 — order_submission` (verified locally; unpublished)
+`SLICE-005 — order_submission` (verified and pushed to its feature branch;
+not integrated)
 
 ## Slice status
 
@@ -18,8 +19,8 @@ last_reviewed: 2026-07-28
 - `SLICE-002 — tenant_branch_and_owner_bootstrap`: complete.
 - `SLICE-003 — employees_permissions_and_configuration`: complete.
 - `SLICE-004 — menu_tables_and_qr`: complete and published.
-- `SLICE-005 — order_submission`: complete and verified locally; uncommitted
-  and unpublished.
+- `SLICE-005 — order_submission`: complete, verified locally, committed, and
+  pushed to `origin/slice-005-order-submission`; not integrated into `main`.
 - `SLICE-006 — kitchen_and_serving`: not started.
 - `SLICE-007 — payment_completion_and_correction`: not started.
 - `SLICE-008 — notifications_reporting_and_audit`: not started.
@@ -96,9 +97,8 @@ last_reviewed: 2026-07-28
 
 ## In progress
 
-- No Slice 005 implementation work remains. The verified changes are
-  intentionally uncommitted and unpublished pending explicit user
-  authorization.
+- No Slice 005 implementation work remains. The verified feature branch is
+  published. Main integration and a pull request remain unauthorized.
 - Active handoff:
   `docs/delivery/handoff-2026-07-28-slice-005-checkpoint.md`.
 
@@ -130,5 +130,6 @@ last_reviewed: 2026-07-28
 
 ## Next slice
 
-`SLICE-006 — kitchen_and_serving`, after Slice 005 is intentionally committed
-and published. Do not begin it from the current uncommitted worktree.
+`SLICE-006 — kitchen_and_serving`, after Slice 005 is intentionally integrated
+into `main` and the resulting CI run succeeds. Do not begin it from the
+feature branch.

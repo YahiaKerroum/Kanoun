@@ -136,5 +136,12 @@ PostgreSQL `18.1` cluster initialized from empty at
 - `corepack pnpm test:browser`: all 17 Chromium browser/WCAG tests passed.
 - `corepack pnpm audit --prod --audit-level high`: no known vulnerabilities.
 
-Slice 005 is verified locally but remains uncommitted and unpublished. No
-integration into `main`, push, pull request, or GitHub Actions run is claimed.
+## Feature-branch publication
+
+The verified implementation was committed as
+`b01bef5638c43bd0298d2da4385c5a587e2055a0`
+(`feat: implement order submission slice`) and confirmed on
+`origin/slice-005-order-submission`.
+
+No integration into `main`, pull request, or GitHub Actions run is claimed.
+The CI workflow runs only for `main` pushes and pull requests.
