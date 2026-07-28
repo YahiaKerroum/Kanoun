@@ -29,5 +29,11 @@ export default defineConfig({
       reuseExistingServer: !process.env.CI,
       timeout: 120_000,
     },
+    {
+      command: "corepack pnpm --filter @rms/customer-web dev",
+      url: "http://127.0.0.1:5174",
+      reuseExistingServer: !process.env.CI,
+      timeout: 120_000,
+    },
   ],
 });

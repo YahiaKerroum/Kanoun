@@ -183,7 +183,7 @@ h1[tabindex="-1"]:focus {
 }
 
 .table-lockup span {
-  color: #6f685d;
+  color: #655f55;
   font-size: 0.78rem;
   font-weight: 800;
   letter-spacing: 0.16em;
@@ -244,13 +244,13 @@ h1[tabindex="-1"]:focus {
 }
 
 .confirmation-panel input::placeholder {
-  color: #777064;
+  color: #655f55;
 }
 
 .field-hint,
 .scan-note,
 .journey-footnote {
-  color: #746d62;
+  color: #655f55;
   font-size: 0.78rem;
   line-height: 1.5;
 }
@@ -426,7 +426,8 @@ h1[tabindex="-1"]:focus {
 }
 
 .dish-row.is-unavailable {
-  opacity: 0.66;
+  border-left: 3px solid #8d3322;
+  padding-left: 16px;
 }
 
 .dish-title-line {
@@ -494,7 +495,7 @@ h1[tabindex="-1"]:focus {
 }
 
 .option-group > div span {
-  color: #746d62;
+  color: #655f55;
   font-size: 0.72rem;
 }
 
@@ -569,11 +570,9 @@ h1[tabindex="-1"]:focus {
 
 @keyframes panel-in {
   from {
-    opacity: 0;
     transform: translateY(18px);
   }
   to {
-    opacity: 1;
     transform: translateY(0);
   }
 }
@@ -591,11 +590,9 @@ h1[tabindex="-1"]:focus {
 
 @keyframes dish-reveal {
   from {
-    opacity: 0;
     transform: translateY(10px);
   }
   to {
-    opacity: 1;
     transform: translateY(0);
   }
 }
