@@ -10,16 +10,14 @@ last_reviewed: 2026-07-28
 
 ## Current slice
 
-`SLICE-004 — menu_tables_and_qr` (local verification complete; publication in
-progress)
+`SLICE-005 — order_submission`
 
 ## Slice status
 
 - `SLICE-001 — application_bootstrap`: complete.
 - `SLICE-002 — tenant_branch_and_owner_bootstrap`: complete.
 - `SLICE-003 — employees_permissions_and_configuration`: complete.
-- `SLICE-004 — menu_tables_and_qr`: locally verified; integration, push, and CI
-  confirmation remain.
+- `SLICE-004 — menu_tables_and_qr`: complete and published.
 - `SLICE-005 — order_submission`: not started.
 - `SLICE-006 — kitchen_and_serving`: not started.
 - `SLICE-007 — payment_completion_and_correction`: not started.
@@ -76,7 +74,7 @@ progress)
 
 ## In progress
 
-- Slice 004 `main` integration, push, and GitHub Actions publication evidence.
+- No Slice 005 implementation has started.
 
 ## Current limitations
 
@@ -99,7 +97,6 @@ progress)
 - Production deployment is blocked by proposed `ADR-0007`.
 - `MISE` remains a working product name until product approves a final name.
 
-## Next slice after Slice 004 delivery
+## Next slice
 
-`SLICE-005 — order_submission`, after Slice 004 final verification and
-publication complete.
+`SLICE-005 — order_submission`

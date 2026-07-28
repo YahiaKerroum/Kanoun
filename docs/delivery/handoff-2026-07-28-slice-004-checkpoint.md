@@ -1,6 +1,6 @@
 ---
 id: HANDOFF-2026-07-28-SLICE-004-CHECKPOINT
-status: slice-004-locally-verified-publication-pending
+status: slice-004-published
 owner: engineering
 last_reviewed: 2026-07-28
 supersedes_active_handoff: docs/delivery/handoff-2026-07-27-slice-004-checkpoint.md
@@ -8,21 +8,22 @@ supersedes_active_handoff: docs/delivery/handoff-2026-07-27-slice-004-checkpoint
 
 # Engineering Handoff — SLICE-004 continuation checkpoint (2026-07-28)
 
-## Current state — local verification complete
+## Current state — published
 
-Slice 004 implementation and local verification are complete. The branch has
-not yet been integrated into `main` or pushed, and GitHub Actions publication
-evidence is therefore pending.
+Slice 004 is complete, integrated into `main`, pushed, and verified by GitHub
+Actions.
 
-- Branch: `slice-004-menu-tables-and-qr`
-- Implementation HEAD before the final documentation/verification commit:
-  `66abd0831ef7ed29d9adc3b2c31a8570b7ae6ca4`
-- `main` and `origin/main` before integration:
-  `6573696b7c0269cbf15802d4483adc5e409af546`
-- The final documentation/verification increment includes the Slice 004
-  declaration, implementation progress, traceability, index, active handoff,
-  narrow Prettier workspace-artifact exclusions, and formatting of the
-  previously identified tables router test.
+- Published Slice 004 commit:
+  `d2d1671f6a9777feb412b15b09c41313c4559940`
+  (`docs: verify menu tables and QR slice`).
+- `main` was fast-forwarded safely from
+  `6573696b7c0269cbf15802d4483adc5e409af546` and pushed to
+  `https://github.com/YahiaKerroum/restaurant-management-system`.
+- GitHub Actions run `30366822840` completed successfully for the exact
+  published commit:
+  `https://github.com/YahiaKerroum/restaurant-management-system/actions/runs/30366822840`.
+- The push-triggered CI workflow's `verify` and `dependency-audit` jobs
+  succeeded on the pinned Node.js `24.18.0` runtime.
 
 Final verification used Node.js `24.18.0`, pnpm `11.17.0`, and the fresh
 PostgreSQL database
@@ -43,15 +44,20 @@ Focused suites and the real API-backed administration-to-customer QR lifecycle
 recorded below remain valid; no focused or golden-path rerun was needed after
 documentation and formatting-only changes.
 
-Remaining publication work:
+Both PostgreSQL clusters were confirmed running from their recorded
+workspace-local paths, stopped cleanly, and removed only after all four exact
+targets resolved beneath `C:\Users\HP\Desktop\mvp\.tmp`:
 
-1. Review and commit the final documentation/verification increment.
-2. Resolve and verify both workspace-local database targets, stop both
-   clusters, and remove only their explicitly named data directories/logs.
-3. Integrate the Slice 004 branch safely into `main`, push `main`, and wait for
-   GitHub Actions.
-4. Record the exact published commit and successful Actions run in this
-   handoff.
+- `.tmp/postgres-slice004`
+- `.tmp/postgres-slice004.log`
+- `.tmp/postgres-slice004-final`
+- `.tmp/postgres-slice004-final.log`
+
+All four targets were confirmed absent afterward. `.cc-history/` was
+preserved.
+
+The exact next slice is `SLICE-005 — order_submission`. No Slice 005
+implementation has started.
 
 ## Current stop point — third compaction
 
@@ -385,64 +391,23 @@ process; do not silently choose a source.
 ## Current standalone continuation prompt
 
 ```text
-Continue SLICE-004 — menu_tables_and_qr in C:\Users\HP\Desktop\mvp.
-Do not restart the slice or redo completed work.
+Begin SLICE-005 — order_submission in C:\Users\HP\Desktop\mvp.
 
-First read in full:
-1. AGENTS.md
-2. docs/index.md
-3. docs/delivery/handoff-2026-07-28-slice-004-checkpoint.md
-4. C:\Users\HP\.claude\plans\gleaming-rolling-kite.md
-5. .superpowers/sdd/gleaming-rolling-kite-tasks/progress.md
-6. all relevant normative sources in the AGENTS.md reading order
+First read AGENTS.md, docs/index.md, and
+docs/delivery/handoff-2026-07-28-slice-004-checkpoint.md in full. Then follow
+the complete AGENTS.md normative reading order for Slice 005, run
+`git status --short --untracked-files=all`, inspect recent history, and review
+the complete working tree before editing.
 
-Then run `git status --short --untracked-files=all`, inspect recent history,
-and review the complete working tree before editing. Preserve .cc-history/
-and .tmp/ and never stage or remove them broadly.
+Slice 004 is published on main at
+d2d1671f6a9777feb412b15b09c41313c4559940. GitHub Actions run 30366822840
+succeeded for that exact commit. Both Slice 004 PostgreSQL clusters and their
+logs were stopped and removed only after their exact workspace-local paths
+were verified. Preserve `.cc-history/` and do not stage or remove it broadly.
 
-Current state:
-- branch: slice-004-menu-tables-and-qr
-- HEAD before the final documentation/verification commit:
-  66abd0831ef7ed29d9adc3b2c31a8570b7ae6ca4
-- main and origin/main:
-  6573696b7c0269cbf15802d4483adc5e409af546
-- Slice 004 implementation and local verification are complete
-- actionable tracked paths are .prettierignore,
-  apps/api/src/tables-routes.test.ts, docs/index.md,
-  docs/delivery/implementation-progress.md, and
-  docs/quality/traceability.yaml
-- actionable untracked paths are
-  docs/delivery/slice-004-menu-tables-and-qr.md and this checkpoint
-- PostgreSQL development database:
-  postgresql://rms@127.0.0.1:55432/rms_test
-- final-verification database:
-  postgresql://rms@127.0.0.1:55433/rms_final
-  All four migrations and the final suite passed against it.
-
-Use Node.js 24.18.0 and pnpm 11.17.0 via fnm/corepack.
-
-Do not repeat completed suites unless a later implementation change requires
-it. Final evidence:
-- focused PostgreSQL MenuTablesService: 26/26
-- focused menu/table/public HTTP routers: 26/26
-- fresh-database PostgreSQL repository tests: 147/147 across 17 files
-- architecture: no violations across 114 modules / 181 dependencies; 3/3
-- OpenAPI and 40 event contracts passed
-- all production builds passed
-- full browser suite: 13/13
-- format, format:check, root lint, and typecheck passed
-- production dependency audit found no known vulnerabilities
-- real API-backed administration-to-customer QR lifecycle passed, including
-  equivalent revoked/unknown public 404 problem shapes
-
-Review the final diff and commit the documentation/verification increment
-coherently. Then resolve and verify the exact workspace-local database paths,
-stop both clusters, and remove only the named data directories/logs. Integrate
-safely into main, push main, wait for GitHub Actions, and record exact
-publication evidence in this handoff.
-
-If context compacts again, stop implementation immediately. Update the
-progress ledger and current handoff with exact HEAD, worktree, database state,
-verification, remaining work, and a standalone continuation prompt, then end
-the chat without continuing implementation.
+Use Node.js 24.18.0 and pnpm 11.17.0 via fnm/corepack. Implement only
+SLICE-005 as assigned by docs/delivery/mvp-slices.yaml. Build on the published
+menu version, immutable menu-resolution contracts, table/session ownership,
+and scoped guest authorization. Do not redo Slice 004 or move US-F04 out of
+its approved Slice 007 assignment.
 ```
