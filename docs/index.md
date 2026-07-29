@@ -3,7 +3,7 @@ id: DOC-INDEX
 status: approved
 version: 1.0
 owner: product-and-architecture
-last_reviewed: 2026-07-28
+last_reviewed: 2026-07-29
 source_of_truth_for:
   - documentation-governance
 ---
@@ -46,9 +46,9 @@ source_of_truth_for:
 | Slice 002 implementation declaration | `docs/delivery/slice-002-tenant-branch-owner-bootstrap.md` | Verified |
 | Slice 003 implementation declaration | `docs/delivery/slice-003-employees-permissions-configuration.md` | Verified |
 | Slice 004 implementation declaration | `docs/delivery/slice-004-menu-tables-and-qr.md` | Verified |
-| Slice 005 implementation declaration | `docs/delivery/slice-005-order-submission.md` | Verified on feature branch; not integrated |
-| Slice 006 implementation declaration | `docs/delivery/slice-006-kitchen-and-serving.md` | Verified and published on feature branch; not integrated |
-| Current engineering handoff | `docs/delivery/handoff-2026-07-28-slice-006-checkpoint.md` | Slice 006 feature branch published; main integration pending |
+| Slice 005 implementation declaration | `docs/delivery/slice-005-order-submission.md` | Verified and integrated |
+| Slice 006 implementation declaration | `docs/delivery/slice-006-kitchen-and-serving.md` | Verified, integrated, and published |
+| Current engineering handoff | `docs/delivery/handoff-2026-07-28-slice-006-checkpoint.md` | Slice 006 published; Slice 007 authorized |
 | Slice 005 publication handoff | `docs/delivery/handoff-2026-07-28-slice-005-checkpoint.md` | Slice 005 feature branch published; main integration pending |
 | Slice 004 publication handoff | `docs/delivery/handoff-2026-07-28-slice-004-checkpoint.md` | Slice 004 published — historical baseline |
 | Prior Slice 004 checkpoint | `docs/delivery/handoff-2026-07-27-slice-004-checkpoint.md` | Superseded — historical only |

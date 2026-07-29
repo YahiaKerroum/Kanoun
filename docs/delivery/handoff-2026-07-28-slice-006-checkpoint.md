@@ -1,8 +1,8 @@
 ---
 id: HANDOFF-2026-07-28-SLICE-006-CHECKPOINT
-status: active
+status: slice-006-published
 owner: engineering
-last_reviewed: 2026-07-28
+last_reviewed: 2026-07-29
 ---
 
 # Slice 006 Publication Checkpoint
@@ -11,9 +11,9 @@ last_reviewed: 2026-07-28
 
 The working context compacted after Slice 006 implementation and full
 verification completed but before publication. The required checkpoint was
-recorded, and the user then explicitly authorized committing and pushing the
-feature branch. Slice 006 is now complete, verified, committed, and published
-on its feature branch.
+recorded, and the user then explicitly authorized feature-branch publication
+and later main integration. Slice 006 is now complete, verified, committed,
+integrated into `main`, published, and verified by GitHub Actions.
 
 Do not redo or extend Slice 006.
 
@@ -32,12 +32,15 @@ Do not redo or extend Slice 006.
   `b01bef5638c43bd0298d2da4385c5a587e2055a0`
 - `origin/slice-005-order-submission`:
   `f1300f64faeb9e0afdae7bc9cd65a25fb27399a1`
-- `main` and `origin/main`:
-  `ca641e3fd6479e38d473dad5e036f2659c8bcdb8`
-- Slice 006 changes are complete, fully verified, committed, and published.
+- Slice 006 integration boundary on `main`:
+  `0670c04d1441ef2729ee6263c4736d4571251b2c`
+- Slice 006 changes are complete, fully verified, committed, integrated, and
+  published.
 - This publication-evidence update is a documentation-only follow-up commit
   on the same feature branch.
-- No pull request was opened and no main integration was attempted.
+- `main` was fast-forwarded without history rewriting from
+  `ca641e3fd6479e38d473dad5e036f2659c8bcdb8`.
+- No pull request was opened.
 
 ## Delivered boundary
 
@@ -147,69 +150,43 @@ The repository workflow runs only for pushes to `main` and pull requests.
 This feature-branch push did not request or trigger a GitHub Actions
 verification run, so no CI success is claimed.
 
-- Do not integrate Slice 005 or Slice 006 into `main`.
-- Do not open a pull request.
-- Do not start Slice 007.
-- Do not rewrite history destructively.
-- A feature-branch push is not expected to trigger GitHub Actions under the
-  current workflow.
-- If main integration is later explicitly authorized, follow the separate
-  main-publication procedure from the Slice 005 handoff: integrate without
-  destructive rewriting, push main, wait for the exact GitHub Actions run,
-  confirm both jobs pass, and record the publication evidence atomically.
+- The later authorized `main` push integrated the complete published Slice 005
+  and Slice 006 history at
+  `0670c04d1441ef2729ee6263c4736d4571251b2c`.
+- GitHub Actions run `30442851671` completed successfully for that exact SHA:
+  `https://github.com/YahiaKerroum/restaurant-management-system/actions/runs/30442851671`.
+- Both the `verify` and `dependency-audit` jobs succeeded. The verify job
+  applied migrations, ran the full workspace checks, and passed the Chromium
+  browser/accessibility suite.
+- Do not rewrite published history destructively.
+- Do not open a pull request unless separately requested.
+- Slice 007 planning and implementation were explicitly authorized only after
+  this successful publication boundary.
 
 ## Standalone continuation prompt
 
 ```text
-Continue from the completed, verified, committed, and feature-branch-published
-SLICE-006 checkpoint in C:\Users\HP\Desktop\mvp.
+Begin SLICE-007 — payment_completion_and_correction in
+C:\Users\HP\Desktop\mvp.
 
 Read in full and in order:
 1. AGENTS.md
 2. docs/index.md
 3. docs/delivery/handoff-2026-07-28-slice-006-checkpoint.md
-4. docs/delivery/slice-006-kitchen-and-serving.md
-5. docs/delivery/implementation-progress.md
+4. docs/delivery/implementation-progress.md
+5. docs/delivery/mvp-slices.yaml
 
 Expected state:
-- branch: slice-006-kitchen-and-serving
-- branch base: f1300f64faeb9e0afdae7bc9cd65a25fb27399a1
-- verified implementation commit:
-  e80e9608f375344903943bbafe5ed384651a65db
-- local branch and origin/slice-006-kitchen-and-serving include that commit
-  and the documentation-only publication-evidence follow-up
-- origin/slice-005-order-submission:
-  f1300f64faeb9e0afdae7bc9cd65a25fb27399a1
-- main and origin/main:
-  ca641e3fd6479e38d473dad5e036f2659c8bcdb8
-- Slice 006 is complete, verified, committed, and feature-branch-published
+- main contains Slice 005 and Slice 006 at
+  0670c04d1441ef2729ee6263c4736d4571251b2c
+- GitHub Actions run 30442851671 succeeded for that exact integration SHA
+- Slice 006 is complete, verified, integrated, and published
 - only the two documented .cc-history files remain untracked
 - never stage or remove .cc-history or .tmp broadly
 
-Do not redo or extend Slice 006. Inspect the working tree, recent history, and
-local/remote refs. Confirm the feature branch is clean apart from the two
-protected .cc-history files and that its local and remote SHAs match.
-
-Do not integrate into main, open a pull request, or begin Slice 007. A feature
-branch push did not trigger GitHub Actions because the workflow runs only for
-main pushes and pull requests. If the actual repository state conflicts with
-this checkpoint, stop and report the discrepancy rather than silently changing
-the scope.
-
-Completed verification:
-- all six migrations applied from empty PostgreSQL 18.1
-- 173 tests passed across 22 files
-- architecture passed across 128 modules and 224 dependencies
-- OpenAPI and all 41 event contracts passed
-- every production build passed
-- all 19 browser/WCAG tests passed
-- formatting, lint, strict TypeScript, frozen install, and production audit
-  passed
-
-The isolated Slice 006 PostgreSQL cluster and exact log were stopped and
-removed, and port 55436 was free afterward.
-
-If working context compacts again, stop immediately, refresh this handoff and
-the implementation-progress document, and produce a new standalone
-continuation prompt.
+Inspect the working tree and refs, then follow the complete AGENTS.md reading
+order for the exact Slice 007 requirements marked mvp and ready. Declare the
+implementation boundary before changing behavior. Do not redo Slice 006,
+silently resolve blocked decisions, or expand beyond the approved Slice 007
+scope. Preserve the two protected .cc-history files.
 ```

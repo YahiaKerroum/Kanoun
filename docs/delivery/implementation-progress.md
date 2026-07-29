@@ -3,15 +3,15 @@ id: IMPLEMENTATION-PROGRESS
 status: active
 version: 1.0
 owner: engineering
-last_reviewed: 2026-07-28
+last_reviewed: 2026-07-29
 ---
 
 # Implementation Progress
 
 ## Current slice
 
-`SLICE-006 — kitchen_and_serving` (complete, fully verified, committed, and
-published on its feature branch; not integrated)
+`SLICE-007 — payment_completion_and_correction` (authorized; normative
+planning not yet completed)
 
 ## Slice status
 
@@ -19,13 +19,14 @@ published on its feature branch; not integrated)
 - `SLICE-002 — tenant_branch_and_owner_bootstrap`: complete.
 - `SLICE-003 — employees_permissions_and_configuration`: complete.
 - `SLICE-004 — menu_tables_and_qr`: complete and published.
-- `SLICE-005 — order_submission`: complete, verified locally, committed, and
-  pushed to `origin/slice-005-order-submission`; not integrated into `main`.
+- `SLICE-005 — order_submission`: complete, verified, and integrated into
+  `main` as the prerequisite history for Slice 006.
 - `SLICE-006 — kitchen_and_serving`: complete and verified on
   `slice-006-kitchen-and-serving`; implementation commit
-  `e80e9608f375344903943bbafe5ed384651a65db` was confirmed on the remote
-  feature branch.
-- `SLICE-007 — payment_completion_and_correction`: not started.
+  `e80e9608f375344903943bbafe5ed384651a65db` and publication follow-up
+  `0670c04d1441ef2729ee6263c4736d4571251b2c` are integrated into `main`.
+- `SLICE-007 — payment_completion_and_correction`: authorized; requirements
+  review and implementation declaration pending.
 - `SLICE-008 — notifications_reporting_and_audit`: not started.
 
 ## Completed
@@ -113,15 +114,18 @@ published on its feature branch; not integrated)
 - Slice 006 implementation commit
   `e80e9608f375344903943bbafe5ed384651a65db` was published to
   `origin/slice-006-kitchen-and-serving` and verified with `git ls-remote`.
+- `main` was fast-forwarded to the Slice 006 publication commit
+  `0670c04d1441ef2729ee6263c4736d4571251b2c` without history rewriting.
+- GitHub Actions run `30442851671` succeeded for that exact integration SHA;
+  both `verify` and `dependency-audit` passed.
 
 ## In progress
 
-- No Slice 006 implementation, verification, commit, or feature-branch
-  publication work remains.
+- Slice 007 requirements, decisions, workflows, contracts, data model, and
+  test strategy must be reviewed before its implementation declaration.
 - Active handoff:
   `docs/delivery/handoff-2026-07-28-slice-006-checkpoint.md`.
-- Slices 005 and 006 remain unintegrated; `main`, pull requests, and main
-  publication remain outside the user's authorization.
+- No Slice 007 application behavior has been changed yet.
 
 ## Current limitations
 
@@ -151,6 +155,5 @@ published on its feature branch; not integrated)
 
 ## Next slice
 
-`SLICE-007 — payment_completion_and_correction` only after separate explicit
-authorization. Do not integrate Slice 005 or Slice 006 into `main` and do not
-open a pull request without explicit authorization.
+`SLICE-007 — payment_completion_and_correction` is explicitly authorized.
+Complete the normative reading and change declaration before implementation.
