@@ -1,4 +1,26 @@
-# Slice 007 continuation prompt — compaction checkpoint 2
+---
+id: CONTINUATION-2026-07-29-SLICE-007-COMPACTION-2
+status: superseded-historical-record
+superseded_by: HANDOFF-2026-07-29-SLICE-007-CHECKPOINT
+last_reviewed: 2026-07-29
+---
+
+# Historical Slice 007 continuation prompt — compaction checkpoint 2
+
+> [!IMPORTANT]
+> Do not execute this continuation prompt. It preserves the exact state of an
+> interrupted, pre-verification checkpoint and is retained only as a historical
+> record. Slice 007 was subsequently completed, verified, committed, and
+> published to `origin/slice-007-payment-completion-and-correction`.
+>
+> The verified implementation commit is
+> `6c167913edaaeff7b5e47e0999b950efd7ffbae7`; the publication-documentation
+> commit and current published branch head is
+> `7e2a829be77ca02a16d46ea2f8382d926a703be9`. Use
+> `docs/delivery/handoff-2026-07-29-slice-007-checkpoint.md` for the current
+> status.
+
+## Original checkpoint prompt
 
 Work in `C:\Users\HP\Desktop\mvp`.
 
