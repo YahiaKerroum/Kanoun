@@ -3,6 +3,7 @@ import {
   Bell,
   ChefHat,
   ClipboardList,
+  CreditCard,
   History,
   House,
   Menu as MenuIcon,
@@ -28,12 +29,14 @@ import { checkApiReadiness, type Readiness } from "./health.js";
 import { MenuWorkspace, TablesWorkspace } from "./OperationalWorkspaces.js";
 import { KitchenWorkspace } from "./KitchenWorkspace.js";
 import { OrdersWorkspace } from "./OrdersWorkspace.js";
+import { PaymentsWorkspace } from "./PaymentsWorkspace.js";
 
 type Section =
   | "Home"
   | "Orders"
   | "Tables"
   | "Kitchen"
+  | "Payments"
   | "Menu"
   | "Stock"
   | "Staff"
@@ -73,6 +76,13 @@ const navigationItems: readonly NavigationItem[] = [
     requiredFeature: "kitchen",
     permissionPrefixes: ["kitchen."],
     permissions: ["orders.serve"],
+  },
+  {
+    label: "Payments",
+    icon: CreditCard,
+    group: "service",
+    requiredFeature: "payments",
+    permissionPrefixes: ["payments."],
   },
   {
     label: "Menu",
@@ -505,6 +515,21 @@ export function App() {
                   canViewTables={portal.capabilities.permissions.includes(
                     "tables.view",
                   )}
+                  canModify={portal.capabilities.permissions.includes(
+                    "orders.modify",
+                  )}
+                  canCancel={portal.capabilities.permissions.includes(
+                    "orders.cancel",
+                  )}
+                  canComplete={portal.capabilities.permissions.includes(
+                    "orders.complete",
+                  )}
+                  canCompleteUnpaid={portal.capabilities.permissions.includes(
+                    "orders.complete_unpaid",
+                  )}
+                  canAssignTables={portal.capabilities.permissions.includes(
+                    "tables.assign",
+                  )}
                 />
               ) : visibleSection === "Kitchen" ? (
                 <KitchenWorkspace
@@ -517,6 +542,19 @@ export function App() {
                   )}
                   canServe={portal.capabilities.permissions.includes(
                     "orders.serve",
+                  )}
+                />
+              ) : visibleSection === "Payments" ? (
+                <PaymentsWorkspace
+                  branchId={portal.capabilities.branchId}
+                  canView={portal.capabilities.permissions.includes(
+                    "payments.view",
+                  )}
+                  canRecord={portal.capabilities.permissions.includes(
+                    "payments.record",
+                  )}
+                  canRefund={portal.capabilities.permissions.includes(
+                    "payments.refund",
                   )}
                 />
               ) : visibleSection === "Menu" ? (

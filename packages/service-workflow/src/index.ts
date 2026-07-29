@@ -6,6 +6,13 @@ export {
   type KitchenServingServiceDependencies,
 } from "./kitchen-serving-service.js";
 export {
+  PaymentCompletionService,
+  type BillRequestView,
+  type CorrectionItemInput,
+  type PaymentCompletionMetadata,
+  type PaymentCompletionServiceDependencies,
+} from "./payment-completion-service.js";
+export {
   OrderSubmissionService,
   type OrderRequestMetadata,
   type OrderSubmissionServiceDependencies,

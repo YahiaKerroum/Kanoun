@@ -11,6 +11,8 @@ export interface KitchenStore {
       readonly orderReference: string;
       readonly tableId: string;
       readonly tableCode: string;
+      readonly changeKind?: "new" | "corrected" | undefined;
+      readonly correctionId?: string | undefined;
       readonly items: readonly {
         readonly id: string;
         readonly orderItemId: string;
@@ -67,4 +69,25 @@ export interface KitchenStore {
     businessAccountId: string,
     orderId: string,
   ): Promise<boolean>;
+  cancelUnstartedForOrder(
+    transaction: TransactionContext,
+    input: {
+      readonly businessAccountId: string;
+      readonly orderId: string;
+      readonly actorUserId: string;
+      readonly effectiveEmployeeId: string;
+      readonly reason: string;
+      readonly now: Date;
+    },
+  ): Promise<readonly KitchenWorkItemRecord[]>;
+  reassignOrdersToTable(
+    transaction: TransactionContext,
+    input: {
+      readonly businessAccountId: string;
+      readonly orderIds: readonly string[];
+      readonly destinationTableId: string;
+      readonly destinationTableCode: string;
+      readonly now: Date;
+    },
+  ): Promise<void>;
 }

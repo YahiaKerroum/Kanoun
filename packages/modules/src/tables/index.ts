@@ -7,6 +7,7 @@ export type {
   Table,
   TableQrCode,
   TableSession,
+  TableSessionMovement,
 } from "./domain/models.js";
 export { deriveTableState } from "./domain/table-state.js";
 export type {

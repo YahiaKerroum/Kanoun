@@ -868,7 +868,6 @@ button:disabled {
 @keyframes review-in {
   from {
     transform: translateX(24px);
-    opacity: 0;
   }
 }
 

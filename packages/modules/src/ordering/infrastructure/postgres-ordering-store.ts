@@ -4,8 +4,10 @@ import type {
   TransactionContext,
 } from "@rms/building-blocks";
 import type {
+  BillRequestRecord,
   CancellationRequestRecord,
   GuestSessionRecord,
+  OrderCorrectionRecord,
   OrderItemRecord,
   OrderOptionSnapshot,
   OrderRecord,
@@ -36,6 +38,7 @@ interface OrderRow {
   readonly restaurant_id: string;
   readonly branch_id: string;
   readonly table_session_id: string;
+  readonly table_session_version: number;
   readonly table_id: string;
   readonly table_code: string;
   readonly reference: string;
@@ -54,6 +57,7 @@ interface OrderRow {
   readonly total_amount: string;
   readonly currency: string;
   readonly version: number;
+  readonly current_item_revision: number;
   readonly submitted_at_utc: Date;
   readonly accepted_at_utc: Date;
   readonly preparing_at_utc: Date | null;
@@ -61,12 +65,25 @@ interface OrderRow {
   readonly served_at_utc: Date | null;
   readonly served_by_user_id: string | null;
   readonly served_by_employee_id: string | null;
+  readonly completed_at_utc: Date | null;
+  readonly completed_by_user_id: string | null;
+  readonly completed_by_employee_id: string | null;
+  readonly unpaid_completion_reason: string | null;
+  readonly cancelled_at_utc: Date | null;
+  readonly cancelled_by_user_id: string | null;
+  readonly cancelled_by_employee_id: string | null;
+  readonly cancellation_reason: string | null;
+  readonly bill_request_id: string | null;
+  readonly bill_request_status: "open" | null;
+  readonly bill_requested_at_utc: Date | null;
+  readonly bill_requested_by_guest_session_id: string | null;
   readonly cancellation_requested: boolean;
 }
 
 interface OrderItemRow {
   readonly id: string;
   readonly order_id: string;
+  readonly revision: number;
   readonly source_dish_id: string;
   readonly source_menu_version: number;
   readonly dish_name: string;
@@ -86,17 +103,40 @@ interface OrderItemRow {
   readonly line_total_amount: string;
 }
 
+interface OrderCorrectionRow {
+  readonly id: string;
+  readonly order_id: string;
+  readonly revision: number;
+  readonly reason: string;
+  readonly before_total_amount: string;
+  readonly after_total_amount: string;
+  readonly currency: string;
+  readonly before_items: readonly OrderItemRecord[];
+  readonly after_items: readonly OrderItemRecord[];
+  readonly corrected_at_utc: Date;
+  readonly corrected_by_user_id: string;
+  readonly corrected_by_employee_id: string;
+}
+
 const orderSelect = `
   select
     o.id, o.business_account_id, o.restaurant_id, o.branch_id,
-    o.table_session_id, ts.table_id, t.code as table_code, o.reference,
+    o.table_session_id, ts.version as table_session_version,
+    ts.table_id, t.code as table_code, o.reference,
     o.creator_type, o.customer_session_id, o.created_by_user_id,
     o.created_by_employee_id, o.customer_display_name,
     o.configuration_version_id, o.configuration_version,
     o.approval_state, o.fulfilment_state, o.financial_state, o.closure_state,
     o.customer_safe_status_reason, o.total_amount, o.currency, o.version,
+    o.current_item_revision,
     o.submitted_at_utc, o.accepted_at_utc, o.preparing_at_utc, o.ready_at_utc,
     o.served_at_utc, o.served_by_user_id, o.served_by_employee_id,
+    o.completed_at_utc, o.completed_by_user_id, o.completed_by_employee_id,
+    o.unpaid_completion_reason, o.cancelled_at_utc, o.cancelled_by_user_id,
+    o.cancelled_by_employee_id, o.cancellation_reason,
+    br.id as bill_request_id, br.status as bill_request_status,
+    br.requested_at_utc as bill_requested_at_utc,
+    br.requested_by_guest_session_id as bill_requested_by_guest_session_id,
     exists (
       select 1 from ordering.cancellation_requests cr
       where cr.business_account_id = o.business_account_id
@@ -108,6 +148,10 @@ const orderSelect = `
     and ts.id = o.table_session_id
   inner join tables.tables t
     on t.business_account_id = ts.business_account_id and t.id = ts.table_id
+  left join ordering.bill_requests br
+    on br.business_account_id = o.business_account_id
+    and br.order_id = o.id
+    and br.status = 'open'
 `;
 
 function mapGuestSession(row: GuestSessionRow): GuestSessionRecord {
@@ -139,6 +183,7 @@ function mapItem(row: OrderItemRow): OrderItemRecord {
   );
   return {
     id: row.id,
+    revision: row.revision,
     sourceDishId: row.source_dish_id,
     sourceMenuVersion: row.source_menu_version,
     name: row.dish_name,
@@ -155,6 +200,7 @@ function mapItem(row: OrderItemRow): OrderItemRecord {
 function mapOrder(
   row: OrderRow,
   items: readonly OrderItemRecord[],
+  corrections: readonly OrderCorrectionRecord[],
 ): OrderRecord {
   return {
     id: row.id,
@@ -162,6 +208,7 @@ function mapOrder(
     restaurantId: row.restaurant_id,
     branchId: row.branch_id,
     tableSessionId: row.table_session_id,
+    tableSessionVersion: row.table_session_version,
     tableId: row.table_id,
     tableCode: row.table_code,
     reference: row.reference,
@@ -179,6 +226,7 @@ function mapOrder(
     customerSafeStatusReason: row.customer_safe_status_reason ?? undefined,
     total: { amount: row.total_amount, currency: row.currency },
     version: row.version,
+    currentItemRevision: row.current_item_revision,
     submittedAtUtc: row.submitted_at_utc,
     acceptedAtUtc: row.accepted_at_utc,
     preparingAtUtc: row.preparing_at_utc ?? undefined,
@@ -186,7 +234,30 @@ function mapOrder(
     servedAtUtc: row.served_at_utc ?? undefined,
     servedByUserId: row.served_by_user_id ?? undefined,
     servedByEmployeeId: row.served_by_employee_id ?? undefined,
+    completedAtUtc: row.completed_at_utc ?? undefined,
+    completedByUserId: row.completed_by_user_id ?? undefined,
+    completedByEmployeeId: row.completed_by_employee_id ?? undefined,
+    unpaidCompletionReason: row.unpaid_completion_reason ?? undefined,
+    cancelledAtUtc: row.cancelled_at_utc ?? undefined,
+    cancelledByUserId: row.cancelled_by_user_id ?? undefined,
+    cancelledByEmployeeId: row.cancelled_by_employee_id ?? undefined,
+    cancellationReason: row.cancellation_reason ?? undefined,
     items,
+    corrections,
+    billRequest:
+      row.bill_request_id &&
+      row.bill_request_status &&
+      row.bill_requested_at_utc
+        ? {
+            id: row.bill_request_id,
+            orderId: row.id,
+            branchId: row.branch_id,
+            status: row.bill_request_status,
+            requestedAtUtc: row.bill_requested_at_utc,
+            requestedByGuestSessionId:
+              row.bill_requested_by_guest_session_id ?? undefined,
+          }
+        : undefined,
     cancellationRequested: row.cancellation_requested,
   };
 }
@@ -203,12 +274,17 @@ async function readItems(
   const result = await sql.query<OrderItemRow>(
     `
       select
-        id, order_id, source_dish_id, source_menu_version, dish_name,
-        base_price_amount, unit_price_amount, currency, quantity,
-        selected_options, note, tax_inclusive, line_total_amount
-      from ordering.order_items
-      where business_account_id = $1 and order_id = any($2::uuid[])
-      order by order_id, position
+        oi.id, oi.order_id, oi.revision, oi.source_dish_id,
+        oi.source_menu_version, oi.dish_name,
+        oi.base_price_amount, oi.unit_price_amount, oi.currency, oi.quantity,
+        oi.selected_options, oi.note, oi.tax_inclusive, oi.line_total_amount
+      from ordering.order_items oi
+      inner join ordering.orders o
+        on o.business_account_id = oi.business_account_id
+        and o.id = oi.order_id
+        and o.current_item_revision = oi.revision
+      where oi.business_account_id = $1 and oi.order_id = any($2::uuid[])
+      order by oi.order_id, oi.position
     `,
     [businessAccountId, orderIds],
   );
@@ -216,6 +292,51 @@ async function readItems(
     const items = byOrder.get(row.order_id) ?? [];
     items.push(mapItem(row));
     byOrder.set(row.order_id, items);
+  }
+  return byOrder;
+}
+
+async function readCorrections(
+  sql: SqlExecutor,
+  businessAccountId: string,
+  orderIds: readonly string[],
+): Promise<ReadonlyMap<string, readonly OrderCorrectionRecord[]>> {
+  const byOrder = new Map<string, OrderCorrectionRecord[]>();
+  if (orderIds.length === 0) return byOrder;
+  const result = await sql.query<OrderCorrectionRow>(
+    `
+      select
+        id, order_id, revision, reason, before_total_amount,
+        after_total_amount, currency, before_items, after_items,
+        corrected_at_utc, corrected_by_user_id, corrected_by_employee_id
+      from ordering.order_corrections
+      where business_account_id = $1 and order_id = any($2::uuid[])
+      order by order_id, revision
+    `,
+    [businessAccountId, orderIds],
+  );
+  for (const row of result.rows) {
+    const corrections = byOrder.get(row.order_id) ?? [];
+    corrections.push({
+      id: row.id,
+      orderId: row.order_id,
+      revision: row.revision,
+      reason: row.reason,
+      beforeTotal: {
+        amount: row.before_total_amount,
+        currency: row.currency,
+      },
+      afterTotal: {
+        amount: row.after_total_amount,
+        currency: row.currency,
+      },
+      beforeItems: row.before_items,
+      afterItems: row.after_items,
+      correctedAtUtc: row.corrected_at_utc,
+      correctedByUserId: row.corrected_by_user_id,
+      correctedByEmployeeId: row.corrected_by_employee_id,
+    });
+    byOrder.set(row.order_id, corrections);
   }
   return byOrder;
 }
@@ -493,7 +614,12 @@ export class PostgresOrderingStore implements OrderingStore {
       return undefined;
     }
     const items = await readItems(sql, businessAccountId, [row.id]);
-    return mapOrder(row, items.get(row.id) ?? []);
+    const corrections = await readCorrections(sql, businessAccountId, [row.id]);
+    return mapOrder(
+      row,
+      items.get(row.id) ?? [],
+      corrections.get(row.id) ?? [],
+    );
   }
 
   public async getOrder(
@@ -625,7 +751,14 @@ export class PostgresOrderingStore implements OrderingStore {
       input.businessAccountId,
       result.rows.map((row) => row.id),
     );
-    return result.rows.map((row) => mapOrder(row, items.get(row.id) ?? []));
+    const corrections = await readCorrections(
+      sql,
+      input.businessAccountId,
+      result.rows.map((row) => row.id),
+    );
+    return result.rows.map((row) =>
+      mapOrder(row, items.get(row.id) ?? [], corrections.get(row.id) ?? []),
+    );
   }
 
   public async createCancellationRequest(
@@ -689,6 +822,550 @@ export class PostgresOrderingStore implements OrderingStore {
     };
   }
 
+  public async createOrGetBillRequest(
+    transaction: TransactionContext,
+    input: Parameters<OrderingStore["createOrGetBillRequest"]>[1],
+  ): Promise<BillRequestRecord> {
+    const inserted = await transaction.sql.query<{
+      readonly id: string;
+      readonly order_id: string;
+      readonly branch_id: string;
+      readonly status: "open" | "resolved";
+      readonly requested_at_utc: Date;
+      readonly requested_by_guest_session_id: string | null;
+      readonly resolved_at_utc: Date | null;
+    }>(
+      `
+        insert into ordering.bill_requests (
+          id, business_account_id, restaurant_id, branch_id, order_id,
+          requested_by_guest_session_id, status, requested_at_utc
+        )
+        values ($1, $2, $3, $4, $5, $6, 'open', $7)
+        on conflict (business_account_id, order_id) where status = 'open'
+        do nothing
+        returning
+          id, order_id, branch_id, status, requested_at_utc,
+          requested_by_guest_session_id, resolved_at_utc
+      `,
+      [
+        input.id,
+        input.businessAccountId,
+        input.restaurantId,
+        input.branchId,
+        input.orderId,
+        input.guestSessionId,
+        input.now,
+      ],
+    );
+    const row =
+      inserted.rows[0] ??
+      (
+        await transaction.sql.query<{
+          readonly id: string;
+          readonly order_id: string;
+          readonly branch_id: string;
+          readonly status: "open" | "resolved";
+          readonly requested_at_utc: Date;
+          readonly requested_by_guest_session_id: string | null;
+          readonly resolved_at_utc: Date | null;
+        }>(
+          `
+            select
+              id, order_id, branch_id, status, requested_at_utc,
+              requested_by_guest_session_id, resolved_at_utc
+            from ordering.bill_requests
+            where business_account_id = $1
+              and order_id = $2
+              and status = 'open'
+          `,
+          [input.businessAccountId, input.orderId],
+        )
+      ).rows[0];
+    if (!row) throw new Error("Database did not return the bill request.");
+    return {
+      id: row.id,
+      orderId: row.order_id,
+      branchId: row.branch_id,
+      status: row.status,
+      requestedAtUtc: row.requested_at_utc,
+      requestedByGuestSessionId: row.requested_by_guest_session_id ?? undefined,
+      resolvedAtUtc: row.resolved_at_utc ?? undefined,
+    };
+  }
+
+  public async getBillRequest(
+    sql: SqlExecutor,
+    businessAccountId: string,
+    billRequestId: string,
+  ): Promise<BillRequestRecord | undefined> {
+    const result = await sql.query<{
+      readonly id: string;
+      readonly order_id: string;
+      readonly branch_id: string;
+      readonly status: "open" | "resolved";
+      readonly requested_at_utc: Date;
+      readonly requested_by_guest_session_id: string | null;
+      readonly resolved_at_utc: Date | null;
+    }>(
+      `
+        select
+          id, order_id, branch_id, status, requested_at_utc,
+          requested_by_guest_session_id, resolved_at_utc
+        from ordering.bill_requests
+        where business_account_id = $1 and id = $2
+      `,
+      [businessAccountId, billRequestId],
+    );
+    const row = result.rows[0];
+    return row
+      ? {
+          id: row.id,
+          orderId: row.order_id,
+          branchId: row.branch_id,
+          status: row.status,
+          requestedAtUtc: row.requested_at_utc,
+          requestedByGuestSessionId:
+            row.requested_by_guest_session_id ?? undefined,
+          resolvedAtUtc: row.resolved_at_utc ?? undefined,
+        }
+      : undefined;
+  }
+
+  public async listOpenBillRequests(
+    sql: SqlExecutor,
+    businessAccountId: string,
+    branchId: string,
+  ): Promise<readonly BillRequestRecord[]> {
+    const result = await sql.query<{
+      readonly id: string;
+      readonly order_id: string;
+      readonly branch_id: string;
+      readonly requested_at_utc: Date;
+      readonly requested_by_guest_session_id: string | null;
+    }>(
+      `
+        select
+          id, order_id, branch_id, requested_at_utc,
+          requested_by_guest_session_id
+        from ordering.bill_requests
+        where business_account_id = $1
+          and branch_id = $2
+          and status = 'open'
+        order by requested_at_utc, id
+      `,
+      [businessAccountId, branchId],
+    );
+    return result.rows.map((row) => ({
+      id: row.id,
+      orderId: row.order_id,
+      branchId: row.branch_id,
+      status: "open",
+      requestedAtUtc: row.requested_at_utc,
+      requestedByGuestSessionId: row.requested_by_guest_session_id ?? undefined,
+    }));
+  }
+
+  public async resolveOpenBillRequest(
+    transaction: TransactionContext,
+    input: Parameters<OrderingStore["resolveOpenBillRequest"]>[1],
+  ): Promise<BillRequestRecord | undefined> {
+    const result = await transaction.sql.query<{
+      readonly id: string;
+      readonly order_id: string;
+      readonly branch_id: string;
+      readonly requested_at_utc: Date;
+      readonly requested_by_guest_session_id: string | null;
+      readonly resolved_at_utc: Date;
+    }>(
+      `
+        update ordering.bill_requests
+        set
+          status = 'resolved',
+          resolved_at_utc = $3,
+          resolved_by_user_id = $4
+        where business_account_id = $1
+          and order_id = $2
+          and status = 'open'
+        returning
+          id, order_id, branch_id, requested_at_utc,
+          requested_by_guest_session_id, resolved_at_utc
+      `,
+      [
+        input.businessAccountId,
+        input.orderId,
+        input.now,
+        input.actorUserId ?? null,
+      ],
+    );
+    const row = result.rows[0];
+    return row
+      ? {
+          id: row.id,
+          orderId: row.order_id,
+          branchId: row.branch_id,
+          status: "resolved",
+          requestedAtUtc: row.requested_at_utc,
+          requestedByGuestSessionId:
+            row.requested_by_guest_session_id ?? undefined,
+          resolvedAtUtc: row.resolved_at_utc,
+        }
+      : undefined;
+  }
+
+  public async appendCorrection(
+    transaction: TransactionContext,
+    input: Parameters<OrderingStore["appendCorrection"]>[1],
+  ): Promise<OrderRecord | undefined> {
+    const current = await this.readOrder(
+      transaction.sql,
+      input.businessAccountId,
+      input.orderId,
+      true,
+    );
+    if (
+      current?.version !== input.expectedVersion ||
+      current.currentItemRevision !== input.expectedRevision ||
+      current.closure !== "active" ||
+      current.fulfilment !== "not_started" ||
+      current.financial !== "unpaid"
+    ) {
+      return undefined;
+    }
+    const revision = current.currentItemRevision + 1;
+    const afterItems: OrderItemRecord[] = input.items.map((item) => ({
+      id: item.id,
+      revision,
+      sourceDishId: item.sourceDishId,
+      sourceMenuVersion: item.sourceMenuVersion,
+      name: item.dishName,
+      basePrice: item.basePrice,
+      unitPrice: item.unitPrice,
+      quantity: item.quantity,
+      selectedOptions: item.selectedOptions.map((option) => ({
+        optionGroupId: option.optionGroupId,
+        optionGroupName: option.optionGroupName,
+        optionId: option.optionId,
+        optionName: option.optionName,
+        priceDelta: option.priceDelta,
+      })),
+      note: item.note,
+      taxInclusive: item.taxInclusive,
+      total: item.lineTotal,
+    }));
+
+    await transaction.sql.query(
+      `
+        insert into ordering.order_corrections (
+          id, business_account_id, restaurant_id, branch_id, order_id,
+          revision, reason, before_total_amount, after_total_amount, currency,
+          before_items, after_items, corrected_at_utc,
+          corrected_by_user_id, corrected_by_employee_id
+        )
+        values (
+          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
+          $11::jsonb, $12::jsonb, $13, $14, $15
+        )
+      `,
+      [
+        input.id,
+        input.businessAccountId,
+        input.restaurantId,
+        input.branchId,
+        input.orderId,
+        revision,
+        input.reason,
+        current.total.amount,
+        input.total.amount,
+        input.total.currency,
+        JSON.stringify(current.items),
+        JSON.stringify(afterItems),
+        input.now,
+        input.actorUserId,
+        input.effectiveEmployeeId,
+      ],
+    );
+
+    await transaction.sql.query(
+      `
+        insert into ordering.order_items (
+          id, business_account_id, branch_id, order_id, revision, position,
+          source_dish_id, source_menu_version, dish_name,
+          base_price_amount, unit_price_amount, currency, quantity,
+          selected_options, note, tax_inclusive, line_total_amount,
+          created_at_utc
+        )
+        select
+          item.id, $2, $3, $1, $4, item.position,
+          item.source_dish_id, item.source_menu_version, item.dish_name,
+          item.base_price_amount, item.unit_price_amount, item.currency,
+          item.quantity, item.selected_options, item.note,
+          item.tax_inclusive, item.line_total_amount, $6
+        from jsonb_to_recordset($5::jsonb) as item(
+          id uuid,
+          position integer,
+          source_dish_id uuid,
+          source_menu_version integer,
+          dish_name varchar,
+          base_price_amount numeric,
+          unit_price_amount numeric,
+          currency char(3),
+          quantity integer,
+          selected_options jsonb,
+          note varchar,
+          tax_inclusive boolean,
+          line_total_amount numeric
+        )
+      `,
+      [
+        input.orderId,
+        input.businessAccountId,
+        input.branchId,
+        revision,
+        JSON.stringify(
+          input.items.map((item, position) => ({
+            id: item.id,
+            position,
+            source_dish_id: item.sourceDishId,
+            source_menu_version: item.sourceMenuVersion,
+            dish_name: item.dishName,
+            base_price_amount: item.basePrice.amount,
+            unit_price_amount: item.unitPrice.amount,
+            currency: item.unitPrice.currency,
+            quantity: item.quantity,
+            selected_options: item.selectedOptions,
+            note: item.note ?? null,
+            tax_inclusive: item.taxInclusive,
+            line_total_amount: item.lineTotal.amount,
+          })),
+        ),
+        input.now,
+      ],
+    );
+
+    const updated = await transaction.sql.query(
+      `
+        update ordering.orders
+        set
+          current_item_revision = $4,
+          total_amount = $5,
+          currency = $6,
+          version = version + 1,
+          updated_at_utc = $7
+        where business_account_id = $1
+          and id = $2
+          and version = $3
+          and current_item_revision = $4 - 1
+          and closure_state = 'active'
+          and fulfilment_state = 'not_started'
+          and financial_state = 'unpaid'
+        returning id
+      `,
+      [
+        input.businessAccountId,
+        input.orderId,
+        input.expectedVersion,
+        revision,
+        input.total.amount,
+        input.total.currency,
+        input.now,
+      ],
+    );
+    if (updated.rowCount !== 1) return undefined;
+    return this.readOrder(
+      transaction.sql,
+      input.businessAccountId,
+      input.orderId,
+    );
+  }
+
+  public async updateFinancialState(
+    transaction: TransactionContext,
+    input: Parameters<OrderingStore["updateFinancialState"]>[1],
+  ): Promise<OrderRecord | undefined> {
+    const updated = await transaction.sql.query(
+      `
+        update ordering.orders
+        set financial_state = $4, version = version + 1, updated_at_utc = $5
+        where business_account_id = $1
+          and id = $2
+          and version = $3
+          and financial_state = $6
+        returning id
+      `,
+      [
+        input.businessAccountId,
+        input.orderId,
+        input.expectedVersion,
+        input.to,
+        input.now,
+        input.from,
+      ],
+    );
+    if (updated.rowCount !== 1) return undefined;
+    return this.readOrder(
+      transaction.sql,
+      input.businessAccountId,
+      input.orderId,
+    );
+  }
+
+  public async completeOrder(
+    transaction: TransactionContext,
+    input: Parameters<OrderingStore["completeOrder"]>[1],
+  ): Promise<OrderRecord | undefined> {
+    const override = input.unpaidOverrideReason !== undefined;
+    const updated = await transaction.sql.query(
+      `
+        update ordering.orders
+        set
+          closure_state = 'completed',
+          version = version + 1,
+          completed_at_utc = $5,
+          completed_by_user_id = $3,
+          completed_by_employee_id = $4,
+          unpaid_completion_reason = $6,
+          updated_at_utc = $5
+        where business_account_id = $1
+          and id = $2
+          and version = $7
+          and closure_state = 'active'
+          and fulfilment_state = 'served'
+          and ($8::boolean or financial_state = 'paid')
+        returning id
+      `,
+      [
+        input.businessAccountId,
+        input.orderId,
+        input.actorUserId,
+        input.effectiveEmployeeId,
+        input.now,
+        input.unpaidOverrideReason ?? null,
+        input.expectedVersion,
+        override,
+      ],
+    );
+    if (updated.rowCount !== 1) return undefined;
+    return this.readOrder(
+      transaction.sql,
+      input.businessAccountId,
+      input.orderId,
+    );
+  }
+
+  public async cancelOrder(
+    transaction: TransactionContext,
+    input: Parameters<OrderingStore["cancelOrder"]>[1],
+  ): Promise<OrderRecord | undefined> {
+    const updated = await transaction.sql.query(
+      `
+        update ordering.orders
+        set
+          closure_state = 'cancelled',
+          version = version + 1,
+          customer_safe_status_reason = $6,
+          cancelled_at_utc = $5,
+          cancelled_by_user_id = $3,
+          cancelled_by_employee_id = $4,
+          cancellation_reason = $6,
+          updated_at_utc = $5
+        where business_account_id = $1
+          and id = $2
+          and version = $7
+          and closure_state = 'active'
+          and fulfilment_state <> 'served'
+        returning id
+      `,
+      [
+        input.businessAccountId,
+        input.orderId,
+        input.actorUserId,
+        input.effectiveEmployeeId,
+        input.now,
+        input.reason,
+        input.expectedVersion,
+      ],
+    );
+    if (updated.rowCount !== 1) return undefined;
+    return this.readOrder(
+      transaction.sql,
+      input.businessAccountId,
+      input.orderId,
+    );
+  }
+
+  public async resolveCancellationRequests(
+    transaction: TransactionContext,
+    businessAccountId: string,
+    orderId: string,
+    now: Date,
+  ): Promise<void> {
+    await transaction.sql.query(
+      `
+        update ordering.cancellation_requests
+        set status = 'resolved', resolved_at_utc = $3
+        where business_account_id = $1
+          and order_id = $2
+          and status = 'open'
+      `,
+      [businessAccountId, orderId, now],
+    );
+  }
+
+  public async reassignTableSessionReferences(
+    transaction: TransactionContext,
+    input: Parameters<OrderingStore["reassignTableSessionReferences"]>[1],
+  ): Promise<readonly string[]> {
+    await transaction.sql.query(
+      `
+        update ordering.customer_sessions
+        set table_id = $3
+        where business_account_id = $1 and table_session_id = $2
+      `,
+      [input.businessAccountId, input.tableSessionId, input.destinationTableId],
+    );
+    const result = await transaction.sql.query<{ readonly id: string }>(
+      `
+        select id
+        from ordering.orders
+        where business_account_id = $1 and table_session_id = $2
+        order by submitted_at_utc, id
+      `,
+      [input.businessAccountId, input.tableSessionId],
+    );
+    return result.rows.map((row) => row.id);
+  }
+
+  public async tableSessionHasUnresolvedWork(
+    sql: SqlExecutor,
+    businessAccountId: string,
+    tableSessionId: string,
+  ): Promise<boolean> {
+    const result = await sql.query<{ readonly unresolved: boolean }>(
+      `
+        select
+          exists (
+            select 1
+            from ordering.orders o
+            where o.business_account_id = $1
+              and o.table_session_id = $2
+              and o.closure_state = 'active'
+          )
+          or exists (
+            select 1
+            from ordering.bill_requests br
+            inner join ordering.orders o
+              on o.business_account_id = br.business_account_id
+              and o.id = br.order_id
+            where br.business_account_id = $1
+              and o.table_session_id = $2
+              and br.status = 'open'
+          ) as unresolved
+      `,
+      [businessAccountId, tableSessionId],
+    );
+    return result.rows[0]?.unresolved === true;
+  }
+
   private async readOrder(
     sql: SqlExecutor,
     businessAccountId: string,
@@ -706,6 +1383,11 @@ export class PostgresOrderingStore implements OrderingStore {
       return undefined;
     }
     const items = await readItems(sql, businessAccountId, [row.id]);
-    return mapOrder(row, items.get(row.id) ?? []);
+    const corrections = await readCorrections(sql, businessAccountId, [row.id]);
+    return mapOrder(
+      row,
+      items.get(row.id) ?? [],
+      corrections.get(row.id) ?? [],
+    );
   }
 }

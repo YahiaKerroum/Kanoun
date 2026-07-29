@@ -10,6 +10,7 @@ import {
   createKitchenRouter,
   createMenuRouter,
   createOrderingRouter,
+  createPaymentsRouter,
   createPublicMenuRouter,
   createPublicTablesRouter,
   createRestaurantConfigurationRouter,
@@ -21,6 +22,7 @@ import {
   PostgresMenuStore,
   PostgresKitchenStore,
   PostgresOrderingStore,
+  PostgresPaymentsStore,
   PostgresRestaurantConfigurationStore,
   PostgresTablesStore,
 } from "@rms/modules";
@@ -28,6 +30,7 @@ import {
   KitchenServingService,
   MenuTablesService,
   OrderSubmissionService,
+  PaymentCompletionService,
   PostgresServiceWorkflow,
   TenantOwnerService,
 } from "@rms/service-workflow";
@@ -56,6 +59,7 @@ export function composeApi(config: ApiConfig): ApiComposition {
   const tables = new PostgresTablesStore();
   const ordering = new PostgresOrderingStore();
   const kitchen = new PostgresKitchenStore();
+  const payments = new PostgresPaymentsStore();
   const audit = new PostgresAuditWriter();
   const workflow = new PostgresServiceWorkflow(databasePool);
   const credentialTokenDelivery = new WebhookCredentialTokenDelivery({
@@ -106,6 +110,18 @@ export function composeApi(config: ApiConfig): ApiComposition {
     audit,
     idempotencySecret: config.guestAccessSecret,
   });
+  const paymentCompletionService = new PaymentCompletionService({
+    databasePool,
+    workflow,
+    restaurantConfiguration,
+    menu,
+    tables,
+    ordering,
+    kitchen,
+    payments,
+    audit,
+    idempotencySecret: config.guestAccessSecret,
+  });
   const sessionDependencies = {
     authenticateSession: (token: string) =>
       tenantOwnerService.authenticateSession(token),
@@ -148,6 +164,11 @@ export function composeApi(config: ApiConfig): ApiComposition {
     ...guestSessionDependencies,
     useCases: orderSubmissionService,
     servingUseCases: kitchenServingService,
+    paymentCompletionUseCases: paymentCompletionService,
+  });
+  const paymentsRouter = createPaymentsRouter({
+    ...sessionDependencies,
+    useCases: paymentCompletionService,
   });
   const kitchenRouter = createKitchenRouter({
     ...sessionDependencies,
@@ -182,6 +203,7 @@ export function composeApi(config: ApiConfig): ApiComposition {
       publicTablesRouter,
       orderingRouter,
       kitchenRouter,
+      paymentsRouter,
     ],
   });
 

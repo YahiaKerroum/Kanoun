@@ -7,6 +7,7 @@ import type {
   Table,
   TableQrCode,
   TableSession,
+  TableSessionMovement,
 } from "../domain/models.js";
 
 export interface CreateTableInput {
@@ -107,5 +108,39 @@ export interface TablesStore {
     sql: SqlExecutor,
     businessAccountId: string,
     tableSessionId: string,
+  ): Promise<TableSession | undefined>;
+  getOpenTableSessionForUpdate(
+    transaction: TransactionContext,
+    businessAccountId: string,
+    tableSessionId: string,
+  ): Promise<TableSession | undefined>;
+  moveTableSession(
+    transaction: TransactionContext,
+    input: {
+      readonly id: string;
+      readonly businessAccountId: string;
+      readonly branchId: string;
+      readonly tableSessionId: string;
+      readonly destinationTableId: string;
+      readonly expectedVersion: number;
+      readonly actorUserId: string;
+      readonly effectiveEmployeeId: string;
+      readonly now: Date;
+    },
+  ): Promise<
+    | {
+        readonly session: TableSession;
+        readonly movement: TableSessionMovement;
+      }
+    | undefined
+  >;
+  closeTableSession(
+    transaction: TransactionContext,
+    input: {
+      readonly businessAccountId: string;
+      readonly tableSessionId: string;
+      readonly expectedVersion: number;
+      readonly now: Date;
+    },
   ): Promise<TableSession | undefined>;
 }

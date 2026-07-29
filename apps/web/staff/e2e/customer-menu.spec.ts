@@ -291,6 +291,25 @@ test("builds, reviews, submits, tracks, and requests cancellation for an order",
       });
     },
   );
+  await page.route(
+    `**/api/v1/public/orders/${orderId}/bill-requests`,
+    async (route) => {
+      expect(route.request().headers()["x-csrf-token"]).toBe(csrfToken);
+      expect(
+        route.request().headers()["idempotency-key"]?.length,
+      ).toBeGreaterThanOrEqual(16);
+      await route.fulfill({
+        status: 202,
+        contentType: "application/json",
+        body: JSON.stringify({
+          id: "00000000-0000-4000-8000-000000000213",
+          orderId,
+          status: "open",
+          requestedAt: "2026-07-28T18:03:00.000Z",
+        }),
+      });
+    },
+  );
 
   await page.goto(`http://127.0.0.1:5174/qr/${activeToken}`);
   await page.getByLabel("Your name (optional)").fill("Amel");
@@ -324,6 +343,11 @@ test("builds, reviews, submits, tracks, and requests cancellation for an order",
   await expect(page.getByText("Received")).toBeVisible();
   await page.getByRole("button", { name: "Refresh status" }).click();
   await expect(page.getByText("Ready")).toBeVisible();
+
+  await page.getByRole("button", { name: "Request the bill" }).click();
+  await expect(
+    page.getByText("Bill requested. Staff have been notified."),
+  ).toBeVisible();
 
   await page.getByLabel("Reason").fill("Ordered the wrong dish");
   await page.getByRole("button", { name: "Send request" }).click();

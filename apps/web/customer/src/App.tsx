@@ -10,6 +10,7 @@ import {
   exchangeQrToken,
   getGuestMenu,
   getGuestOrder,
+  requestGuestBill,
   requestGuestCancellation,
   submitGuestOrder,
   type CustomerMenu,
@@ -701,6 +702,10 @@ function OrderView(props: {
     "idle" | "pending" | "sent" | "failed"
   >(order.cancellationRequested ? "sent" : "idle");
   const cancellationKey = useRef<string | undefined>(undefined);
+  const [billState, setBillState] = useState<
+    "idle" | "pending" | "sent" | "failed"
+  >(order.billRequest ? "sent" : "idle");
+  const billKey = useRef<string | undefined>(undefined);
 
   async function refresh() {
     setRefreshState("pending");
@@ -740,6 +745,27 @@ function OrderView(props: {
       setOrder((current) => ({ ...current, cancellationRequested: true }));
     } catch {
       setCancellationState("failed");
+    }
+  }
+
+  async function requestBill() {
+    const key = billKey.current ?? crypto.randomUUID();
+    billKey.current = key;
+    setBillState("pending");
+    try {
+      const bill = await requestGuestBill(props.session, order.id, key);
+      billKey.current = undefined;
+      setBillState("sent");
+      setOrder((current) => ({
+        ...current,
+        billRequest: {
+          id: bill.id,
+          status: bill.status,
+          requestedAt: bill.requestedAt,
+        },
+      }));
+    } catch {
+      setBillState("failed");
     }
   }
 
@@ -833,6 +859,27 @@ function OrderView(props: {
           </button>
         </div>
       </section>
+      {order.closure === "active" ? (
+        <section className="cancellation-request bill-request">
+          <h2>{copy.billTitle}</h2>
+          {billState === "sent" || order.billRequest ? (
+            <p role="status">{copy.billSent}</p>
+          ) : (
+            <>
+              {billState === "failed" ? (
+                <p role="alert">{copy.billFailure}</p>
+              ) : null}
+              <button
+                type="button"
+                disabled={billState === "pending"}
+                onClick={() => void requestBill()}
+              >
+                {billState === "pending" ? copy.billPending : copy.requestBill}
+              </button>
+            </>
+          )}
+        </section>
+      ) : null}
       {order.closure === "active" && cancellationState !== "sent" ? (
         <section className="cancellation-request">
           <h2>{copy.cancellationTitle}</h2>

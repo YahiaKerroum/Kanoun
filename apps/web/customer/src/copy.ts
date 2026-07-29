@@ -86,6 +86,12 @@ export const copy = {
   cancellationSent: "Cancellation requested. Staff can now review it.",
   cancellationFailure:
     "The cancellation request was not sent. Check your connection and try again.",
+  billTitle: "Ready to pay?",
+  requestBill: "Request the bill",
+  billPending: "Requesting…",
+  billSent: "Bill requested. Staff have been notified.",
+  billFailure:
+    "The bill request was not sent. Check your connection and try again.",
   refreshStatus: "Refresh status",
   refreshingStatus: "Refreshing…",
   statusUpdatesAutomatically:

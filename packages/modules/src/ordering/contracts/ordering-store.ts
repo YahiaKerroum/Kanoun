@@ -4,6 +4,7 @@ import type {
   TransactionContext,
 } from "@rms/building-blocks";
 import type {
+  BillRequestRecord,
   CancellationRequestRecord,
   GuestSessionRecord,
   OrderApprovalState,
@@ -138,4 +139,109 @@ export interface OrderingStore {
       readonly now: Date;
     },
   ): Promise<CancellationRequestRecord>;
+  createOrGetBillRequest(
+    transaction: TransactionContext,
+    input: {
+      readonly id: string;
+      readonly businessAccountId: string;
+      readonly restaurantId: string;
+      readonly branchId: string;
+      readonly orderId: string;
+      readonly guestSessionId: string;
+      readonly now: Date;
+    },
+  ): Promise<BillRequestRecord>;
+  getBillRequest(
+    sql: SqlExecutor,
+    businessAccountId: string,
+    billRequestId: string,
+  ): Promise<BillRequestRecord | undefined>;
+  listOpenBillRequests(
+    sql: SqlExecutor,
+    businessAccountId: string,
+    branchId: string,
+  ): Promise<readonly BillRequestRecord[]>;
+  resolveOpenBillRequest(
+    transaction: TransactionContext,
+    input: {
+      readonly businessAccountId: string;
+      readonly orderId: string;
+      readonly actorUserId?: string | undefined;
+      readonly now: Date;
+    },
+  ): Promise<BillRequestRecord | undefined>;
+  appendCorrection(
+    transaction: TransactionContext,
+    input: {
+      readonly id: string;
+      readonly businessAccountId: string;
+      readonly restaurantId: string;
+      readonly branchId: string;
+      readonly orderId: string;
+      readonly expectedVersion: number;
+      readonly expectedRevision: number;
+      readonly reason: string;
+      readonly total: Money;
+      readonly items: readonly (ResolvedOrderItemSnapshot & {
+        readonly id: string;
+      })[];
+      readonly actorUserId: string;
+      readonly effectiveEmployeeId: string;
+      readonly now: Date;
+    },
+  ): Promise<OrderRecord | undefined>;
+  updateFinancialState(
+    transaction: TransactionContext,
+    input: {
+      readonly businessAccountId: string;
+      readonly orderId: string;
+      readonly expectedVersion: number;
+      readonly from: "unpaid" | "paid" | "partially_refunded";
+      readonly to: "paid" | "partially_refunded" | "refunded";
+      readonly now: Date;
+    },
+  ): Promise<OrderRecord | undefined>;
+  completeOrder(
+    transaction: TransactionContext,
+    input: {
+      readonly businessAccountId: string;
+      readonly orderId: string;
+      readonly expectedVersion: number;
+      readonly actorUserId: string;
+      readonly effectiveEmployeeId: string;
+      readonly unpaidOverrideReason?: string | undefined;
+      readonly now: Date;
+    },
+  ): Promise<OrderRecord | undefined>;
+  cancelOrder(
+    transaction: TransactionContext,
+    input: {
+      readonly businessAccountId: string;
+      readonly orderId: string;
+      readonly expectedVersion: number;
+      readonly actorUserId: string;
+      readonly effectiveEmployeeId: string;
+      readonly reason: string;
+      readonly now: Date;
+    },
+  ): Promise<OrderRecord | undefined>;
+  resolveCancellationRequests(
+    transaction: TransactionContext,
+    businessAccountId: string,
+    orderId: string,
+    now: Date,
+  ): Promise<void>;
+  reassignTableSessionReferences(
+    transaction: TransactionContext,
+    input: {
+      readonly businessAccountId: string;
+      readonly tableSessionId: string;
+      readonly destinationTableId: string;
+    },
+  ): Promise<readonly string[]>;
+  tableSessionHasUnresolvedWork(
+    sql: SqlExecutor,
+    businessAccountId: string,
+    tableSessionId: string,
+  ): Promise<boolean>;
 }

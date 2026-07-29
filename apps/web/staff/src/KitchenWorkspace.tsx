@@ -30,6 +30,8 @@ const kitchenItemSchema = z.object({
     }),
   ),
   note: z.string().nullable(),
+  changeKind: z.enum(["new", "corrected"]).default("new"),
+  correctionId: z.uuid().nullable().default(null),
   state: z.enum(["queued", "preparing", "ready", "cancelled"]),
   queuedAt: z.iso.datetime(),
   startedAt: z.iso.datetime().nullable(),
@@ -478,7 +480,9 @@ export function KitchenWorkspace(props: {
                               className={`kitchen-state kitchen-state--${item.state}`}
                             >
                               {item.state === "queued"
-                                ? "New · queued"
+                                ? item.changeKind === "corrected"
+                                  ? "Changed · queued"
+                                  : "New · queued"
                                 : item.state}
                             </span>
                           </div>

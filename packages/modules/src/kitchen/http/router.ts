@@ -119,6 +119,8 @@ export function presentKitchenWorkItem(
       optionName: option.optionName,
     })),
     note: item.note ?? null,
+    changeKind: item.changeKind,
+    correctionId: item.correctionId ?? null,
     state: item.state,
     queuedAt: item.queuedAtUtc.toISOString(),
     startedAt: item.startedAtUtc?.toISOString() ?? null,

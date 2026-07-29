@@ -78,6 +78,14 @@ export const orderSchema = z.object({
   submittedAt: z.iso.datetime(),
   acceptedAt: z.iso.datetime(),
   cancellationRequested: z.boolean(),
+  billRequest: z
+    .object({
+      id: z.uuid(),
+      status: z.enum(["open", "resolved"]),
+      requestedAt: z.iso.datetime(),
+    })
+    .nullable()
+    .default(null),
   items: z.array(
     z.object({
       id: z.uuid(),
@@ -109,6 +117,13 @@ const cancellationRequestSchema = z.object({
   status: z.enum(["open", "resolved"]),
   reason: z.string(),
   createdAt: z.iso.datetime(),
+});
+
+const billRequestSchema = z.object({
+  id: z.uuid(),
+  orderId: z.uuid(),
+  status: z.enum(["open", "resolved"]),
+  requestedAt: z.iso.datetime(),
 });
 
 export type GuestOrder = z.infer<typeof orderSchema>;
@@ -229,4 +244,26 @@ export async function requestGuestCancellation(
     },
   );
   await parsedJson(response, cancellationRequestSchema);
+}
+
+export async function requestGuestBill(
+  session: GuestSession,
+  orderId: string,
+  idempotencyKey: string,
+): Promise<z.infer<typeof billRequestSchema>> {
+  const response = await fetch(
+    `/api/v1/public/orders/${encodeURIComponent(orderId)}/bill-requests`,
+    {
+      method: "POST",
+      credentials: "same-origin",
+      headers: {
+        accept: "application/json",
+        "content-type": "application/json",
+        "x-csrf-token": session.csrfToken,
+        "idempotency-key": idempotencyKey,
+      },
+      body: "{}",
+    },
+  );
+  return parsedJson(response, billRequestSchema);
 }

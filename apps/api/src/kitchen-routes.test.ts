@@ -61,6 +61,7 @@ const item: KitchenQueueItemView = {
     },
   ],
   note: "No parsley",
+  changeKind: "new",
   state: "preparing",
   version: 2,
   queuedAtUtc: new Date("2026-07-28T12:00:00.000Z"),

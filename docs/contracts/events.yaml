@@ -3,7 +3,7 @@ document:
   status: approved
   version: "1.0"
   owner: architecture
-  last_reviewed: 2026-07-27
+  last_reviewed: 2026-07-29
 
 delivery:
   mode: at_least_once
@@ -156,6 +156,11 @@ events:
     consumers: [notifications, reporting]
   EVT-ORDER-SERVED:
     type: ordering.order_served.v1
+    owner: ordering
+    aggregate: order
+    consumers: [notifications, reporting]
+  EVT-ORDER-CORRECTED:
+    type: ordering.order_corrected.v1
     owner: ordering
     aggregate: order
     consumers: [notifications, reporting]

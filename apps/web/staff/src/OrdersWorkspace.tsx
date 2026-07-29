@@ -1,6 +1,7 @@
 import { CircleAlert, Clock3, Plus, RefreshCw, X } from "lucide-react";
 import { useEffect, useRef, useState, type SyntheticEvent } from "react";
 import { z } from "zod";
+import { OrderOperations } from "./OrderOperations.js";
 
 const moneySchema = z.object({
   amount: z.string().regex(/^-?\d+(?:\.\d{1,2})?$/),
@@ -55,6 +56,7 @@ const orderSchema = z.object({
   version: z.number().int().positive(),
   branchId: z.uuid(),
   tableSessionId: z.uuid(),
+  tableSessionVersion: z.number().int().positive().default(1),
   tableId: z.uuid(),
   tableCode: z.string(),
   creatorType: z.enum(["guest", "staff"]),
@@ -69,9 +71,32 @@ const orderSchema = z.object({
   submittedAt: z.iso.datetime(),
   acceptedAt: z.iso.datetime(),
   cancellationRequested: z.boolean(),
+  currentItemRevision: z.number().int().positive().default(1),
+  billRequest: z
+    .object({
+      id: z.uuid(),
+      status: z.enum(["open", "resolved"]),
+      requestedAt: z.iso.datetime(),
+    })
+    .nullable()
+    .default(null),
+  corrections: z
+    .array(
+      z.object({
+        id: z.uuid(),
+        revision: z.number().int().min(2),
+        reason: z.string(),
+        beforeTotal: moneySchema,
+        afterTotal: moneySchema,
+        correctedAt: z.iso.datetime(),
+        correctedByEmployeeId: z.uuid(),
+      }),
+    )
+    .default([]),
   items: z.array(
     z.object({
       id: z.uuid(),
+      revision: z.number().int().positive().default(1),
       dishId: z.uuid(),
       menuVersion: z.string(),
       name: z.string(),
@@ -101,8 +126,8 @@ const dishesPageSchema = z.object({
 });
 const optionGroupsPageSchema = z.object({ items: z.array(optionGroupSchema) });
 
-type Order = z.infer<typeof orderSchema>;
-type Table = z.infer<typeof tableSchema>;
+export type Order = z.infer<typeof orderSchema>;
+export type Table = z.infer<typeof tableSchema>;
 type Dish = z.infer<typeof dishSchema>;
 type OptionGroup = z.infer<typeof optionGroupSchema>;
 type BranchOverride = z.infer<typeof branchOverrideSchema>;
@@ -110,6 +135,7 @@ type BranchOverride = z.infer<typeof branchOverrideSchema>;
 interface OrderFilters {
   readonly approval: string;
   readonly fulfilment: string;
+  readonly closure: string;
   readonly tableId: string;
   readonly createdByEmployeeId: string;
   readonly submittedFrom: string;
@@ -136,6 +162,7 @@ type LoadState<Data> =
 const initialFilters: OrderFilters = {
   approval: "",
   fulfilment: "",
+  closure: "active",
   tableId: "",
   createdByEmployeeId: "",
   submittedFrom: "",
@@ -146,6 +173,7 @@ const filterSchema = z
   .object({
     approval: z.enum(["", "submitted", "accepted", "rejected"]),
     fulfilment: z.enum(["", "not_started", "preparing", "ready", "served"]),
+    closure: z.enum(["active", "completed", "cancelled"]),
     tableId: z.union([z.literal(""), z.uuid()]),
     createdByEmployeeId: z.union([z.literal(""), z.uuid()]),
     submittedFrom: z.string(),
@@ -294,6 +322,11 @@ export function OrdersWorkspace(props: {
   readonly canCreate: boolean;
   readonly canViewMenu: boolean;
   readonly canViewTables: boolean;
+  readonly canModify: boolean;
+  readonly canCancel: boolean;
+  readonly canComplete: boolean;
+  readonly canCompleteUnpaid: boolean;
+  readonly canAssignTables: boolean;
 }) {
   const [filters, setFilters] = useState<OrderFilters>(initialFilters);
   const [appliedFilters, setAppliedFilters] =
@@ -329,7 +362,7 @@ export function OrdersWorkspace(props: {
         }
       });
     return () => abortController.abort();
-  }, [dependencyTablesEnabled, props.branchId]);
+  }, [dependencyTablesEnabled, props.branchId, reloadSequence]);
 
   useEffect(() => {
     const dialog = entryDialog.current;
@@ -451,6 +484,20 @@ export function OrdersWorkspace(props: {
               )}
             </label>
             <label>
+              <span>Closure</span>
+              <select
+                value={filters.closure}
+                onChange={(event) => {
+                  const value = event.currentTarget.value;
+                  setFilters((current) => ({ ...current, closure: value }));
+                }}
+              >
+                <option value="active">Active</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </label>
+            <label>
               <span>Creating employee</span>
               <input
                 value={filters.createdByEmployeeId}
@@ -527,6 +574,12 @@ export function OrdersWorkspace(props: {
             filters={appliedFilters}
             reloadSequence={reloadSequence}
             onReload={() => setReloadSequence((value) => value + 1)}
+            tables={tableItems}
+            canModify={props.canModify}
+            canCancel={props.canCancel}
+            canComplete={props.canComplete}
+            canCompleteUnpaid={props.canCompleteUnpaid}
+            canAssignTables={props.canAssignTables}
           />
         </>
       ) : (
@@ -574,6 +627,12 @@ function OrdersList(props: {
   readonly filters: OrderFilters;
   readonly reloadSequence: number;
   readonly onReload: () => void;
+  readonly tables: readonly Table[];
+  readonly canModify: boolean;
+  readonly canCancel: boolean;
+  readonly canComplete: boolean;
+  readonly canCompleteUnpaid: boolean;
+  readonly canAssignTables: boolean;
 }) {
   const [state, setState] = useState<LoadState<readonly Order[]>>({
     kind: "loading",
@@ -589,7 +648,7 @@ function OrdersList(props: {
     const abortController = new AbortController();
     const query = new URLSearchParams({
       branchId: props.branchId,
-      closure: "active",
+      closure: props.filters.closure,
       pageSize: "50",
     });
     if (props.filters.approval) query.set("approval", props.filters.approval);
@@ -708,6 +767,17 @@ function OrdersList(props: {
               </div>
               <div className="order-state-cell">
                 <span className="order-state">{lifecycleLabel(order)}</span>
+                <span className="order-request-state">
+                  {order.financial.replace("_", " ")}
+                </span>
+                {order.billRequest ? (
+                  <span className="order-request-state">Bill requested</span>
+                ) : null}
+                {order.corrections.length > 0 ? (
+                  <span className="order-request-state">
+                    Corrected · revision {order.currentItemRevision}
+                  </span>
+                ) : null}
                 {order.cancellationRequested ? (
                   <span className="order-request-state">
                     Cancellation requested
@@ -717,6 +787,16 @@ function OrdersList(props: {
               <strong className="order-total">
                 {formatMoney(order.total.amount, order.total.currency)}
               </strong>
+              <OrderOperations
+                order={order}
+                tables={props.tables}
+                canModify={props.canModify}
+                canCancel={props.canCancel}
+                canComplete={props.canComplete}
+                canCompleteUnpaid={props.canCompleteUnpaid}
+                canAssignTables={props.canAssignTables}
+                onChanged={props.onReload}
+              />
             </li>
           ))}
         </ul>

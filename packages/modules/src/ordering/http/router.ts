@@ -18,15 +18,20 @@ import {
   type GuestSessionMiddlewareDependencies,
 } from "./guest-session-middleware.js";
 import type {
+  BillRequestRecord,
   CancellationRequestRecord,
   OrderRecord,
 } from "../domain/models.js";
 import {
   cancellationRequestSchema,
+  cancelOrderSchema,
+  completeOrderSchema,
+  correctOrderSchema,
   createStaffOrderSchema,
   expectedVersionSchema,
   idempotencyKeySchema,
   listStaffOrdersSchema,
+  moveOrderTableSchema,
   orderParametersSchema,
   servingActionSchema,
   submitOrderSchema,
@@ -113,6 +118,66 @@ export interface OrderingRouterDependencies
       metadata: RequestMetadata,
     ): Promise<OrderRecord>;
   };
+  readonly paymentCompletionUseCases: {
+    requestGuestBill(
+      context: GuestRequestContext,
+      orderId: string,
+      idempotencyKey: string,
+      metadata: RequestMetadata,
+    ): Promise<BillRequestRecord>;
+    correctOrder(
+      context: StaffRequestContext,
+      orderId: string,
+      expectedVersion: number,
+      input: {
+        readonly menuVersion: number;
+        readonly items: readonly {
+          readonly dishId: string;
+          readonly quantity: number;
+          readonly optionIds: readonly string[];
+          readonly note?: string | undefined;
+        }[];
+        readonly reason: string;
+        readonly effectiveEmployeeId?: string | undefined;
+      },
+      idempotencyKey: string,
+      metadata: RequestMetadata,
+    ): Promise<OrderRecord>;
+    cancelOrder(
+      context: StaffRequestContext,
+      orderId: string,
+      expectedVersion: number,
+      input: {
+        readonly reason: string;
+        readonly effectiveEmployeeId?: string | undefined;
+      },
+      idempotencyKey: string,
+      metadata: RequestMetadata,
+    ): Promise<OrderRecord>;
+    completeOrder(
+      context: StaffRequestContext,
+      orderId: string,
+      expectedVersion: number,
+      input: {
+        readonly unpaidOverrideReason?: string | undefined;
+        readonly confirmUnpaidOverride?: boolean | undefined;
+        readonly effectiveEmployeeId?: string | undefined;
+      },
+      idempotencyKey: string,
+      metadata: RequestMetadata,
+    ): Promise<OrderRecord>;
+    moveOrderTable(
+      context: StaffRequestContext,
+      orderId: string,
+      input: {
+        readonly destinationTableId: string;
+        readonly expectedTableSessionVersion: number;
+        readonly effectiveEmployeeId?: string | undefined;
+      },
+      idempotencyKey: string,
+      metadata: RequestMetadata,
+    ): Promise<OrderRecord>;
+  };
 }
 
 function parse<Input>(schema: z.ZodType<Input>, value: unknown): Input {
@@ -165,6 +230,7 @@ export function presentOrder(order: OrderRecord): object {
     version: order.version,
     branchId: order.branchId,
     tableSessionId: order.tableSessionId,
+    tableSessionVersion: order.tableSessionVersion,
     tableId: order.tableId,
     tableCode: order.tableCode,
     creatorType: order.creatorType,
@@ -183,8 +249,32 @@ export function presentOrder(order: OrderRecord): object {
     servedAt: order.servedAtUtc?.toISOString() ?? null,
     servedByEmployeeId: order.servedByEmployeeId ?? null,
     cancellationRequested: order.cancellationRequested,
+    currentItemRevision: order.currentItemRevision,
+    billRequest: order.billRequest
+      ? {
+          id: order.billRequest.id,
+          status: order.billRequest.status,
+          requestedAt: order.billRequest.requestedAtUtc.toISOString(),
+        }
+      : null,
+    completedAt: order.completedAtUtc?.toISOString() ?? null,
+    completedByEmployeeId: order.completedByEmployeeId ?? null,
+    unpaidCompletionReason: order.unpaidCompletionReason ?? null,
+    cancelledAt: order.cancelledAtUtc?.toISOString() ?? null,
+    cancelledByEmployeeId: order.cancelledByEmployeeId ?? null,
+    cancellationReason: order.cancellationReason ?? null,
+    corrections: order.corrections.map((correction) => ({
+      id: correction.id,
+      revision: correction.revision,
+      reason: correction.reason,
+      beforeTotal: correction.beforeTotal,
+      afterTotal: correction.afterTotal,
+      correctedAt: correction.correctedAtUtc.toISOString(),
+      correctedByEmployeeId: correction.correctedByEmployeeId,
+    })),
     items: order.items.map((item) => ({
       id: item.id,
+      revision: item.revision,
       dishId: item.sourceDishId,
       menuVersion: String(item.sourceMenuVersion),
       name: item.name,
@@ -291,6 +381,33 @@ export function createOrderingRouter(
     },
   );
 
+  router.post(
+    "/public/orders/:orderId/bill-requests",
+    commandLimiter,
+    requireGuestSession(),
+    guestCsrf,
+    async (request, response) => {
+      const parameters = parse(orderParametersSchema, request.params);
+      const idempotencyKey = parse(
+        idempotencyKeySchema,
+        request.get("idempotency-key"),
+      );
+      const bill =
+        await dependencies.paymentCompletionUseCases.requestGuestBill(
+          guestContext(request),
+          parameters.orderId,
+          idempotencyKey,
+          metadata(request),
+        );
+      response.status(202).send({
+        id: bill.id,
+        orderId: bill.orderId,
+        status: bill.status,
+        requestedAt: bill.requestedAtUtc.toISOString(),
+      });
+    },
+  );
+
   router.get(
     "/staff/orders",
     requireStaffSession(),
@@ -374,6 +491,131 @@ export function createOrderingRouter(
             parameters.orderId,
             expectedVersion,
             input.effectiveEmployeeId,
+            idempotencyKey,
+            metadata(request),
+          ),
+        ),
+      );
+    },
+  );
+
+  router.post(
+    "/staff/orders/:orderId/corrections",
+    commandLimiter,
+    requireStaffSession(),
+    staffCsrf,
+    async (request, response) => {
+      const parameters = parse(orderParametersSchema, request.params);
+      const input = parse(correctOrderSchema, request.body);
+      const expectedVersion = parse(
+        expectedVersionSchema,
+        request.get("if-match"),
+      );
+      const idempotencyKey = parse(
+        idempotencyKeySchema,
+        request.get("idempotency-key"),
+      );
+      response.send(
+        presentOrder(
+          await dependencies.paymentCompletionUseCases.correctOrder(
+            staffContext(request),
+            parameters.orderId,
+            expectedVersion,
+            {
+              ...input,
+              items: input.items.map((item) => ({
+                ...item,
+                note: item.note ?? undefined,
+              })),
+            },
+            idempotencyKey,
+            metadata(request),
+          ),
+        ),
+      );
+    },
+  );
+
+  router.post(
+    "/staff/orders/:orderId/cancellation",
+    commandLimiter,
+    requireStaffSession(),
+    staffCsrf,
+    async (request, response) => {
+      const parameters = parse(orderParametersSchema, request.params);
+      const input = parse(cancelOrderSchema, request.body);
+      const expectedVersion = parse(
+        expectedVersionSchema,
+        request.get("if-match"),
+      );
+      const idempotencyKey = parse(
+        idempotencyKeySchema,
+        request.get("idempotency-key"),
+      );
+      response.send(
+        presentOrder(
+          await dependencies.paymentCompletionUseCases.cancelOrder(
+            staffContext(request),
+            parameters.orderId,
+            expectedVersion,
+            input,
+            idempotencyKey,
+            metadata(request),
+          ),
+        ),
+      );
+    },
+  );
+
+  router.post(
+    "/staff/orders/:orderId/completion",
+    commandLimiter,
+    requireStaffSession(),
+    staffCsrf,
+    async (request, response) => {
+      const parameters = parse(orderParametersSchema, request.params);
+      const input = parse(completeOrderSchema, request.body ?? {});
+      const expectedVersion = parse(
+        expectedVersionSchema,
+        request.get("if-match"),
+      );
+      const idempotencyKey = parse(
+        idempotencyKeySchema,
+        request.get("idempotency-key"),
+      );
+      response.send(
+        presentOrder(
+          await dependencies.paymentCompletionUseCases.completeOrder(
+            staffContext(request),
+            parameters.orderId,
+            expectedVersion,
+            input,
+            idempotencyKey,
+            metadata(request),
+          ),
+        ),
+      );
+    },
+  );
+
+  router.post(
+    "/staff/orders/:orderId/table-assignment",
+    commandLimiter,
+    requireStaffSession(),
+    staffCsrf,
+    async (request, response) => {
+      const parameters = parse(orderParametersSchema, request.params);
+      const input = parse(moveOrderTableSchema, request.body);
+      const idempotencyKey = parse(
+        idempotencyKeySchema,
+        request.get("idempotency-key"),
+      );
+      response.send(
+        presentOrder(
+          await dependencies.paymentCompletionUseCases.moveOrderTable(
+            staffContext(request),
+            parameters.orderId,
+            input,
             idempotencyKey,
             metadata(request),
           ),

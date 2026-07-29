@@ -3,7 +3,7 @@ document:
   status: approved
   version: "1.0"
   owner: architecture
-  last_reviewed: 2026-07-27
+  last_reviewed: 2026-07-29
 
 rules:
   foreign_table_writes: prohibited
@@ -110,14 +110,22 @@ modules:
       - mark_served
       - complete_order
       - get_order_bill_snapshot
+      - update_order_financial_projection
+      - resolve_open_order_requests
+      - reassign_table_session_references
+      - table_session_has_unresolved_work
     publishes:
       - EVT-ORDER-SUBMITTED
       - EVT-ORDER-ACCEPTED
       - EVT-ORDER-CANCELLATION-REQUESTED
       - EVT-ORDER-READY
       - EVT-ORDER-SERVED
+      - EVT-ORDER-CORRECTED
       - EVT-ORDER-CANCELLED
       - EVT-ORDER-COMPLETED
+      - EVT-ORDER-COMPLETED-WITH-OVERRIDE
+      - EVT-BILL-REQUESTED
+      - EVT-BILL-REQUEST-RESOLVED
 
   kitchen:
     owns:
@@ -130,6 +138,8 @@ modules:
       - start_item
       - mark_item_ready
       - cancel_unstarted_item
+      - replace_unstarted_work_for_correction
+      - reassign_live_work_to_table
     publishes: [EVT-KITCHEN-ITEM-STARTED, EVT-KITCHEN-ITEM-READY, EVT-KITCHEN-ITEM-CANCELLED]
 
   payments:
@@ -142,6 +152,7 @@ modules:
       - record_payment
       - record_refund
       - get_order_balance
+      - get_order_ledger
       - verify_order_paid
     publishes: [EVT-PAYMENT-RECORDED, EVT-PAYMENT-REFUNDED, EVT-ORDER-PAID]
 
@@ -155,6 +166,7 @@ modules:
       - EVT-ORDER-READY
       - EVT-ORDER-CANCELLED
       - EVT-ORDER-CANCELLATION-REQUESTED
+      - EVT-ORDER-CORRECTED
       - EVT-TABLE-SESSION-MOVED
       - EVT-BILL-REQUESTED
     exposes: [get_notification_inbox, acknowledge_notification, stream_notifications]
@@ -170,6 +182,8 @@ modules:
       - EVT-ORDER-SERVED
       - EVT-ORDER-CANCELLED
       - EVT-ORDER-COMPLETED
+      - EVT-ORDER-COMPLETED-WITH-OVERRIDE
+      - EVT-ORDER-CORRECTED
       - EVT-PAYMENT-RECORDED
       - EVT-PAYMENT-REFUNDED
       - EVT-BILL-REQUESTED

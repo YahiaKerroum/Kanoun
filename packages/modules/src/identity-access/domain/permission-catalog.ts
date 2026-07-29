@@ -207,6 +207,7 @@ export const administratorPermissionKeys = [
   "orders.cancel",
   "orders.serve",
   "orders.complete",
+  "orders.complete_unpaid",
   "kitchen.view",
   "kitchen.update",
   "payments.view",

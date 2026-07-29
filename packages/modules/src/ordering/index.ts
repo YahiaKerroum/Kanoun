@@ -1,4 +1,5 @@
 export type {
+  BillRequestRecord,
   CancellationRequestRecord,
   GuestSessionRecord,
   OrderApprovalState,
@@ -6,6 +7,7 @@ export type {
   OrderFinancialState,
   OrderFulfilmentState,
   OrderItemRecord,
+  OrderCorrectionRecord,
   OrderOptionSnapshot,
   OrderRecord,
 } from "./domain/models.js";

@@ -10,8 +10,8 @@ last_reviewed: 2026-07-29
 
 ## Current slice
 
-`SLICE-007 — payment_completion_and_correction` (authorized; normative
-planning not yet completed)
+`SLICE-007 — payment_completion_and_correction` (complete and verified;
+publication authorization pending)
 
 ## Slice status
 
@@ -25,8 +25,8 @@ planning not yet completed)
   `slice-006-kitchen-and-serving`; implementation commit
   `e80e9608f375344903943bbafe5ed384651a65db` and publication follow-up
   `0670c04d1441ef2729ee6263c4736d4571251b2c` are integrated into `main`.
-- `SLICE-007 — payment_completion_and_correction`: authorized; requirements
-  review and implementation declaration pending.
+- `SLICE-007 — payment_completion_and_correction`: complete and verified on
+  `slice-007-payment-completion-and-correction`; uncommitted and unpublished.
 - `SLICE-008 — notifications_reporting_and_audit`: not started.
 
 ## Completed
@@ -118,24 +118,45 @@ planning not yet completed)
   `0670c04d1441ef2729ee6263c4736d4571251b2c` without history rewriting.
 - GitHub Actions run `30442851671` succeeded for that exact integration SHA;
   both `verify` and `dependency-audit` passed.
+- The documentation-only Slice 006 main-publication record was committed and
+  pushed at `c04c4bd5df6ad9f70ac42fa13b0148b1b3410e2f`.
+- GitHub Actions run `30443206834` succeeded for that exact documentation
+  commit; both `verify` and `dependency-audit` passed.
+- Slice 007 whole-session table movement; append-only order correction,
+  payment, and refund history; bill-request operations; reasoned cancellation;
+  served/paid and critical unpaid completion; guarded table-session closure;
+  customer/staff experiences; and transactional audit/idempotency/outbox
+  behavior.
+- Final Slice 007 verification applied all seven migrations from empty
+  PostgreSQL 18.1 and passed 189 tests across 24 files, architecture checks
+  across 136 modules and 247 dependencies, OpenAPI and 42 event contracts, all
+  production builds, all 23 browser/WCAG tests, frozen installation,
+  formatting, lint, strict TypeScript, and the production dependency audit.
+- Responsive traced states for customer bill requests, the staff
+  payment/refund desk, correction retry, and whole-session movement were
+  visually inspected after the complete browser suite passed.
 
 ## In progress
 
-- Slice 007 requirements, decisions, workflows, contracts, data model, and
-  test strategy must be reviewed before its implementation declaration.
+- Slice 007 is complete in the worktree. The isolated PostgreSQL verification
+  cluster was stopped, only its exact data/log artifacts were removed, and
+  port `55437` was confirmed free.
+- No Slice 007 commit, stage, feature-branch push, pull request, or integration
+  exists. Publication requires explicit authorization.
 - Active handoff:
-  `docs/delivery/handoff-2026-07-28-slice-006-checkpoint.md`.
-- No Slice 007 application behavior has been changed yet.
+  `docs/delivery/handoff-2026-07-29-slice-007-checkpoint.md`.
+- Historical compaction continuation prompt:
+  `docs/delivery/continuation-prompt-2026-07-29-slice-007-compaction-2.md`.
 
 ## Current limitations
 
 - Customer web has scoped QR exchange, explicit table confirmation, real
   branch menu browsing, and a browser/WCAG-tested cart/order journey.
 - Menu and physical-table administration and the staff Orders workspace are
-  present and their complete browser/WCAG suite passes. Table-session and
-  queued kitchen records support Slice 005 submission, but kitchen processing,
-  payment, durable notification, reporting, and audit-query screens remain in
-  their owning later slices.
+  present and their complete browser/WCAG suite passes. Kitchen processing,
+  payment/completion/correction, and bill-request operations are now present;
+  durable notification delivery, reporting projections, and audit-query
+  screens remain in Slice 008.
 - Slice 005 persists item notes and carries them into queued Kitchen work, but
   it does not claim completion of configurable free-text note policy or later
   employee note presentation. Optional customer-name configuration also
@@ -155,5 +176,6 @@ planning not yet completed)
 
 ## Next slice
 
-`SLICE-007 — payment_completion_and_correction` is explicitly authorized.
-Complete the normative reading and change declaration before implementation.
+Publish `SLICE-007 — payment_completion_and_correction` only after explicit
+authorization and a final protected-path-aware scope review. Do not begin
+`SLICE-008 — notifications_reporting_and_audit` from this handoff.

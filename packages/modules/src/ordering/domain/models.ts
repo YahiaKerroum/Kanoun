@@ -32,6 +32,7 @@ export interface OrderOptionSnapshot {
 
 export interface OrderItemRecord {
   readonly id: string;
+  readonly revision: number;
   readonly sourceDishId: string;
   readonly sourceMenuVersion: number;
   readonly name: string;
@@ -44,12 +45,37 @@ export interface OrderItemRecord {
   readonly total: Money;
 }
 
+export interface OrderCorrectionRecord {
+  readonly id: string;
+  readonly orderId: string;
+  readonly revision: number;
+  readonly reason: string;
+  readonly beforeTotal: Money;
+  readonly afterTotal: Money;
+  readonly beforeItems: readonly OrderItemRecord[];
+  readonly afterItems: readonly OrderItemRecord[];
+  readonly correctedAtUtc: Date;
+  readonly correctedByUserId: string;
+  readonly correctedByEmployeeId: string;
+}
+
+export interface BillRequestRecord {
+  readonly id: string;
+  readonly orderId: string;
+  readonly branchId: string;
+  readonly status: "open" | "resolved";
+  readonly requestedAtUtc: Date;
+  readonly requestedByGuestSessionId?: string | undefined;
+  readonly resolvedAtUtc?: Date | undefined;
+}
+
 export interface OrderRecord {
   readonly id: string;
   readonly businessAccountId: string;
   readonly restaurantId: string;
   readonly branchId: string;
   readonly tableSessionId: string;
+  readonly tableSessionVersion: number;
   readonly tableId: string;
   readonly tableCode: string;
   readonly reference: string;
@@ -67,6 +93,7 @@ export interface OrderRecord {
   readonly customerSafeStatusReason?: string | undefined;
   readonly total: Money;
   readonly version: number;
+  readonly currentItemRevision: number;
   readonly submittedAtUtc: Date;
   readonly acceptedAtUtc: Date;
   readonly preparingAtUtc?: Date | undefined;
@@ -74,7 +101,17 @@ export interface OrderRecord {
   readonly servedAtUtc?: Date | undefined;
   readonly servedByUserId?: string | undefined;
   readonly servedByEmployeeId?: string | undefined;
+  readonly completedAtUtc?: Date | undefined;
+  readonly completedByUserId?: string | undefined;
+  readonly completedByEmployeeId?: string | undefined;
+  readonly unpaidCompletionReason?: string | undefined;
+  readonly cancelledAtUtc?: Date | undefined;
+  readonly cancelledByUserId?: string | undefined;
+  readonly cancelledByEmployeeId?: string | undefined;
+  readonly cancellationReason?: string | undefined;
   readonly items: readonly OrderItemRecord[];
+  readonly corrections: readonly OrderCorrectionRecord[];
+  readonly billRequest?: BillRequestRecord | undefined;
   readonly cancellationRequested: boolean;
 }
 

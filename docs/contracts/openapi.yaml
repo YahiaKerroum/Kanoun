@@ -1293,14 +1293,21 @@ paths:
       tags: [Public, Orders]
       operationId: requestGuestOrderBill
       summary: Request the bill for one guest order.
-      security: [{guestCookie: []}]
+      security: [{guestCookie: [], csrfHeader: []}]
       parameters:
         - $ref: "#/components/parameters/OrderId"
         - $ref: "#/components/parameters/IdempotencyKey"
       responses:
-        "202": {description: Bill request recorded and relevant branch staff notified.}
+        "202":
+          description: The existing or newly recorded open bill request.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/BillRequest"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "403": {$ref: "#/components/responses/Forbidden"}
         "409": {$ref: "#/components/responses/Conflict"}
         "404": {$ref: "#/components/responses/NotFound"}
+        "422": {$ref: "#/components/responses/ValidationFailed"}
 
   /v1/staff/orders:
     get:
@@ -1393,7 +1400,7 @@ paths:
       tags: [Payments]
       operationId: recordOrderPayment
       summary: Record an immutable full-balance payment for an order.
-      security: [{staffCookie: []}]
+      security: [{staffCookie: [], csrfHeader: []}]
       parameters:
         - $ref: "#/components/parameters/OrderId"
         - $ref: "#/components/parameters/IdempotencyKey"
@@ -1407,7 +1414,158 @@ paths:
           description: Immutable payment record created.
           content:
             application/json:
-              schema: {$ref: "#/components/schemas/Payment"}
+              schema: {$ref: "#/components/schemas/PaymentMutationResult"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "403": {$ref: "#/components/responses/Forbidden"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "409": {$ref: "#/components/responses/Conflict"}
+        "422": {$ref: "#/components/responses/ValidationFailed"}
+
+  /v1/staff/payments/bill-requests:
+    get:
+      tags: [Payments]
+      operationId: listOpenBillRequests
+      summary: List the authoritative open bill requests for one authorized branch.
+      security: [{staffCookie: []}]
+      parameters:
+        - {name: branchId, in: query, required: true, schema: {type: string, format: uuid}}
+      responses:
+        "200":
+          description: Open bill requests with current per-order ledgers.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: {$ref: "#/components/schemas/OpenBillRequestLedger"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "403": {$ref: "#/components/responses/Forbidden"}
+        "422": {$ref: "#/components/responses/ValidationFailed"}
+
+  /v1/staff/orders/{orderId}/payment-ledger:
+    get:
+      tags: [Payments]
+      operationId: getOrderPaymentLedger
+      summary: Read one immutable order payment/refund ledger.
+      security: [{staffCookie: []}]
+      parameters:
+        - $ref: "#/components/parameters/OrderId"
+      responses:
+        "200":
+          description: Current payment ledger and authoritative order state.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/PaymentLedger"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "403": {$ref: "#/components/responses/Forbidden"}
+        "404": {$ref: "#/components/responses/NotFound"}
+
+  /v1/staff/payments/{paymentId}/refunds:
+    post:
+      tags: [Payments]
+      operationId: recordPaymentRefund
+      summary: Append a reasoned partial or full refund against one payment.
+      security: [{staffCookie: [], csrfHeader: []}]
+      parameters:
+        - $ref: "#/components/parameters/PaymentId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/RecordRefundRequest"}
+      responses:
+        "201":
+          description: Immutable refund record created.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/RefundMutationResult"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "403": {$ref: "#/components/responses/Forbidden"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "409": {$ref: "#/components/responses/Conflict"}
+        "422": {$ref: "#/components/responses/ValidationFailed"}
+
+  /v1/staff/orders/{orderId}/corrections:
+    post:
+      tags: [Orders]
+      operationId: correctOrder
+      summary: Append a full replacement item revision to an eligible active order.
+      security: [{staffCookie: [], csrfHeader: []}]
+      parameters:
+        - $ref: "#/components/parameters/OrderId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/ExpectedVersion"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/CorrectOrderRequest"}
+      responses:
+        "200":
+          description: Corrected order with append-only history.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Order"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "403": {$ref: "#/components/responses/Forbidden"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "409": {$ref: "#/components/responses/Conflict"}
+        "422": {$ref: "#/components/responses/ValidationFailed"}
+
+  /v1/staff/orders/{orderId}/cancellation:
+    post:
+      tags: [Orders]
+      operationId: cancelOrder
+      summary: Cancel an eligible order, preserving fulfilment and financial history.
+      security: [{staffCookie: [], csrfHeader: []}]
+      parameters:
+        - $ref: "#/components/parameters/OrderId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/ExpectedVersion"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/CancelOrderRequest"}
+      responses:
+        "200":
+          description: Cancelled order after related requests and money are resolved.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Order"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "403": {$ref: "#/components/responses/Forbidden"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "409": {$ref: "#/components/responses/Conflict"}
+        "422": {$ref: "#/components/responses/ValidationFailed"}
+
+  /v1/staff/orders/{orderId}/table-assignment:
+    post:
+      tags: [Tables, Orders]
+      operationId: moveOrderTableSession
+      summary: Move the order's entire open table session to one available table.
+      security: [{staffCookie: [], csrfHeader: []}]
+      parameters:
+        - $ref: "#/components/parameters/OrderId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/MoveOrderTableRequest"}
+      responses:
+        "200":
+          description: Order projected from the moved whole table session.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Order"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "403": {$ref: "#/components/responses/Forbidden"}
+        "404": {$ref: "#/components/responses/NotFound"}
         "409": {$ref: "#/components/responses/Conflict"}
         "422": {$ref: "#/components/responses/ValidationFailed"}
 
@@ -1416,7 +1574,7 @@ paths:
       tags: [Orders]
       operationId: completeOrder
       summary: Complete a served and paid order.
-      security: [{staffCookie: []}]
+      security: [{staffCookie: [], csrfHeader: []}]
       parameters:
         - $ref: "#/components/parameters/OrderId"
         - $ref: "#/components/parameters/IdempotencyKey"
@@ -1427,14 +1585,23 @@ paths:
             schema:
               type: object
               properties:
-                unpaidOverrideReason: {type: [string, "null"], maxLength: 500}
+                unpaidOverrideReason: {type: string, minLength: 1, maxLength: 500}
+                confirmUnpaidOverride: {type: boolean, enum: [true]}
+                effectiveEmployeeId: {type: string, format: uuid}
+              dependentRequired:
+                unpaidOverrideReason: [confirmUnpaidOverride]
+                confirmUnpaidOverride: [unpaidOverrideReason]
       responses:
         "200":
           description: Completed order.
           content:
             application/json:
               schema: {$ref: "#/components/schemas/Order"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "403": {$ref: "#/components/responses/Forbidden"}
+        "404": {$ref: "#/components/responses/NotFound"}
         "409": {$ref: "#/components/responses/Conflict"}
+        "422": {$ref: "#/components/responses/ValidationFailed"}
 
   /v1/staff/kitchen/queue:
     get:
@@ -1604,6 +1771,11 @@ components:
       in: path
       required: true
       schema: {type: string, format: uuid}
+    PaymentId:
+      name: paymentId
+      in: path
+      required: true
+      schema: {type: string, format: uuid}
     WorkItemId:
       name: workItemId
       in: path
@@ -1619,7 +1791,7 @@ components:
       in: header
       required: true
       description: Quoted integer aggregate version.
-      schema: {type: string, pattern: '^"[0-9]+"$'}
+      schema: {type: string, pattern: '^"[1-9][0-9]*"$'}
     Cursor:
       name: cursor
       in: query
@@ -2271,13 +2443,14 @@ components:
 
     Order:
       type: object
-      required: [id, reference, version, branchId, tableSessionId, tableId, tableCode, creatorType, createdByEmployeeId, customerName, approval, fulfilment, financial, closure, customerSafeStatusReason, total, submittedAt, acceptedAt, preparingAt, readyAt, servedAt, servedByEmployeeId, cancellationRequested, items]
+      required: [id, reference, version, branchId, tableSessionId, tableSessionVersion, tableId, tableCode, creatorType, createdByEmployeeId, customerName, approval, fulfilment, financial, closure, customerSafeStatusReason, total, submittedAt, acceptedAt, preparingAt, readyAt, servedAt, servedByEmployeeId, cancellationRequested, currentItemRevision, billRequest, completedAt, completedByEmployeeId, unpaidCompletionReason, cancelledAt, cancelledByEmployeeId, cancellationReason, corrections, items]
       properties:
         id: {type: string, format: uuid}
         reference: {type: string}
         version: {type: integer, minimum: 1}
         branchId: {type: string, format: uuid}
         tableSessionId: {type: string, format: uuid}
+        tableSessionVersion: {type: integer, minimum: 1}
         tableId: {type: string, format: uuid}
         tableCode: {type: string}
         creatorType: {type: string, enum: [guest, staff]}
@@ -2296,14 +2469,29 @@ components:
         servedAt: {type: [string, "null"], format: date-time}
         servedByEmployeeId: {type: [string, "null"], format: uuid}
         cancellationRequested: {type: boolean}
+        currentItemRevision: {type: integer, minimum: 1}
+        billRequest:
+          oneOf:
+            - {$ref: "#/components/schemas/OrderBillRequest"}
+            - {type: "null"}
+        completedAt: {type: [string, "null"], format: date-time}
+        completedByEmployeeId: {type: [string, "null"], format: uuid}
+        unpaidCompletionReason: {type: [string, "null"], maxLength: 500}
+        cancelledAt: {type: [string, "null"], format: date-time}
+        cancelledByEmployeeId: {type: [string, "null"], format: uuid}
+        cancellationReason: {type: [string, "null"], maxLength: 500}
+        corrections:
+          type: array
+          items: {$ref: "#/components/schemas/OrderCorrection"}
         items:
           type: array
           minItems: 1
           items:
             type: object
-            required: [id, dishId, menuVersion, name, quantity, basePrice, unitPrice, selectedOptions, note, taxInclusive, total]
+            required: [id, revision, dishId, menuVersion, name, quantity, basePrice, unitPrice, selectedOptions, note, taxInclusive, total]
             properties:
               id: {type: string, format: uuid}
+              revision: {type: integer, minimum: 1}
               dishId: {type: string, format: uuid}
               menuVersion: {type: string}
               name: {type: string}
@@ -2325,6 +2513,35 @@ components:
               note: {type: [string, "null"]}
               taxInclusive: {type: boolean}
 
+    OrderBillRequest:
+      type: object
+      required: [id, status, requestedAt]
+      properties:
+        id: {type: string, format: uuid}
+        status: {type: string, enum: [open, resolved]}
+        requestedAt: {type: string, format: date-time}
+
+    BillRequest:
+      type: object
+      required: [id, orderId, status, requestedAt]
+      properties:
+        id: {type: string, format: uuid}
+        orderId: {type: string, format: uuid}
+        status: {type: string, enum: [open, resolved]}
+        requestedAt: {type: string, format: date-time}
+
+    OrderCorrection:
+      type: object
+      required: [id, revision, reason, beforeTotal, afterTotal, correctedAt, correctedByEmployeeId]
+      properties:
+        id: {type: string, format: uuid}
+        revision: {type: integer, minimum: 2}
+        reason: {type: string, minLength: 1, maxLength: 500}
+        beforeTotal: {$ref: "#/components/schemas/Money"}
+        afterTotal: {$ref: "#/components/schemas/Money"}
+        correctedAt: {type: string, format: date-time}
+        correctedByEmployeeId: {type: string, format: uuid}
+
     CancellationRequest:
       type: object
       required: [id, orderId, status, reason, createdAt]
@@ -2337,7 +2554,7 @@ components:
 
     KitchenWorkItem:
       type: object
-      required: [id, version, orderId, orderReference, tableId, tableCode, itemName, quantity, selectedOptions, note, state, queuedAt, startedAt, startedByEmployeeId, readyAt, readyByEmployeeId]
+      required: [id, version, orderId, orderReference, tableId, tableCode, itemName, quantity, selectedOptions, note, changeKind, correctionId, state, queuedAt, startedAt, startedByEmployeeId, readyAt, readyByEmployeeId]
       properties:
         id: {type: string, format: uuid}
         version: {type: integer, minimum: 1}
@@ -2358,6 +2575,8 @@ components:
               optionId: {type: string, format: uuid}
               optionName: {type: string}
         note: {type: [string, "null"]}
+        changeKind: {type: string, enum: [new, corrected]}
+        correctionId: {type: [string, "null"], format: uuid}
         state: {type: string, enum: [queued, preparing, ready, cancelled]}
         queuedAt: {type: string, format: date-time}
         startedAt: {type: [string, "null"], format: date-time}
@@ -2389,17 +2608,139 @@ components:
       properties:
         amount: {$ref: "#/components/schemas/Money"}
         method: {type: string, enum: [cash, card]}
-        externalReference: {type: [string, "null"], maxLength: 100}
+        externalReference: {type: string, minLength: 1, maxLength: 100}
+        effectiveEmployeeId: {type: string, format: uuid}
 
     Payment:
       type: object
-      required: [id, orderId, amount, method, recordedAt]
+      required: [id, orderId, amount, method, externalReference, recordedAt, recordedByEmployeeId]
       properties:
         id: {type: string, format: uuid}
         orderId: {type: string, format: uuid}
         amount: {$ref: "#/components/schemas/Money"}
         method: {type: string, enum: [cash, card]}
+        externalReference: {type: [string, "null"], maxLength: 100}
         recordedAt: {type: string, format: date-time}
+        recordedByEmployeeId: {type: string, format: uuid}
+
+    Refund:
+      type: object
+      required: [id, orderId, paymentId, amount, reason, source, refundedAt, refundedByEmployeeId]
+      properties:
+        id: {type: string, format: uuid}
+        orderId: {type: string, format: uuid}
+        paymentId: {type: string, format: uuid}
+        amount: {$ref: "#/components/schemas/Money"}
+        reason: {type: string, minLength: 1, maxLength: 500}
+        source: {type: string, enum: [manual, order_cancellation]}
+        refundedAt: {type: string, format: date-time}
+        refundedByEmployeeId: {type: string, format: uuid}
+
+    PaymentOrderState:
+      type: object
+      required: [id, version, financial]
+      properties:
+        id: {type: string, format: uuid}
+        version: {type: integer, minimum: 1}
+        financial: {type: string, enum: [unpaid, paid, partially_refunded, refunded]}
+
+    PaymentMutationResult:
+      type: object
+      required: [payment, order]
+      properties:
+        payment: {$ref: "#/components/schemas/Payment"}
+        order: {$ref: "#/components/schemas/PaymentOrderState"}
+
+    RecordRefundRequest:
+      type: object
+      required: [amount, reason, confirmed]
+      properties:
+        amount: {$ref: "#/components/schemas/Money"}
+        reason: {type: string, minLength: 1, maxLength: 500}
+        confirmed: {type: boolean, enum: [true]}
+        effectiveEmployeeId: {type: string, format: uuid}
+
+    RefundMutationResult:
+      type: object
+      required: [refund, order]
+      properties:
+        refund: {$ref: "#/components/schemas/Refund"}
+        order: {$ref: "#/components/schemas/PaymentOrderState"}
+
+    PaymentLedger:
+      type: object
+      required: [orderId, orderReference, orderVersion, branchId, tableId, tableCode, total, financial, fulfilment, closure, payment, refunds, refundedAmount, netPaidAmount]
+      properties:
+        orderId: {type: string, format: uuid}
+        orderReference: {type: string}
+        orderVersion: {type: integer, minimum: 1}
+        branchId: {type: string, format: uuid}
+        tableId: {type: string, format: uuid}
+        tableCode: {type: string}
+        total: {$ref: "#/components/schemas/Money"}
+        financial: {type: string, enum: [unpaid, paid, partially_refunded, refunded]}
+        fulfilment: {type: string, enum: [not_started, preparing, ready, served]}
+        closure: {type: string, enum: [active, completed, cancelled]}
+        payment:
+          oneOf:
+            - {$ref: "#/components/schemas/Payment"}
+            - {type: "null"}
+        refunds:
+          type: array
+          items: {$ref: "#/components/schemas/Refund"}
+        refundedAmount: {$ref: "#/components/schemas/Money"}
+        netPaidAmount: {$ref: "#/components/schemas/Money"}
+
+    OpenBillRequestLedger:
+      allOf:
+        - $ref: "#/components/schemas/PaymentLedger"
+        - type: object
+          required: [id, requestedAt]
+          properties:
+            id: {type: string, format: uuid}
+            requestedAt: {type: string, format: date-time}
+
+    CorrectOrderRequest:
+      type: object
+      required: [menuVersion, items, reason]
+      properties:
+        menuVersion:
+          oneOf:
+            - {type: integer, minimum: 1}
+            - {type: string, pattern: "^[1-9][0-9]*$"}
+        items:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items:
+            type: object
+            required: [dishId, quantity, optionIds]
+            properties:
+              dishId: {type: string, format: uuid}
+              quantity: {type: integer, minimum: 1, maximum: 99}
+              optionIds:
+                type: array
+                maxItems: 100
+                uniqueItems: true
+                items: {type: string, format: uuid}
+              note: {type: [string, "null"], minLength: 1, maxLength: 500}
+        reason: {type: string, minLength: 1, maxLength: 500}
+        effectiveEmployeeId: {type: string, format: uuid}
+
+    CancelOrderRequest:
+      type: object
+      required: [reason]
+      properties:
+        reason: {type: string, minLength: 1, maxLength: 500}
+        effectiveEmployeeId: {type: string, format: uuid}
+
+    MoveOrderTableRequest:
+      type: object
+      required: [destinationTableId, expectedTableSessionVersion]
+      properties:
+        destinationTableId: {type: string, format: uuid}
+        expectedTableSessionVersion: {type: integer, minimum: 1}
+        effectiveEmployeeId: {type: string, format: uuid}
 
     Money:
       type: object

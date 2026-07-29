@@ -34,6 +34,43 @@ export const servingActionSchema = z.object({
   effectiveEmployeeId: z.uuid().optional(),
 });
 
+export const correctOrderSchema = z.object({
+  menuVersion: menuVersionSchema,
+  items: z.array(orderItemSchema).min(1).max(100),
+  reason: z.string().trim().min(1).max(500),
+  effectiveEmployeeId: z.uuid().optional(),
+});
+
+export const cancelOrderSchema = z.object({
+  reason: z.string().trim().min(1).max(500),
+  effectiveEmployeeId: z.uuid().optional(),
+});
+
+export const completeOrderSchema = z
+  .object({
+    unpaidOverrideReason: z.string().trim().min(1).max(500).optional(),
+    confirmUnpaidOverride: z.boolean().optional(),
+    effectiveEmployeeId: z.uuid().optional(),
+  })
+  .refine(
+    (value) =>
+      (value.unpaidOverrideReason === undefined &&
+        value.confirmUnpaidOverride === undefined) ||
+      (value.unpaidOverrideReason !== undefined &&
+        value.confirmUnpaidOverride === true),
+    {
+      message:
+        "An unpaid override reason and explicit confirmation are required together.",
+      path: ["confirmUnpaidOverride"],
+    },
+  );
+
+export const moveOrderTableSchema = z.object({
+  destinationTableId: z.uuid(),
+  expectedTableSessionVersion: z.int().min(1),
+  effectiveEmployeeId: z.uuid().optional(),
+});
+
 export const expectedVersionSchema = z
   .string()
   .regex(/^"[1-9]\d*"$/)

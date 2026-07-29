@@ -3,7 +3,7 @@ id: CONSISTENCY-MODEL
 status: approved
 version: 1.0
 owner: architecture
-last_reviewed: 2026-07-27
+last_reviewed: 2026-07-29
 source_of_truth_for:
   - transaction-boundaries
   - consistency-classification
@@ -31,12 +31,16 @@ source_of_truth_for:
 | Exchange table QR | Tables | Validate QR, create pending guest/table context | Security metric | Invalid/revoked QR returns a non-sensitive error |
 | Submit order | ServiceWorkflow | Validate branch/configuration, validate/claim table, resolve menu snapshots, create order, auto-accept, create kitchen work, audit, outbox | Notify staff, update reporting | Entire command rolls back; idempotency key replays the original result |
 | Request order cancellation | ServiceWorkflow | Verify guest ownership and active order, preserve one open request and reason, audit, idempotency, outbox | Notify relevant staff | Duplicate idempotency key replays; another guest or terminal order fails closed |
+| Request bill | ServiceWorkflow | Lock and verify the guest-owned active order, preserve at most one open bill request, idempotency, outbox | Refresh the authoritative Payments view; durable notification delivery | Repeated requests return the existing open request; another guest, branch, or tenant fails closed |
 | Start/ready kitchen item | ServiceWorkflow | Validate permission/version, update Kitchen work, derive and update the Ordering fulfilment projection when the first item starts or all required items are ready, audit, idempotency, outbox | Refresh branch operational views; durable notification delivery | Any Kitchen, Ordering, audit, idempotency, or outbox failure rolls back; conflict returns current version and retry is safe |
 | Mark order served | ServiceWorkflow | Verify all work ready, update Ordering, audit, outbox | Reporting and customer update | Entire state change fails if readiness changed |
-| Record payment | Payments | Verify immutable bill snapshot and outstanding balance, append payment, audit, outbox | Reporting and customer update | Duplicate idempotency key replays; over/underpayment rejected |
-| Complete order | ServiceWorkflow | Verify served and paid through module contracts, update closure, audit, outbox | Reporting; evaluate table-session closure | Fails closed if payment or fulfilment is not authoritative |
-| Cancel order | ServiceWorkflow | Validate policy, close order, cancel unstarted kitchen work, append required payment correction, audit, outbox | Notifications and reporting | Prepared items remain as waste/history; no row is deleted |
-| Close table session | Tables | Verify all orders terminal and requests resolved, close session, audit, outbox | Table UI update; future cleaning task | Cannot close while any guard fails |
+| Correct order | ServiceWorkflow | Lock and version-check the active unpaid order, reprice a full replacement revision through Menu, append Ordering history, cancel superseded queued Kitchen work, create changed replacement work, audit, idempotency, outbox | Refresh customer, Kitchen, and reporting views | Any stale version, started work, payment, menu change, or downstream write failure commits nothing |
+| Move table session | ServiceWorkflow | Lock the source order and destination table, move the whole Tables session, append movement history, update all Ordering guest/order references and Kitchen live-work snapshots, audit, idempotency, outbox | Refresh table and operational views | Occupied/cross-branch destinations, stale session versions, or any projection failure roll back the whole move; sessions are never combined |
+| Record payment | ServiceWorkflow | Lock and verify the Ordering bill snapshot, append one exact-balance Payments record, update the Ordering financial projection, resolve the open bill request, audit, idempotency, outbox | Reporting, notifications, and customer refresh | Duplicate idempotency key replays; over/underpayment, another payment, or any projection/event failure commits nothing |
+| Record refund | ServiceWorkflow | Require recent authentication and permission, lock the order then payment, append one reasoned Payments refund, update the Ordering financial projection, audit, idempotency, outbox | Reporting, notifications, and customer refresh | A nonpositive, wrong-currency, or over-refund request fails; payment/refund history is never updated or deleted |
+| Complete order | ServiceWorkflow | Lock and version-check the order, require Served and Paid or the recent-auth unpaid override, append Ordering completion, resolve the bill request, close an eligible Tables session, audit, idempotency, outbox | Reporting, notifications, and table UI refresh | Fails closed if payment, fulfilment, permission, confirmation, session guards, or any atomic write changed |
+| Cancel order | ServiceWorkflow | Lock and version-check the order, append any required full remaining refund, cancel only unstarted Kitchen work, append Ordering cancellation, resolve open requests, close an eligible Tables session, audit, idempotency, outbox | Notifications, reporting, and table UI refresh | Prepared items and all financial history remain; any refund, Kitchen, Ordering, audit, session, or event failure rolls back |
+| Close table session | ServiceWorkflow | While completing or cancelling an order, verify every session order is terminal and no bill or fulfilment work remains, lock and close the Tables session, audit, outbox | Table UI update; future cleaning task | Cannot close while any guard fails; a concurrent change leaves the session open |
 | Permission change | IdentityAccess | Validate delegation, update grants, revoke/invalidate affected sessions/cache, audit, outbox | Notify affected user | Entire change rolls back if delegation is invalid |
 | Feature change | RestaurantConfiguration | Validate dependencies/in-flight policy, append configuration version, audit, outbox | Cache invalidation and UI refresh | Reject if it would strand active work |
 

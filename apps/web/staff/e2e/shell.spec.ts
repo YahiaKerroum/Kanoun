@@ -958,3 +958,342 @@ test("keeps the last verified menu visible when a reload fails", async ({
   await expect(page.getByText("may be stale")).toBeVisible();
   await expect(page.getByText("Verified soup")).toBeVisible();
 });
+
+test("records payment and refund with confirmation in the responsive payment desk", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  const paymentId = "00000000-0000-4000-8000-000000000140";
+  let paid = false;
+  let refunded = false;
+  await mockReadyPortal(page, {
+    permissions: ["payments.view", "payments.record", "payments.refund"],
+    enabledFeatures: ["payments"],
+    grants: [
+      { permissionKey: "payments.view", restaurantId, branchId },
+      { permissionKey: "payments.record", restaurantId, branchId },
+      { permissionKey: "payments.refund", restaurantId, branchId },
+    ],
+  });
+  const ledger = () => ({
+    orderId,
+    orderReference: "ORD-000021",
+    orderVersion: refunded ? 4 : paid ? 3 : 2,
+    branchId,
+    tableId,
+    tableCode: "T-12",
+    total: { amount: "21.00", currency: "USD" },
+    financial: refunded ? "partially_refunded" : paid ? "paid" : "unpaid",
+    fulfilment: "served",
+    closure: "active",
+    payment: paid
+      ? {
+          id: paymentId,
+          orderId,
+          amount: { amount: "21.00", currency: "USD" },
+          method: "card",
+          externalReference: "CARD-21",
+          recordedAt: "2026-07-29T10:00:00.000Z",
+          recordedByEmployeeId: employeeId,
+        }
+      : null,
+    refunds: refunded
+      ? [
+          {
+            id: "00000000-0000-4000-8000-000000000141",
+            orderId,
+            paymentId,
+            amount: { amount: "5.00", currency: "USD" },
+            reason: "Guest goodwill",
+            source: "manual",
+            refundedAt: "2026-07-29T10:10:00.000Z",
+            refundedByEmployeeId: employeeId,
+          },
+        ]
+      : [],
+    refundedAmount: {
+      amount: refunded ? "5.00" : "0.00",
+      currency: "USD",
+    },
+    netPaidAmount: {
+      amount: refunded ? "16.00" : paid ? "21.00" : "0.00",
+      currency: "USD",
+    },
+  });
+  await page.route("**/api/v1/staff/payments/bill-requests?*", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        items: paid
+          ? []
+          : [
+              {
+                id: "00000000-0000-4000-8000-000000000142",
+                requestedAt: "2026-07-29T09:58:00.000Z",
+                ...ledger(),
+              },
+            ],
+      }),
+    }),
+  );
+  await page.route("**/api/v1/staff/orders/*/payments", async (route) => {
+    const request = route.request();
+    expect(request.headers()["idempotency-key"]?.length).toBeGreaterThanOrEqual(
+      16,
+    );
+    expect(request.postDataJSON()).toEqual({
+      amount: { amount: "21.00", currency: "USD" },
+      method: "card",
+      externalReference: "CARD-21",
+    });
+    paid = true;
+    await route.fulfill({
+      status: 201,
+      contentType: "application/json",
+      body: JSON.stringify({
+        payment: ledger().payment,
+        order: { id: orderId, version: 3, financial: "paid" },
+      }),
+    });
+  });
+  await page.route("**/api/v1/staff/orders/*/payment-ledger", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify(ledger()),
+    }),
+  );
+  await page.route("**/api/v1/staff/payments/*/refunds", async (route) => {
+    expect(route.request().postDataJSON()).toEqual({
+      amount: { amount: "5.00", currency: "USD" },
+      reason: "Guest goodwill",
+      confirmed: true,
+    });
+    refunded = true;
+    await route.fulfill({
+      status: 201,
+      contentType: "application/json",
+      body: JSON.stringify({
+        refund: ledger().refunds[0],
+        order: {
+          id: orderId,
+          version: 4,
+          financial: "partially_refunded",
+        },
+      }),
+    });
+  });
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Payments" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Bill requests" }),
+  ).toBeVisible();
+  await page.getByLabel("Method").selectOption("card");
+  await page.getByLabel("External reference (optional)").fill("CARD-21");
+  await page.getByLabel("Confirm receipt of exactly $21.00.").check();
+  await page.getByRole("button", { name: "Record payment" }).click();
+  await expect(page.getByText("No open bill requests.")).toBeVisible();
+
+  await page.getByLabel("Order identifier").fill(orderId);
+  await page.getByRole("button", { name: "Find ledger" }).click();
+  await expect(page.getByText("Original payment")).toBeVisible();
+  await page.getByLabel("Amount (USD)").fill("5.00");
+  await page.getByLabel("Reason").fill("Guest goodwill");
+  await page.getByLabel("Confirm this append-only refund.").check();
+  await page.getByRole("button", { name: "Record refund" }).click();
+  await expect(page.getByText("Refunded", { exact: true })).toBeVisible();
+  await expect(page.getByText("$5.00")).toBeVisible();
+
+  const results = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
+    .analyze();
+  expect(results.violations).toEqual([]);
+  expect(
+    await page
+      .locator("body")
+      .evaluate((body) => body.scrollWidth <= body.clientWidth),
+  ).toBe(true);
+});
+
+test("keeps the same correction key across a failed response and exposes keyboard-safe order operations", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  const destinationId = "00000000-0000-4000-8000-000000000143";
+  const operationOrder = {
+    ...activeOrder,
+    fulfilment: "not_started",
+    tableSessionVersion: 1,
+    currentItemRevision: 1,
+    billRequest: null,
+    corrections: [],
+  };
+  const correctionKeys: string[] = [];
+  let attempts = 0;
+  await mockReadyPortal(page, {
+    permissions: [
+      "orders.view",
+      "orders.modify",
+      "orders.cancel",
+      "tables.assign",
+      "tables.view",
+    ],
+    enabledFeatures: ["ordering", "tables"],
+  });
+  await page.route("**/api/v1/staff/orders?*", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ items: [operationOrder], nextCursor: null }),
+    }),
+  );
+  await page.route(`**/api/v1/staff/branches/${branchId}/tables`, (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        items: [
+          {
+            id: tableId,
+            code: "T-12",
+            status: "active",
+            outOfService: false,
+            derivedState: "occupied",
+          },
+          {
+            id: destinationId,
+            code: "T-13",
+            status: "active",
+            outOfService: false,
+            derivedState: "available",
+          },
+        ],
+      }),
+    }),
+  );
+  await page.route("**/api/v1/staff/orders/*/corrections", async (route) => {
+    attempts += 1;
+    correctionKeys.push(route.request().headers()["idempotency-key"] ?? "");
+    expect(route.request().headers()["if-match"]).toBe('"2"');
+    expect(route.request().postDataJSON()).toMatchObject({
+      menuVersion: 7,
+      reason: "Correct quantity",
+      items: [{ dishId, quantity: 2, optionIds: [] }],
+    });
+    await route.fulfill(
+      attempts === 1
+        ? {
+            status: 503,
+            contentType: "application/problem+json",
+            body: JSON.stringify({
+              title: "Temporary failure",
+              status: 503,
+              code: "service_unavailable",
+            }),
+          }
+        : {
+            status: 200,
+            contentType: "application/json",
+            body: JSON.stringify({ id: orderId, version: 3 }),
+          },
+    );
+  });
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Orders" }).click();
+  await page.getByRole("button", { name: "Manage" }).click();
+  await page.getByLabel("Saffron chicken").fill("2");
+  await page.getByLabel("Correction reason").fill("Correct quantity");
+  await page.getByRole("button", { name: "Save correction" }).click();
+  await expect(page.getByRole("alert")).toContainText("Temporary failure");
+  await page.getByRole("button", { name: "Save correction" }).click();
+  await expect.poll(() => attempts).toBe(2);
+  expect(correctionKeys[0]).toBe(correctionKeys[1]);
+  await expect(
+    page.getByRole("button", { name: "Move entire session" }),
+  ).toBeVisible();
+  await expect(page.getByText("Confirm cancellation")).toBeVisible();
+
+  const results = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
+    .analyze();
+  expect(results.violations).toEqual([]);
+  expect(
+    await page
+      .locator("body")
+      .evaluate((body) => body.scrollWidth <= body.clientWidth),
+  ).toBe(true);
+});
+
+test("does not fetch payment data without payments.view", async ({ page }) => {
+  let paymentRequests = 0;
+  await mockReadyPortal(page, {
+    permissions: ["payments.record"],
+    enabledFeatures: ["payments"],
+    grants: [{ permissionKey: "payments.record", restaurantId, branchId }],
+  });
+  await page.route("**/api/v1/staff/payments/**", (route) => {
+    paymentRequests += 1;
+    return route.fulfill({ status: 500 });
+  });
+  await page.goto("/");
+  await page.getByRole("button", { name: "Payments" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Payment view permission required" }),
+  ).toBeVisible();
+  expect(paymentRequests).toBe(0);
+});
+
+test("requires explicit confirmation for the critical unpaid completion UI", async ({
+  page,
+}) => {
+  const servedUnpaid = {
+    ...activeOrder,
+    fulfilment: "served",
+    financial: "unpaid",
+    tableSessionVersion: 1,
+    currentItemRevision: 1,
+    billRequest: null,
+    corrections: [],
+  };
+  let completionCalls = 0;
+  await mockReadyPortal(page, {
+    permissions: ["orders.view", "orders.complete_unpaid"],
+    enabledFeatures: ["ordering"],
+  });
+  await page.route("**/api/v1/staff/orders?*", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ items: [servedUnpaid], nextCursor: null }),
+    }),
+  );
+  await page.route("**/api/v1/staff/orders/*/completion", async (route) => {
+    completionCalls += 1;
+    expect(route.request().headers()["if-match"]).toBe('"2"');
+    expect(route.request().postDataJSON()).toEqual({
+      unpaidOverrideReason: "Manager-approved recovery",
+      confirmUnpaidOverride: true,
+    });
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ id: orderId, version: 3 }),
+    });
+  });
+  await page.goto("/");
+  await page.getByRole("button", { name: "Orders" }).click();
+  await page.getByRole("button", { name: "Manage" }).click();
+  const submit = page.getByRole("button", { name: "Complete order" });
+  await expect(submit).toBeDisabled();
+  await page.getByLabel("Override reason").fill("Manager-approved recovery");
+  await expect(submit).toBeDisabled();
+  await page
+    .getByLabel("Confirm moving this order to completed history.")
+    .check();
+  await expect(submit).toBeEnabled();
+  await submit.click();
+  await expect.poll(() => completionCalls).toBe(1);
+});

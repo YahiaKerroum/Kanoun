@@ -60,6 +60,7 @@ const order: OrderRecord = {
   restaurantId,
   branchId,
   tableSessionId: randomUUID(),
+  tableSessionVersion: 1,
   tableId,
   tableCode: "T-1",
   reference: "ORD-000001",
@@ -74,12 +75,15 @@ const order: OrderRecord = {
   closure: "active",
   total: { amount: "1250.00", currency: "DZD" },
   version: 2,
+  currentItemRevision: 1,
   submittedAtUtc: new Date("2026-07-28T12:00:00.000Z"),
   acceptedAtUtc: new Date("2026-07-28T12:00:00.000Z"),
   cancellationRequested: false,
+  corrections: [],
   items: [
     {
       id: randomUUID(),
+      revision: 1,
       sourceDishId: randomUUID(),
       sourceMenuVersion: 4,
       name: "Couscous",
@@ -146,9 +150,30 @@ function application(overrides?: Partial<OrderingHttpUseCases>) {
       servedByEmployeeId: employeeId,
     }),
   };
+  const paymentCompletionUseCases = {
+    requestGuestBill: vi.fn().mockResolvedValue({
+      id: randomUUID(),
+      orderId,
+      branchId,
+      status: "open" as const,
+      requestedAtUtc: new Date("2026-07-28T12:30:00.000Z"),
+      requestedByGuestSessionId: guestSessionId,
+    }),
+    correctOrder: vi.fn().mockResolvedValue(order),
+    cancelOrder: vi.fn().mockResolvedValue({
+      ...order,
+      closure: "cancelled" as const,
+    }),
+    completeOrder: vi.fn().mockResolvedValue({
+      ...order,
+      closure: "completed" as const,
+    }),
+    moveOrderTable: vi.fn().mockResolvedValue(order),
+  };
   return {
     useCases,
     servingUseCases,
+    paymentCompletionUseCases,
     app: createApp({
       logger,
       trustProxy: false,
@@ -160,6 +185,7 @@ function application(overrides?: Partial<OrderingHttpUseCases>) {
           ...dependencies,
           useCases,
           servingUseCases,
+          paymentCompletionUseCases,
         }),
       ],
     }),
@@ -337,6 +363,126 @@ describe("ordering HTTP adapter", () => {
       4,
       undefined,
       "serve-1234567890",
+      expect.any(Object),
+    );
+  });
+
+  it("creates an idempotent guest bill request with guest CSRF", async () => {
+    const { app, paymentCompletionUseCases } = application();
+    const response = await request(app)
+      .post(`/api/v1/public/orders/${orderId}/bill-requests`)
+      .set("Cookie", "rms_guest_session=guest-token")
+      .set("Origin", guestOrigin)
+      .set("X-CSRF-Token", "guest-csrf")
+      .set("Idempotency-Key", "bill-12345678901")
+      .send({})
+      .expect(202);
+    expect(response.body).toMatchObject({
+      orderId,
+      status: "open",
+    });
+    expect(paymentCompletionUseCases.requestGuestBill).toHaveBeenCalledWith(
+      guestContext,
+      orderId,
+      "bill-12345678901",
+      expect.any(Object),
+    );
+  });
+
+  it("validates and composes correction, cancellation, completion, and whole-session move commands", async () => {
+    const { app, paymentCompletionUseCases } = application();
+    const headers = {
+      Cookie: "rms_staff_session=staff-token",
+      Origin: staffOrigin,
+      "X-CSRF-Token": "staff-csrf",
+      "Idempotency-Key": "operation-1234567",
+      "If-Match": '"2"',
+    };
+
+    await request(app)
+      .post(`/api/v1/staff/orders/${orderId}/corrections`)
+      .set(headers)
+      .send({
+        menuVersion: "4",
+        items: submission.items,
+        reason: "Correct quantity",
+      })
+      .expect(200);
+    expect(paymentCompletionUseCases.correctOrder).toHaveBeenCalledWith(
+      staffContext,
+      orderId,
+      2,
+      expect.objectContaining({
+        menuVersion: 4,
+        reason: "Correct quantity",
+      }),
+      "operation-1234567",
+      expect.any(Object),
+    );
+
+    await request(app)
+      .post(`/api/v1/staff/orders/${orderId}/cancellation`)
+      .set(headers)
+      .send({ reason: "Customer left" })
+      .expect(200);
+    expect(paymentCompletionUseCases.cancelOrder).toHaveBeenCalledWith(
+      staffContext,
+      orderId,
+      2,
+      { reason: "Customer left" },
+      "operation-1234567",
+      expect.any(Object),
+    );
+
+    await request(app)
+      .post(`/api/v1/staff/orders/${orderId}/completion`)
+      .set(headers)
+      .send({ confirmUnpaidOverride: true })
+      .expect(422);
+    expect(paymentCompletionUseCases.completeOrder).not.toHaveBeenCalled();
+
+    await request(app)
+      .post(`/api/v1/staff/orders/${orderId}/completion`)
+      .set(headers)
+      .send({
+        unpaidOverrideReason: "Approved recovery",
+        confirmUnpaidOverride: true,
+      })
+      .expect(200);
+    expect(paymentCompletionUseCases.completeOrder).toHaveBeenCalledWith(
+      staffContext,
+      orderId,
+      2,
+      {
+        unpaidOverrideReason: "Approved recovery",
+        confirmUnpaidOverride: true,
+      },
+      "operation-1234567",
+      expect.any(Object),
+    );
+
+    const destinationTableId = randomUUID();
+    await request(app)
+      .post(`/api/v1/staff/orders/${orderId}/table-assignment`)
+      .set({
+        Cookie: headers.Cookie,
+        Origin: headers.Origin,
+        "X-CSRF-Token": headers["X-CSRF-Token"],
+        "Idempotency-Key": headers["Idempotency-Key"],
+      })
+      .send({
+        destinationTableId,
+        expectedTableSessionVersion: 3,
+      })
+      .expect(200);
+    expect(paymentCompletionUseCases.moveOrderTable).toHaveBeenCalledWith(
+      staffContext,
+      orderId,
+      {
+        destinationTableId,
+        expectedTableSessionVersion: 3,
+      },
+      "operation-1234567",
       expect.any(Object),
     );
   });

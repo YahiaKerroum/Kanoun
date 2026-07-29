@@ -8,6 +8,7 @@ import type {
   Table,
   TableQrCode,
   TableSession,
+  TableSessionMovement,
 } from "../domain/models.js";
 import type {
   CreateTableInput,
@@ -450,6 +451,182 @@ export class PostgresTablesStore implements TablesStore {
         where business_account_id = $1 and id = $2 and status = 'open'
       `,
       [businessAccountId, tableSessionId],
+    );
+    const row = result.rows[0];
+    return row ? mapTableSession(row) : undefined;
+  }
+
+  public async getOpenTableSessionForUpdate(
+    transaction: TransactionContext,
+    businessAccountId: string,
+    tableSessionId: string,
+  ): Promise<TableSession | undefined> {
+    const result = await transaction.sql.query<TableSessionRow>(
+      `
+        select
+          id, business_account_id, branch_id, table_id, status,
+          configuration_version_id, configuration_version, version,
+          opened_at_utc, closed_at_utc
+        from tables.table_sessions
+        where business_account_id = $1 and id = $2 and status = 'open'
+        for update
+      `,
+      [businessAccountId, tableSessionId],
+    );
+    const row = result.rows[0];
+    return row ? mapTableSession(row) : undefined;
+  }
+
+  public async moveTableSession(
+    transaction: TransactionContext,
+    input: Parameters<TablesStore["moveTableSession"]>[1],
+  ): ReturnType<TablesStore["moveTableSession"]> {
+    const current = await this.getOpenTableSessionForUpdate(
+      transaction,
+      input.businessAccountId,
+      input.tableSessionId,
+    );
+    if (
+      current?.branchId !== input.branchId ||
+      current.version !== input.expectedVersion ||
+      current.tableId === input.destinationTableId
+    ) {
+      return undefined;
+    }
+    const destination = await transaction.sql.query<{
+      readonly id: string;
+      readonly branch_id: string;
+      readonly status: EntityStatus;
+      readonly out_of_service: boolean;
+    }>(
+      `
+        select
+          t.id, t.branch_id, t.status, t.out_of_service
+        from tables.tables t
+        where t.business_account_id = $1 and t.id = $2
+        for update
+      `,
+      [input.businessAccountId, input.destinationTableId],
+    );
+    const destinationRow = destination.rows[0];
+    if (
+      destinationRow?.branch_id !== input.branchId ||
+      destinationRow.status !== "active" ||
+      destinationRow.out_of_service
+    ) {
+      return undefined;
+    }
+    const occupancy = await transaction.sql.query<{
+      readonly has_open_session: boolean;
+    }>(
+      `
+        select exists (
+          select 1
+          from tables.table_sessions occupied
+          where occupied.business_account_id = $1
+            and occupied.table_id = $2
+            and occupied.status = 'open'
+        ) as has_open_session
+      `,
+      [input.businessAccountId, input.destinationTableId],
+    );
+    if (occupancy.rows[0]?.has_open_session !== false) return undefined;
+    const moved = await transaction.sql.query<TableSessionRow>(
+      `
+        update tables.table_sessions
+        set table_id = $4, version = version + 1
+        where business_account_id = $1
+          and id = $2
+          and status = 'open'
+          and version = $3
+        returning
+          id, business_account_id, branch_id, table_id, status,
+          configuration_version_id, configuration_version, version,
+          opened_at_utc, closed_at_utc
+      `,
+      [
+        input.businessAccountId,
+        input.tableSessionId,
+        input.expectedVersion,
+        input.destinationTableId,
+      ],
+    );
+    const movedRow = moved.rows[0];
+    if (!movedRow) return undefined;
+    const movementResult = await transaction.sql.query<{
+      readonly id: string;
+      readonly table_session_id: string;
+      readonly branch_id: string;
+      readonly from_table_id: string;
+      readonly to_table_id: string;
+      readonly session_version: number;
+      readonly moved_at_utc: Date;
+      readonly moved_by_user_id: string;
+      readonly moved_by_employee_id: string;
+    }>(
+      `
+        insert into tables.table_session_movements (
+          id, business_account_id, branch_id, table_session_id,
+          from_table_id, to_table_id, moved_at_utc,
+          moved_by_user_id, moved_by_employee_id, session_version
+        )
+        values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        returning
+          id, table_session_id, branch_id, from_table_id, to_table_id,
+          session_version, moved_at_utc, moved_by_user_id,
+          moved_by_employee_id
+      `,
+      [
+        input.id,
+        input.businessAccountId,
+        input.branchId,
+        input.tableSessionId,
+        current.tableId,
+        input.destinationTableId,
+        input.now,
+        input.actorUserId,
+        input.effectiveEmployeeId,
+        movedRow.version,
+      ],
+    );
+    const movementRow = requireReturnedRow(movementResult.rows);
+    const movement: TableSessionMovement = {
+      id: movementRow.id,
+      tableSessionId: movementRow.table_session_id,
+      branchId: movementRow.branch_id,
+      fromTableId: movementRow.from_table_id,
+      toTableId: movementRow.to_table_id,
+      sessionVersion: movementRow.session_version,
+      movedAtUtc: movementRow.moved_at_utc,
+      movedByUserId: movementRow.moved_by_user_id,
+      movedByEmployeeId: movementRow.moved_by_employee_id,
+    };
+    return { session: mapTableSession(movedRow), movement };
+  }
+
+  public async closeTableSession(
+    transaction: TransactionContext,
+    input: Parameters<TablesStore["closeTableSession"]>[1],
+  ): Promise<TableSession | undefined> {
+    const result = await transaction.sql.query<TableSessionRow>(
+      `
+        update tables.table_sessions
+        set status = 'closed', version = version + 1, closed_at_utc = $4
+        where business_account_id = $1
+          and id = $2
+          and status = 'open'
+          and version = $3
+        returning
+          id, business_account_id, branch_id, table_id, status,
+          configuration_version_id, configuration_version, version,
+          opened_at_utc, closed_at_utc
+      `,
+      [
+        input.businessAccountId,
+        input.tableSessionId,
+        input.expectedVersion,
+        input.now,
+      ],
     );
     const row = result.rows[0];
     return row ? mapTableSession(row) : undefined;

@@ -1,4 +1,5 @@
 export type KitchenWorkState = "queued" | "preparing" | "ready" | "cancelled";
+export type KitchenWorkChangeKind = "new" | "corrected";
 
 export interface KitchenOptionSnapshot {
   readonly optionGroupId: string;
@@ -20,6 +21,8 @@ export interface KitchenWorkItemRecord {
   readonly quantity: number;
   readonly selectedOptions: readonly KitchenOptionSnapshot[];
   readonly note?: string | undefined;
+  readonly changeKind: KitchenWorkChangeKind;
+  readonly correctionId?: string | undefined;
   readonly state: KitchenWorkState;
   readonly version: number;
   readonly queuedAtUtc: Date;
@@ -29,4 +32,8 @@ export interface KitchenWorkItemRecord {
   readonly readyAtUtc?: Date | undefined;
   readonly readyByUserId?: string | undefined;
   readonly readyByEmployeeId?: string | undefined;
+  readonly cancelledAtUtc?: Date | undefined;
+  readonly cancelledByUserId?: string | undefined;
+  readonly cancelledByEmployeeId?: string | undefined;
+  readonly cancellationReason?: string | undefined;
 }

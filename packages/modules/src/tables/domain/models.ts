@@ -54,3 +54,15 @@ export interface ClaimedTableSession {
   readonly session: TableSession;
   readonly opened: boolean;
 }
+
+export interface TableSessionMovement {
+  readonly id: string;
+  readonly tableSessionId: string;
+  readonly branchId: string;
+  readonly fromTableId: string;
+  readonly toTableId: string;
+  readonly sessionVersion: number;
+  readonly movedAtUtc: Date;
+  readonly movedByUserId: string;
+  readonly movedByEmployeeId: string;
+}

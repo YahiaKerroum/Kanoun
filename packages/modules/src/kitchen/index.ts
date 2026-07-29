@@ -1,6 +1,7 @@
 export type { KitchenStore } from "./contracts/kitchen-store.js";
 export type {
   KitchenOptionSnapshot,
+  KitchenWorkChangeKind,
   KitchenWorkItemRecord,
   KitchenWorkState,
 } from "./domain/models.js";

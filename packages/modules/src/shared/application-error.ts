@@ -10,6 +10,8 @@ export type ApplicationErrorCode =
   | "menu_changed"
   | "dish_unavailable"
   | "table_unavailable"
+  | "payment_conflict"
+  | "feature_disabled"
   | "idempotency_conflict";
 
 export class ApplicationError extends Error {

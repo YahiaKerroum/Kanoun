@@ -1,6 +1,7 @@
 import type { KitchenStore } from "../contracts/kitchen-store.js";
 import type {
   KitchenOptionSnapshot,
+  KitchenWorkChangeKind,
   KitchenWorkItemRecord,
   KitchenWorkState,
 } from "../domain/models.js";
@@ -18,6 +19,8 @@ interface KitchenWorkItemRow {
   readonly quantity: number;
   readonly selected_options: readonly KitchenOptionSnapshot[];
   readonly note: string | null;
+  readonly change_kind: KitchenWorkChangeKind;
+  readonly correction_id: string | null;
   readonly state: KitchenWorkState;
   readonly version: number;
   readonly queued_at_utc: Date;
@@ -27,14 +30,20 @@ interface KitchenWorkItemRow {
   readonly ready_at_utc: Date | null;
   readonly ready_by_user_id: string | null;
   readonly ready_by_employee_id: string | null;
+  readonly cancelled_at_utc: Date | null;
+  readonly cancelled_by_user_id: string | null;
+  readonly cancelled_by_employee_id: string | null;
+  readonly cancellation_reason: string | null;
 }
 
 const workItemColumns = `
   id, business_account_id, branch_id, order_id, order_item_id,
   order_reference, table_id, table_code, item_name, quantity,
-  selected_options, note, state, version, queued_at_utc,
+  selected_options, note, change_kind, correction_id, state, version, queued_at_utc,
   started_at_utc, started_by_user_id, started_by_employee_id,
-  ready_at_utc, ready_by_user_id, ready_by_employee_id
+  ready_at_utc, ready_by_user_id, ready_by_employee_id,
+  cancelled_at_utc, cancelled_by_user_id, cancelled_by_employee_id,
+  cancellation_reason
 `;
 
 function mapWorkItem(row: KitchenWorkItemRow): KitchenWorkItemRecord {
@@ -51,6 +60,8 @@ function mapWorkItem(row: KitchenWorkItemRow): KitchenWorkItemRecord {
     quantity: row.quantity,
     selectedOptions: row.selected_options,
     note: row.note ?? undefined,
+    changeKind: row.change_kind,
+    correctionId: row.correction_id ?? undefined,
     state: row.state,
     version: row.version,
     queuedAtUtc: row.queued_at_utc,
@@ -60,6 +71,10 @@ function mapWorkItem(row: KitchenWorkItemRow): KitchenWorkItemRecord {
     readyAtUtc: row.ready_at_utc ?? undefined,
     readyByUserId: row.ready_by_user_id ?? undefined,
     readyByEmployeeId: row.ready_by_employee_id ?? undefined,
+    cancelledAtUtc: row.cancelled_at_utc ?? undefined,
+    cancelledByUserId: row.cancelled_by_user_id ?? undefined,
+    cancelledByEmployeeId: row.cancelled_by_employee_id ?? undefined,
+    cancellationReason: row.cancellation_reason ?? undefined,
   };
 }
 
@@ -73,12 +88,13 @@ export class PostgresKitchenStore implements KitchenStore {
         insert into kitchen.work_items (
           id, business_account_id, branch_id, order_id, order_item_id,
           order_reference, table_id, table_code, item_name, quantity,
-          selected_options, note, state, version, queued_at_utc, updated_at_utc
+          selected_options, note, change_kind, correction_id,
+          state, version, queued_at_utc, updated_at_utc
         )
         select
           item.id, $1, $2, $3, item.order_item_id, $4, $5, $6,
           item.name, item.quantity, item.selected_options, item.note,
-          'queued', 1, $8, $8
+          $9, $10, 'queued', 1, $8, $8
         from jsonb_to_recordset($7::jsonb) as item(
           id uuid,
           order_item_id uuid,
@@ -106,6 +122,8 @@ export class PostgresKitchenStore implements KitchenStore {
           })),
         ),
         input.now,
+        input.changeKind ?? "new",
+        input.correctionId ?? null,
       ],
     );
   }
@@ -229,5 +247,63 @@ export class PostgresKitchenStore implements KitchenStore {
       [businessAccountId, orderId],
     );
     return result.rows[0]?.ready === true;
+  }
+
+  public async cancelUnstartedForOrder(
+    transaction: Parameters<KitchenStore["cancelUnstartedForOrder"]>[0],
+    input: Parameters<KitchenStore["cancelUnstartedForOrder"]>[1],
+  ): Promise<readonly KitchenWorkItemRecord[]> {
+    const result = await transaction.sql.query<KitchenWorkItemRow>(
+      `
+        update kitchen.work_items
+        set
+          state = 'cancelled',
+          version = version + 1,
+          cancelled_at_utc = $5,
+          cancelled_by_user_id = $3,
+          cancelled_by_employee_id = $4,
+          cancellation_reason = $6,
+          updated_at_utc = $5
+        where business_account_id = $1
+          and order_id = $2
+          and state = 'queued'
+        returning ${workItemColumns}
+      `,
+      [
+        input.businessAccountId,
+        input.orderId,
+        input.actorUserId,
+        input.effectiveEmployeeId,
+        input.now,
+        input.reason,
+      ],
+    );
+    return result.rows.map(mapWorkItem);
+  }
+
+  public async reassignOrdersToTable(
+    transaction: Parameters<KitchenStore["reassignOrdersToTable"]>[0],
+    input: Parameters<KitchenStore["reassignOrdersToTable"]>[1],
+  ): Promise<void> {
+    if (input.orderIds.length === 0) return;
+    await transaction.sql.query(
+      `
+        update kitchen.work_items
+        set
+          table_id = $3,
+          table_code = $4,
+          updated_at_utc = $5
+        where business_account_id = $1
+          and order_id = any($2::uuid[])
+          and state <> 'cancelled'
+      `,
+      [
+        input.businessAccountId,
+        input.orderIds,
+        input.destinationTableId,
+        input.destinationTableCode,
+        input.now,
+      ],
+    );
   }
 }

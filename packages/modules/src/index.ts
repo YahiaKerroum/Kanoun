@@ -20,6 +20,7 @@ export * from "./ordering/index.js";
 export * from "./menu/index.js";
 export * from "./tables/index.js";
 export * from "./kitchen/index.js";
+export * from "./payments/index.js";
 export {
   ApplicationError,
   type ApplicationErrorCode,

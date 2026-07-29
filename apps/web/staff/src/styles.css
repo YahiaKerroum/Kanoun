@@ -1225,6 +1225,116 @@ button:disabled {
   background: var(--warning-soft);
 }
 
+.orders-list li > .order-operations {
+  display: grid;
+  grid-column: 1 / -1;
+  gap: 12px;
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+
+.order-operations > button {
+  display: inline-flex;
+  min-height: 44px;
+  width: fit-content;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: 9px;
+  padding: 9px 13px;
+  font-weight: 800;
+  background: var(--surface);
+}
+
+.order-operation-panel {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.order-operation-panel form {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  padding: 14px;
+  background: var(--canvas);
+}
+
+.order-operation-panel h4,
+.order-operation-panel p {
+  margin: 0;
+}
+
+.order-operation-panel label {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.order-operation-panel input,
+.order-operation-panel select,
+.order-operation-panel textarea {
+  min-height: 44px;
+  width: 100%;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  padding: 9px 11px;
+  color: var(--text);
+  background: var(--surface);
+  font: inherit;
+}
+
+.order-operation-panel form > button {
+  min-height: 44px;
+  border: 1px solid var(--brand-700);
+  border-radius: 9px;
+  padding: 10px 13px;
+  font-weight: 800;
+  background: var(--brand-fill);
+}
+
+.order-operation-panel form > .danger-action {
+  border-color: var(--danger);
+  color: white;
+  background: var(--danger);
+}
+
+.order-operation-confirmation {
+  grid-template-columns: 22px minmax(0, 1fr) !important;
+  align-items: start;
+  color: var(--text) !important;
+}
+
+.order-operation-confirmation input {
+  min-height: 20px;
+  width: 20px;
+}
+
+.order-operation-warning {
+  display: flex;
+  gap: 7px;
+  align-items: flex-start;
+  border-radius: 8px;
+  padding: 9px;
+  color: var(--warning);
+  background: var(--warning-soft);
+}
+
+@media (max-width: 820px) {
+  .order-operation-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .order-operations > button {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
 .order-entry {
   width: min(680px, 100vw);
   max-width: none;
@@ -2014,6 +2124,212 @@ button:disabled {
 
   .kitchen-item__footer button,
   .kitchen-heading button {
+    width: 100%;
+  }
+}
+
+.payments-workspace {
+  display: grid;
+  gap: 22px;
+}
+
+.payments-heading,
+.payments-heading > div,
+.record-payment-form,
+.refund-form,
+.payment-history-lookup {
+  display: grid;
+  gap: 12px;
+}
+
+.payments-heading {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+}
+
+.payments-heading h2,
+.payments-heading p,
+.payment-history-lookup h3,
+.payment-history-lookup p,
+.payments-empty h3,
+.payments-empty p {
+  margin: 0;
+}
+
+.payments-heading > button,
+.record-payment-form > button,
+.refund-form > button,
+.payment-history-lookup button {
+  min-height: 44px;
+  border: 1px solid var(--brand-700);
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-weight: 800;
+  background: var(--brand-fill);
+}
+
+.payments-heading > button {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.payments-live-status,
+.payments-stale {
+  margin: 0;
+  border-radius: 10px;
+  padding: 12px 14px;
+  color: var(--text);
+  background: var(--brand-100);
+}
+
+.payments-stale {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  border: 1px solid var(--warning);
+  background: var(--warning-soft);
+}
+
+.payments-loading,
+.payments-boundary,
+.payments-empty,
+.payment-history-lookup,
+.payment-ledger-result,
+.bill-request-list > li {
+  border: 1px solid var(--line-strong);
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: 0 8px 22px rgba(79, 57, 8, 0.08);
+}
+
+.payments-loading,
+.payments-boundary,
+.payments-empty {
+  padding: 24px;
+}
+
+.payments-loading {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.payments-empty,
+.payments-boundary {
+  display: grid;
+  gap: 10px;
+  justify-items: start;
+}
+
+.bill-request-list {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bill-request-list > li,
+.payment-ledger-result {
+  display: grid;
+  gap: 18px;
+  padding: 18px;
+}
+
+.ledger-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.ledger-summary > div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  border-left: 3px solid var(--brand-400);
+  padding-left: 10px;
+}
+
+.ledger-summary span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.ledger-summary strong {
+  overflow-wrap: anywhere;
+}
+
+.record-payment-form,
+.refund-form {
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
+}
+
+.record-payment-form label,
+.refund-form label,
+.payment-history-lookup label {
+  display: grid;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.record-payment-form input,
+.record-payment-form select,
+.refund-form input,
+.refund-form textarea,
+.payment-history-lookup input {
+  min-height: 44px;
+  width: 100%;
+  border: 1px solid var(--line-strong);
+  border-radius: 9px;
+  padding: 10px 12px;
+  color: var(--text);
+  background: white;
+  font: inherit;
+}
+
+.financial-confirmation {
+  grid-template-columns: 24px minmax(0, 1fr) !important;
+  align-items: start;
+  color: var(--text) !important;
+}
+
+.financial-confirmation input {
+  min-height: 20px;
+  width: 20px;
+}
+
+.payment-history-lookup {
+  padding: 20px;
+}
+
+.payment-history-lookup form > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+}
+
+.refund-form h4 {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin: 0;
+}
+
+@media (max-width: 760px) {
+  .payments-heading,
+  .ledger-summary,
+  .payment-history-lookup form > div {
+    grid-template-columns: 1fr;
+  }
+
+  .payments-heading > button,
+  .payment-history-lookup button {
     width: 100%;
   }
 }

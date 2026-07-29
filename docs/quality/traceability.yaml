@@ -3,7 +3,7 @@ document:
   status: approved
   version: "1.0"
   owner: quality
-  last_reviewed: 2026-07-28
+  last_reviewed: 2026-07-29
 
 vertical_slices:
   application_bootstrap:
@@ -98,10 +98,14 @@ vertical_slices:
 
   payments_and_completion:
     implements: [US-F04, US-H04, US-H05, US-K01, US-K02, US-K03, US-K04]
-    obeys: [PD-012, PD-015, PD-016, PD-017, PD-018, PD-032, BR-008, BR-013, BR-015, BR-016, BR-017, BR-018, BR-019]
-    modules: [payments, ordering, audit]
-    operations: [requestGuestOrderBill, recordOrderPayment, completeOrder]
-    tests: [TEST-PAYMENT-001, TEST-PAYMENT-002, TEST-REFUND-001, TEST-COMPLETE-001]
+    obeys: [PD-001, PD-009, PD-012, PD-013, PD-015, PD-016, PD-017, PD-018, PD-022, PD-024, PD-025, PD-026, PD-027, PD-029, PD-030, PD-032, PD-034, ADR-0001, ADR-0002, ADR-0003, ADR-0004, ADR-0005, ADR-0006, CFG-005, CFG-006, CFG-007, CFG-011, CFG-013, CFG-015, PERM-014, PERM-016, PERM-018, PERM-022, PERM-023, PERM-025, PERM-026, PERM-029, PERM-030, PERM-031, BR-001, BR-002, BR-003, BR-006, BR-007, BR-008, BR-013, BR-015, BR-016, BR-017, BR-018, BR-019, BR-021, BR-022, BR-023, BR-024]
+    modules: [identity_access, restaurant_configuration, menu, tables, ordering, kitchen, payments, audit, service_workflow]
+    operations: [requestGuestOrderBill, listOpenBillRequests, getOrderPaymentLedger, recordOrderPayment, recordPaymentRefund, correctOrder, cancelOrder, moveOrderTableSession, completeOrder]
+    tests: [TEST-BILL-001, TEST-PAYMENT-001, TEST-PAYMENT-002, TEST-REFUND-001, TEST-CORRECTION-001, TEST-CANCEL-001, TEST-TABLE-MOVE-001, TEST-COMPLETE-001, TEST-IDEMPOTENCY-001, TEST-CONCURRENCY-001, TEST-TENANT-001, TEST-PERM-001, TEST-AUDIT-001, TEST-ROLLBACK-001, TEST-CONTRACT-001, TEST-CUSTOMER-BROWSER-001, TEST-CUSTOMER-A11Y-001, TEST-A11Y-STAFF-001]
+    slice_007_verified_acceptance: [AC-US-F04-01, AC-US-F04-02, AC-US-F04-03, AC-US-H04-01, AC-US-H04-02, AC-US-H04-03, AC-US-H04-04, AC-US-H05-01, AC-US-H05-02, AC-US-H05-04, AC-US-K01-01, AC-US-K01-02, AC-US-K01-03, AC-US-K01-04, AC-US-K02-01, AC-US-K02-02, AC-US-K02-03, AC-US-K02-04, AC-US-K03-01, AC-US-K03-02, AC-US-K03-03, AC-US-K03-04, AC-US-K04-01, AC-US-K04-02, AC-US-K04-03, AC-US-K04-04]
+    cross_slice_acceptance:
+      AC-US-H05-03: Slice 007 provides customer-safe authoritative refresh, branch-scoped staff views, and the transactional cancellation event; durable configured notification delivery is verified in Slice 008.
+      AC-US-K04-05: Slice 007 verifies immutable audit evidence and publishes the transactional refund event; report projection consumption is verified in Slice 008.
 
   notifications:
     implements: [US-O01, US-O02, US-O03]
