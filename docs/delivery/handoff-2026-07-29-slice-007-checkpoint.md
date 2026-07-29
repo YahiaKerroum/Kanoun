@@ -1,22 +1,24 @@
 ---
 id: HANDOFF-2026-07-29-SLICE-007-CHECKPOINT
-status: slice-007-complete-verified-unpublished
+status: slice-007-published
 owner: engineering
 last_reviewed: 2026-07-29
 ---
 
-# Slice 007 Completion Handoff
+# Slice 007 Publication Handoff
 
 ## Current status
 
-Slice 007 is complete and verified in the uncommitted worktree. The earlier
-context-compaction sections below are retained as the exact historical resume
-record and are superseded by the completion evidence at the end of this
-document.
+Slice 007 is complete, verified, committed, and published to
+`origin/slice-007-payment-completion-and-correction`. The implementation commit
+is `6c167913edaaeff7b5e47e0999b950efd7ffbae7`, and the first remote
+verification matched that exact SHA.
 
-No Slice 007 change is staged, committed, pushed, integrated, or attached to a
-pull request. The two `.cc-history` files remain protected and outside the
-implementation scope. Publication requires explicit authorization.
+The earlier context-compaction sections below are retained as the exact
+historical resume record and are superseded by the completion and publication
+evidence at the end of this document. No pull request or `main` integration
+has occurred. The two `.cc-history` files remain protected and outside the
+publication scope.
 
 ## Why this checkpoint exists
 
@@ -542,9 +544,8 @@ the isolated native PostgreSQL 18.1 cluster:
   defect found;
 - `corepack pnpm audit --prod --audit-level high`: no known vulnerabilities.
 
-Slice 007 remains intentionally uncommitted and unpublished. The only next
-publication action is a protected-path-aware scope review followed by explicit
-user authorization.
+At this completion checkpoint, Slice 007 remained intentionally uncommitted
+and unpublished. The later feature-branch publication is recorded below.
 
 The isolated verification cluster was then stopped cleanly. Only
 `C:\Users\HP\Desktop\mvp\.tmp\postgres-slice007` and
@@ -552,10 +553,23 @@ The isolated verification cluster was then stopped cleanly. Only
 are absent, no matching PostgreSQL process remains, and port `55437` has zero
 listeners.
 
-Final repository inspection found 43 tracked modifications and 17 untracked
-paths. Fifteen untracked paths belong to Slice 007; the other two are the
-protected `.cc-history` files, whose byte sizes and UTC modification times
-remain identical to the resume boundary. Nothing is staged. The active branch,
-`HEAD`, `main`, and `origin/main` remain at
-`c04c4bd5df6ad9f70ac42fa13b0148b1b3410e2f`, and no remote Slice 007 branch
-exists.
+Pre-publication final repository inspection found 43 tracked modifications
+and 17 untracked paths. Fifteen untracked paths belong to Slice 007; the other
+two are the protected `.cc-history` files, whose byte sizes and UTC
+modification times remain identical to the resume boundary. Nothing was
+staged. At that inspection, the active branch, `HEAD`, `main`, and
+`origin/main` were at `c04c4bd5df6ad9f70ac42fa13b0148b1b3410e2f`, and no
+remote Slice 007 branch existed.
+
+## Feature-branch publication
+
+- Implementation commit:
+  `6c167913edaaeff7b5e47e0999b950efd7ffbae7`.
+- Published branch:
+  `origin/slice-007-payment-completion-and-correction`.
+- The first post-push `git ls-remote` result matched the implementation
+  commit exactly.
+- This documentation-only follow-up records the feature-branch publication.
+- No pull request was opened and `main` remains unchanged at
+  `c04c4bd5df6ad9f70ac42fa13b0148b1b3410e2f`.
+- The protected `.cc-history` files were neither staged nor modified.

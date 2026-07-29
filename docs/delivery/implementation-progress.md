@@ -11,7 +11,7 @@ last_reviewed: 2026-07-29
 ## Current slice
 
 `SLICE-007 — payment_completion_and_correction` (complete and verified;
-publication authorization pending)
+feature branch published, pull request and integration pending)
 
 ## Slice status
 
@@ -26,7 +26,9 @@ publication authorization pending)
   `e80e9608f375344903943bbafe5ed384651a65db` and publication follow-up
   `0670c04d1441ef2729ee6263c4736d4571251b2c` are integrated into `main`.
 - `SLICE-007 — payment_completion_and_correction`: complete and verified on
-  `slice-007-payment-completion-and-correction`; uncommitted and unpublished.
+  `slice-007-payment-completion-and-correction`; implementation commit
+  `6c167913edaaeff7b5e47e0999b950efd7ffbae7` is published to the matching
+  remote feature branch.
 - `SLICE-008 — notifications_reporting_and_audit`: not started.
 
 ## Completed
@@ -135,14 +137,17 @@ publication authorization pending)
 - Responsive traced states for customer bill requests, the staff
   payment/refund desk, correction retry, and whole-session movement were
   visually inspected after the complete browser suite passed.
+- Slice 007 implementation commit
+  `6c167913edaaeff7b5e47e0999b950efd7ffbae7` was published to
+  `origin/slice-007-payment-completion-and-correction` and verified with
+  `git ls-remote`.
 
 ## In progress
 
-- Slice 007 is complete in the worktree. The isolated PostgreSQL verification
-  cluster was stopped, only its exact data/log artifacts were removed, and
-  port `55437` was confirmed free.
-- No Slice 007 commit, stage, feature-branch push, pull request, or integration
-  exists. Publication requires explicit authorization.
+- Slice 007 is published on its feature branch. No pull request or `main`
+  integration exists; those remain separately authorized actions.
+- The isolated PostgreSQL verification cluster was stopped, only its exact
+  data/log artifacts were removed, and port `55437` was confirmed free.
 - Active handoff:
   `docs/delivery/handoff-2026-07-29-slice-007-checkpoint.md`.
 - Historical compaction continuation prompt:
@@ -176,6 +181,6 @@ publication authorization pending)
 
 ## Next slice
 
-Publish `SLICE-007 — payment_completion_and_correction` only after explicit
-authorization and a final protected-path-aware scope review. Do not begin
+Open or integrate `SLICE-007 — payment_completion_and_correction` only after
+explicit authorization and a fresh protected-path-aware review. Do not begin
 `SLICE-008 — notifications_reporting_and_audit` from this handoff.

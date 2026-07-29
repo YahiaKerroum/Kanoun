@@ -113,3 +113,10 @@ database:
   customer, payment/refund, correction-retry, and table-move states were
   visually inspected;
 - the production dependency audit reported no known vulnerabilities.
+
+## Feature-branch publication
+
+The verified implementation is committed as
+`6c167913edaaeff7b5e47e0999b950efd7ffbae7` and published to
+`origin/slice-007-payment-completion-and-correction`. No pull request or
+`main` integration is included in this publication step.
