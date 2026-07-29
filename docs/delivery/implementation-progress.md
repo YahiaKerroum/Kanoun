@@ -10,8 +10,9 @@ last_reviewed: 2026-07-29
 
 ## Current slice
 
-`SLICE-007 — payment_completion_and_correction` (complete and verified;
-feature branch published, pull request and integration pending)
+`SLICE-007 — payment_completion_and_correction` (complete, verified,
+feature-branch published, and integrated into `main`; main-publication record
+pending its documentation commit and CI)
 
 ## Slice status
 
@@ -27,8 +28,9 @@ feature branch published, pull request and integration pending)
   `0670c04d1441ef2729ee6263c4736d4571251b2c` are integrated into `main`.
 - `SLICE-007 — payment_completion_and_correction`: complete and verified on
   `slice-007-payment-completion-and-correction`; implementation commit
-  `6c167913edaaeff7b5e47e0999b950efd7ffbae7` is published to the matching
-  remote feature branch.
+  `6c167913edaaeff7b5e47e0999b950efd7ffbae7` and reviewed publication head
+  `db38e98b169375650dadb9534e5ab65567234552` are published to the matching
+  remote feature branch and integrated into `main`.
 - `SLICE-008 — notifications_reporting_and_audit`: not started.
 
 ## Completed
@@ -141,11 +143,20 @@ feature branch published, pull request and integration pending)
   `6c167913edaaeff7b5e47e0999b950efd7ffbae7` was published to
   `origin/slice-007-payment-completion-and-correction` and verified with
   `git ls-remote`.
+- Slice 007 publication preparation was committed at
+  `db38e98b169375650dadb9534e5ab65567234552`; the local and remote feature
+  refs were verified independently.
+- `main` was fast-forwarded without history rewriting from
+  `c04c4bd5df6ad9f70ac42fa13b0148b1b3410e2f` to
+  `db38e98b169375650dadb9534e5ab65567234552`, pushed normally, and verified
+  independently against `origin/main`.
+- GitHub Actions run `30456268068` succeeded for the exact Slice 007
+  integration SHA; both `verify` and `dependency-audit` passed.
 
 ## In progress
 
-- Slice 007 is published on its feature branch. No pull request or `main`
-  integration exists; those remain separately authorized actions.
+- The documentation-only Slice 007 main-publication record is being committed
+  and pushed. Its exact GitHub Actions run must pass before Slice 008 starts.
 - The isolated PostgreSQL verification cluster was stopped, only its exact
   data/log artifacts were removed, and port `55437` was confirmed free.
 - Active handoff:
@@ -181,6 +192,7 @@ feature branch published, pull request and integration pending)
 
 ## Next slice
 
-Open or integrate `SLICE-007 — payment_completion_and_correction` only after
-explicit authorization and a fresh protected-path-aware review. Do not begin
-`SLICE-008 — notifications_reporting_and_audit` from this handoff.
+After the documentation-only Slice 007 main-publication commit passes its
+exact GitHub Actions run, create
+`slice-008-notifications-reporting-and-audit` from verified `main` and execute
+the approved Slice 008 continuation prompt. Do not begin another slice.

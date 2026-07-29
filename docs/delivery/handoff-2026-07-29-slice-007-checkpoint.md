@@ -1,6 +1,6 @@
 ---
 id: HANDOFF-2026-07-29-SLICE-007-CHECKPOINT
-status: slice-007-published
+status: slice-007-integrated
 owner: engineering
 last_reviewed: 2026-07-29
 ---
@@ -10,17 +10,20 @@ last_reviewed: 2026-07-29
 ## Current status
 
 Slice 007 — Payment, Completion, and Correction is complete, locally verified,
-committed, and published to
-`origin/slice-007-payment-completion-and-correction`.
+published to its feature branch, fast-forwarded into `main`, and verified by
+GitHub Actions.
 
 - Verified implementation commit:
   `6c167913edaaeff7b5e47e0999b950efd7ffbae7`
-- Publication-documentation commit and current branch head:
+- Initial publication-documentation commit:
   `7e2a829be77ca02a16d46ea2f8382d926a703be9`
-- Remote verification: `git ls-remote` matched the current branch head exactly.
-- `main` and `origin/main` remain unchanged at
-  `c04c4bd5df6ad9f70ac42fa13b0148b1b3410e2f`.
-- No pull request or `main` integration has occurred.
+- Reviewed feature-branch head and fast-forward integration SHA:
+  `db38e98b169375650dadb9534e5ab65567234552`
+- Independent `git ls-remote` checks matched the feature branch and `main`
+  refs exactly.
+- GitHub Actions run `30456268068` succeeded for the exact integration SHA;
+  both `verify` and `dependency-audit` passed.
+- No pull request was opened and no history was rewritten.
 - Slice 008 has not started.
 
 The two untracked `.cc-history` files remain protected, unchanged, and outside
@@ -100,13 +103,25 @@ The complete second-compaction record is retained separately at
 `docs/delivery/continuation-prompt-2026-07-29-slice-007-compaction-2.md`.
 It must be treated as historical only.
 
+## Main integration evidence
+
+Local `main` was fast-forwarded from
+`c04c4bd5df6ad9f70ac42fa13b0148b1b3410e2f` to the reviewed feature head
+`db38e98b169375650dadb9534e5ab65567234552` and pushed normally. No merge
+commit, rebase, squash, cherry-pick, reset, force-push, or pull request was
+used.
+
+GitHub Actions run `30456268068` completed successfully for
+`db38e98b169375650dadb9534e5ab65567234552`:
+
+- `verify`: passed, including migrations, workspace verification, and browser
+  and accessibility smoke tests;
+- `dependency-audit`: passed.
+
 ## Next authorized action
 
-Opening a pull request or integrating Slice 007 into `main` requires explicit
-authorization and a fresh protected-path-aware review. Do not begin Slice 008
-from this handoff.
-
-The prepared standalone execution prompt for that separately authorized work
-is `docs/delivery/continuation-prompt-2026-07-29-slice-008.md`. Its presence
-does not itself execute or authorize repository changes; use it as the next
-user request when ready.
+The documentation-only main-publication record containing this evidence must
+be committed, pushed, and pass its own exact GitHub Actions run. After that
+verification, create `slice-008-notifications-reporting-and-audit` from the
+verified `main` and follow
+`docs/delivery/continuation-prompt-2026-07-29-slice-008.md`.

@@ -114,9 +114,15 @@ database:
   visually inspected;
 - the production dependency audit reported no known vulnerabilities.
 
-## Feature-branch publication
+## Publication and main integration
 
 The verified implementation is committed as
 `6c167913edaaeff7b5e47e0999b950efd7ffbae7` and published to
-`origin/slice-007-payment-completion-and-correction`. No pull request or
-`main` integration is included in this publication step.
+`origin/slice-007-payment-completion-and-correction`. The reviewed
+publication-documentation descendants culminate at
+`db38e98b169375650dadb9534e5ab65567234552`.
+
+Local `main` was fast-forwarded to that exact reviewed head and pushed without
+history rewriting. GitHub Actions run `30456268068` succeeded for
+`db38e98b169375650dadb9534e5ab65567234552`; both `verify` and
+`dependency-audit` passed. No pull request was opened.
