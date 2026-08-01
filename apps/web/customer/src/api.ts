@@ -23,6 +23,7 @@ const dishSchema = z.object({
   id: z.uuid(),
   name: z.string(),
   description: z.string().nullish(),
+  imageUrl: z.url().nullish(),
   unitPrice: moneySchema,
   available: z.boolean(),
   optionGroups: z.array(optionGroupSchema).default([]),

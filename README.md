@@ -15,14 +15,49 @@
 > **MISE is a working product name.** The product name is deliberately not yet
 > presented as final branding.
 
-## In the product
+## Product tour
 
-| Staff operating view                                                                              | Mobile reporting                                                                        | Administration evidence                                                                                     |
-| ------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| ![MISE staff dashboard with current branch activity](docs/assets/screenshots/staff-dashboard.png) | ![MISE sales report at a mobile width](docs/assets/screenshots/staff-report-mobile.png) | ![MISE administration insights with reports and audit evidence](docs/assets/screenshots/admin-insights.png) |
+The gallery covers the actual customer, staff, and administration applications,
+using deterministic browser fixtures with synthetic Algerian restaurant data. These are representative
+operational states, not mockup artwork or a customer environment.
 
-The screenshots are generated from the repository's Playwright visual-review
-fixtures. They show representative scoped data, not a customer environment.
+### Guest ordering
+
+| Current table menu                                                         | Order tracking on mobile                                                                              |
+| -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| ![Customer menu for table T-12](docs/assets/screenshots/customer-menu.png) | ![Customer order status on a mobile screen](docs/assets/screenshots/customer-order-status-mobile.png) |
+
+### Staff operations
+
+| Current branch dashboard                                                                                      |
+| ------------------------------------------------------------------------------------------------------------- |
+| ![Current branch dashboard with orders, tables, and daily sales](docs/assets/screenshots/staff-dashboard.png) |
+
+| Orders                                                                                    | Kitchen                                                                                      |
+| ----------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| ![Staff order queue with filtered active order](docs/assets/screenshots/staff-orders.png) | ![Kitchen preparation queue with a grouped order](docs/assets/screenshots/staff-kitchen.png) |
+
+| Menu                                                                         | Tables                                                                     |
+| ---------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| ![Staff menu view with availability](docs/assets/screenshots/staff-menu.png) | ![Staff table availability view](docs/assets/screenshots/staff-tables.png) |
+
+| Payments and refunds                                                                                     | Notifications                                                                                |
+| -------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| ![Staff payment ledger and refund on a mobile screen](docs/assets/screenshots/staff-payments-mobile.png) | ![Staff notification inbox at tablet width](docs/assets/screenshots/staff-notifications.png) |
+
+| Sales reports                                                                                                               | Audit history                                                                                         |
+| --------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| ![Staff sales report with accessible scrollable evidence table on mobile](docs/assets/screenshots/staff-reports-mobile.png) | ![Staff append-only audit history on a mobile screen](docs/assets/screenshots/staff-audit-mobile.png) |
+
+### Administration
+
+| People and permissions                                                                                          | Menu, tables, and QR lifecycle                                                                               |
+| --------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| ![Administration workforce, permissions, and branch configuration](docs/assets/screenshots/admin-workforce.png) | ![Administration menu, table, and issued QR code controls](docs/assets/screenshots/admin-menu-tables-qr.png) |
+
+| Reports and audit evidence                                                                             |
+| ------------------------------------------------------------------------------------------------------ |
+| ![Administration insights with reports and audit evidence](docs/assets/screenshots/admin-insights.png) |
 
 ## What MISE covers
 

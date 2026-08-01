@@ -52,9 +52,11 @@ test("confirms the detected table and browses the current branch menu accessibly
             dishes: [
               {
                 id: dishId,
-                name: "Saffron chicken",
-                description: "Charred lemon and preserved pepper.",
-                unitPrice: { amount: "1750.00", currency: "DZD" },
+                name: "Couscous royale",
+                description:
+                  "Lamb, chicken, seasonal vegetables, and sweet onions.",
+                imageUrl: "http://127.0.0.1:5174/images/couscous-royale.webp",
+                unitPrice: { amount: "1850.00", currency: "DZD" },
                 available: true,
                 optionGroups: [
                   {
@@ -77,8 +79,10 @@ test("confirms the detected table and browses the current branch menu accessibly
               },
               {
                 id: unavailableDishId,
-                name: "Seasonal mechoui",
-                description: "Returns with the next market delivery.",
+                name: "Rechta au poulet",
+                description:
+                  "Hand-cut noodles with chicken, turnips, and chickpeas.",
+                imageUrl: "http://127.0.0.1:5174/images/rechta.webp",
                 unitPrice: { amount: "2400.00", currency: "DZD" },
                 available: false,
                 optionGroups: [],
@@ -116,9 +120,16 @@ test("confirms the detected table and browses the current branch menu accessibly
     page.getByRole("heading", { name: "What’s being served" }),
   ).toBeFocused();
   await expect(
-    page.getByRole("heading", { name: "Saffron chicken" }),
+    page.getByRole("heading", { name: "Couscous royale" }),
   ).toBeVisible();
-  await expect(page.getByText("DZD 1,750")).toBeVisible();
+  await expect(page.getByText("DZD 1,850")).toBeVisible();
+  await expect(
+    page.getByRole("img", { name: "Couscous royale" }),
+  ).toHaveAttribute("src", "http://127.0.0.1:5174/images/couscous-royale.webp");
+  await page.screenshot({
+    path: "test-results/readme-customer-menu.png",
+    fullPage: true,
+  });
 
   const choices = page.getByText("View choices");
   await choices.focus();
@@ -127,7 +138,7 @@ test("confirms the detected table and browses the current branch menu accessibly
   await expect(page.getByText("+DZD 250")).toBeVisible();
   await expect(
     page.getByRole("article", {
-      name: "Seasonal mechoui, Unavailable today",
+      name: "Rechta au poulet, Unavailable today",
     }),
   ).toContainText("Unavailable today");
   await expectNoWcagViolations(page);
@@ -343,6 +354,10 @@ test("builds, reviews, submits, tracks, and requests cancellation for an order",
   await expect(page.getByText("Received")).toBeVisible();
   await page.getByRole("button", { name: "Refresh status" }).click();
   await expect(page.getByText("Ready", { exact: true })).toBeVisible();
+  await page.screenshot({
+    path: "test-results/readme-customer-order-status-mobile.png",
+    fullPage: true,
+  });
 
   await page.getByRole("button", { name: "Request the bill" }).click();
   await expect(

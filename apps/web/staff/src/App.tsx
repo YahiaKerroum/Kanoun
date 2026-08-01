@@ -661,22 +661,21 @@ function HomeWorkspace({
     <div className="workspace__content">
       <section className="launch-banner" aria-labelledby="launch-title">
         <div>
-          <p className="eyebrow">SLICE 003 · CAPABILITY-AWARE PORTAL</p>
-          <h2 id="launch-title">Your branch tools, resolved by access.</h2>
+          <p className="eyebrow">SERVICE OVERVIEW</p>
+          <h2 id="launch-title">Your branch is ready for service.</h2>
           <p>
-            This rail is the intersection of your effective branch permissions
-            and enabled MVP features. The server still authorizes every direct
-            API request.
+            Orders, tables, menu, kitchen, payments, and reporting tools are
+            tailored to the responsibilities assigned to you.
           </p>
         </div>
         <div className="launch-banner__status" id={statusId} role="status">
           <ReadinessMark readiness={readiness} />
           <span>
             {apiReady
-              ? "Capabilities and API readiness were verified."
+              ? "Service access and API readiness were verified."
               : readiness.kind === "checking"
-                ? "Refreshing access and API readiness."
-                : "Capabilities loaded, but API readiness is not verified."}
+                ? "Refreshing service access and API readiness."
+                : "Service access loaded, but API readiness is not verified."}
           </span>
         </div>
       </section>
@@ -685,8 +684,8 @@ function HomeWorkspace({
         <section className="workspace-panel" aria-labelledby="access-title">
           <div className="panel-heading">
             <div>
-              <p className="eyebrow">Effective branch access</p>
-              <h2 id="access-title">Portal boundary</h2>
+              <p className="eyebrow">TODAY'S ACCESS</p>
+              <h2 id="access-title">Your workspace</h2>
             </div>
             <span className="panel-count">
               v{capabilities.configurationVersion}
@@ -698,20 +697,20 @@ function HomeWorkspace({
                 <Badge size={19} />
               </span>
               <div>
-                <strong>{destinationCount} visible destinations</strong>
-                <span>Unauthorized and disabled modules are omitted.</span>
+                <strong>{destinationCount} available workspaces</strong>
+                <span>Only tools available to this branch are shown.</span>
               </div>
-              <span className="state-label state-label--ready">Scoped</span>
+              <span className="state-label state-label--ready">Ready</span>
             </li>
             <li>
               <span className="check-icon check-icon--ready" aria-hidden="true">
                 <Users size={19} />
               </span>
               <div>
-                <strong>{capabilities.permissions.length} permissions</strong>
-                <span>
-                  Several responsibilities remain in one staff account.
-                </span>
+                <strong>
+                  {capabilities.permissions.length} active permissions
+                </strong>
+                <span>Responsibilities are confirmed for this session.</span>
               </div>
               <span className="state-label state-label--ready">Effective</span>
             </li>
@@ -721,9 +720,9 @@ function HomeWorkspace({
               </span>
               <div>
                 <strong>
-                  {capabilities.enabledFeatures.length} enabled features
+                  {capabilities.enabledFeatures.length} active services
                 </strong>
-                <span>Resolved from restaurant and branch configuration.</span>
+                <span>Branch tools are configured for service.</span>
               </div>
               <span className="state-label state-label--ready">Current</span>
             </li>
@@ -733,26 +732,23 @@ function HomeWorkspace({
         <section className="workspace-panel" aria-labelledby="boundary-title">
           <div className="panel-heading">
             <div>
-              <p className="eyebrow">Delivery boundary</p>
-              <h2 id="boundary-title">Navigation is ready</h2>
+              <p className="eyebrow">SERVICE STATUS</p>
+              <h2 id="boundary-title">Ready for operations</h2>
             </div>
-            <span className="slice-number">003</span>
+            <span className="slice-number">Open</span>
           </div>
           <p className="panel-copy">
-            Employee access and feature configuration now shape this shell.
-            Order, table, menu, kitchen, payment, report, audit-query, and task
-            screens remain deferred to their owning slices.
+            Work through the branch tools available to you, from orders and
+            tables to kitchen flow, payments, reports, and audit evidence.
           </p>
           <dl className="scope-list">
             <div>
-              <dt>Implemented</dt>
-              <dd>Authenticated capability disclosure and endpoint guards</dd>
+              <dt>Available</dt>
+              <dd>Tools and data scoped to your branch responsibilities</dd>
             </div>
             <div>
-              <dt>Not claimed</dt>
-              <dd>
-                Downstream tasks, automation, or operational module actions
-              </dd>
+              <dt>Need access?</dt>
+              <dd>Contact a branch administrator to update your assignment.</dd>
             </div>
           </dl>
         </section>
@@ -763,17 +759,16 @@ function HomeWorkspace({
         >
           <div className="panel-heading">
             <div>
-              <p className="eyebrow">Design authority</p>
-              <h2 id="design-title">MISE · Saffron Gold</h2>
+              <p className="eyebrow">SERVICE STANDARD</p>
+              <h2 id="design-title">Made for service</h2>
             </div>
             <ChefHat aria-hidden="true" size={26} />
           </div>
           <p className="panel-copy">
-            Saffron frame, ivory working surface, compact context, restrained
-            panels, and a service-oriented navigation dock remain the visual
-            foundation.
+            A clear saffron frame, calm working surface, and compact navigation
+            keep the team focused through every service period.
           </p>
-          <span className="working-name">Working product name</span>
+          <span className="working-name">MISE staff workspace</span>
         </section>
       </div>
       <DashboardWorkspace branchId={branchId} canView={canViewReports} />

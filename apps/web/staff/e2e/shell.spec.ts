@@ -13,6 +13,7 @@ const tableSessionId = "00000000-0000-4000-8000-000000000109";
 const orderItemId = "00000000-0000-4000-8000-000000000110";
 const optionGroupId = "00000000-0000-4000-8000-000000000111";
 const optionId = "00000000-0000-4000-8000-000000000112";
+const secondDishId = "00000000-0000-4000-8000-000000000113";
 
 const activeOrder = {
   id: orderId,
@@ -24,13 +25,13 @@ const activeOrder = {
   tableCode: "T-12",
   creatorType: "staff",
   createdByEmployeeId: employeeId,
-  customerName: "Nadia",
+  customerName: "Nadia Cheriet",
   approval: "accepted",
   fulfilment: "ready",
-  financial: "unpaid",
+  financial: "partially_refunded",
   closure: "active",
   customerSafeStatusReason: null,
-  total: { amount: "21.00", currency: "USD" },
+  total: { amount: "4200.00", currency: "DZD" },
   submittedAt: new Date(Date.now() - 12 * 60_000).toISOString(),
   acceptedAt: new Date(Date.now() - 12 * 60_000).toISOString(),
   cancellationRequested: false,
@@ -39,12 +40,12 @@ const activeOrder = {
       id: orderItemId,
       dishId,
       menuVersion: "7",
-      name: "Saffron chicken",
+      name: "Couscous royale",
       quantity: 1,
-      unitPrice: { amount: "21.00", currency: "USD" },
+      unitPrice: { amount: "4200.00", currency: "DZD" },
       selectedOptions: [],
       note: null,
-      total: { amount: "21.00", currency: "USD" },
+      total: { amount: "4200.00", currency: "DZD" },
     },
   ],
 };
@@ -57,6 +58,35 @@ interface PortalOverrides {
     readonly restaurantId?: string;
     readonly branchId?: string;
   }[];
+}
+
+async function captureReadmeScreenshot(
+  page: Page,
+  path: string,
+): Promise<void> {
+  await page.evaluate(() => {
+    const focusedElement = document.activeElement;
+    if (focusedElement instanceof HTMLElement) {
+      focusedElement.blur();
+    }
+    window.scrollTo(0, 0);
+    document.querySelector<HTMLElement>(".workspace")?.scrollTo(0, 0);
+  });
+  const viewport = page.viewportSize();
+  const isCompactCapture = viewport !== null && viewport.width <= 820;
+  if (isCompactCapture) {
+    const contentHeight = await page.evaluate(() =>
+      Math.max(
+        document.body.scrollHeight,
+        document.documentElement.scrollHeight,
+      ),
+    );
+    await page.setViewportSize({
+      width: viewport.width,
+      height: Math.min(contentHeight, 1600),
+    });
+  }
+  await page.screenshot({ path, fullPage: !isCompactCapture });
 }
 
 async function mockReadyPortal(
@@ -109,11 +139,11 @@ async function mockReadyPortal(
 test.beforeEach(async ({ page }) => {
   await page.route("**/health/ready", async (route) => {
     await route.fulfill({
-      status: 503,
+      status: 200,
       contentType: "application/json",
       body: JSON.stringify({
-        status: "not_ready",
-        dependencies: { database: "unavailable" },
+        status: "ready",
+        dependencies: { database: "available" },
       }),
     });
   });
@@ -161,7 +191,7 @@ test("shows only destinations allowed by both permissions and enabled features",
 
   await expect(
     page.getByRole("heading", {
-      name: "Your branch tools, resolved by access.",
+      name: "Your branch is ready for service.",
     }),
   ).toBeVisible();
   await expect(page.getByRole("button", { name: "Home" })).toBeVisible();
@@ -277,6 +307,7 @@ test("filters active orders, displays elapsed time, and preserves stale results"
   await expect(page.getByText("ORD-000021")).toBeVisible();
   await expect(page.getByText("T-12")).toBeVisible();
   await expect(page.getByText(/\d+ min/)).toBeVisible();
+  await captureReadmeScreenshot(page, "test-results/readme-staff-orders.png");
   expect(lastOrderUrl).toContain("fulfilment=ready");
   expect(lastOrderUrl).toContain(
     `createdByEmployeeId=${encodeURIComponent(employeeId)}`,
@@ -410,7 +441,7 @@ test("creates a menu- and table-backed staff order with CSRF and idempotency", a
     expect(request.postDataJSON()).toMatchObject({
       tableId,
       menuVersion: 7,
-      customerName: "Nadia",
+      customerName: "Nadia Cheriet",
       items: [
         {
           dishId,
@@ -440,7 +471,7 @@ test("creates a menu- and table-backed staff order with CSRF and idempotency", a
 
   const dialog = page.getByRole("dialog", { name: "Create order" });
   await dialog.getByLabel("Table").selectOption(tableId);
-  await dialog.getByLabel("Customer name (optional)").fill("Nadia");
+  await dialog.getByLabel("Customer name (optional)").fill("Nadia Cheriet");
   await dialog.getByLabel("Dish").selectOption(dishId);
   await dialog.getByLabel("Roasted potatoes").check();
   await dialog.getByLabel("Preparation note (optional)").fill("No chilli");
@@ -587,6 +618,7 @@ test("processes the grouped kitchen queue and ready-order collection accessibly"
   await expect(page.getByText("Large")).toBeVisible();
   await expect(page.getByText("Note: No parsley")).toBeVisible();
   await expect(page.getByText("New · queued")).toBeVisible();
+  await captureReadmeScreenshot(page, "test-results/readme-staff-kitchen.png");
   await page.getByRole("button", { name: "Start preparation" }).click();
   await expect(page.getByText("preparing", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Mark ready" }).click();
@@ -756,7 +788,7 @@ test("loads real read-only menu and derived table states for the active scope", 
               id: categoryId,
               businessAccountId,
               restaurantId,
-              name: "Wood-fired plates",
+              name: "Traditional mains",
               displayOrder: 1,
               status: "active",
               version: 2,
@@ -778,13 +810,28 @@ test("loads real read-only menu and derived table states for the active scope", 
               businessAccountId,
               restaurantId,
               categoryId,
-              name: "Saffron chicken",
-              description: "Charred lemon and preserved pepper.",
-              basePrice: { amount: "18.50", currency: "USD" },
+              name: "Couscous royale",
+              description:
+                "Lamb, chicken, seasonal vegetables, and sweet onions.",
+              basePrice: { amount: "1850.00", currency: "DZD" },
               status: "active",
               available: true,
               displayOrder: 1,
               version: 3,
+            },
+            {
+              id: secondDishId,
+              businessAccountId,
+              restaurantId,
+              categoryId,
+              name: "Rechta au poulet",
+              description:
+                "Hand-cut noodles with chicken, turnips, and chickpeas.",
+              basePrice: { amount: "2400.00", currency: "DZD" },
+              status: "active",
+              available: false,
+              displayOrder: 2,
+              version: 1,
             },
           ],
         }),
@@ -801,7 +848,18 @@ test("loads real read-only menu and derived table states for the active scope", 
             businessAccountId,
             branchId,
             code: "T-12",
-            area: "Dining room",
+            area: "Salle principale",
+            status: "active",
+            outOfService: false,
+            version: 1,
+            derivedState: "occupied",
+          },
+          {
+            id: "00000000-0000-4000-8000-000000000114",
+            businessAccountId,
+            branchId,
+            code: "T-08",
+            area: "Terrasse",
             status: "active",
             outOfService: false,
             version: 1,
@@ -818,13 +876,14 @@ test("loads real read-only menu and derived table states for the active scope", 
   await expect(
     page.getByRole("heading", { name: "What guests can order" }),
   ).toBeVisible();
-  await expect(page.getByText("Saffron chicken")).toBeVisible();
-  await expect(page.getByText("$18.50")).toBeVisible();
+  await expect(page.getByText("Couscous royale")).toBeVisible();
+  await expect(page.getByText("DZD\u00a01,850.00")).toBeVisible();
   await expect(
     page
-      .getByRole("region", { name: "Wood-fired plates" })
+      .getByRole("region", { name: "Traditional mains" })
       .getByText("Available", { exact: true }),
   ).toBeVisible();
+  await captureReadmeScreenshot(page, "test-results/readme-staff-menu.png");
 
   await page.getByRole("button", { name: "Tables" }).click();
 
@@ -832,10 +891,11 @@ test("loads real read-only menu and derived table states for the active scope", 
     page.getByRole("heading", { name: "Table availability" }),
   ).toBeVisible();
   await expect(page.getByText("T-12")).toBeVisible();
-  await expect(page.getByText("Dining room")).toBeVisible();
+  await expect(page.getByText("Salle principale")).toBeVisible();
+  await captureReadmeScreenshot(page, "test-results/readme-staff-tables.png");
   await expect(
     page
-      .getByRole("region", { name: "Dining room" })
+      .getByRole("region", { name: "Terrasse" })
       .getByText("Available", { exact: true }),
   ).toBeVisible();
 
@@ -985,7 +1045,7 @@ test("records payment and refund with confirmation in the responsive payment des
     branchId,
     tableId,
     tableCode: "T-12",
-    total: { amount: "21.00", currency: "USD" },
+    total: { amount: "4200.00", currency: "DZD" },
     financial: refunded ? "partially_refunded" : paid ? "paid" : "unpaid",
     fulfilment: "served",
     closure: "active",
@@ -993,9 +1053,9 @@ test("records payment and refund with confirmation in the responsive payment des
       ? {
           id: paymentId,
           orderId,
-          amount: { amount: "21.00", currency: "USD" },
+          amount: { amount: "4200.00", currency: "DZD" },
           method: "card",
-          externalReference: "CARD-21",
+          externalReference: "CIB-ALG-4200",
           recordedAt: "2026-07-29T10:00:00.000Z",
           recordedByEmployeeId: employeeId,
         }
@@ -1006,8 +1066,8 @@ test("records payment and refund with confirmation in the responsive payment des
             id: "00000000-0000-4000-8000-000000000141",
             orderId,
             paymentId,
-            amount: { amount: "5.00", currency: "USD" },
-            reason: "Guest goodwill",
+            amount: { amount: "500.00", currency: "DZD" },
+            reason: "Courtesy adjustment for Nadia Cheriet",
             source: "manual",
             refundedAt: "2026-07-29T10:10:00.000Z",
             refundedByEmployeeId: employeeId,
@@ -1015,12 +1075,12 @@ test("records payment and refund with confirmation in the responsive payment des
         ]
       : [],
     refundedAmount: {
-      amount: refunded ? "5.00" : "0.00",
-      currency: "USD",
+      amount: refunded ? "500.00" : "0.00",
+      currency: "DZD",
     },
     netPaidAmount: {
-      amount: refunded ? "16.00" : paid ? "21.00" : "0.00",
-      currency: "USD",
+      amount: refunded ? "3700.00" : paid ? "4200.00" : "0.00",
+      currency: "DZD",
     },
   });
   await page.route("**/api/v1/staff/payments/bill-requests?*", (route) =>
@@ -1046,9 +1106,9 @@ test("records payment and refund with confirmation in the responsive payment des
       16,
     );
     expect(request.postDataJSON()).toEqual({
-      amount: { amount: "21.00", currency: "USD" },
+      amount: { amount: "4200.00", currency: "DZD" },
       method: "card",
-      externalReference: "CARD-21",
+      externalReference: "CIB-ALG-4200",
     });
     paid = true;
     await route.fulfill({
@@ -1069,8 +1129,8 @@ test("records payment and refund with confirmation in the responsive payment des
   );
   await page.route("**/api/v1/staff/payments/*/refunds", async (route) => {
     expect(route.request().postDataJSON()).toEqual({
-      amount: { amount: "5.00", currency: "USD" },
-      reason: "Guest goodwill",
+      amount: { amount: "500.00", currency: "DZD" },
+      reason: "Courtesy adjustment for Nadia Cheriet",
       confirmed: true,
     });
     refunded = true;
@@ -1094,20 +1154,26 @@ test("records payment and refund with confirmation in the responsive payment des
     page.getByRole("heading", { name: "Bill requests" }),
   ).toBeVisible();
   await page.getByLabel("Method").selectOption("card");
-  await page.getByLabel("External reference (optional)").fill("CARD-21");
-  await page.getByLabel("Confirm receipt of exactly $21.00.").check();
+  await page.getByLabel("External reference (optional)").fill("CIB-ALG-4200");
+  await page
+    .getByLabel("Confirm receipt of exactly DZD\u00a04,200.00.")
+    .check();
   await page.getByRole("button", { name: "Record payment" }).click();
   await expect(page.getByText("No open bill requests.")).toBeVisible();
 
   await page.getByLabel("Order identifier").fill(orderId);
   await page.getByRole("button", { name: "Find ledger" }).click();
   await expect(page.getByText("Original payment")).toBeVisible();
-  await page.getByLabel("Amount (USD)").fill("5.00");
-  await page.getByLabel("Reason").fill("Guest goodwill");
+  await page.getByLabel("Amount (DZD)").fill("500.00");
+  await page.getByLabel("Reason").fill("Courtesy adjustment for Nadia Cheriet");
   await page.getByLabel("Confirm this append-only refund.").check();
   await page.getByRole("button", { name: "Record refund" }).click();
   await expect(page.getByText("Refunded", { exact: true })).toBeVisible();
-  await expect(page.getByText("$5.00")).toBeVisible();
+  await expect(page.getByText("DZD\u00a0500.00")).toBeVisible();
+  await captureReadmeScreenshot(
+    page,
+    "test-results/readme-staff-payments-mobile.png",
+  );
 
   const results = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
@@ -1207,7 +1273,7 @@ test("keeps the same correction key across a failed response and exposes keyboar
   await page.goto("/");
   await page.getByRole("button", { name: "Orders" }).click();
   await page.getByRole("button", { name: "Manage" }).click();
-  await page.getByLabel("Saffron chicken").fill("2");
+  await page.getByLabel("Couscous royale").fill("2");
   await page.getByLabel("Correction reason").fill("Correct quantity");
   await page.getByRole("button", { name: "Save correction" }).click();
   await expect(page.getByRole("alert")).toContainText("Temporary failure");
@@ -1353,14 +1419,14 @@ test("keeps the staff insights workspaces usable across desktop, tablet, and mob
       contentType: "application/json",
       body: JSON.stringify({
         branch: {
-          branchName: "Central branch",
-          restaurantName: "Mise Test Kitchen",
+          branchName: "Hydra",
+          restaurantName: "Dar Nedjma",
           timeZone: "Africa/Algiers",
           currency: "DZD",
         },
         activeOrders: 3,
         orderStates: [],
-        occupiedTables: 2,
+        occupiedTables: 1,
         pendingRequests: { bills: 1, cancellations: 0 },
         kitchenWaiting: [],
         dailySales: [
@@ -1368,7 +1434,7 @@ test("keeps the staff insights workspaces usable across desktop, tablet, and mob
             currency: "DZD",
             grossAmount: "4200.00",
             paidAmount: "4200.00",
-            refundedAmount: "0.00",
+            refundedAmount: "500.00",
             cancelledAmount: "0.00",
           },
         ],
@@ -1383,8 +1449,8 @@ test("keeps the staff insights workspaces usable across desktop, tablet, and mob
       body: JSON.stringify({
         rows: [
           {
-            restaurantName: "Mise Test Kitchen",
-            branchName: "Central branch",
+            restaurantName: "Dar Nedjma",
+            branchName: "Hydra",
             orderId,
             orderReference: "ORD-000021",
             businessDate: "2026-08-01",
@@ -1392,7 +1458,7 @@ test("keeps the staff insights workspaces usable across desktop, tablet, and mob
             grossAmount: "4200.00",
             cancelledAmount: "0.00",
             paidAmount: "4200.00",
-            refundedAmount: "0.00",
+            refundedAmount: "500.00",
             paymentMethod: "card",
             orderState: "completed",
           },
@@ -1403,7 +1469,7 @@ test("keeps the staff insights workspaces usable across desktop, tablet, and mob
             grossAmount: "4200.00",
             cancelledAmount: "0.00",
             paidAmount: "4200.00",
-            refundedAmount: "0.00",
+            refundedAmount: "500.00",
           },
         ],
         page: 0,
@@ -1442,12 +1508,12 @@ test("keeps the staff insights workspaces usable across desktop, tablet, and mob
   await expect(
     page.getByRole("heading", { name: "Current branch activity" }),
   ).toBeVisible();
-  await page.screenshot({
-    path: "test-results/slice008-staff-desktop-dashboard.png",
-    fullPage: true,
-  });
-
   await page.setViewportSize({ width: 1024, height: 768 });
+  await captureReadmeScreenshot(
+    page,
+    "test-results/readme-staff-dashboard.png",
+  );
+
   await page
     .getByRole("button", { name: "Notifications", exact: true })
     .click();
@@ -1456,20 +1522,20 @@ test("keeps the staff insights workspaces usable across desktop, tablet, and mob
       name: "Notifications that survive reconnects",
     }),
   ).toBeVisible();
-  await page.screenshot({
-    path: "test-results/slice008-staff-tablet-inbox.png",
-    fullPage: true,
-  });
+  await captureReadmeScreenshot(
+    page,
+    "test-results/readme-staff-notifications.png",
+  );
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.getByRole("button", { name: "Reports" }).click();
   await expect(
     page.getByRole("heading", { name: "Sales report" }),
   ).toBeVisible();
-  await page.screenshot({
-    path: "test-results/slice008-staff-mobile-report.png",
-    fullPage: true,
-  });
+  await captureReadmeScreenshot(
+    page,
+    "test-results/readme-staff-reports-mobile.png",
+  );
   const reportTable = page.getByLabel(
     "Sales report table. Scroll horizontally to view all columns.",
   );
@@ -1499,6 +1565,12 @@ test("keeps the staff insights workspaces usable across desktop, tablet, and mob
   await expect(
     page.getByRole("heading", { name: "Audit history" }),
   ).toBeVisible();
+  await page.getByLabel("Exact action").fill("payments.payment_recorded");
+  await page.getByRole("button", { name: "Search history" }).click();
+  await captureReadmeScreenshot(
+    page,
+    "test-results/readme-staff-audit-mobile.png",
+  );
   const auditAccessibility = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
     .analyze();

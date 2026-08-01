@@ -281,6 +281,9 @@ function DishRow(props: {
       className={`dish-row${dish.available ? "" : " is-unavailable"}`}
       aria-label={`${dish.name}${dish.available ? "" : `, ${copy.unavailableDish}`}`}
     >
+      {dish.imageUrl ? (
+        <img className="dish-image" src={dish.imageUrl} alt={dish.name} />
+      ) : null}
       <div className="dish-copy">
         <div className="dish-title-line">
           <h3>{dish.name}</h3>
@@ -519,7 +522,7 @@ function MenuView(props: {
                   </span>
                   <h2>{category.name}</h2>
                 </div>
-                <div>
+                <div className="category-dishes">
                   {category.dishes.map((dish) => (
                     <DishRow
                       key={dish.id}

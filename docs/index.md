@@ -57,6 +57,7 @@ source_of_truth_for:
 | Prior Slice 004 checkpoint | `docs/delivery/handoff-2026-07-27-slice-004-checkpoint.md` | Superseded — historical only |
 | Prior engineering handoff (Slice 003 publication evidence) | `docs/delivery/handoff-2026-07-27.md` | Superseded — historical only |
 | Frontend quality | `docs/quality/frontend-quality.md` | Approved |
+| Product interface design system | `DESIGN.md` | Active implementation guide |
 | Deployment and recovery | `docs/operations/deployment-and-recovery.md` | Proposed until hosting ADR |
 | Observability and operations | `docs/operations/observability-and-runbook.md` | Approved baseline |
 | Agent operating rules | `AGENTS.md` | Approved |

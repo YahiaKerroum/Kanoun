@@ -222,6 +222,7 @@ interface CustomerMenuRow {
   readonly dish_id: string;
   readonly dish_name: string;
   readonly description: string | null;
+  readonly image_url: string | null;
   readonly base_price_amount: string;
   readonly base_price_currency: string;
   readonly dish_available: boolean;
@@ -805,7 +806,7 @@ export class PostgresMenuStore implements MenuStore {
       `
         select
           c.id as category_id, c.name as category_name, c.display_order as category_order,
-          d.id as dish_id, d.name as dish_name, d.description, d.base_price_amount, d.base_price_currency,
+          d.id as dish_id, d.name as dish_name, d.description, d.image_url, d.base_price_amount, d.base_price_currency,
           d.available as dish_available, d.display_order as dish_order,
           o.price_amount as override_price_amount, o.price_currency as override_price_currency,
           o.available as override_available, o.visible as override_visible
@@ -870,6 +871,7 @@ export class PostgresMenuStore implements MenuStore {
         id: row.dish_id,
         name: row.dish_name,
         description: row.description ?? undefined,
+        imageUrl: row.image_url ?? undefined,
         unitPrice: effectivePrice,
         available: effectiveAvailable,
         optionGroups: (optionGroupsByDish.get(row.dish_id) ?? []).map(
