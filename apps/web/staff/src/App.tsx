@@ -1,8 +1,8 @@
 import {
-  Badge,
   Bell,
   ChefHat,
   ClipboardList,
+  CircleCheckBig,
   CreditCard,
   History,
   House,
@@ -11,6 +11,8 @@ import {
   PackageOpen,
   RefreshCw,
   Settings,
+  ShieldCheck,
+  SlidersHorizontal,
   TableProperties,
   Users,
   UserRound,
@@ -156,6 +158,7 @@ const sessionSchema = z.object({
 
 const capabilitiesSchema = z.object({
   branchId: z.uuid(),
+  branchName: z.string().min(1),
   restaurantId: z.uuid(),
   timeZone: z.string(),
   currency: z.string().regex(/^[A-Z]{3}$/),
@@ -294,10 +297,6 @@ function isNavigationItemAvailable(
   );
 }
 
-function shortIdentifier(identifier: string): string {
-  return `…${identifier.slice(-8)}`;
-}
-
 export function App() {
   const [activeSection, setActiveSection] = useState<Section>("Home");
   const [portal, setPortal] = useState<PortalState>({ kind: "loading" });
@@ -427,8 +426,8 @@ export function App() {
               </div>
               <div className="context-item">
                 <span className="context-item__label">Branch</span>
-                <strong title={portal.capabilities.branchId}>
-                  Assigned {shortIdentifier(portal.capabilities.branchId)}
+                <strong title={`Branch ID: ${portal.capabilities.branchId}`}>
+                  {portal.capabilities.branchName}
                 </strong>
               </div>
               <div className="context-item">
@@ -694,7 +693,7 @@ function HomeWorkspace({
           <ul className="check-list">
             <li>
               <span className="check-icon check-icon--ready" aria-hidden="true">
-                <Badge size={19} />
+                <CircleCheckBig size={19} strokeWidth={2.25} />
               </span>
               <div>
                 <strong>{destinationCount} available workspaces</strong>
@@ -704,7 +703,7 @@ function HomeWorkspace({
             </li>
             <li>
               <span className="check-icon check-icon--ready" aria-hidden="true">
-                <Users size={19} />
+                <ShieldCheck size={19} strokeWidth={2.25} />
               </span>
               <div>
                 <strong>
@@ -716,7 +715,7 @@ function HomeWorkspace({
             </li>
             <li>
               <span className="check-icon check-icon--ready" aria-hidden="true">
-                <Settings size={19} />
+                <SlidersHorizontal size={19} strokeWidth={2.25} />
               </span>
               <div>
                 <strong>

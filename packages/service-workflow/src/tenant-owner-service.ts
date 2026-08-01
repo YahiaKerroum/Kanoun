@@ -1462,6 +1462,7 @@ export class TenantOwnerService {
     branchId: string,
   ): Promise<{
     readonly branchId: string;
+    readonly branchName: string;
     readonly restaurantId: string;
     readonly timeZone: string;
     readonly currency: string;
@@ -1515,6 +1516,7 @@ export class TenantOwnerService {
     );
     return {
       branchId,
+      branchName: branch.name,
       restaurantId: branch.restaurantId,
       timeZone: branch.timeZone,
       currency: branch.currency,

@@ -149,6 +149,7 @@ export interface RestaurantConfigurationHttpUseCases {
     branchId: string,
   ): Promise<{
     readonly branchId: string;
+    readonly branchName: string;
     readonly restaurantId: string;
     readonly timeZone: string;
     readonly currency: string;

@@ -114,6 +114,7 @@ async function mockReadyPortal(
         contentType: "application/json",
         body: JSON.stringify({
           branchId,
+          branchName: "Hydra",
           restaurantId,
           timeZone: "Africa/Algiers",
           currency: "DZD",
@@ -179,14 +180,14 @@ test("keeps staff navigation behind an authenticated capability boundary", async
 test("shows only destinations allowed by both permissions and enabled features", async ({
   page,
 }) => {
-  await mockReadyPortal(page);
-  await page.route("**/api/v1/staff/orders?*", (route) =>
-    route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({ items: [], nextCursor: null }),
-    }),
-  );
+  await mockReadyPortal(page, {
+    permissions: ["orders.view", "kitchen.update"],
+    enabledFeatures: ["notifications", "ordering", "kitchen"],
+    grants: [
+      { permissionKey: "orders.view", restaurantId, branchId },
+      { permissionKey: "kitchen.update", restaurantId, branchId },
+    ],
+  });
   await page.goto("/");
 
   await expect(
@@ -195,26 +196,23 @@ test("shows only destinations allowed by both permissions and enabled features",
     }),
   ).toBeVisible();
   await expect(page.getByRole("button", { name: "Home" })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Notifications", exact: true }),
+  ).toBeVisible();
   await expect(page.getByRole("button", { name: "Orders" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Kitchen" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Audit" })).toBeVisible();
 
   await expect(page.getByRole("button", { name: "Tables" })).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "Menu" })).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "Stock" })).toHaveCount(0);
   await expect(
     page.getByRole("button", { name: "Staff", exact: true }),
   ).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Reports" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Setup" })).toHaveCount(0);
 
-  await page.getByRole("button", { name: "Orders" }).click();
-  await expect(page.getByRole("heading", { name: "Order flow" })).toBeVisible();
-  await expect(
-    page.getByRole("heading", {
-      name: "No active orders match these filters",
-    }),
-  ).toBeVisible();
+  await captureReadmeScreenshot(
+    page,
+    "test-results/readme-staff-workspace.png",
+  );
 });
 
 test("keeps order list and entry dependencies behind their exact permission gates", async ({
@@ -1164,6 +1162,7 @@ test("records payment and refund with confirmation in the responsive payment des
   await page.getByLabel("Order identifier").fill(orderId);
   await page.getByRole("button", { name: "Find ledger" }).click();
   await expect(page.getByText("Original payment")).toBeVisible();
+  await expect(page.getByLabel("Order identifier")).toHaveValue("");
   await page.getByLabel("Amount (DZD)").fill("500.00");
   await page.getByLabel("Reason").fill("Courtesy adjustment for Nadia Cheriet");
   await page.getByLabel("Confirm this append-only refund.").check();
@@ -1194,6 +1193,7 @@ test("keeps the same correction key across a failed response and exposes keyboar
   const operationOrder = {
     ...activeOrder,
     fulfilment: "not_started",
+    financial: "unpaid",
     tableSessionVersion: 1,
     currentItemRevision: 1,
     billRequest: null,

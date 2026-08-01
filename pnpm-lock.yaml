@@ -20,6 +20,15 @@ importers:
       '@redocly/cli':
         specifier: 2.41.0
         version: 2.41.0
+      '@rms/building-blocks':
+        specifier: workspace:*
+        version: link:packages/building-blocks
+      '@rms/modules':
+        specifier: workspace:*
+        version: link:packages/modules
+      '@rms/service-workflow':
+        specifier: workspace:*
+        version: link:packages/service-workflow
       '@types/node':
         specifier: 24.13.3
         version: 24.13.3

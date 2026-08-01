@@ -119,6 +119,7 @@ function createTestApplication(
       .mockResolvedValue({ ...featureConfiguration, branchId: undefined }),
     getPortalCapabilities: vi.fn().mockResolvedValue({
       branchId,
+      branchName: "Hydra",
       restaurantId,
       timeZone: "Africa/Algiers",
       currency: "DZD",
@@ -271,6 +272,7 @@ describe("restaurant configuration HTTP adapter", () => {
 
     expect(response.body).toEqual({
       branchId,
+      branchName: "Hydra",
       restaurantId,
       timeZone: "Africa/Algiers",
       currency: "DZD",

@@ -33,6 +33,10 @@ operational states, not mockup artwork or a customer environment.
 | ------------------------------------------------------------------------------------------------------------- |
 | ![Current branch dashboard with orders, tables, and daily sales](docs/assets/screenshots/staff-dashboard.png) |
 
+| Staff workspace and access                                                                                                        |
+| --------------------------------------------------------------------------------------------------------------------------------- |
+| ![Staff workspace with explicit availability, permission, and service-control icons](docs/assets/screenshots/staff-workspace.png) |
+
 | Orders                                                                                    | Kitchen                                                                                      |
 | ----------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
 | ![Staff order queue with filtered active order](docs/assets/screenshots/staff-orders.png) | ![Kitchen preparation queue with a grouped order](docs/assets/screenshots/staff-kitchen.png) |
@@ -128,6 +132,24 @@ docker compose up -d postgres
 corepack pnpm db:migrate
 corepack pnpm dev
 ```
+
+To create a fresh local database and populate it with a synthetic Dar Nedjma /
+Hydra demo restaurant, choose a local-only demo password and run the setup
+command. It starts the repository PostgreSQL service, applies migrations, and
+then seeds. The seed also applies pending migrations when PostgreSQL is already
+running. It refuses to run in production and is idempotent by business code;
+it never runs as part of application startup.
+
+```powershell
+$env:DEMO_SEED_PASSWORD = "<local demo password>"
+corepack pnpm db:setup:demo
+```
+
+The demo includes Algerian staff and customers, menu photography, tables, an
+open kitchen order, a paid/refunded order, audit evidence, and worker-derived
+notifications and reporting projections. It uses the provided password for
+the owner and demo staff accounts without printing it. These are synthetic
+records only.
 
 The combined development command starts the API, worker, and staff application.
 Use `corepack pnpm dev:api`, `corepack pnpm dev:worker`, or

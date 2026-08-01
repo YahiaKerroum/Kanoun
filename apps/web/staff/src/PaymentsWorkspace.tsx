@@ -220,6 +220,7 @@ export function PaymentsWorkspace(props: {
         ledgerSchema,
       );
       setLookup({ kind: "ready", ledger });
+      setLookupOrderId("");
     } catch (error: unknown) {
       setLookup({ kind: "error", message: message(error) });
     }

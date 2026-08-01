@@ -896,6 +896,7 @@ describeWithDatabase("tenant, branch, and owner bootstrap", () => {
       staff.context,
       tenant.branch.id,
     );
+    expect(capabilities.branchName).toBe(tenant.branch.name);
     expect(capabilities.permissions).toEqual(
       expect.arrayContaining(["orders.view", "orders.create", "kitchen.view"]),
     );
