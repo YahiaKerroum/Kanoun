@@ -69,6 +69,8 @@ describeWithDatabase("order submission service against PostgreSQL", () => {
     identitySecurity,
     audit,
     credentialTokenDelivery: tokenDelivery,
+    ordering,
+    tables,
   });
   const menuTablesService = new MenuTablesService({
     databasePool,

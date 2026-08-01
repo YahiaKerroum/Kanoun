@@ -1,5 +1,19 @@
 import { AxeBuilder } from "@axe-core/playwright";
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
+
+async function captureReadmeScreenshot(
+  page: Page,
+  path: string,
+): Promise<void> {
+  await page.evaluate(() => {
+    const focusedElement = document.activeElement;
+    if (focusedElement instanceof HTMLElement) {
+      focusedElement.blur();
+    }
+    window.scrollTo(0, 0);
+  });
+  await page.screenshot({ path, fullPage: true });
+}
 
 test("administration begins at a protected, accessible sign-in state", async ({
   page,
@@ -79,7 +93,7 @@ test("employee, permission, and feature administration is responsive and accessi
         items: [
           {
             id: restaurantId,
-            name: "Test Kitchen",
+            name: "Dar Nedjma",
             status: "active",
             version: 1,
           },
@@ -92,7 +106,7 @@ test("employee, permission, and feature administration is responsive and accessi
           {
             id: branchId,
             restaurantId,
-            name: "Central branch",
+            name: "Hydra",
             timeZone: "Africa/Algiers",
             currency: "DZD",
             status: "active",
@@ -111,6 +125,7 @@ test("employee, permission, and feature administration is responsive and accessi
             displayName: "General Staff",
             permissionKeys: ["orders.view"],
             version: 1,
+            active: true,
           },
         ],
         catalog: [
@@ -137,8 +152,8 @@ test("employee, permission, and feature administration is responsive and accessi
           {
             id: employeeId,
             restaurantId,
-            displayName: "Ada Service",
-            email: "ada@example.test",
+            displayName: "Imane Khellaf",
+            email: "imane.khellaf@dar-nedjma.test",
             status: "active",
             version: 1,
             branchIds: [branchId],
@@ -207,6 +222,10 @@ test("employee, permission, and feature administration is responsive and accessi
   ).toBeVisible();
   await expect(page.getByRole("heading", { name: "Workforce" })).toBeVisible();
   await expect(page.getByText("automatic · fixed in MVP")).toBeVisible();
+  await page.screenshot({
+    path: "test-results/readme-admin-workforce.png",
+    fullPage: false,
+  });
 
   const results = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
@@ -278,7 +297,7 @@ test("menu, table, branch override, and QR administration use the real contracts
         items: [
           {
             id: restaurantId,
-            name: "Mise Test Kitchen",
+            name: "Dar Nedjma",
             status: "active",
             version: 1,
           },
@@ -291,7 +310,7 @@ test("menu, table, branch override, and QR administration use the real contracts
           {
             id: branchId,
             restaurantId,
-            name: "Central branch",
+            name: "Hydra",
             timeZone: "Africa/Algiers",
             currency: "DZD",
             status: "active",
@@ -306,7 +325,19 @@ test("menu, table, branch override, and QR administration use the real contracts
       return json({ items: [], catalog: [] });
     }
     if (url.pathname.endsWith("/staff/employees")) {
-      return json({ items: [] });
+      return json({
+        items: [
+          {
+            id: employeeId,
+            restaurantId,
+            displayName: "Imane Khellaf",
+            email: "imane.khellaf@dar-nedjma.test",
+            status: "active",
+            version: 1,
+            branchIds: [branchId],
+          },
+        ],
+      });
     }
     if (url.pathname.endsWith(`/branches/${branchId}/features`)) {
       return json({
@@ -359,7 +390,7 @@ test("menu, table, branch override, and QR administration use the real contracts
             id: categoryId,
             businessAccountId,
             restaurantId,
-            name: "Main plates",
+            name: "Traditional mains",
             displayOrder: 0,
             status: "active",
             version: 1,
@@ -375,13 +406,28 @@ test("menu, table, branch override, and QR administration use the real contracts
             businessAccountId,
             restaurantId,
             categoryId,
-            name: "Saffron chicken",
-            description: "Charred lemon and preserved pepper.",
+            name: "Couscous royale",
+            description:
+              "Lamb, chicken, seasonal vegetables, and sweet onions.",
             basePrice: { amount: "1800.00", currency: "DZD" },
             status: "active",
             available: true,
             displayOrder: 0,
             version: 2,
+          },
+          {
+            id: "00000000-0000-4000-8000-000000000030",
+            businessAccountId,
+            restaurantId,
+            categoryId,
+            name: "Rechta au poulet",
+            description:
+              "Hand-cut noodles with chicken, turnips, and chickpeas.",
+            basePrice: { amount: "2400.00", currency: "DZD" },
+            status: "active",
+            available: false,
+            displayOrder: 1,
+            version: 1,
           },
         ],
       });
@@ -405,7 +451,7 @@ test("menu, table, branch override, and QR administration use the real contracts
                 id: optionId,
                 businessAccountId,
                 optionGroupId,
-                name: "Roasted potatoes",
+                name: "Fresh kesra",
                 priceDelta: { amount: "250.00", currency: "DZD" },
                 displayOrder: 0,
                 status: "active",
@@ -510,10 +556,10 @@ test("menu, table, branch override, and QR administration use the real contracts
   const tables = page.getByRole("region", { name: "Tables & QR" });
 
   await expect(
-    menu.getByRole("heading", { name: "Saffron chicken" }),
+    menu.getByRole("heading", { name: "Couscous royale" }),
   ).toBeVisible();
   await expect(menu.getByLabel("Current options")).toHaveValue(
-    /Roasted potatoes \| 250\.00 \| active/,
+    /Fresh kesra \| 250\.00 \| active/,
   );
   await menu.getByLabel("Category name").fill("Desserts");
   await menu.getByRole("button", { name: "Add category" }).click();
@@ -544,7 +590,215 @@ test("menu, table, branch override, and QR administration use the real contracts
   await expect(
     tables.getByRole("link", { name: "Download PNG" }),
   ).toHaveAttribute("download", /mise-table-.*\.png/);
+  await captureReadmeScreenshot(
+    page,
+    "test-results/readme-admin-menu-tables-and-qr.png",
+  );
 
+  const results = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
+    .analyze();
+  expect(results.violations).toEqual([]);
+});
+
+test("keeps administration evidence responsive across desktop, tablet, and mobile widths", async ({
+  page,
+}) => {
+  const restaurantId = "00000000-0000-4000-8000-000000000061";
+  const branchId = "00000000-0000-4000-8000-000000000062";
+  const employeeId = "00000000-0000-4000-8000-000000000063";
+  const orderId = "00000000-0000-4000-8000-000000000064";
+  const auditId = "00000000-0000-4000-8000-000000000065";
+  await page.route("**/api/v1/**", async (route) => {
+    const url = new URL(route.request().url());
+    const json = (body: unknown) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(body),
+      });
+    if (url.pathname.endsWith("/auth/session")) {
+      return json({
+        employeeId,
+        activeBranchId: branchId,
+        authorizedBranchIds: [branchId],
+        grants: [
+          "restaurant.view",
+          "branches.view",
+          "employees.view",
+          "features.manage",
+          "reports.view",
+          "reports.view_cross_branch",
+          "audit.view",
+        ].map((permissionKey) => ({ permissionKey, restaurantId })),
+        expiresAt: "2026-08-02T12:00:00.000Z",
+      });
+    }
+    if (url.pathname.endsWith("/staff/restaurants")) {
+      return json({
+        items: [
+          {
+            id: restaurantId,
+            name: "Dar Nedjma",
+            status: "active",
+            version: 1,
+          },
+        ],
+      });
+    }
+    if (url.pathname.endsWith("/staff/branches")) {
+      return json({
+        items: [
+          {
+            id: branchId,
+            restaurantId,
+            name: "Hydra",
+            timeZone: "Africa/Algiers",
+            currency: "DZD",
+            status: "active",
+            serviceStatus: "open",
+            version: 1,
+            openingHours: [],
+          },
+        ],
+      });
+    }
+    if (url.pathname.endsWith("/staff/permission-templates")) {
+      return json({ items: [], catalog: [] });
+    }
+    if (url.pathname.endsWith("/staff/employees")) {
+      return json({
+        items: [
+          {
+            id: employeeId,
+            restaurantId,
+            displayName: "Imane Khellaf",
+            email: "imane.khellaf@dar-nedjma.test",
+            status: "active",
+            version: 1,
+            branchIds: [branchId],
+          },
+        ],
+      });
+    }
+    if (url.pathname.endsWith(`/branches/${branchId}/features`)) {
+      return json({
+        configuration: {
+          id: "00000000-0000-4000-8000-000000000066",
+          branchId,
+          version: 1,
+          values: { "CFG-014": "enabled" },
+          createdAtUtc: "2026-08-01T12:00:00.000Z",
+        },
+        catalog: [],
+      });
+    }
+    if (url.pathname.endsWith(`/restaurants/${restaurantId}/features`)) {
+      return json({
+        configuration: {
+          id: "00000000-0000-4000-8000-000000000067",
+          version: 1,
+          values: { "CFG-014": "enabled" },
+          createdAtUtc: "2026-08-01T12:00:00.000Z",
+        },
+        catalog: [],
+      });
+    }
+    if (url.pathname.endsWith("/staff/reports/sales")) {
+      return json({
+        rows: [
+          {
+            restaurantName: "Dar Nedjma",
+            branchName: "Hydra",
+            orderId,
+            orderReference: "ORD-000021",
+            businessDate: "2026-08-01",
+            currency: "DZD",
+            grossAmount: "4200.00",
+            cancelledAmount: "0.00",
+            paidAmount: "4200.00",
+            refundedAmount: "500.00",
+            paymentMethod: "card",
+            orderState: "completed",
+            submittedAt: "2026-08-01T12:00:00.000Z",
+          },
+        ],
+        totals: [
+          {
+            currency: "DZD",
+            grossAmount: "4200.00",
+            cancelledAmount: "0.00",
+            paidAmount: "4200.00",
+            refundedAmount: "500.00",
+          },
+        ],
+        page: 0,
+        hasMore: false,
+      });
+    }
+    if (url.pathname.endsWith("/staff/audit-events")) {
+      return json({
+        items: [
+          {
+            id: auditId,
+            branchId,
+            actorUserId: employeeId,
+            action: "payments.payment_recorded",
+            targetType: "order",
+            targetId: orderId,
+            outcome: "succeeded",
+            reason: "Payment confirmed at the desk",
+            before: { financial: "unpaid" },
+            after: { financial: "paid" },
+            occurredAt: "2026-08-01T12:00:00.000Z",
+          },
+        ],
+        page: 0,
+        hasMore: false,
+      });
+    }
+    if (url.pathname.endsWith("/staff/notification-gaps")) {
+      return json({ items: [] });
+    }
+    return json({ items: [] });
+  });
+
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("http://127.0.0.1:5175");
+  const insights = page.locator("#insights");
+  await expect(
+    insights.getByRole("heading", {
+      name: "Reports, audit & notification coverage",
+    }),
+  ).toBeVisible();
+  await captureReadmeScreenshot(page, "test-results/readme-admin-insights.png");
+  expect(
+    await page
+      .locator("body")
+      .evaluate((body) => body.scrollWidth <= body.clientWidth),
+  ).toBe(true);
+
+  await page.setViewportSize({ width: 1024, height: 768 });
+  await page.screenshot({
+    path: "test-results/slice008-admin-tablet-insights.png",
+    fullPage: true,
+  });
+  expect(
+    await page
+      .locator("body")
+      .evaluate((body) => body.scrollWidth <= body.clientWidth),
+  ).toBe(true);
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.screenshot({
+    path: "test-results/slice008-admin-mobile-insights.png",
+    fullPage: true,
+  });
+  expect(
+    await page
+      .locator("body")
+      .evaluate((body) => body.scrollWidth <= body.clientWidth),
+  ).toBe(true);
   const results = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
     .analyze();

@@ -119,6 +119,31 @@ a conflict.
 Audit rows and outbox messages commit atomically with operational state.
 Outbox consumers are eventually consistent and may not roll back submission.
 
+## Notifications, reporting, and audit
+
+`identity.permission_template_states` records restaurant-scoped active state
+for each predefined copy-on-apply template. Its stable state identifier is the
+audit target and outbox aggregate; deactivation in one restaurant never
+changes the same template in another restaurant or grants already copied to
+an employee.
+
+`notifications.inbox_items` is recipient-owned durable history derived from
+an outbox event, effective permission, assigned branch scope, and enabled
+features. The tenant/event/recipient uniqueness constraint suppresses
+duplicate delivery. Read and acknowledgement timestamps are mutable inbox
+state; expired inbox and delivery-attempt rows are removed after 30 days.
+
+Reporting writes branch, order, table-session, kitchen-item, and sales
+projections in its own schema. Event handlers and a tenant-scoped rebuild may
+read only the explicitly exposed source projection fields from owning modules.
+Sales preserve originating restaurant, branch, business date, recorded
+currency, underlying order, gross, cancelled, paid, and refunded values;
+currencies are never converted or combined.
+
+`audit.audit_events` remains append-only. Queries derive tenant, restaurant,
+and branch scope from the authenticated session and `audit.view` grants.
+Normal restaurant interfaces expose no update or delete operation.
+
 ## Retention and deletion
 
 Orders, submitted items, cancellation history, audit evidence, payments,

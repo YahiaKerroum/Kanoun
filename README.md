@@ -1,94 +1,131 @@
-# Restaurant Management System
+# MISE Restaurant Management System
 
-A specification-first, multi-tenant restaurant management and point-of-sale platform for dine-in service. The MVP connects restaurant and branch setup, permission-aware staff access, menu management, table QR ordering, kitchen fulfilment, manually recorded payments, reporting, notifications, and append-only audit history.
+<p align="center">
+  <strong>One calm operating system for the dining room, kitchen, and back office.</strong><br />
+  A specification-first, multi-tenant restaurant management and point-of-sale MVP for dine-in service.
+</p>
 
-## Current implementation status
+<p align="center">
+  <a href="docs/index.md">Documentation</a> ·
+  <a href="#quick-start">Quick start</a> ·
+  <a href="#verification">Verification</a> ·
+  <a href="#contributing">Contributing</a>
+</p>
 
-- Product, domain, security, contract, quality, and architecture baselines are approved.
-- `SLICE-001` (`application_bootstrap`) is complete: the executable workspace, migration pipeline, module-boundary checks, API/worker processes, React applications, and CI are present.
-- The staff application shell follows `Restaurant POS design system/Mise Staff Shell v2.dc.html`. `design-exploration/` and the older design-system artifacts are retained as history, not implementation authority.
-- The next delivery increment is `SLICE-002` (`tenant_branch_and_owner_bootstrap`).
-- No restaurant-domain product story is claimed by Slice 001; the visible shell uses honest setup and deferred states until Slice 002 adds protected owner and branch workflows.
-- Production infrastructure remains blocked until `ADR-0007` is accepted or superseded.
+> **MISE is a working product name.** The product name is deliberately not yet
+> presented as final branding.
 
-Progress and limitations are tracked in
-[`docs/delivery/implementation-progress.md`](docs/delivery/implementation-progress.md).
+## Product tour
 
-## Major capabilities and roles
+The gallery covers the actual customer, staff, and administration applications,
+using deterministic browser fixtures with synthetic Algerian restaurant data. These are representative
+operational states, not mockup artwork or a customer environment.
 
-The MVP supports business owners, restaurant administrators, branch managers, permission-scoped staff, customers using table QR codes, and tightly controlled platform support operators.
+### Guest ordering
 
-Core capabilities include:
+| Current table menu                                                         | Order tracking on mobile                                                                              |
+| -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| ![Customer menu for table T-12](docs/assets/screenshots/customer-menu.png) | ![Customer order status on a mobile screen](docs/assets/screenshots/customer-order-status-mobile.png) |
 
-- Multiple restaurants and branches within one business-account security tenant.
-- Individual, grants-only permissions with branch-scoped access.
-- Restaurant menus with branch price, visibility, and availability overrides.
-- Temporary guest sessions and table-specific QR ordering.
-- Automatic order acceptance and kitchen-display fulfilment.
-- Per-order, full-balance cash or card recording without payment processing.
-- Operational notifications, dashboards, reports, and sensitive-action audit.
+### Staff operations
 
-Inventory quantities, reviews, cleaning workflows, online payments, split or partial payments, and dynamic workflows are explicitly outside the MVP.
+| Current branch dashboard                                                                                      |
+| ------------------------------------------------------------------------------------------------------------- |
+| ![Current branch dashboard with orders, tables, and daily sales](docs/assets/screenshots/staff-dashboard.png) |
+
+| Staff workspace and access                                                                                                        |
+| --------------------------------------------------------------------------------------------------------------------------------- |
+| ![Staff workspace with explicit availability, permission, and service-control icons](docs/assets/screenshots/staff-workspace.png) |
+
+| Orders                                                                                    | Kitchen                                                                                      |
+| ----------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| ![Staff order queue with filtered active order](docs/assets/screenshots/staff-orders.png) | ![Kitchen preparation queue with a grouped order](docs/assets/screenshots/staff-kitchen.png) |
+
+| Menu                                                                         | Tables                                                                     |
+| ---------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| ![Staff menu view with availability](docs/assets/screenshots/staff-menu.png) | ![Staff table availability view](docs/assets/screenshots/staff-tables.png) |
+
+| Payments and refunds                                                                                     | Notifications                                                                                |
+| -------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| ![Staff payment ledger and refund on a mobile screen](docs/assets/screenshots/staff-payments-mobile.png) | ![Staff notification inbox at tablet width](docs/assets/screenshots/staff-notifications.png) |
+
+| Sales reports                                                                                                               | Audit history                                                                                         |
+| --------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| ![Staff sales report with accessible scrollable evidence table on mobile](docs/assets/screenshots/staff-reports-mobile.png) | ![Staff append-only audit history on a mobile screen](docs/assets/screenshots/staff-audit-mobile.png) |
+
+### Administration
+
+| People and permissions                                                                                          | Menu, tables, and QR lifecycle                                                                               |
+| --------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| ![Administration workforce, permissions, and branch configuration](docs/assets/screenshots/admin-workforce.png) | ![Administration menu, table, and issued QR code controls](docs/assets/screenshots/admin-menu-tables-qr.png) |
+
+| Reports and audit evidence                                                                             |
+| ------------------------------------------------------------------------------------------------------ |
+| ![Administration insights with reports and audit evidence](docs/assets/screenshots/admin-insights.png) |
+
+## What MISE covers
+
+- Multi-restaurant and multi-branch business accounts with server-enforced
+  tenant, restaurant, and branch scope.
+- Owner and administrator setup, employee profiles, grants-only permissions,
+  branch assignments, and copy-on-apply permission templates.
+- Menu, price/availability overrides, tables, QR issue/rotation, and scoped
+  guest ordering.
+- Kitchen work, whole-order serving, bill requests, manually recorded cash or
+  card payments, refunds, corrections, and completion safeguards.
+- Durable in-app notifications, dashboard projections, currency-separated
+  sales evidence, append-only audit queries, and safe deactivation controls.
+
+The MVP intentionally excludes online payment processing, split/partial
+payments, stock control, report exports, currency conversion, external
+notification providers, and dynamic workflows. The full approved scope is in
+[the MVP slice map](docs/delivery/mvp-slices.yaml).
 
 ## Architecture
 
-The system is a modular monolith with one PostgreSQL database and separate API and worker processes from the same workspace. Business modules own their writes. Critical cross-module commands use explicit public contracts and one local transaction through `ServiceWorkflow`; post-commit notifications, reporting, and projections use a transactional outbox with idempotent handlers.
-
-Express is restricted to HTTP adapters. Domain and application code cannot import Express, route handlers cannot contain business rules or SQL, and the worker cannot start the HTTP application.
-
-## Technology stack
-
-- Node.js `24.18.0` and pnpm `11.17.0`
-- Express `5.2.1`, strict TypeScript `6.0.3`, Zod `4.4.3`, and ECMAScript modules
-- PostgreSQL `18.1`, `pg` `8.22.0`, and Drizzle migrations
-- React `19.2.8` and Vite `8.1.5` for customer, staff, and administration web applications
-- REST/JSON described by OpenAPI and Server-Sent Events
-- Vitest `4.1.10`, Playwright `1.62.0`, dependency-cruiser `18.1.0`, and Redocly `2.41.0`
-
-Every dependency is exact-pinned in a workspace manifest and resolved by the committed lockfile.
-
-## Repository structure
+MISE is a modular monolith backed by PostgreSQL. It runs an Express API and a
+background worker as separate processes, plus independent customer, staff, and
+administration React applications.
 
 ```text
-apps/                       Executable API, worker, and React applications
-packages/                   Modules, contracts, workflow, database, and test support
-migrations/                 Versioned PostgreSQL migrations and Drizzle metadata
-tests/                      Cross-workspace architecture tests
-scripts/                    Contract validation scripts
-docs/                       Normative product, domain, architecture, and quality docs
-Restaurant POS design system/
-                            Current v2 design source plus superseded supplied artifacts
-design-exploration/         Historical design exploration; not implementation authority
-restaurant-management-system-requirements.md
-restaurant-management-system-architecture.md
+Customer / Staff / Administration React apps
+                  │ REST + SSE hints
+                  ▼
+               Express API
+                  │ local transactions + module contracts
+                  ▼
+        PostgreSQL module-owned tables + outbox
+                  │
+                  ▼
+          Background projection worker
 ```
 
-## Local development
+Source modules own their writes. Cross-module synchronous commands use explicit
+contracts; post-commit notifications, reporting, and audit consumers use the
+transactional outbox. The worker never starts Express. Read the
+[module map](docs/architecture/modules.yaml),
+[consistency rules](docs/architecture/consistency.md), and
+[ADR index](docs/architecture/adr/README.md) before changing a boundary.
+
+## Quick start
 
 ### Prerequisites
 
-- Git
-- Node.js `24.18.0`, pinned in `.node-version` and `.nvmrc`
-- Corepack with pnpm `11.17.0`, pinned by `packageManager`
-- PostgreSQL `18.1`
-- Docker only when using the optional containerized database workflow
+- Node.js `24.18.0`
+- Corepack and pnpm `11.17.0`
+- PostgreSQL `18.1`, or Docker for the optional local database
 
-### Environment
-
-No secret or local environment file is committed. Copy `.env.example` to `.env`,
-keep the example local credentials for an isolated development database only,
-and replace `SESSION_SECRET`, `BOOTSTRAP_SECRET`, and
-`SUPPORT_ACCESS_SECRET` with separate random values of at least 32 characters.
-The support secret authenticates only the private grant-issuance adapter; it
-does not itself permit tenant reads. The API, worker, and migration
-configuration load the root `.env` file when it is present; already-defined
-process variables take precedence.
-
-### First run
+Activate the pinned Node version before working:
 
 ```powershell
-corepack enable
-corepack prepare pnpm@11.17.0 --activate
+fnm env --shell powershell | Out-String | Invoke-Expression
+fnm use 24.18.0 | Out-Null
+node --version # v24.18.0
+```
+
+Install and configure an isolated local environment:
+
+```powershell
 corepack pnpm install --frozen-lockfile
 Copy-Item .env.example .env
 docker compose up -d postgres
@@ -96,21 +133,34 @@ corepack pnpm db:migrate
 corepack pnpm dev
 ```
 
-The combined development command starts the API on `http://127.0.0.1:3000`,
-the worker, and the MISE staff application on `http://127.0.0.1:5173`.
-The staff development server proxies `/health` to the API.
-
-Run individual processes with:
+To create a fresh local database and populate it with a synthetic Dar Nedjma /
+Hydra demo restaurant, choose a local-only demo password and run the setup
+command. It starts the repository PostgreSQL service, applies migrations, and
+then seeds. The seed also applies pending migrations when PostgreSQL is already
+running. It refuses to run in production and is idempotent by business code;
+it never runs as part of application startup.
 
 ```powershell
-corepack pnpm dev:api
-corepack pnpm dev:worker
-corepack pnpm dev:staff
-corepack pnpm --filter @rms/customer-web dev
-corepack pnpm --filter @rms/admin-web dev
+$env:DEMO_SEED_PASSWORD = "<local demo password>"
+corepack pnpm db:setup:demo
 ```
 
-### Verification
+The demo includes Algerian staff and customers, menu photography, tables, an
+open kitchen order, a paid/refunded order, audit evidence, and worker-derived
+notifications and reporting projections. It uses the provided password for
+the owner and demo staff accounts without printing it. These are synthetic
+records only.
+
+The combined development command starts the API, worker, and staff application.
+Use `corepack pnpm dev:api`, `corepack pnpm dev:worker`, or
+`corepack pnpm dev:staff` for one process. The customer and administration
+applications can be started with their workspace `dev` commands.
+
+Never commit `.env` or replace the example secrets with real credentials.
+
+## Verification
+
+Run the repository checks with the pinned toolchain:
 
 ```powershell
 corepack pnpm format:check
@@ -121,40 +171,41 @@ corepack pnpm test
 corepack pnpm test:architecture
 corepack pnpm contracts:lint
 corepack pnpm build
-corepack pnpm exec playwright install chromium
 corepack pnpm test:browser
+corepack pnpm check
 corepack pnpm audit --prod --audit-level high
 ```
 
-`corepack pnpm check` runs formatting, lint, type, unit/integration, architecture,
-contract, and production-build verification in one command. PostgreSQL
-integration tests run when `TEST_DATABASE_URL` is defined and otherwise report a
-skip. CI always supplies it, applies the migration, and runs the complete check.
+`TEST_DATABASE_URL` is required for the PostgreSQL integration path. CI applies
+migrations and supplies it, so database tests must not silently skip there.
+The browser suite includes WCAG A/AA automated checks; visual review captures
+the staff and administration insights at desktop, tablet, and mobile widths.
 
-Stop the optional database with `docker compose down`. Do not add `-v` unless
-you explicitly intend to delete the local database volume.
+## Repository guide
 
-## Documentation
-
-- [Documentation source-of-truth map](docs/index.md)
-- [Requirements](restaurant-management-system-requirements.md)
-- [Architecture baseline](restaurant-management-system-architecture.md)
-- [MVP scope](docs/product/mvp-scope.yaml)
-- [Delivery slices](docs/delivery/mvp-slices.yaml)
-- [Product decisions](docs/product/decision-register.md)
-- [Express implementation guide](docs/architecture/express-implementation-guide.md)
-- [Consistency and transactions](docs/architecture/consistency.md)
-- [Architecture decisions](docs/architecture/adr/README.md)
-- [HTTP contract](docs/contracts/openapi.yaml)
-- [Event contract](docs/contracts/events.yaml)
-- [Test strategy](docs/quality/test-strategy.md)
-
-## Security
-
-Never commit credentials, tokens, raw session values, private keys, production data, or local `.env` files. Tenant and branch scope must be derived from an authenticated staff session or validated guest session, all external input must be validated, authorization is enforced server-side, and sensitive logs must be redacted.
-
-Please report suspected vulnerabilities privately to the repository owner rather than opening a public issue.
+| Need                                     | Start here                                                                                                                         |
+| ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Product behavior and acceptance criteria | [Requirements](restaurant-management-system-requirements.md)                                                                       |
+| Scope and product decisions              | [MVP scope](docs/product/mvp-scope.yaml) and [decision register](docs/product/decision-register.md)                                |
+| Domain rules and workflows               | [Domain model](docs/domain/model.md), [workflows](docs/domain/workflows.yaml), and [business rules](docs/domain/business-rules.md) |
+| HTTP and event contracts                 | [OpenAPI](docs/contracts/openapi.yaml) and [events](docs/contracts/events.yaml)                                                    |
+| Test mapping                             | [Traceability](docs/quality/traceability.yaml) and [test strategy](docs/quality/test-strategy.md)                                  |
+| All documentation authority              | [Documentation index](docs/index.md)                                                                                               |
 
 ## Contributing
 
-Read [`AGENTS.md`](AGENTS.md) and [`docs/index.md`](docs/index.md) before changing application behavior. Implement only stories marked `mvp` and `ready`, follow the dependency-ordered delivery slices, update contracts and traceability atomically, and use focused conventional commits.
+Read [AGENTS.md](AGENTS.md) and [the documentation index](docs/index.md)
+before changing application behavior. In particular:
+
+1. Work only on `mvp` and `ready` scope, and declare the applicable user
+   stories, acceptance criteria, business rules, permissions, and decisions.
+2. Keep Express in HTTP adapters, validate external input at boundaries, and
+   preserve module write ownership and transactional outbox behavior.
+3. Update contracts, migrations, tests, traceability, and the relevant delivery
+   declaration together.
+4. Use focused conventional commits. Never commit local secrets, test database
+   data, or protected agent history.
+
+For a new contributor, the smallest useful first pass is: start the stack,
+follow one staff or administration browser test, then trace its API operation
+through the contract, module service, migration, and test mapping.

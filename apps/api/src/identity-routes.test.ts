@@ -65,6 +65,14 @@ function createTestApplication(overrides?: Partial<IdentityHttpUseCases>) {
       version: 2,
       grants: [],
     }),
+    deactivatePermissionTemplate: vi.fn().mockResolvedValue({
+      stateId: randomUUID(),
+      key: "cashier",
+      displayName: "Cashier",
+      permissionKeys: [],
+      version: 2,
+      active: false,
+    }),
     ...overrides,
   } satisfies IdentityHttpUseCases;
   const sessionDependencies = {

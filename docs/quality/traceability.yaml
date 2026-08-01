@@ -112,18 +112,21 @@ vertical_slices:
     obeys: [BR-023]
     modules: [notifications]
     tests: [TEST-NOTIFY-001, TEST-REALTIME-001]
+    slice_008_verified_acceptance: [AC-US-O01-01, AC-US-O01-02, AC-US-O01-03, AC-US-O02-01, AC-US-O02-02, AC-US-O02-03, AC-US-O03-01, AC-US-O03-02, AC-US-O03-03]
 
   reporting:
     implements: [US-P01, US-P02]
     obeys: [PD-019, PD-025, BR-020, BR-021]
     modules: [reporting]
     tests: [TEST-REPORT-001, TEST-REPORT-002]
+    slice_008_verified_acceptance: [AC-US-P01-01, AC-US-P01-02, AC-US-P01-03, AC-US-P02-01, AC-US-P02-02, AC-US-P02-03]
 
   audit_and_deactivation:
     implements: [US-Q01, US-Q02]
     obeys: [PD-032, BR-024, BR-025]
     modules: [audit]
     tests: [TEST-AUDIT-001, TEST-DEACTIVATE-001]
+    slice_008_verified_acceptance: [AC-US-A03-01, AC-US-A03-02, AC-US-A03-03, AC-US-Q01-01, AC-US-Q01-02, AC-US-Q01-03, AC-US-Q02-01, AC-US-Q02-02, AC-US-Q02-03]
 
 nfr_verification:
   NFR-01: [TEST-E2E-SETUP-001, TEST-UX-001]

@@ -41,6 +41,11 @@ export interface IssueQrCodeInput {
 }
 
 export interface TablesStore {
+  branchHasOpenTableSessions(
+    sql: SqlExecutor,
+    businessAccountId: string,
+    branchId: string,
+  ): Promise<boolean>;
   createTable(
     transaction: TransactionContext,
     input: CreateTableInput,

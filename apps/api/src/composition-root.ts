@@ -6,25 +6,34 @@ import {
 } from "@rms/building-blocks";
 import {
   createGuestSessionMiddleware,
+  createAuditRouter,
   createIdentityAccessRouter,
   createKitchenRouter,
   createMenuRouter,
   createOrderingRouter,
   createPaymentsRouter,
+  createNotificationsRouter,
+  createReportingRouter,
   createPublicMenuRouter,
   createPublicTablesRouter,
   createRestaurantConfigurationRouter,
   createStaffSessionMiddleware,
   createTablesRouter,
   IdentitySecurity,
+  AuditQueryService,
+  NotificationService,
+  PostgresAuditReader,
   PostgresAuditWriter,
   PostgresIdentityAccessStore,
   PostgresMenuStore,
   PostgresKitchenStore,
+  PostgresNotificationStore,
   PostgresOrderingStore,
   PostgresPaymentsStore,
+  PostgresReportingStore,
   PostgresRestaurantConfigurationStore,
   PostgresTablesStore,
+  ReportingService,
 } from "@rms/modules";
 import {
   KitchenServingService,
@@ -61,6 +70,9 @@ export function composeApi(config: ApiConfig): ApiComposition {
   const kitchen = new PostgresKitchenStore();
   const payments = new PostgresPaymentsStore();
   const audit = new PostgresAuditWriter();
+  const auditReader = new PostgresAuditReader();
+  const notificationStore = new PostgresNotificationStore();
+  const reportingStore = new PostgresReportingStore();
   const workflow = new PostgresServiceWorkflow(databasePool);
   const credentialTokenDelivery = new WebhookCredentialTokenDelivery({
     ...(config.recoveryDeliveryUrl
@@ -78,6 +90,8 @@ export function composeApi(config: ApiConfig): ApiComposition {
     identitySecurity,
     audit,
     credentialTokenDelivery,
+    ordering,
+    tables,
   });
   const menuTablesService = new MenuTablesService({
     databasePool,
@@ -121,6 +135,21 @@ export function composeApi(config: ApiConfig): ApiComposition {
     payments,
     audit,
     idempotencySecret: config.guestAccessSecret,
+  });
+  const notificationService = new NotificationService({
+    databasePool,
+    store: notificationStore,
+    identityAccess,
+    restaurantConfiguration,
+  });
+  const reportingService = new ReportingService({
+    databasePool,
+    store: reportingStore,
+    restaurantConfiguration,
+  });
+  const auditQueryService = new AuditQueryService({
+    databasePool,
+    reader: auditReader,
   });
   const sessionDependencies = {
     authenticateSession: (token: string) =>
@@ -174,6 +203,18 @@ export function composeApi(config: ApiConfig): ApiComposition {
     ...sessionDependencies,
     useCases: kitchenServingService,
   });
+  const notificationsRouter = createNotificationsRouter({
+    ...sessionDependencies,
+    useCases: notificationService,
+  });
+  const reportingRouter = createReportingRouter({
+    ...sessionDependencies,
+    useCases: reportingService,
+  });
+  const auditRouter = createAuditRouter({
+    ...sessionDependencies,
+    useCases: auditQueryService,
+  });
   const bootstrapRouter = createTenantBootstrapRouter({
     bootstrapSecret: config.bootstrapSecret,
     bootstrapTenant: (input, metadata) =>
@@ -204,6 +245,9 @@ export function composeApi(config: ApiConfig): ApiComposition {
       orderingRouter,
       kitchenRouter,
       paymentsRouter,
+      notificationsRouter,
+      reportingRouter,
+      auditRouter,
     ],
   });
 

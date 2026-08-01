@@ -14,6 +14,8 @@
     "contracts:lint": "redocly lint docs/contracts/openapi.yaml && tsx scripts/validate-events.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
+    "db:seed:demo": "corepack pnpm build && tsx scripts/seed-demo.ts",
+    "db:setup:demo": "docker compose up -d postgres && corepack pnpm db:seed:demo",
     "dev": "corepack pnpm --parallel --filter @rms/api --filter @rms/worker --filter @rms/staff-web dev",
     "dev:api": "corepack pnpm --filter @rms/api dev",
     "dev:staff": "corepack pnpm --filter @rms/staff-web dev",
@@ -27,6 +29,9 @@
     "typecheck": "tsc --noEmit -p tsconfig.check.json"
   },
   "devDependencies": {
+    "@rms/building-blocks": "workspace:*",
+    "@rms/modules": "workspace:*",
+    "@rms/service-workflow": "workspace:*",
     "@axe-core/playwright": "4.12.1",
     "@eslint/js": "10.0.1",
     "@playwright/test": "1.62.0",

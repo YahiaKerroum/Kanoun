@@ -70,3 +70,13 @@ Use a database constraint or short row lock where optimistic concurrency alone c
 Outbox rows contain event ID, type, schema version, tenant/branch, aggregate ID/version, UTC occurrence time, correlation/causation IDs, payload, attempt count, and next-attempt time.
 
 Workers use leases and process events at least once. Each handler stores an inbox/checkpoint record keyed by event ID and handler. Failures use bounded exponential backoff with jitter; exhausted events enter quarantine and alert operations. Ordering is guaranteed only per aggregate.
+
+## Reporting projection source boundary
+
+Reporting owns and writes only the `reporting` schema. Its outbox handler and
+explicit rebuild operation may read the narrow, tenant-scoped projection
+sources exposed by Restaurant Configuration, Tables, Ordering, Kitchen, and
+Payments. These adapter-level reads are read-only, always include
+`business_account_id`, and may not become command-side foreign-table writes.
+Event application remains idempotent through the platform inbox checkpoint;
+rebuild replaces only the selected tenant's Reporting-owned projections.

@@ -7,9 +7,11 @@ import type {
   CreateSessionInput,
   IdentityAccessStore,
   InvitationRecord,
+  NotificationRecipient,
   PermissionGrant,
   PermissionSet,
   PermissionTemplate,
+  PermissionTemplateStateChange,
   RecoveryTokenInput,
   SupportAccessGrant,
   UserCredentialRecord,
@@ -953,19 +955,28 @@ export class PostgresIdentityAccessStore implements IdentityAccessStore {
 
   public async listPermissionTemplates(
     sql: SqlExecutor,
+    businessAccountId: string,
+    restaurantId: string,
   ): Promise<readonly PermissionTemplate[]> {
     const result = await sql.query<{
       template_key: string;
       display_name: string;
       permission_keys: unknown;
       version: number;
+      active: boolean;
     }>(
       `
-        select template_key, display_name, permission_keys, version
-        from identity.permission_templates
-        where active = true
-        order by template_key
+        select t.template_key, t.display_name, t.permission_keys,
+          coalesce(s.version, t.version) as version,
+          coalesce(s.active, t.active) as active
+        from identity.permission_templates t
+        left join identity.permission_template_states s
+          on s.business_account_id = $1
+         and s.restaurant_id = $2
+         and s.template_key = t.template_key
+        order by t.template_key
       `,
+      [businessAccountId, restaurantId],
     );
     return result.rows.map((row) => ({
       key: row.template_key,
@@ -977,7 +988,92 @@ export class PostgresIdentityAccessStore implements IdentityAccessStore {
           )
         : [],
       version: row.version,
+      active: row.active,
     }));
+  }
+
+  public async deactivatePermissionTemplate(
+    transaction: TransactionContext,
+    input: {
+      readonly stateId: string;
+      readonly businessAccountId: string;
+      readonly restaurantId: string;
+      readonly templateKey: string;
+      readonly expectedVersion: number;
+      readonly updatedByUserId: string;
+      readonly reason: string;
+      readonly now: Date;
+    },
+  ): Promise<PermissionTemplateStateChange | undefined> {
+    const result = await transaction.sql.query<{
+      state_id: string;
+      template_key: string;
+      display_name: string;
+      permission_keys: unknown;
+      active: boolean;
+      version: number;
+    }>(
+      `
+        with base as (
+          select template_key, display_name, permission_keys, version, active
+          from identity.permission_templates
+          where template_key = $4
+            and version = $5
+            and active = true
+        ),
+        changed as (
+          insert into identity.permission_template_states (
+            id, business_account_id, restaurant_id, template_key,
+            active, version,
+            updated_by_user_id, reason, updated_at_utc
+          )
+          select $1, $2, $3, base.template_key, false, base.version + 1,
+            $6, $7, $8
+          from base
+          on conflict (business_account_id, restaurant_id, template_key)
+          do update set
+            active = false,
+            version = identity.permission_template_states.version + 1,
+            updated_by_user_id = excluded.updated_by_user_id,
+            reason = excluded.reason,
+            updated_at_utc = excluded.updated_at_utc
+          where identity.permission_template_states.active = true
+            and identity.permission_template_states.version = $5
+          returning id as state_id, template_key, active, version
+        )
+        select changed.state_id, base.template_key, base.display_name,
+          base.permission_keys, changed.active, changed.version
+        from base
+        join changed using (template_key)
+      `,
+      [
+        input.stateId,
+        input.businessAccountId,
+        input.restaurantId,
+        input.templateKey,
+        input.expectedVersion,
+        input.updatedByUserId,
+        input.reason,
+        input.now,
+      ],
+    );
+    const current = result.rows[0];
+    if (!current) {
+      return undefined;
+    }
+    return {
+      stateId: current.state_id,
+      key: current.template_key,
+      displayName: current.display_name,
+      permissionKeys: Array.isArray(current.permission_keys)
+        ? current.permission_keys.filter(
+            (value): value is PermissionKey =>
+              typeof value === "string" && isPermissionKey(value),
+          )
+        : [],
+      version: current.version,
+      active: false,
+    };
   }
 
   public async createSupportAccessGrant(
@@ -1113,5 +1209,75 @@ export class PostgresIdentityAccessStore implements IdentityAccessStore {
           expiresAtUtc: row.expires_at_utc,
         }
       : undefined;
+  }
+
+  public async listEligibleNotificationRecipients(
+    sql: SqlExecutor,
+    input: {
+      readonly businessAccountId: string;
+      readonly restaurantId: string;
+      readonly branchId?: string;
+      readonly permissionKey: PermissionKey;
+    },
+  ): Promise<readonly NotificationRecipient[]> {
+    const result = await sql.query<{
+      user_id: string;
+      employee_id: string;
+    }>(
+      `
+        select distinct u.id as user_id, u.employee_id
+        from identity.users u
+        join restaurant.employees e
+          on e.business_account_id = u.business_account_id
+         and e.id = u.employee_id
+        join restaurant.restaurants r
+          on r.business_account_id = e.business_account_id
+         and r.id = e.restaurant_id
+        join restaurant.business_accounts ba
+          on ba.id = u.business_account_id
+        join identity.permission_grants g
+          on g.business_account_id = u.business_account_id
+         and g.employee_id = u.employee_id
+         and g.revoked_at_utc is null
+        where u.business_account_id = $1
+          and u.status = 'active'
+          and e.status = 'active'
+          and r.status = 'active'
+          and ba.status = 'active'
+          and e.restaurant_id = $2
+          and g.permission_key = $4
+          and (g.restaurant_id is null or g.restaurant_id = $2)
+          and (
+            ($3::uuid is null and g.branch_id is null)
+            or (
+              $3::uuid is not null
+              and (g.branch_id is null or g.branch_id = $3)
+            )
+          )
+          and exists (
+            select 1
+            from restaurant.employee_branch_access eba
+            join restaurant.branches b
+              on b.business_account_id = eba.business_account_id
+             and b.id = eba.branch_id
+            where eba.business_account_id = u.business_account_id
+              and eba.employee_id = u.employee_id
+              and ($3::uuid is null or eba.branch_id = $3)
+              and b.restaurant_id = $2
+              and b.status = 'active'
+          )
+        order by u.id
+      `,
+      [
+        input.businessAccountId,
+        input.restaurantId,
+        input.branchId ?? null,
+        input.permissionKey,
+      ],
+    );
+    return result.rows.map((row) => ({
+      userId: row.user_id,
+      employeeId: row.employee_id,
+    }));
   }
 }

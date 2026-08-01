@@ -62,3 +62,25 @@ Under the PD-025 workload:
 7. Communicate status and recovery guidance.
 8. Record timeline, root cause, corrective actions, and required ADR/runbook updates.
 
+## Quarantined outbox replay
+
+1. Locate one quarantined row by exact `event_id`; record its
+   `business_account_id`, optional restaurant/branch scope, `event_type`,
+   `aggregate_id`, `aggregate_version`, attempts, and failure code. Do not
+   include the event payload in tickets or routine logs.
+2. Correct the handler or source-data fault and confirm earlier aggregate
+   versions are processed. A quarantined predecessor intentionally blocks its
+   aggregate successors.
+3. Build the worker, then schedule only that event for replay:
+
+   ```powershell
+   corepack pnpm --filter @rms/worker build
+   corepack pnpm --filter @rms/worker replay:quarantined -- <event-id>
+   ```
+
+4. A missing or non-quarantined event exits unsuccessfully and changes
+   nothing. A successful replay clears only that event's attempts, lease,
+   quarantine marker, error code, and handler checkpoints.
+5. Observe the structured event/tenant/aggregate identity, confirm the event
+   and its successors process in order, and record the outcome. Never bulk
+   replay or delete quarantined rows.

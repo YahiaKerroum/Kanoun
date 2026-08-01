@@ -90,3 +90,17 @@ export const applyPermissionTemplateSchema = z.object({
   expectedVersion: z.int().positive(),
   reason: z.string().trim().min(8).max(500),
 });
+
+export const permissionTemplateParametersSchema = z.object({
+  templateKey: z.enum([
+    "administrator",
+    "general_staff",
+    "cashier",
+    "kitchen_staff",
+  ]),
+});
+
+export const deactivatePermissionTemplateSchema = z.object({
+  expectedVersion: z.int().positive(),
+  reason: z.string().trim().min(8).max(500),
+});

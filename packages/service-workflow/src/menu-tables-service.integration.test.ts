@@ -124,6 +124,8 @@ describeWithDatabase("menu, tables, and QR service against PostgreSQL", () => {
     identitySecurity,
     audit,
     credentialTokenDelivery: tokenDelivery,
+    ordering,
+    tables,
   });
   const menuTablesService = new MenuTablesService({
     databasePool,
@@ -907,6 +909,7 @@ describeWithDatabase("menu, tables, and QR service against PostgreSQL", () => {
         categoryId: category.id,
         name: "Mechoui",
         description: "Slow roasted lamb",
+        imageUrl: "https://images.example.test/menu/mechoui.webp",
         basePrice: money("2400.00"),
         displayOrder: 0,
       },
@@ -992,6 +995,7 @@ describeWithDatabase("menu, tables, and QR service against PostgreSQL", () => {
       id: inherited.id,
       name: "Mechoui",
       description: "Slow roasted lamb",
+      imageUrl: "https://images.example.test/menu/mechoui.webp",
       unitPrice: { amount: "2400.00", currency: "DZD" },
       available: true,
     });

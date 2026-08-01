@@ -218,6 +218,36 @@ async function replaceOpeningHours(
 }
 
 export class PostgresRestaurantConfigurationStore implements RestaurantConfigurationStore {
+  public async lockBranchLifecycle(
+    transaction: TransactionContext,
+    businessAccountId: string,
+    branchId: string,
+  ): Promise<BranchRecord | undefined> {
+    const result = await transaction.sql.query<BranchRow>(
+      `
+        select
+          id,
+          business_account_id,
+          restaurant_id,
+          name,
+          address,
+          contact,
+          time_zone,
+          currency,
+          status,
+          service_status,
+          allow_order_override,
+          version
+        from restaurant.branches
+        where business_account_id = $1 and id = $2
+        for update
+      `,
+      [businessAccountId, branchId],
+    );
+    const row = result.rows[0];
+    return row ? mapBranch(transaction.sql, row) : undefined;
+  }
+
   public async createBusinessAccount(
     transaction: TransactionContext,
     input: CreateBusinessAccountInput,
@@ -1108,5 +1138,50 @@ export class PostgresRestaurantConfigurationStore implements RestaurantConfigura
         status: row.status,
       })),
     };
+  }
+
+  public async isBranchFeatureEnabled(
+    sql: SqlExecutor,
+    businessAccountId: string,
+    branchId: string,
+    featureId: string,
+  ): Promise<boolean> {
+    const result = await sql.query<{ enabled: boolean }>(
+      `
+        select
+          b.status = 'active'
+          and r.status = 'active'
+          and ba.status = 'active'
+          and coalesce(
+                (
+                  select fcv.configuration ->> $3
+                  from restaurant.feature_configuration_versions fcv
+                  where fcv.business_account_id = b.business_account_id
+                    and fcv.branch_id = b.id
+                  order by fcv.version desc
+                  limit 1
+                ),
+                (
+                  select fcv.configuration ->> $3
+                  from restaurant.feature_configuration_versions fcv
+                  where fcv.business_account_id = b.business_account_id
+                    and fcv.restaurant_id = b.restaurant_id
+                    and fcv.branch_id is null
+                  order by fcv.version desc
+                  limit 1
+                ),
+                'enabled'
+              ) not in ('disabled', 'unavailable') as enabled
+        from restaurant.branches b
+        join restaurant.restaurants r
+          on r.business_account_id = b.business_account_id
+         and r.id = b.restaurant_id
+        join restaurant.business_accounts ba
+          on ba.id = b.business_account_id
+        where b.business_account_id = $1 and b.id = $2
+      `,
+      [businessAccountId, branchId, featureId],
+    );
+    return result.rows[0]?.enabled ?? false;
   }
 }

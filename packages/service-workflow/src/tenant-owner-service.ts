@@ -8,7 +8,6 @@ import {
   featureDefinitions,
   hasPermission,
   permissionDefinitionByKey,
-  permissionTemplateCatalog,
   type Address,
   type AuditWriter,
   type BranchRecord,
@@ -19,14 +18,17 @@ import {
   type IdentityAccessStore,
   type IdentitySecurity,
   type OpeningPeriod,
+  type OrderingStore,
   type PermissionGrant,
   type PermissionKey,
   type PermissionSet,
   type PermissionTemplate,
+  type PermissionTemplateKey,
   type RestaurantConfigurationStore,
   type RestaurantRecord,
   type StaffRequestContext,
   type SupportTenantSnapshot,
+  type TablesStore,
 } from "@rms/modules";
 import type { PostgresServiceWorkflow } from "./postgres-service-workflow.js";
 
@@ -98,6 +100,8 @@ export interface TenantOwnerServiceDependencies {
   readonly identitySecurity: IdentitySecurity;
   readonly audit: AuditWriter;
   readonly credentialTokenDelivery: CredentialTokenDelivery;
+  readonly ordering: OrderingStore;
+  readonly tables: TablesStore;
 }
 
 function nowFrom(metadata: RequestMetadata): Date {
@@ -739,6 +743,39 @@ export class TenantOwnerService {
     }
     const now = nowFrom(metadata);
     return this.dependencies.workflow.run(async (transaction) => {
+      const lockedBranch =
+        await this.dependencies.restaurantConfiguration.lockBranchLifecycle(
+          transaction,
+          context.businessAccountId,
+          input.branchId,
+        );
+      if (
+        lockedBranch?.version === input.expectedVersion &&
+        lockedBranch.status === "active" &&
+        input.status === "inactive"
+      ) {
+        const [hasActiveOrders, hasOpenSessions] = await Promise.all([
+          this.dependencies.ordering.branchHasActiveOrders(
+            transaction.sql,
+            context.businessAccountId,
+            before.id,
+          ),
+          this.dependencies.tables.branchHasOpenTableSessions(
+            transaction.sql,
+            context.businessAccountId,
+            before.id,
+          ),
+        ]);
+        if (hasActiveOrders || hasOpenSessions) {
+          throw new ApplicationError(
+            "invalid_state_transition",
+            409,
+            "Branch has active work",
+            "Complete or cancel active orders and close table sessions before deactivating this branch.",
+            before.version,
+          );
+        }
+      }
       const branch =
         await this.dependencies.restaurantConfiguration.updateBranch(
           transaction,
@@ -1234,20 +1271,36 @@ export class TenantOwnerService {
     );
     return this.dependencies.identityAccess.listPermissionTemplates(
       this.dependencies.databasePool,
+      context.businessAccountId,
+      context.restaurantId,
     );
   }
 
   public async applyPermissionTemplate(
     context: StaffRequestContext,
     employeeId: string,
-    templateKey: keyof typeof permissionTemplateCatalog,
+    templateKey: PermissionTemplateKey,
     expectedVersion: number,
     reason: string,
     metadata: RequestMetadata,
   ): Promise<PermissionSet> {
     const employee = await this.getEmployee(context, employeeId);
     const current = await this.getEmployeePermissions(context, employeeId);
-    const template = permissionTemplateCatalog[templateKey];
+    const template = (
+      await this.dependencies.identityAccess.listPermissionTemplates(
+        this.dependencies.databasePool,
+        context.businessAccountId,
+        employee.restaurantId,
+      )
+    ).find((item) => item.key === templateKey);
+    if (!template?.active) {
+      throw new ApplicationError(
+        "invalid_state_transition",
+        409,
+        "Permission template is inactive",
+        "Choose an active predefined template.",
+      );
+    }
     const copied: PermissionGrant[] = [];
     for (const permissionKey of template.permissionKeys) {
       const permission = permissionDefinitionByKey.get(permissionKey);
@@ -1274,6 +1327,72 @@ export class TenantOwnerService {
       reason,
       metadata,
     );
+  }
+
+  public async deactivatePermissionTemplate(
+    context: StaffRequestContext,
+    templateKey: PermissionTemplateKey,
+    expectedVersion: number,
+    reason: string,
+    metadata: RequestMetadata,
+  ): Promise<PermissionTemplate> {
+    const now = nowFrom(metadata);
+    requirePermission(
+      context,
+      "employees.manage_permissions",
+      context.restaurantId,
+    );
+    requireRecentAuthentication(context, now);
+    return this.dependencies.workflow.run(async (transaction) => {
+      const template =
+        await this.dependencies.identityAccess.deactivatePermissionTemplate(
+          transaction,
+          {
+            stateId: randomUUID(),
+            businessAccountId: context.businessAccountId,
+            restaurantId: context.restaurantId,
+            templateKey,
+            expectedVersion,
+            updatedByUserId: context.userId,
+            reason,
+            now,
+          },
+        );
+      if (!template) {
+        throw new ApplicationError(
+          "concurrency_conflict",
+          409,
+          "Permission template changed",
+          "Reload permission templates before trying again.",
+        );
+      }
+      await this.appendAudit(transaction, {
+        businessAccountId: context.businessAccountId,
+        restaurantId: context.restaurantId,
+        actorUserId: context.userId,
+        action: "identity.permission_template_deactivated",
+        targetType: "restaurant_permission_template",
+        targetId: template.stateId,
+        outcome: "succeeded",
+        reason,
+        correlationId: metadata.correlationId,
+        beforeData: { templateKey, version: expectedVersion, active: true },
+        afterData: { templateKey, version: template.version, active: false },
+        now,
+      });
+      await this.appendEvent(transaction, {
+        eventType: "identity.permission_template_deactivated.v1",
+        businessAccountId: context.businessAccountId,
+        restaurantId: context.restaurantId,
+        aggregateId: template.stateId,
+        aggregateVersion: template.version,
+        actorId: context.userId,
+        payload: { templateKey, active: false },
+        metadata,
+        now,
+      });
+      return template;
+    });
   }
 
   public async getFeatureConfiguration(
@@ -1343,6 +1462,10 @@ export class TenantOwnerService {
     branchId: string,
   ): Promise<{
     readonly branchId: string;
+    readonly branchName: string;
+    readonly restaurantId: string;
+    readonly timeZone: string;
+    readonly currency: string;
     readonly permissions: readonly PermissionKey[];
     readonly enabledFeatures: readonly string[];
     readonly configurationVersion: number;
@@ -1393,6 +1516,10 @@ export class TenantOwnerService {
     );
     return {
       branchId,
+      branchName: branch.name,
+      restaurantId: branch.restaurantId,
+      timeZone: branch.timeZone,
+      currency: branch.currency,
       permissions,
       enabledFeatures: featureDefinitions
         .filter((feature) => {

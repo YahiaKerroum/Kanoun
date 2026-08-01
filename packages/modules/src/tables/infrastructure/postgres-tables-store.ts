@@ -120,6 +120,26 @@ function mapTableSession(row: TableSessionRow): TableSession {
 }
 
 export class PostgresTablesStore implements TablesStore {
+  public async branchHasOpenTableSessions(
+    sql: SqlExecutor,
+    businessAccountId: string,
+    branchId: string,
+  ): Promise<boolean> {
+    const result = await sql.query<{ exists: boolean }>(
+      `
+        select exists (
+          select 1
+          from tables.table_sessions
+          where business_account_id = $1
+            and branch_id = $2
+            and status = 'open'
+        ) as exists
+      `,
+      [businessAccountId, branchId],
+    );
+    return result.rows[0]?.exists ?? false;
+  }
+
   public async createTable(
     transaction: TransactionContext,
     input: CreateTableInput,
@@ -171,6 +191,16 @@ export class PostgresTablesStore implements TablesStore {
           version = version + 1,
           updated_at_utc = $9
         where business_account_id = $1 and id = $2 and version = $3
+          and (
+            $7::text is distinct from 'inactive'
+            or not exists (
+              select 1
+              from tables.table_sessions session
+              where session.business_account_id = tables.tables.business_account_id
+                and session.table_id = tables.tables.id
+                and session.status = 'open'
+            )
+          )
         returning id, business_account_id, branch_id, code, area, status, out_of_service, version
       `,
       [

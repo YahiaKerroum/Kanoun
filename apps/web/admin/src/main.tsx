@@ -11,6 +11,7 @@ import {
   MenuTablesAdministration,
   type MenuTablesPermissions,
 } from "./MenuTablesAdministration.js";
+import { InsightsAdministration } from "./InsightsAdministration.js";
 import "./styles.css";
 
 const permissionGrantSchema = z.object({
@@ -74,6 +75,7 @@ const templateSchema = z.object({
   displayName: z.string(),
   permissionKeys: z.array(z.string()),
   version: z.number(),
+  active: z.boolean(),
 });
 const templatesResultSchema = z.object({
   items: z.array(templateSchema),
@@ -185,6 +187,7 @@ function App() {
   const [permissionSet, setPermissionSet] = useState<PermissionSet>();
   const [draftGrantIds, setDraftGrantIds] = useState<Set<string>>(new Set());
   const [featureDraft, setFeatureDraft] = useState<Record<string, string>>({});
+  const [templateReason, setTemplateReason] = useState("");
 
   async function loadWorkspace(preferredBranchId?: string) {
     const session = await api("/api/v1/auth/session", sessionSchema);
@@ -415,6 +418,10 @@ function App() {
 
   async function applyTemplate(template: Template) {
     if (!selectedEmployee || !permissionSet) return;
+    if (!template.active) {
+      setMessage("This predefined template is inactive for future use.");
+      return;
+    }
     if (
       !window.confirm(
         `Copy ${template.displayName} permissions to this employee? Existing custom grants remain.`,
@@ -443,6 +450,57 @@ function App() {
     } catch (error) {
       setMessage(
         error instanceof Error ? error.message : "Template application failed.",
+      );
+    }
+  }
+
+  async function deactivateTemplate(template: Template) {
+    if (state.kind !== "ready" || !template.active) return;
+    const reason = templateReason.trim();
+    if (reason.length < 8) {
+      setMessage(
+        "Enter a template-deactivation reason of at least 8 characters.",
+      );
+      return;
+    }
+    if (
+      !window.confirm(
+        `Deactivate ${template.displayName} for future use? Existing copied grants will not change.`,
+      )
+    )
+      return;
+    setMessage(`Deactivating ${template.displayName}…`);
+    try {
+      const result = await api(
+        `/api/v1/staff/permission-templates/${template.key}/deactivation`,
+        templateSchema,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            expectedVersion: template.version,
+            reason,
+          }),
+        },
+      );
+      setState((current) =>
+        current.kind === "ready"
+          ? {
+              ...current,
+              templates: current.templates.map((item) =>
+                item.key === result.key ? result : item,
+              ),
+            }
+          : current,
+      );
+      setTemplateReason("");
+      setMessage(
+        `${result.displayName} is inactive. Existing employee grants are unchanged.`,
+      );
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Template deactivation failed.",
       );
     }
   }
@@ -626,6 +684,15 @@ function App() {
     tablesManage: activePermissionKeys.has("tables.manage"),
     qrManage: activePermissionKeys.has("qr.manage"),
   };
+  const canViewReports = activePermissionKeys.has("reports.view");
+  const canViewAudit = activePermissionKeys.has("audit.view");
+  const canManageFeatures = activePermissionKeys.has("features.manage");
+  const canViewTenantAudit = state.session.grants.some(
+    (grant) =>
+      grant.permissionKey === "audit.view" &&
+      grant.restaurantId === undefined &&
+      grant.branchId === undefined,
+  );
   const persistedFeatureValues = {
     ...(state.restaurantFeatures?.configuration.values ?? {}),
     ...(state.features?.configuration.values ?? {}),
@@ -668,6 +735,9 @@ function App() {
           <a href="#permissions">Permissions</a>
           <a href="#menu">Menu</a>
           <a href="#tables">Tables &amp; QR</a>
+          {canViewReports || canViewAudit || canManageFeatures ? (
+            <a href="#insights">Insights</a>
+          ) : null}
           <a href="#features">Features</a>
         </nav>
         <section className="setup-content">
@@ -762,15 +832,44 @@ function App() {
                   aria-label="Permission templates"
                 >
                   {state.templates.map((template) => (
-                    <button
-                      type="button"
-                      key={template.key}
-                      onClick={() => void applyTemplate(template)}
-                    >
-                      Apply {template.displayName}
-                    </button>
+                    <div className="template-action" key={template.key}>
+                      <span>
+                        <strong>{template.displayName}</strong>
+                        <small>
+                          {template.active
+                            ? `Version ${template.version} · available`
+                            : `Version ${template.version} · inactive`}
+                        </small>
+                      </span>
+                      <button
+                        type="button"
+                        disabled={!template.active}
+                        onClick={() => void applyTemplate(template)}
+                      >
+                        Apply
+                      </button>
+                      <button
+                        type="button"
+                        disabled={!template.active}
+                        onClick={() => void deactivateTemplate(template)}
+                      >
+                        Deactivate
+                      </button>
+                    </div>
                   ))}
                 </div>
+                <label className="reason-field">
+                  Reason for template deactivation
+                  <input
+                    value={templateReason}
+                    minLength={8}
+                    maxLength={500}
+                    onChange={(event) =>
+                      setTemplateReason(event.currentTarget.value)
+                    }
+                    placeholder="Describe why future template use must stop"
+                  />
+                </label>
                 <div className="permission-groups">
                   {Object.entries(groupedPermissions).map(
                     ([module, definitions]) => (
@@ -864,6 +963,19 @@ function App() {
               }}
             />
           ) : null}
+
+          <InsightsAdministration
+            restaurants={state.restaurants}
+            branches={state.branches}
+            activeBranchId={state.activeBranchId}
+            canViewReports={canViewReports}
+            canViewCrossBranch={activePermissionKeys.has(
+              "reports.view_cross_branch",
+            )}
+            canViewAudit={canViewAudit}
+            canViewTenantAudit={canViewTenantAudit}
+            canManageFeatures={canManageFeatures}
+          />
 
           <section id="features" className="admin-section">
             <div className="section-heading">

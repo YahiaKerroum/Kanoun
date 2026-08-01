@@ -1,16 +1,20 @@
+@import url("https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600..800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
+
 :root {
-  color: #211e19;
-  background: #f4efe5;
-  font-family:
-    Inter,
-    ui-sans-serif,
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
+  color: #1e1b14;
+  background: #fff8e8;
+  font-family: "Plus Jakarta Sans", system-ui, sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
+  --brand-fill: #ffb300;
+  --brand-700: #6e4700;
+  --brand-100: #fff0cc;
+  --canvas: #faf8f4;
+  --surface: #ffffff;
+  --line: #efe7da;
+  --text: #1e1b14;
+  --muted: #565044;
+  --danger: #c22c23;
 }
 
 * {
@@ -25,7 +29,7 @@ body {
   min-width: 320px;
   min-height: 100vh;
   margin: 0;
-  background: #f4efe5;
+  background: var(--canvas);
 }
 
 button,
@@ -45,7 +49,7 @@ a:focus-visible,
 input:focus-visible,
 textarea:focus-visible,
 summary:focus-visible {
-  outline: 3px solid #a63822;
+  outline: 3px solid var(--brand-fill);
   outline-offset: 3px;
 }
 
@@ -101,7 +105,7 @@ h1[tabindex="-1"]:focus {
 .brand-link {
   width: fit-content;
   color: #211e19;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: "Bricolage Grotesque", system-ui, sans-serif;
   font-size: 1.05rem;
   font-weight: 700;
   letter-spacing: 0.22em;
@@ -125,16 +129,16 @@ h1[tabindex="-1"]:focus {
 .menu-intro h1 {
   max-width: 650px;
   margin: 12px 0 0;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: "Bricolage Grotesque", system-ui, sans-serif;
   font-size: clamp(2.5rem, 9vw, 5.6rem);
-  font-weight: 400;
+  font-weight: 700;
   letter-spacing: -0.055em;
   line-height: 0.96;
 }
 
 .eyebrow {
   margin: 0;
-  color: #8d3322;
+  color: var(--brand-700);
   font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.18em;
@@ -160,7 +164,7 @@ h1[tabindex="-1"]:focus {
 .loading-mark span {
   width: 8px;
   height: 32px;
-  background: #a63822;
+  background: var(--brand-fill);
   animation: loading-rise 900ms ease-in-out infinite alternate;
 }
 
@@ -193,7 +197,7 @@ h1[tabindex="-1"]:focus {
 }
 
 .table-lockup strong {
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: "Bricolage Grotesque", system-ui, sans-serif;
   font-size: clamp(3rem, 18vw, 7rem);
   font-weight: 400;
   letter-spacing: -0.06em;
@@ -211,7 +215,7 @@ h1[tabindex="-1"]:focus {
 .branch-mark span {
   width: 16px;
   height: 46px;
-  border: 2px solid #a63822;
+  border: 2px solid var(--brand-700);
 }
 
 .branch-mark span:nth-child(2) {
@@ -261,10 +265,10 @@ h1[tabindex="-1"]:focus {
   min-height: 52px;
   margin-top: 18px;
   padding: 0 24px;
-  border: 1px solid #a63822;
+  border: 1px solid var(--brand-fill);
   border-radius: 0;
-  color: #fffaf2;
-  background: #a63822;
+  color: var(--text);
+  background: var(--brand-fill);
   cursor: pointer;
   font-weight: 800;
   transition:
@@ -274,8 +278,8 @@ h1[tabindex="-1"]:focus {
 }
 
 .primary-action:hover {
-  color: #a63822;
-  background: transparent;
+  color: var(--surface);
+  background: var(--brand-700);
   transform: translateY(-2px);
 }
 
@@ -294,16 +298,16 @@ h1[tabindex="-1"]:focus {
   height: 64px;
   place-items: center;
   margin-bottom: 32px;
-  border: 1px solid #a63822;
+  border: 1px solid var(--brand-700);
   border-radius: 50%;
-  color: #a63822;
-  font-family: Georgia, "Times New Roman", serif;
+  color: var(--brand-700);
+  font-family: "Bricolage Grotesque", system-ui, sans-serif;
   font-size: 2rem;
 }
 
 .menu-shell {
   min-height: 100vh;
-  background: #f4efe5;
+  background: var(--canvas);
 }
 
 .menu-header {
@@ -315,8 +319,8 @@ h1[tabindex="-1"]:focus {
   align-items: center;
   justify-content: space-between;
   padding: 8px clamp(20px, 5vw, 72px);
-  border-bottom: 1px solid rgb(70 60 46 / 18%);
-  background: rgb(244 239 229 / 94%);
+  border-bottom: 1px solid var(--line);
+  background: rgb(250 248 244 / 94%);
   backdrop-filter: blur(14px);
 }
 
@@ -339,8 +343,9 @@ h1[tabindex="-1"]:focus {
   align-items: center;
   gap: 8px;
   padding: 0 14px;
-  border: 1px solid #a63822;
-  color: #7d2a1b;
+  border: 1px solid var(--brand-700);
+  border-radius: 10px;
+  color: var(--brand-700);
   font-size: 0.76rem;
   font-weight: 800;
 }
@@ -357,11 +362,19 @@ h1[tabindex="-1"]:focus {
 
 .menu-intro {
   padding-bottom: 42px;
-  border-bottom: 1px solid #bdb2a0;
+  border-bottom: 1px solid var(--line);
 }
 
 .menu-intro h1 {
   max-width: 760px;
+  font-family: "Bricolage Grotesque", system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+}
+
+.menu-header .journey-brand {
+  font-family: "Bricolage Grotesque", system-ui, sans-serif;
+  letter-spacing: 0.16em;
 }
 
 .menu-intro nav {
@@ -376,8 +389,10 @@ h1[tabindex="-1"]:focus {
 .menu-intro nav a {
   min-height: 44px;
   padding: 12px 15px;
-  border-bottom: 1px solid #8e8578;
-  color: #342f28;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--text);
+  background: var(--surface);
   text-decoration: none;
   white-space: nowrap;
 }
@@ -392,7 +407,7 @@ h1[tabindex="-1"]:focus {
   grid-template-columns: minmax(180px, 0.72fr) minmax(0, 1.6fr);
   gap: clamp(36px, 8vw, 110px);
   padding: clamp(52px, 8vw, 94px) 0;
-  border-bottom: 1px solid #bdb2a0;
+  border-bottom: 1px solid var(--line);
 }
 
 .category-heading {
@@ -402,7 +417,7 @@ h1[tabindex="-1"]:focus {
 }
 
 .category-heading span {
-  color: #a63822;
+  color: var(--brand-700);
   font-size: 0.74rem;
   font-weight: 800;
   letter-spacing: 0.16em;
@@ -410,26 +425,50 @@ h1[tabindex="-1"]:focus {
 
 .category-heading h2 {
   margin: 12px 0 0;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: "Bricolage Grotesque", system-ui, sans-serif;
   font-size: clamp(2.1rem, 5vw, 4.2rem);
   font-weight: 400;
   letter-spacing: -0.045em;
   line-height: 1;
 }
 
+.category-dishes {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .dish-row {
-  padding: 0 0 30px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
   animation: dish-reveal 420ms ease both;
 }
 
 .dish-row + .dish-row {
-  padding-top: 30px;
-  border-top: 1px solid rgb(85 73 56 / 16%);
+  padding-top: 0;
+  border-top: 1px solid var(--line);
 }
 
 .dish-row.is-unavailable {
-  border-left: 3px solid #8d3322;
-  padding-left: 16px;
+  border-left: 3px solid var(--danger);
+}
+
+.dish-row.is-unavailable .dish-image {
+  filter: saturate(0.45);
+}
+
+.dish-image {
+  display: block;
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  object-fit: cover;
+  background: var(--brand-100);
+}
+
+.dish-copy {
+  padding: 20px;
 }
 
 .dish-title-line {
@@ -459,7 +498,7 @@ h1[tabindex="-1"]:focus {
 }
 
 .dish-row .availability {
-  color: #8d3322;
+  color: var(--danger);
   font-weight: 800;
 }
 
@@ -471,7 +510,7 @@ h1[tabindex="-1"]:focus {
   width: fit-content;
   min-height: 44px;
   padding: 12px 0;
-  color: #7d2a1b;
+  color: var(--brand-700);
   cursor: pointer;
   font-size: 0.84rem;
   font-weight: 800;
@@ -481,7 +520,7 @@ h1[tabindex="-1"]:focus {
   display: grid;
   gap: 24px;
   padding: 12px 0 4px 18px;
-  border-left: 2px solid #a63822;
+  border-left: 2px solid var(--brand-fill);
 }
 
 .option-group {
@@ -525,7 +564,7 @@ h1[tabindex="-1"]:focus {
   width: 18px;
   height: 18px;
   margin: 0;
-  accent-color: #a63822;
+  accent-color: var(--brand-fill);
 }
 
 .dish-order-controls {
@@ -580,10 +619,10 @@ h1[tabindex="-1"]:focus {
   min-height: 44px;
   align-self: end;
   padding: 0 20px;
-  border: 1px solid #211e19;
+  border: 1px solid var(--brand-fill);
   border-radius: 5px;
-  color: #f4efe5;
-  background: #211e19;
+  color: var(--text);
+  background: var(--brand-fill);
   cursor: pointer;
   font-weight: 800;
 }
@@ -627,8 +666,8 @@ button:disabled {
   padding: 0 18px;
   border: 0;
   border-radius: 5px;
-  color: #211e19;
-  background: #f0c879;
+  color: var(--text);
+  background: var(--brand-fill);
   cursor: pointer;
   font-weight: 900;
 }
@@ -673,7 +712,7 @@ button:disabled {
 
 .cart-review__header h2 {
   margin: 4px 0 0;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: "Bricolage Grotesque", system-ui, sans-serif;
   font-size: clamp(2rem, 7vw, 3rem);
   font-weight: 400;
 }
@@ -683,7 +722,7 @@ button:disabled {
 .cancellation-request button {
   min-height: 44px;
   border: 0;
-  color: #7d2a1b;
+  color: var(--brand-700);
   background: transparent;
   cursor: pointer;
   font-weight: 800;
@@ -739,13 +778,13 @@ button:disabled {
 }
 
 .cart-total strong {
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: "Bricolage Grotesque", system-ui, sans-serif;
   font-size: 1.65rem;
 }
 
 .submit-message {
   padding: 12px;
-  border-left: 3px solid #a63822;
+  border-left: 3px solid var(--brand-fill);
   color: #6b2117;
   background: #f7e9df;
   line-height: 1.5;
@@ -753,8 +792,8 @@ button:disabled {
 
 .submit-order {
   width: 100%;
-  color: #f4efe5;
-  background: #a63822;
+  color: var(--text);
+  background: var(--brand-fill);
 }
 
 .order-confirmation {
@@ -785,13 +824,13 @@ button:disabled {
 
 .order-receipt h1 {
   margin: 5px 0 8px;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: "Bricolage Grotesque", system-ui, sans-serif;
   font-size: clamp(2rem, 7vw, 3.3rem);
   font-weight: 400;
 }
 
 .order-reference {
-  color: #a63822;
+  color: var(--brand-700);
   font-size: 1.1rem;
   letter-spacing: 0.08em;
 }
@@ -807,7 +846,7 @@ button:disabled {
 }
 
 .order-status strong {
-  color: #7d2a1b;
+  color: var(--brand-700);
 }
 
 .status-reason,
@@ -824,7 +863,7 @@ button:disabled {
 
 .order-freshness.is-stale {
   padding: 10px 12px;
-  border-left: 3px solid #a63822;
+  border-left: 3px solid var(--brand-fill);
   color: #6b2117;
   background: #f7e9df;
 }
@@ -850,7 +889,7 @@ button:disabled {
 
 .cancellation-request h2 {
   margin: 0;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: "Bricolage Grotesque", system-ui, sans-serif;
   font-weight: 400;
 }
 
@@ -878,7 +917,7 @@ button:disabled {
 
 .empty-menu h2 {
   margin: 0;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: "Bricolage Grotesque", system-ui, sans-serif;
   font-size: 2.2rem;
   font-weight: 400;
 }
@@ -893,7 +932,7 @@ button:disabled {
   padding: 0;
   border: 0;
   border-bottom: 1px solid currentColor;
-  color: #8d3322;
+  color: var(--brand-700);
   background: transparent;
   cursor: pointer;
   font-weight: 800;
@@ -906,12 +945,12 @@ button:disabled {
   justify-content: space-between;
   gap: 20px;
   padding: 30px clamp(20px, 5vw, 72px);
-  color: #f4efe5;
+  color: #fff8e8;
   background: #211e19;
 }
 
 .menu-shell footer span {
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: "Bricolage Grotesque", system-ui, sans-serif;
   font-weight: 700;
   letter-spacing: 0.2em;
 }
@@ -974,6 +1013,10 @@ button:disabled {
   .menu-category {
     grid-template-columns: 1fr;
     gap: 32px;
+  }
+
+  .category-dishes {
+    grid-template-columns: 1fr;
   }
 
   .category-heading {

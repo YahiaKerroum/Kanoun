@@ -5,11 +5,24 @@ const workerConfigSchema = z.object({
   LOG_LEVEL: z
     .enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"])
     .default("info"),
+  WORKER_ID: z.string().trim().min(1).max(160).default("rms-worker-1"),
+  OUTBOX_LEASE_MS: z.coerce
+    .number()
+    .int()
+    .min(1_000)
+    .max(300_000)
+    .default(30_000),
+  OUTBOX_MAX_ATTEMPTS: z.coerce.number().int().min(1).max(100).default(5),
+  OUTBOX_RETENTION_DAYS: z.coerce.number().int().min(30).max(3650).default(90),
 });
 
 export interface WorkerConfig {
   readonly databaseUrl: string;
   readonly logLevel: string;
+  readonly workerId: string;
+  readonly leaseMilliseconds: number;
+  readonly maximumAttempts: number;
+  readonly outboxRetentionDays: number;
 }
 
 export function loadWorkerConfig(environment: NodeJS.ProcessEnv): WorkerConfig {
@@ -24,5 +37,9 @@ export function loadWorkerConfig(environment: NodeJS.ProcessEnv): WorkerConfig {
   return {
     databaseUrl: result.data.DATABASE_URL,
     logLevel: result.data.LOG_LEVEL,
+    workerId: result.data.WORKER_ID,
+    leaseMilliseconds: result.data.OUTBOX_LEASE_MS,
+    maximumAttempts: result.data.OUTBOX_MAX_ATTEMPTS,
+    outboxRetentionDays: result.data.OUTBOX_RETENTION_DAYS,
   };
 }

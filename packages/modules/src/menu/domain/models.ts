@@ -87,6 +87,7 @@ export interface CustomerMenuDish {
   readonly id: string;
   readonly name: string;
   readonly description?: string | undefined;
+  readonly imageUrl?: string | undefined;
   readonly unitPrice: Money;
   readonly available: boolean;
   readonly optionGroups: readonly CustomerMenuOptionGroup[];

@@ -49,13 +49,15 @@ source_of_truth_for:
 | Slice 005 implementation declaration | `docs/delivery/slice-005-order-submission.md` | Verified and integrated |
 | Slice 006 implementation declaration | `docs/delivery/slice-006-kitchen-and-serving.md` | Verified, integrated, and published |
 | Slice 007 implementation declaration | `docs/delivery/slice-007-payment-completion-and-correction.md` | Verified, feature branch published, and integrated |
-| Current engineering handoff | `docs/delivery/handoff-2026-07-29-slice-007-checkpoint.md` | Slice 007 integrated and integration CI verified; main-publication record pending |
+| Current engineering handoff | `docs/delivery/handoff-2026-07-29-slice-008-checkpoint.md` | Slice 008 feature branch published; integration not authorized |
+| Slice 008 implementation declaration | `docs/delivery/slice-008-notifications-reporting-and-audit.md` | Verified and feature branch published; integration not authorized |
 | Slice 006 publication handoff | `docs/delivery/handoff-2026-07-28-slice-006-checkpoint.md` | Slice 006 published; historical Slice 007 starting point |
 | Slice 005 publication handoff | `docs/delivery/handoff-2026-07-28-slice-005-checkpoint.md` | Slice 005 feature branch published; main integration pending |
 | Slice 004 publication handoff | `docs/delivery/handoff-2026-07-28-slice-004-checkpoint.md` | Slice 004 published — historical baseline |
 | Prior Slice 004 checkpoint | `docs/delivery/handoff-2026-07-27-slice-004-checkpoint.md` | Superseded — historical only |
 | Prior engineering handoff (Slice 003 publication evidence) | `docs/delivery/handoff-2026-07-27.md` | Superseded — historical only |
 | Frontend quality | `docs/quality/frontend-quality.md` | Approved |
+| Product interface design system | `DESIGN.md` | Active implementation guide |
 | Deployment and recovery | `docs/operations/deployment-and-recovery.md` | Proposed until hosting ADR |
 | Observability and operations | `docs/operations/observability-and-runbook.md` | Approved baseline |
 | Agent operating rules | `AGENTS.md` | Approved |

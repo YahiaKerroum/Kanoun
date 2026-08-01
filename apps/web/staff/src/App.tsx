@@ -1,8 +1,8 @@
 import {
-  Badge,
   Bell,
   ChefHat,
   ClipboardList,
+  CircleCheckBig,
   CreditCard,
   History,
   House,
@@ -11,6 +11,8 @@ import {
   PackageOpen,
   RefreshCw,
   Settings,
+  ShieldCheck,
+  SlidersHorizontal,
   TableProperties,
   Users,
   UserRound,
@@ -30,6 +32,12 @@ import { MenuWorkspace, TablesWorkspace } from "./OperationalWorkspaces.js";
 import { KitchenWorkspace } from "./KitchenWorkspace.js";
 import { OrdersWorkspace } from "./OrdersWorkspace.js";
 import { PaymentsWorkspace } from "./PaymentsWorkspace.js";
+import {
+  AuditWorkspace,
+  DashboardWorkspace,
+  NotificationInboxWorkspace,
+  SalesReportWorkspace,
+} from "./InsightsWorkspaces.js";
 
 type Section =
   | "Home"
@@ -42,7 +50,8 @@ type Section =
   | "Staff"
   | "Reports"
   | "Setup"
-  | "Audit";
+  | "Audit"
+  | "Notifications";
 
 interface NavigationItem {
   readonly label: Section;
@@ -55,6 +64,12 @@ interface NavigationItem {
 
 const navigationItems: readonly NavigationItem[] = [
   { label: "Home", icon: House, group: "service" },
+  {
+    label: "Notifications",
+    icon: Bell,
+    group: "service",
+    requiredFeature: "notifications",
+  },
   {
     label: "Orders",
     icon: ClipboardList,
@@ -143,6 +158,10 @@ const sessionSchema = z.object({
 
 const capabilitiesSchema = z.object({
   branchId: z.uuid(),
+  branchName: z.string().min(1),
+  restaurantId: z.uuid(),
+  timeZone: z.string(),
+  currency: z.string().regex(/^[A-Z]{3}$/),
   permissions: z.array(z.string()),
   enabledFeatures: z.array(z.string()),
   configurationVersion: z.number().int().positive(),
@@ -278,48 +297,6 @@ function isNavigationItemAvailable(
   );
 }
 
-function shortIdentifier(identifier: string): string {
-  return `…${identifier.slice(-8)}`;
-}
-
-function resolveActiveRestaurantId(
-  session: StaffSession,
-  branchId: string,
-): string | null {
-  const exactBranchRestaurants = new Set(
-    session.grants
-      .filter(
-        (grant) =>
-          grant.branchId === branchId && grant.restaurantId !== undefined,
-      )
-      .map((grant) => grant.restaurantId)
-      .filter(
-        (restaurantId): restaurantId is string => restaurantId !== undefined,
-      ),
-  );
-  if (exactBranchRestaurants.size === 1) {
-    return [...exactBranchRestaurants][0] ?? null;
-  }
-  if (exactBranchRestaurants.size > 1) {
-    return null;
-  }
-
-  const restaurantScopedGrants = new Set(
-    session.grants
-      .filter(
-        (grant) =>
-          grant.branchId === undefined && grant.restaurantId !== undefined,
-      )
-      .map((grant) => grant.restaurantId)
-      .filter(
-        (restaurantId): restaurantId is string => restaurantId !== undefined,
-      ),
-  );
-  return restaurantScopedGrants.size === 1
-    ? ([...restaurantScopedGrants][0] ?? null)
-    : null;
-}
-
 export function App() {
   const [activeSection, setActiveSection] = useState<Section>("Home");
   const [portal, setPortal] = useState<PortalState>({ kind: "loading" });
@@ -381,9 +358,9 @@ export function App() {
   )
     ? activeSection
     : "Home";
-  const activeRestaurantId = resolveActiveRestaurantId(
-    portal.session,
-    portal.capabilities.branchId,
+  const activeRestaurantId = portal.capabilities.restaurantId;
+  const notificationsAvailable = availableNavigation.some(
+    (item) => item.label === "Notifications",
   );
 
   return (
@@ -449,8 +426,8 @@ export function App() {
               </div>
               <div className="context-item">
                 <span className="context-item__label">Branch</span>
-                <strong title={portal.capabilities.branchId}>
-                  Assigned {shortIdentifier(portal.capabilities.branchId)}
+                <strong title={`Branch ID: ${portal.capabilities.branchId}`}>
+                  {portal.capabilities.branchName}
                 </strong>
               </div>
               <div className="context-item">
@@ -483,8 +460,10 @@ export function App() {
               <button
                 className="icon-button"
                 type="button"
-                aria-label="Notifications are not implemented yet"
-                disabled
+                aria-label="Open notifications"
+                aria-pressed={visibleSection === "Notifications"}
+                disabled={!notificationsAvailable}
+                onClick={() => selectSection("Notifications")}
               >
                 <Bell aria-hidden="true" size={20} />
               </button>
@@ -497,6 +476,14 @@ export function App() {
                   destinationCount={availableNavigation.length}
                   readiness={readiness}
                   statusId={statusId}
+                  branchId={portal.capabilities.branchId}
+                  canViewReports={portal.capabilities.permissions.includes(
+                    "reports.view",
+                  )}
+                />
+              ) : visibleSection === "Notifications" ? (
+                <NotificationInboxWorkspace
+                  branchId={portal.capabilities.branchId}
                 />
               ) : visibleSection === "Orders" ? (
                 <OrdersWorkspace
@@ -571,6 +558,22 @@ export function App() {
                     "tables.view",
                   )}
                 />
+              ) : visibleSection === "Reports" ? (
+                <SalesReportWorkspace
+                  branchId={portal.capabilities.branchId}
+                  timeZone={portal.capabilities.timeZone}
+                  canView={portal.capabilities.permissions.includes(
+                    "reports.view",
+                  )}
+                />
+              ) : visibleSection === "Audit" ? (
+                <AuditWorkspace
+                  restaurantId={activeRestaurantId}
+                  branchId={portal.capabilities.branchId}
+                  canView={portal.capabilities.permissions.includes(
+                    "audit.view",
+                  )}
+                />
               ) : (
                 <DeferredWorkspace section={visibleSection} />
               )}
@@ -641,11 +644,15 @@ function HomeWorkspace({
   destinationCount,
   readiness,
   statusId,
+  branchId,
+  canViewReports,
 }: {
   readonly capabilities: PortalCapabilities;
   readonly destinationCount: number;
   readonly readiness: Readiness;
   readonly statusId: string;
+  readonly branchId: string;
+  readonly canViewReports: boolean;
 }) {
   const apiReady = readiness.kind === "ready";
 
@@ -653,22 +660,21 @@ function HomeWorkspace({
     <div className="workspace__content">
       <section className="launch-banner" aria-labelledby="launch-title">
         <div>
-          <p className="eyebrow">SLICE 003 · CAPABILITY-AWARE PORTAL</p>
-          <h2 id="launch-title">Your branch tools, resolved by access.</h2>
+          <p className="eyebrow">SERVICE OVERVIEW</p>
+          <h2 id="launch-title">Your branch is ready for service.</h2>
           <p>
-            This rail is the intersection of your effective branch permissions
-            and enabled MVP features. The server still authorizes every direct
-            API request.
+            Orders, tables, menu, kitchen, payments, and reporting tools are
+            tailored to the responsibilities assigned to you.
           </p>
         </div>
         <div className="launch-banner__status" id={statusId} role="status">
           <ReadinessMark readiness={readiness} />
           <span>
             {apiReady
-              ? "Capabilities and API readiness were verified."
+              ? "Service access and API readiness were verified."
               : readiness.kind === "checking"
-                ? "Refreshing access and API readiness."
-                : "Capabilities loaded, but API readiness is not verified."}
+                ? "Refreshing service access and API readiness."
+                : "Service access loaded, but API readiness is not verified."}
           </span>
         </div>
       </section>
@@ -677,8 +683,8 @@ function HomeWorkspace({
         <section className="workspace-panel" aria-labelledby="access-title">
           <div className="panel-heading">
             <div>
-              <p className="eyebrow">Effective branch access</p>
-              <h2 id="access-title">Portal boundary</h2>
+              <p className="eyebrow">TODAY'S ACCESS</p>
+              <h2 id="access-title">Your workspace</h2>
             </div>
             <span className="panel-count">
               v{capabilities.configurationVersion}
@@ -687,35 +693,35 @@ function HomeWorkspace({
           <ul className="check-list">
             <li>
               <span className="check-icon check-icon--ready" aria-hidden="true">
-                <Badge size={19} />
+                <CircleCheckBig size={19} strokeWidth={2.25} />
               </span>
               <div>
-                <strong>{destinationCount} visible destinations</strong>
-                <span>Unauthorized and disabled modules are omitted.</span>
+                <strong>{destinationCount} available workspaces</strong>
+                <span>Only tools available to this branch are shown.</span>
               </div>
-              <span className="state-label state-label--ready">Scoped</span>
+              <span className="state-label state-label--ready">Ready</span>
             </li>
             <li>
               <span className="check-icon check-icon--ready" aria-hidden="true">
-                <Users size={19} />
+                <ShieldCheck size={19} strokeWidth={2.25} />
               </span>
               <div>
-                <strong>{capabilities.permissions.length} permissions</strong>
-                <span>
-                  Several responsibilities remain in one staff account.
-                </span>
+                <strong>
+                  {capabilities.permissions.length} active permissions
+                </strong>
+                <span>Responsibilities are confirmed for this session.</span>
               </div>
               <span className="state-label state-label--ready">Effective</span>
             </li>
             <li>
               <span className="check-icon check-icon--ready" aria-hidden="true">
-                <Settings size={19} />
+                <SlidersHorizontal size={19} strokeWidth={2.25} />
               </span>
               <div>
                 <strong>
-                  {capabilities.enabledFeatures.length} enabled features
+                  {capabilities.enabledFeatures.length} active services
                 </strong>
-                <span>Resolved from restaurant and branch configuration.</span>
+                <span>Branch tools are configured for service.</span>
               </div>
               <span className="state-label state-label--ready">Current</span>
             </li>
@@ -725,26 +731,23 @@ function HomeWorkspace({
         <section className="workspace-panel" aria-labelledby="boundary-title">
           <div className="panel-heading">
             <div>
-              <p className="eyebrow">Delivery boundary</p>
-              <h2 id="boundary-title">Navigation is ready</h2>
+              <p className="eyebrow">SERVICE STATUS</p>
+              <h2 id="boundary-title">Ready for operations</h2>
             </div>
-            <span className="slice-number">003</span>
+            <span className="slice-number">Open</span>
           </div>
           <p className="panel-copy">
-            Employee access and feature configuration now shape this shell.
-            Order, table, menu, kitchen, payment, report, audit-query, and task
-            screens remain deferred to their owning slices.
+            Work through the branch tools available to you, from orders and
+            tables to kitchen flow, payments, reports, and audit evidence.
           </p>
           <dl className="scope-list">
             <div>
-              <dt>Implemented</dt>
-              <dd>Authenticated capability disclosure and endpoint guards</dd>
+              <dt>Available</dt>
+              <dd>Tools and data scoped to your branch responsibilities</dd>
             </div>
             <div>
-              <dt>Not claimed</dt>
-              <dd>
-                Downstream tasks, automation, or operational module actions
-              </dd>
+              <dt>Need access?</dt>
+              <dd>Contact a branch administrator to update your assignment.</dd>
             </div>
           </dl>
         </section>
@@ -755,19 +758,19 @@ function HomeWorkspace({
         >
           <div className="panel-heading">
             <div>
-              <p className="eyebrow">Design authority</p>
-              <h2 id="design-title">MISE · Saffron Gold</h2>
+              <p className="eyebrow">SERVICE STANDARD</p>
+              <h2 id="design-title">Made for service</h2>
             </div>
             <ChefHat aria-hidden="true" size={26} />
           </div>
           <p className="panel-copy">
-            Saffron frame, ivory working surface, compact context, restrained
-            panels, and a service-oriented navigation dock remain the visual
-            foundation.
+            A clear saffron frame, calm working surface, and compact navigation
+            keep the team focused through every service period.
           </p>
-          <span className="working-name">Working product name</span>
+          <span className="working-name">MISE staff workspace</span>
         </section>
       </div>
+      <DashboardWorkspace branchId={branchId} canView={canViewReports} />
     </div>
   );
 }

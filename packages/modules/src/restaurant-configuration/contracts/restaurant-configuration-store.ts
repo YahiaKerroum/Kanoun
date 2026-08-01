@@ -124,6 +124,11 @@ export interface UpdateBranchInput {
 }
 
 export interface RestaurantConfigurationStore {
+  lockBranchLifecycle(
+    transaction: TransactionContext,
+    businessAccountId: string,
+    branchId: string,
+  ): Promise<BranchRecord | undefined>;
   createBusinessAccount(
     transaction: TransactionContext,
     input: CreateBusinessAccountInput,
@@ -250,4 +255,10 @@ export interface RestaurantConfigurationStore {
     sql: SqlExecutor,
     businessAccountId: string,
   ): Promise<SupportTenantSnapshot | undefined>;
+  isBranchFeatureEnabled(
+    sql: SqlExecutor,
+    businessAccountId: string,
+    branchId: string,
+    featureId: string,
+  ): Promise<boolean>;
 }
