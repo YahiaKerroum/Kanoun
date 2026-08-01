@@ -126,3 +126,8 @@ focus and keyboard horizontal scrolling for report tables, and capture the
 review images linked from the root README. The suite continues to emit harmless
 Vite proxy `ECONNREFUSED 127.0.0.1:3000` lines for intentionally unmocked
 dashboard requests in an existing browser fixture.
+
+Implementation commit:
+`ec2264e492e191ecd0acc38f56d6f783dd52791e`. The matching remote branch was
+independently verified at that SHA. Slice 008 has not been integrated into
+`main` and no pull request was opened.

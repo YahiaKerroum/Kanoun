@@ -35,6 +35,16 @@ The isolated cluster was stopped cleanly with its own data directory. Port
 `[::]:5432` as PID `7608`. The isolated `.tmp` data and log artifacts are
 retained and excluded from Git.
 
+### Publication evidence
+
+The implementation was committed as
+`ec2264e492e191ecd0acc38f56d6f783dd52791e`
+(`feat: implement notifications reporting and audit slice`) and pushed only to
+`origin/slice-008-notifications-reporting-and-audit`. Independent
+`git ls-remote --heads origin slice-008-notifications-reporting-and-audit`
+returned the identical SHA. No pull request was opened and `main` was not
+modified.
+
 ## Current checkpoint: tenth compaction
 
 This section supersedes the ninth-compaction record below. Working context

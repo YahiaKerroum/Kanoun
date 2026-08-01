@@ -187,7 +187,9 @@ remote-ref publication remain unfinished)
   administration evidence workspace. It added keyboard-focusable report
   scrolling, a visible scroll instruction, accurate underlying-order wording,
   and responsive administration action styling. Publication of the feature
-  branch remains the final delivery step.
+  branch completed at `ec2264e492e191ecd0acc38f56d6f783dd52791e`; its remote
+  ref was independently verified. No pull request was opened and `main` was
+  not modified.
 - Context compacted a tenth time after the ninth-continuation reconciliation,
   a lint-only test fix, isolated PostgreSQL migration verification, and the
   repository command suite. Work stopped under the mandatory compaction rule.
