@@ -74,6 +74,11 @@ events:
     owner: identity_access
     aggregate: employee_access
     consumers: [notifications]
+  EVT-IDENTITY-PERMISSION-TEMPLATE-DEACTIVATED:
+    type: identity.permission_template_deactivated.v1
+    owner: identity_access
+    aggregate: restaurant_permission_template
+    consumers: [notifications]
   EVT-IDENTITY-SUPPORT-ACCESS-GRANTED:
     type: identity.support_access_granted.v1
     owner: identity_access

@@ -80,6 +80,11 @@ export interface PermissionTemplate {
   readonly displayName: string;
   readonly permissionKeys: readonly PermissionKey[];
   readonly version: number;
+  readonly active: boolean;
+}
+
+export interface PermissionTemplateStateChange extends PermissionTemplate {
+  readonly stateId: string;
 }
 
 export interface CreateSupportAccessGrantInput {
@@ -108,6 +113,11 @@ export interface SupportAccessGrant {
   readonly reason: string;
   readonly scope: CreateSupportAccessGrantInput["scope"];
   readonly expiresAtUtc: Date;
+}
+
+export interface NotificationRecipient {
+  readonly userId: string;
+  readonly employeeId: string;
 }
 
 export interface IdentityAccessStore {
@@ -239,7 +249,22 @@ export interface IdentityAccessStore {
   ): Promise<PermissionSet | undefined>;
   listPermissionTemplates(
     sql: SqlExecutor,
+    businessAccountId: string,
+    restaurantId: string,
   ): Promise<readonly PermissionTemplate[]>;
+  deactivatePermissionTemplate(
+    transaction: TransactionContext,
+    input: {
+      readonly stateId: string;
+      readonly businessAccountId: string;
+      readonly restaurantId: string;
+      readonly templateKey: string;
+      readonly expectedVersion: number;
+      readonly updatedByUserId: string;
+      readonly reason: string;
+      readonly now: Date;
+    },
+  ): Promise<PermissionTemplateStateChange | undefined>;
   createSupportAccessGrant(
     transaction: TransactionContext,
     input: CreateSupportAccessGrantInput,
@@ -258,4 +283,13 @@ export interface IdentityAccessStore {
       readonly now: Date;
     },
   ): Promise<SupportAccessGrant | undefined>;
+  listEligibleNotificationRecipients(
+    sql: SqlExecutor,
+    input: {
+      readonly businessAccountId: string;
+      readonly restaurantId: string;
+      readonly branchId?: string;
+      readonly permissionKey: PermissionKey;
+    },
+  ): Promise<readonly NotificationRecipient[]>;
 }

@@ -10,7 +10,7 @@ export interface StaffRequest extends Request {
   staffContext?: StaffRequestContext & { readonly csrfTokenHash: string };
 }
 
-function readCookie(
+export function readRequestCookie(
   header: string | undefined,
   name: string,
 ): string | undefined {
@@ -43,7 +43,7 @@ export function createStaffSessionMiddleware(
   dependencies: SessionMiddlewareDependencies,
 ): RequestHandler {
   return async (request, _response, next) => {
-    const sessionToken = readCookie(
+    const sessionToken = readRequestCookie(
       request.headers.cookie,
       staffSessionCookieName,
     );

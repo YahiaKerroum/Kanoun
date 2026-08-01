@@ -111,6 +111,7 @@ test("employee, permission, and feature administration is responsive and accessi
             displayName: "General Staff",
             permissionKeys: ["orders.view"],
             version: 1,
+            active: true,
           },
         ],
         catalog: [
@@ -545,6 +546,201 @@ test("menu, table, branch override, and QR administration use the real contracts
     tables.getByRole("link", { name: "Download PNG" }),
   ).toHaveAttribute("download", /mise-table-.*\.png/);
 
+  const results = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
+    .analyze();
+  expect(results.violations).toEqual([]);
+});
+
+test("keeps administration evidence responsive across desktop, tablet, and mobile widths", async ({
+  page,
+}) => {
+  const restaurantId = "00000000-0000-4000-8000-000000000061";
+  const branchId = "00000000-0000-4000-8000-000000000062";
+  const employeeId = "00000000-0000-4000-8000-000000000063";
+  const orderId = "00000000-0000-4000-8000-000000000064";
+  const auditId = "00000000-0000-4000-8000-000000000065";
+  await page.route("**/api/v1/**", async (route) => {
+    const url = new URL(route.request().url());
+    const json = (body: unknown) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(body),
+      });
+    if (url.pathname.endsWith("/auth/session")) {
+      return json({
+        employeeId,
+        activeBranchId: branchId,
+        authorizedBranchIds: [branchId],
+        grants: [
+          "restaurant.view",
+          "branches.view",
+          "employees.view",
+          "features.manage",
+          "reports.view",
+          "reports.view_cross_branch",
+          "audit.view",
+        ].map((permissionKey) => ({ permissionKey, restaurantId })),
+        expiresAt: "2026-08-02T12:00:00.000Z",
+      });
+    }
+    if (url.pathname.endsWith("/staff/restaurants")) {
+      return json({
+        items: [
+          {
+            id: restaurantId,
+            name: "Mise Test Kitchen",
+            status: "active",
+            version: 1,
+          },
+        ],
+      });
+    }
+    if (url.pathname.endsWith("/staff/branches")) {
+      return json({
+        items: [
+          {
+            id: branchId,
+            restaurantId,
+            name: "Central branch",
+            timeZone: "Africa/Algiers",
+            currency: "DZD",
+            status: "active",
+            serviceStatus: "open",
+            version: 1,
+            openingHours: [],
+          },
+        ],
+      });
+    }
+    if (url.pathname.endsWith("/staff/permission-templates")) {
+      return json({ items: [], catalog: [] });
+    }
+    if (url.pathname.endsWith("/staff/employees")) {
+      return json({ items: [] });
+    }
+    if (url.pathname.endsWith(`/branches/${branchId}/features`)) {
+      return json({
+        configuration: {
+          id: "00000000-0000-4000-8000-000000000066",
+          branchId,
+          version: 1,
+          values: { "CFG-014": "enabled" },
+          createdAtUtc: "2026-08-01T12:00:00.000Z",
+        },
+        catalog: [],
+      });
+    }
+    if (url.pathname.endsWith(`/restaurants/${restaurantId}/features`)) {
+      return json({
+        configuration: {
+          id: "00000000-0000-4000-8000-000000000067",
+          version: 1,
+          values: { "CFG-014": "enabled" },
+          createdAtUtc: "2026-08-01T12:00:00.000Z",
+        },
+        catalog: [],
+      });
+    }
+    if (url.pathname.endsWith("/staff/reports/sales")) {
+      return json({
+        rows: [
+          {
+            restaurantName: "Mise Test Kitchen",
+            branchName: "Central branch",
+            orderId,
+            orderReference: "ORD-000021",
+            businessDate: "2026-08-01",
+            currency: "DZD",
+            grossAmount: "4200.00",
+            cancelledAmount: "0.00",
+            paidAmount: "4200.00",
+            refundedAmount: "0.00",
+            paymentMethod: "card",
+            orderState: "completed",
+            submittedAt: "2026-08-01T12:00:00.000Z",
+          },
+        ],
+        totals: [
+          {
+            currency: "DZD",
+            grossAmount: "4200.00",
+            cancelledAmount: "0.00",
+            paidAmount: "4200.00",
+            refundedAmount: "0.00",
+          },
+        ],
+        page: 0,
+        hasMore: false,
+      });
+    }
+    if (url.pathname.endsWith("/staff/audit-events")) {
+      return json({
+        items: [
+          {
+            id: auditId,
+            branchId,
+            actorUserId: employeeId,
+            action: "payments.payment_recorded",
+            targetType: "order",
+            targetId: orderId,
+            outcome: "succeeded",
+            reason: "Payment confirmed at the desk",
+            before: { financial: "unpaid" },
+            after: { financial: "paid" },
+            occurredAt: "2026-08-01T12:00:00.000Z",
+          },
+        ],
+        page: 0,
+        hasMore: false,
+      });
+    }
+    if (url.pathname.endsWith("/staff/notification-gaps")) {
+      return json({ items: [] });
+    }
+    return json({ items: [] });
+  });
+
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("http://127.0.0.1:5175");
+  const insights = page.locator("#insights");
+  await expect(
+    insights.getByRole("heading", {
+      name: "Reports, audit & notification coverage",
+    }),
+  ).toBeVisible();
+  await page.screenshot({
+    path: "test-results/slice008-admin-desktop-insights.png",
+    fullPage: true,
+  });
+  expect(
+    await page
+      .locator("body")
+      .evaluate((body) => body.scrollWidth <= body.clientWidth),
+  ).toBe(true);
+
+  await page.setViewportSize({ width: 1024, height: 768 });
+  await page.screenshot({
+    path: "test-results/slice008-admin-tablet-insights.png",
+    fullPage: true,
+  });
+  expect(
+    await page
+      .locator("body")
+      .evaluate((body) => body.scrollWidth <= body.clientWidth),
+  ).toBe(true);
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.screenshot({
+    path: "test-results/slice008-admin-mobile-insights.png",
+    fullPage: true,
+  });
+  expect(
+    await page
+      .locator("body")
+      .evaluate((body) => body.scrollWidth <= body.clientWidth),
+  ).toBe(true);
   const results = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
     .analyze();

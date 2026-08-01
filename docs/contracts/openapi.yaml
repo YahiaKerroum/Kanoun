@@ -21,6 +21,9 @@ tags:
   - {name: Orders, description: Guest and staff order lifecycle operations.}
   - {name: Kitchen, description: Branch kitchen queue and work-item operations.}
   - {name: Payments, description: Staff-recorded payment and correction operations.}
+  - {name: Notifications, description: Durable staff notification inbox and delivery gaps.}
+  - {name: Reporting, description: Authorized operational dashboards and sales projections.}
+  - {name: Audit, description: Immutable tenant-scoped audit history queries.}
   - {name: Realtime, description: Branch-scoped Server-Sent Events streams.}
 
 paths:
@@ -620,6 +623,37 @@ paths:
           content:
             application/json:
               schema: {$ref: "#/components/schemas/PermissionSet"}
+        "409": {$ref: "#/components/responses/Conflict"}
+
+  /v1/staff/permission-templates/{templateKey}/deactivation:
+    post:
+      tags: [Identity]
+      operationId: deactivatePermissionTemplate
+      summary: Deactivate one predefined template for future copy-on-apply use in the active restaurant.
+      security: [{staffCookie: [], csrfHeader: []}]
+      parameters:
+        - name: templateKey
+          in: path
+          required: true
+          schema: {type: string, enum: [administrator, general_staff, cashier, kitchen_staff]}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [expectedVersion, reason]
+              properties:
+                expectedVersion: {type: integer, minimum: 1}
+                reason: {type: string, minLength: 8, maxLength: 500}
+      responses:
+        "200":
+          description: Restaurant template state deactivated without changing copied grants.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/PermissionTemplate"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "403": {$ref: "#/components/responses/Forbidden"}
         "409": {$ref: "#/components/responses/Conflict"}
 
   /v1/staff/branches/{branchId}/features:
@@ -1693,6 +1727,164 @@ paths:
               schema: {type: string}
         "401": {$ref: "#/components/responses/Unauthorized"}
 
+  /v1/staff/notifications:
+    get:
+      tags: [Notifications]
+      operationId: getNotificationInbox
+      summary: Get the authenticated user's authoritative unexpired inbox.
+      security: [{staffCookie: []}]
+      parameters:
+        - {name: branchId, in: query, schema: {type: string, format: uuid}}
+        - {name: after, in: query, schema: {type: string, format: date-time}}
+        - {name: limit, in: query, schema: {type: integer, minimum: 1, maximum: 100, default: 50}}
+      responses:
+        "200":
+          description: Durable notification inbox.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items: {type: array, items: {$ref: "#/components/schemas/NotificationInboxItem"}}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "403": {$ref: "#/components/responses/Forbidden"}
+
+  /v1/staff/notifications/{notificationId}:
+    patch:
+      tags: [Notifications]
+      operationId: updateNotificationState
+      summary: Mark one owned inbox item read or acknowledged.
+      security: [{staffCookie: [], csrfHeader: []}]
+      parameters:
+        - {name: notificationId, in: path, required: true, schema: {type: string, format: uuid}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action]
+              properties:
+                action: {type: string, enum: [read, acknowledge]}
+      responses:
+        "200":
+          description: Updated owned inbox item.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/NotificationInboxItem"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "422": {$ref: "#/components/responses/ValidationFailed"}
+
+  /v1/staff/notification-gaps:
+    get:
+      tags: [Notifications]
+      operationId: listNotificationRecipientGaps
+      summary: List critical source events that had no eligible recipient.
+      security: [{staffCookie: []}]
+      parameters:
+        - {name: branchId, in: query, required: true, schema: {type: string, format: uuid}}
+      responses:
+        "200":
+          description: Branch-scoped recipient configuration warnings.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items: {type: array, items: {$ref: "#/components/schemas/NotificationGap"}}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "403": {$ref: "#/components/responses/Forbidden"}
+
+  /v1/staff/notification-events:
+    get:
+      tags: [Notifications, Realtime]
+      operationId: streamNotificationHints
+      summary: Stream owned notification hints; reconnect gaps reload the inbox query.
+      security: [{staffCookie: []}]
+      parameters:
+        - {name: branchId, in: query, schema: {type: string, format: uuid}}
+        - {name: after, in: query, schema: {type: string, format: date-time}}
+        - {name: Last-Event-ID, in: header, schema: {type: string, format: uuid}, description: Last delivered notification cursor.}
+      responses:
+        "200":
+          description: Server-Sent Events hints with notification IDs.
+          content:
+            text/event-stream:
+              schema: {type: string}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "403": {$ref: "#/components/responses/Forbidden"}
+        "422": {$ref: "#/components/responses/ValidationFailed"}
+
+  /v1/staff/branches/{branchId}/dashboard:
+    get:
+      tags: [Reporting]
+      operationId: getBranchDashboard
+      summary: Get enabled-module operational widgets from branch projections.
+      security: [{staffCookie: []}]
+      parameters:
+        - $ref: "#/components/parameters/BranchId"
+      responses:
+        "200":
+          description: Authorized branch dashboard without delay classification.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/BranchDashboard"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "403": {$ref: "#/components/responses/Forbidden"}
+        "503": {$ref: "#/components/responses/ServiceUnavailable"}
+
+  /v1/staff/reports/sales:
+    get:
+      tags: [Reporting]
+      operationId: getSalesReport
+      summary: Get branch-visible sales facts grouped by currency and traceable to orders.
+      security: [{staffCookie: []}]
+      parameters:
+        - {name: restaurantId, in: query, schema: {type: array, items: {type: string, format: uuid}}}
+        - {name: branchId, in: query, schema: {type: array, items: {type: string, format: uuid}}}
+        - {name: dateFrom, in: query, required: true, schema: {type: string, format: date}}
+        - {name: dateTo, in: query, required: true, schema: {type: string, format: date}}
+        - {name: paymentMethod, in: query, schema: {type: string, enum: [cash, card]}}
+        - {name: orderState, in: query, schema: {type: string, enum: [active, completed, cancelled]}}
+        - {name: page, in: query, schema: {type: integer, minimum: 0, default: 0}}
+        - {name: pageSize, in: query, schema: {type: integer, minimum: 1, maximum: 100, default: 50}}
+      responses:
+        "200":
+          description: Paginated sales facts and full filtered totals grouped by ISO currency.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/SalesReport"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "403": {$ref: "#/components/responses/Forbidden"}
+
+  /v1/staff/audit-events:
+    get:
+      tags: [Audit]
+      operationId: searchAuditEvents
+      summary: Search immutable, redacted audit evidence in assigned scope.
+      security: [{staffCookie: []}]
+      parameters:
+        - {name: restaurantId, in: query, schema: {type: string, format: uuid}, description: Required unless the actor holds tenant-wide audit.view authority.}
+        - {name: branchId, in: query, schema: {type: string, format: uuid}}
+        - {name: actorUserId, in: query, schema: {type: string, format: uuid}}
+        - {name: action, in: query, schema: {type: string, maxLength: 160}}
+        - {name: targetType, in: query, schema: {type: string, maxLength: 80}}
+        - {name: occurredFrom, in: query, schema: {type: string, format: date-time}}
+        - {name: occurredTo, in: query, schema: {type: string, format: date-time}}
+        - {name: page, in: query, schema: {type: integer, minimum: 0, default: 0}}
+        - {name: pageSize, in: query, schema: {type: integer, minimum: 1, maximum: 100, default: 50}}
+      responses:
+        "200":
+          description: Paginated append-only audit evidence.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/AuditSearchResult"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "403": {$ref: "#/components/responses/Forbidden"}
+
 components:
   securitySchemes:
     bootstrapSecret:
@@ -2102,12 +2294,178 @@ components:
 
     PermissionTemplate:
       type: object
-      required: [key, displayName, permissionKeys, version]
+      required: [key, displayName, permissionKeys, version, active]
       properties:
         key: {type: string, enum: [administrator, general_staff, cashier, kitchen_staff]}
         displayName: {type: string}
         permissionKeys: {type: array, items: {$ref: "#/components/schemas/PermissionKey"}}
         version: {type: integer, minimum: 1}
+        active: {type: boolean}
+
+    NotificationInboxItem:
+      type: object
+      additionalProperties: false
+      required: [id, eventId, restaurantId, branchId, type, groupKey, title, body, taskState, readAt, acknowledgedAt, occurredAt, expiresAt]
+      properties:
+        id: {type: string, format: uuid}
+        eventId: {type: string, format: uuid}
+        restaurantId: {type: string, format: uuid}
+        branchId: {type: [string, "null"], format: uuid}
+        type: {type: string, enum: [new_order, order_change, ready_order, bill_request, payment_or_refund, configuration_or_permission_change]}
+        groupKey: {type: string}
+        title: {type: string}
+        body: {type: string}
+        taskState: {type: string, enum: [unhandled, handled]}
+        readAt: {type: [string, "null"], format: date-time}
+        acknowledgedAt: {type: [string, "null"], format: date-time}
+        occurredAt: {type: string, format: date-time}
+        expiresAt: {type: string, format: date-time}
+
+    NotificationGap:
+      type: object
+      additionalProperties: false
+      required: [eventId, restaurantId, branchId, notificationType, requiredPermission, reason, attemptedAt]
+      properties:
+        eventId: {type: string, format: uuid}
+        restaurantId: {type: string, format: uuid}
+        branchId: {type: [string, "null"], format: uuid}
+        notificationType: {type: string}
+        requiredPermission: {$ref: "#/components/schemas/PermissionKey"}
+        reason: {type: string}
+        attemptedAt: {type: string, format: date-time}
+
+    BranchDashboard:
+      type: object
+      additionalProperties: false
+      required: [branch, activeOrders, orderStates, occupiedTables, pendingRequests, kitchenWaiting, dailySales, enabledWidgets]
+      properties:
+        branch:
+          type: object
+          additionalProperties: false
+          required: [restaurantId, branchId, restaurantName, branchName, timeZone, currency, status]
+          properties:
+            restaurantId: {type: string, format: uuid}
+            branchId: {type: string, format: uuid}
+            restaurantName: {type: string}
+            branchName: {type: string}
+            timeZone: {type: string}
+            currency: {type: string, pattern: "^[A-Z]{3}$"}
+            status: {type: string, enum: [active, inactive]}
+        activeOrders: {type: integer, minimum: 0}
+        orderStates:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [fulfilment, financial, count]
+            properties:
+              fulfilment: {type: string}
+              financial: {type: string}
+              count: {type: integer, minimum: 0}
+        occupiedTables: {type: integer, minimum: 0}
+        pendingRequests:
+          type: object
+          additionalProperties: false
+          required: [bills, cancellations]
+          properties:
+            bills: {type: integer, minimum: 0}
+            cancellations: {type: integer, minimum: 0}
+        kitchenWaiting:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [workItemId, orderId, orderReference, itemName, state, waitingSince]
+            properties:
+              workItemId: {type: string, format: uuid}
+              orderId: {type: string, format: uuid}
+              orderReference: {type: string}
+              itemName: {type: string}
+              state: {type: string, enum: [queued, preparing]}
+              waitingSince: {type: string, format: date-time}
+        dailySales:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [currency, grossAmount, paidAmount, refundedAmount, cancelledAmount]
+            properties:
+              currency: {type: string, pattern: "^[A-Z]{3}$"}
+              grossAmount: {type: string}
+              paidAmount: {type: string}
+              refundedAmount: {type: string}
+              cancelledAmount: {type: string}
+        enabledWidgets: {type: array, items: {type: string, enum: [orders, tables, kitchen, payments]}}
+
+    SalesReport:
+      type: object
+      additionalProperties: false
+      required: [rows, totals, page, hasMore]
+      properties:
+        rows:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [restaurantId, branchId, restaurantName, branchName, orderId, orderReference, businessDate, currency, grossAmount, cancelledAmount, paidAmount, refundedAmount, paymentMethod, orderState, submittedAt]
+            properties:
+              restaurantId: {type: string, format: uuid}
+              branchId: {type: string, format: uuid}
+              restaurantName: {type: string}
+              branchName: {type: string}
+              orderId: {type: string, format: uuid}
+              orderReference: {type: string}
+              businessDate: {type: string, format: date}
+              currency: {type: string, pattern: "^[A-Z]{3}$"}
+              grossAmount: {type: string}
+              cancelledAmount: {type: string}
+              paidAmount: {type: string}
+              refundedAmount: {type: string}
+              paymentMethod: {type: [string, "null"], enum: [cash, card, null]}
+              orderState: {type: string, enum: [active, completed, cancelled]}
+              submittedAt: {type: string, format: date-time}
+        totals:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [currency, grossAmount, cancelledAmount, paidAmount, refundedAmount]
+            properties:
+              currency: {type: string, pattern: "^[A-Z]{3}$"}
+              grossAmount: {type: string}
+              cancelledAmount: {type: string}
+              paidAmount: {type: string}
+              refundedAmount: {type: string}
+        page: {type: integer, minimum: 0}
+        hasMore: {type: boolean}
+
+    AuditSearchResult:
+      type: object
+      additionalProperties: false
+      required: [items, page, hasMore]
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [id, restaurantId, branchId, actorUserId, action, targetType, targetId, outcome, reason, correlationId, before, after, occurredAt]
+            properties:
+              id: {type: string, format: uuid}
+              restaurantId: {type: [string, "null"], format: uuid}
+              branchId: {type: [string, "null"], format: uuid}
+              actorUserId: {type: [string, "null"], format: uuid}
+              action: {type: string}
+              targetType: {type: string}
+              targetId: {type: string, format: uuid}
+              outcome: {type: string, enum: [attempted, succeeded, failed]}
+              reason: {type: [string, "null"]}
+              correlationId: {type: string, format: uuid}
+              before: {}
+              after: {}
+              occurredAt: {type: string, format: date-time}
+        page: {type: integer, minimum: 0}
+        hasMore: {type: boolean}
 
     PermissionDefinition:
       type: object
@@ -2157,9 +2515,12 @@ components:
 
     PortalCapabilities:
       type: object
-      required: [branchId, permissions, enabledFeatures, configurationVersion]
+      required: [branchId, restaurantId, timeZone, currency, permissions, enabledFeatures, configurationVersion]
       properties:
         branchId: {type: string, format: uuid}
+        restaurantId: {type: string, format: uuid}
+        timeZone: {type: string}
+        currency: {type: string, pattern: "^[A-Z]{3}$"}
         permissions: {type: array, items: {$ref: "#/components/schemas/PermissionKey"}}
         enabledFeatures: {type: array, items: {type: string}}
         configurationVersion: {type: integer, minimum: 1}

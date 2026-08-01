@@ -84,6 +84,9 @@ async function mockReadyPortal(
         contentType: "application/json",
         body: JSON.stringify({
           branchId,
+          restaurantId,
+          timeZone: "Africa/Algiers",
+          currency: "DZD",
           permissions: overrides.permissions ?? [
             "orders.view",
             "kitchen.update",
@@ -1296,4 +1299,208 @@ test("requires explicit confirmation for the critical unpaid completion UI", asy
   await expect(submit).toBeEnabled();
   await submit.click();
   await expect.poll(() => completionCalls).toBe(1);
+});
+
+test("keeps the staff insights workspaces usable across desktop, tablet, and mobile widths", async ({
+  page,
+}) => {
+  const notificationId = "00000000-0000-4000-8000-000000000151";
+  const auditId = "00000000-0000-4000-8000-000000000152";
+  const instant = "2026-08-01T12:00:00.000Z";
+  await mockReadyPortal(page, {
+    permissions: ["reports.view", "audit.view"],
+    enabledFeatures: ["notifications", "reporting", "audit"],
+    grants: [
+      { permissionKey: "reports.view", restaurantId, branchId },
+      { permissionKey: "audit.view", restaurantId, branchId },
+    ],
+  });
+  await page.route("**/api/v1/staff/notifications?*", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        items: [
+          {
+            id: notificationId,
+            eventId: "00000000-0000-4000-8000-000000000153",
+            restaurantId,
+            branchId,
+            type: "new_order",
+            groupKey: "order:ORD-000021",
+            title: "New order at T-12",
+            body: "ORD-000021 is ready for the kitchen queue.",
+            taskState: "unhandled",
+            readAt: null,
+            acknowledgedAt: null,
+            occurredAt: instant,
+            expiresAt: "2026-08-31T12:00:00.000Z",
+          },
+        ],
+      }),
+    }),
+  );
+  await page.route("**/api/v1/staff/notification-events?*", (route) =>
+    route.fulfill({
+      status: 204,
+      contentType: "text/event-stream",
+      body: "",
+    }),
+  );
+  await page.route("**/api/v1/staff/branches/*/dashboard", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        branch: {
+          branchName: "Central branch",
+          restaurantName: "Mise Test Kitchen",
+          timeZone: "Africa/Algiers",
+          currency: "DZD",
+        },
+        activeOrders: 3,
+        orderStates: [],
+        occupiedTables: 2,
+        pendingRequests: { bills: 1, cancellations: 0 },
+        kitchenWaiting: [],
+        dailySales: [
+          {
+            currency: "DZD",
+            grossAmount: "4200.00",
+            paidAmount: "4200.00",
+            refundedAmount: "0.00",
+            cancelledAmount: "0.00",
+          },
+        ],
+        enabledWidgets: ["orders", "tables", "kitchen", "payments"],
+      }),
+    }),
+  );
+  await page.route("**/api/v1/staff/reports/sales?*", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        rows: [
+          {
+            restaurantName: "Mise Test Kitchen",
+            branchName: "Central branch",
+            orderId,
+            orderReference: "ORD-000021",
+            businessDate: "2026-08-01",
+            currency: "DZD",
+            grossAmount: "4200.00",
+            cancelledAmount: "0.00",
+            paidAmount: "4200.00",
+            refundedAmount: "0.00",
+            paymentMethod: "card",
+            orderState: "completed",
+          },
+        ],
+        totals: [
+          {
+            currency: "DZD",
+            grossAmount: "4200.00",
+            cancelledAmount: "0.00",
+            paidAmount: "4200.00",
+            refundedAmount: "0.00",
+          },
+        ],
+        page: 0,
+        hasMore: false,
+      }),
+    }),
+  );
+  await page.route("**/api/v1/staff/audit-events?*", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        items: [
+          {
+            id: auditId,
+            actorUserId: employeeId,
+            action: "payments.payment_recorded",
+            targetType: "order",
+            targetId: orderId,
+            branchId,
+            outcome: "succeeded",
+            reason: "Payment confirmed at the desk",
+            before: { financial: "unpaid" },
+            after: { financial: "paid" },
+            occurredAt: instant,
+          },
+        ],
+        page: 0,
+        hasMore: false,
+      }),
+    }),
+  );
+
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/");
+  await expect(
+    page.getByRole("heading", { name: "Current branch activity" }),
+  ).toBeVisible();
+  await page.screenshot({
+    path: "test-results/slice008-staff-desktop-dashboard.png",
+    fullPage: true,
+  });
+
+  await page.setViewportSize({ width: 1024, height: 768 });
+  await page
+    .getByRole("button", { name: "Notifications", exact: true })
+    .click();
+  await expect(
+    page.getByRole("heading", {
+      name: "Notifications that survive reconnects",
+    }),
+  ).toBeVisible();
+  await page.screenshot({
+    path: "test-results/slice008-staff-tablet-inbox.png",
+    fullPage: true,
+  });
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByRole("button", { name: "Reports" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Sales report" }),
+  ).toBeVisible();
+  await page.screenshot({
+    path: "test-results/slice008-staff-mobile-report.png",
+    fullPage: true,
+  });
+  const reportTable = page.getByLabel(
+    "Sales report table. Scroll horizontally to view all columns.",
+  );
+  await reportTable.focus();
+  const initialScrollLeft = await reportTable.evaluate(
+    (element) => element.scrollLeft,
+  );
+  await page.keyboard.press("ArrowRight");
+  await expect
+    .poll(() => reportTable.evaluate((element) => element.scrollLeft))
+    .toBeGreaterThan(initialScrollLeft);
+  await page.screenshot({
+    path: "test-results/slice008-staff-mobile-report-focused.png",
+    fullPage: true,
+  });
+  const reportAccessibility = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
+    .analyze();
+  expect(reportAccessibility.violations).toEqual([]);
+  expect(
+    await page
+      .locator("body")
+      .evaluate((body) => body.scrollWidth <= body.clientWidth),
+  ).toBe(true);
+
+  await page.getByRole("button", { name: "Audit" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Audit history" }),
+  ).toBeVisible();
+  const auditAccessibility = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
+    .analyze();
+  expect(auditAccessibility.violations).toEqual([]);
 });

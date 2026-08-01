@@ -8,6 +8,12 @@ export {
   type OutboxMessage,
 } from "./database/outbox-writer.js";
 export {
+  PostgresOutboxProcessor,
+  type OutboxEvent,
+  type OutboxEventHandler,
+  type OutboxProcessorOptions,
+} from "./database/outbox-processor.js";
+export {
   beginIdempotentCommand,
   completeIdempotentCommand,
   type BeginIdempotentCommandInput,

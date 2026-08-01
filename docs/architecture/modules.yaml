@@ -28,6 +28,7 @@ modules:
       - staff_sessions
       - permission_grants
       - permission_templates
+      - permission_template_states
       - support_access_grants
     exposes:
       - authenticate_staff
@@ -37,7 +38,7 @@ modules:
       - invite_existing_employee
       - recover_credentials
       - protect_last_administrator
-    publishes: [EVT-IDENTITY-OWNER-BOOTSTRAPPED, EVT-IDENTITY-SESSION-REVOKED, EVT-IDENTITY-STAFF-INVITED, EVT-IDENTITY-INVITATION-ACCEPTED, EVT-IDENTITY-CREDENTIALS-RECOVERED, EVT-IDENTITY-ADMINISTRATOR-REMOVED, EVT-IDENTITY-ADMINISTRATOR-TRANSFERRED, EVT-IDENTITY-EMPLOYEE-DEACTIVATED, EVT-IDENTITY-PERMISSIONS-CHANGED, EVT-IDENTITY-SUPPORT-ACCESS-GRANTED, EVT-IDENTITY-SUPPORT-ACCESS-REVOKED]
+    publishes: [EVT-IDENTITY-OWNER-BOOTSTRAPPED, EVT-IDENTITY-SESSION-REVOKED, EVT-IDENTITY-STAFF-INVITED, EVT-IDENTITY-INVITATION-ACCEPTED, EVT-IDENTITY-CREDENTIALS-RECOVERED, EVT-IDENTITY-ADMINISTRATOR-REMOVED, EVT-IDENTITY-ADMINISTRATOR-TRANSFERRED, EVT-IDENTITY-EMPLOYEE-DEACTIVATED, EVT-IDENTITY-PERMISSIONS-CHANGED, EVT-IDENTITY-PERMISSION-TEMPLATE-DEACTIVATED, EVT-IDENTITY-SUPPORT-ACCESS-GRANTED, EVT-IDENTITY-SUPPORT-ACCESS-REVOKED]
     never_owns: [employee_profile, restaurant_configuration]
 
   restaurant_configuration:
@@ -57,6 +58,7 @@ modules:
       - create_and_manage_restaurant
       - create_and_manage_branch
       - manage_branch_operating_information
+      - read_reporting_branch_and_restaurant_source
     publishes: [EVT-RESTAURANT-CREATED, EVT-RESTAURANT-UPDATED, EVT-BRANCH-CREATED, EVT-BRANCH-UPDATED, EVT-RESTAURANT-EMPLOYEE-CREATED, EVT-RESTAURANT-EMPLOYEE-UPDATED, EVT-RESTAURANT-EMPLOYEE-BRANCH-SCOPE-CHANGED, EVT-RESTAURANT-FEATURE-CONFIGURATION-CHANGED]
 
   menu:
@@ -86,6 +88,7 @@ modules:
       - validate_table_session
       - move_table_session
       - close_table_session
+      - read_reporting_table_session_source
     publishes: [EVT-TABLE-SESSION-OPENED, EVT-TABLE-SESSION-MOVED, EVT-TABLE-SESSION-CLOSED]
 
   ordering:
@@ -114,6 +117,7 @@ modules:
       - resolve_open_order_requests
       - reassign_table_session_references
       - table_session_has_unresolved_work
+      - read_reporting_order_source
     publishes:
       - EVT-ORDER-SUBMITTED
       - EVT-ORDER-ACCEPTED
@@ -140,6 +144,7 @@ modules:
       - cancel_unstarted_item
       - replace_unstarted_work_for_correction
       - reassign_live_work_to_table
+      - read_reporting_kitchen_source
     publishes: [EVT-KITCHEN-ITEM-STARTED, EVT-KITCHEN-ITEM-READY, EVT-KITCHEN-ITEM-CANCELLED]
 
   payments:
@@ -154,6 +159,7 @@ modules:
       - get_order_balance
       - get_order_ledger
       - verify_order_paid
+      - read_reporting_payment_source
     publishes: [EVT-PAYMENT-RECORDED, EVT-PAYMENT-REFUNDED, EVT-ORDER-PAID]
 
   notifications:
@@ -169,6 +175,20 @@ modules:
       - EVT-ORDER-CORRECTED
       - EVT-TABLE-SESSION-MOVED
       - EVT-BILL-REQUESTED
+      - EVT-PAYMENT-RECORDED
+      - EVT-PAYMENT-REFUNDED
+      - EVT-ORDER-PAID
+      - EVT-RESTAURANT-FEATURE-CONFIGURATION-CHANGED
+      - EVT-RESTAURANT-EMPLOYEE-CREATED
+      - EVT-RESTAURANT-EMPLOYEE-UPDATED
+      - EVT-RESTAURANT-EMPLOYEE-BRANCH-SCOPE-CHANGED
+      - EVT-BRANCH-CREATED
+      - EVT-BRANCH-UPDATED
+      - EVT-IDENTITY-ADMINISTRATOR-REMOVED
+      - EVT-IDENTITY-ADMINISTRATOR-TRANSFERRED
+      - EVT-IDENTITY-EMPLOYEE-DEACTIVATED
+      - EVT-IDENTITY-PERMISSIONS-CHANGED
+      - EVT-IDENTITY-PERMISSION-TEMPLATE-DEACTIVATED
     exposes: [get_notification_inbox, acknowledge_notification, stream_notifications]
 
   reporting:
@@ -188,6 +208,18 @@ modules:
       - EVT-PAYMENT-REFUNDED
       - EVT-BILL-REQUESTED
       - EVT-BILL-REQUEST-RESOLVED
+      - EVT-ORDER-SUBMITTED
+      - EVT-ORDER-READY
+      - EVT-KITCHEN-ITEM-STARTED
+      - EVT-KITCHEN-ITEM-READY
+      - EVT-KITCHEN-ITEM-CANCELLED
+      - EVT-TABLE-SESSION-OPENED
+      - EVT-TABLE-SESSION-MOVED
+      - EVT-TABLE-SESSION-CLOSED
+      - EVT-RESTAURANT-CREATED
+      - EVT-RESTAURANT-UPDATED
+      - EVT-BRANCH-CREATED
+      - EVT-BRANCH-UPDATED
     exposes: [get_branch_dashboard, get_sales_report]
 
   audit:
@@ -222,5 +254,11 @@ allowed_synchronous_dependencies:
     - payments
     - audit
   ordering: [restaurant_configuration, menu, tables]
-  notifications: [identity_access]
-  reporting: [identity_access]
+  notifications: [identity_access, restaurant_configuration]
+  reporting:
+    - identity_access
+    - restaurant_configuration
+    - tables
+    - ordering
+    - kitchen
+    - payments

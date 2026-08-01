@@ -189,6 +189,9 @@ importers:
       '@rms/building-blocks':
         specifier: workspace:*
         version: link:../../packages/building-blocks
+      '@rms/modules':
+        specifier: workspace:*
+        version: link:../../packages/modules
       pino:
         specifier: 10.3.1
         version: 10.3.1

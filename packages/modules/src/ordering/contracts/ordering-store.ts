@@ -28,6 +28,11 @@ export interface CreateGuestSessionInput {
 }
 
 export interface OrderingStore {
+  branchHasActiveOrders(
+    sql: SqlExecutor,
+    businessAccountId: string,
+    branchId: string,
+  ): Promise<boolean>;
   createGuestSession(
     transaction: TransactionContext,
     input: CreateGuestSessionInput,

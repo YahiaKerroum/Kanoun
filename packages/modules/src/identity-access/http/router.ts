@@ -12,11 +12,13 @@ import type {
 import { permissionDefinitions } from "../domain/permission-catalog.js";
 import {
   applyPermissionTemplateSchema,
+  deactivatePermissionTemplateSchema,
   administratorChangeSchema,
   administratorTransferSchema,
   branchSwitchSchema,
   employeeDeactivationSchema,
   employeeIdParametersSchema,
+  permissionTemplateParametersSchema,
   invitationAcceptanceSchema,
   loginSchema,
   recoveryCompletionSchema,
@@ -115,6 +117,15 @@ export interface IdentityHttpUseCases {
     reason: string,
     metadata: RequestMetadata,
   ): Promise<PermissionSet>;
+  deactivatePermissionTemplate(
+    context: StaffRequestContext,
+    templateKey: z.infer<
+      typeof permissionTemplateParametersSchema
+    >["templateKey"],
+    expectedVersion: number,
+    reason: string,
+    metadata: RequestMetadata,
+  ): Promise<PermissionTemplate>;
 }
 
 export interface IdentityRouterDependencies extends SessionMiddlewareDependencies {
@@ -378,6 +389,28 @@ export function createIdentityAccessRouter(
         ),
         catalog: permissionDefinitions,
       });
+    },
+  );
+
+  router.post(
+    "/staff/permission-templates/:templateKey/deactivation",
+    permissionLimiter,
+    requireStaffSession(),
+    requireCsrf,
+    async (request, response) => {
+      const parameters = parse(
+        permissionTemplateParametersSchema,
+        request.params,
+      );
+      const input = parse(deactivatePermissionTemplateSchema, request.body);
+      const template = await dependencies.useCases.deactivatePermissionTemplate(
+        requireContext(request),
+        parameters.templateKey,
+        input.expectedVersion,
+        input.reason,
+        metadata(request),
+      );
+      response.send(template);
     },
   );
 

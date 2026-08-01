@@ -7,7 +7,9 @@ import {
   IdentitySecurity,
   PostgresAuditWriter,
   PostgresIdentityAccessStore,
+  PostgresOrderingStore,
   PostgresRestaurantConfigurationStore,
+  PostgresTablesStore,
 } from "@rms/modules";
 import { PostgresServiceWorkflow } from "./postgres-service-workflow.js";
 import {
@@ -72,6 +74,8 @@ describeWithDatabase("tenant, branch, and owner bootstrap", () => {
   const workflow = new PostgresServiceWorkflow(databasePool);
   const restaurantConfiguration = new PostgresRestaurantConfigurationStore();
   const identityAccess = new PostgresIdentityAccessStore();
+  const ordering = new PostgresOrderingStore();
+  const tables = new PostgresTablesStore();
   const identitySecurity = new IdentitySecurity(
     "slice-002-test-token-secret-with-32-characters",
   );
@@ -90,6 +94,8 @@ describeWithDatabase("tenant, branch, and owner bootstrap", () => {
     identitySecurity,
     audit: new PostgresAuditWriter(),
     credentialTokenDelivery: tokenDelivery,
+    ordering,
+    tables,
   });
 
   let first: TenantBootstrapResult;
@@ -910,6 +916,95 @@ describeWithDatabase("tenant, branch, and owner bootstrap", () => {
     expect(
       await service.authenticateSession(staff.sessionToken),
     ).toBeUndefined();
+  });
+
+  it("deactivates permission templates only within the authorized restaurant", async () => {
+    const code = `template-scope-${randomUUID().slice(0, 8)}`;
+    const tenant = await service.bootstrapTenant(
+      bootstrapInput(code),
+      metadata(),
+    );
+    const owner = await service.login(
+      {
+        businessCode: code,
+        email: `owner-${code}@example.test`,
+        password: "Correct-Horse-42",
+      },
+      metadata(),
+    );
+    const siblingRestaurant = await service.createRestaurant(
+      owner.context,
+      { name: "Sibling template scope" },
+      metadata(),
+    );
+    const siblingContext = {
+      ...owner.context,
+      restaurantId: siblingRestaurant.id,
+    };
+
+    const changed = await service.deactivatePermissionTemplate(
+      owner.context,
+      "cashier",
+      1,
+      "Retire cashier template for this restaurant",
+      metadata(),
+    );
+
+    expect(changed).toMatchObject({
+      key: "cashier",
+      active: false,
+      version: 2,
+    });
+    expect(
+      (await service.listPermissionTemplates(owner.context)).find(
+        (template) => template.key === "cashier",
+      ),
+    ).toMatchObject({ active: false, version: 2 });
+    expect(
+      (await service.listPermissionTemplates(siblingContext)).find(
+        (template) => template.key === "cashier",
+      ),
+    ).toMatchObject({ active: true, version: 1 });
+
+    const evidence = await databasePool.query<{
+      state_id: string;
+      state_restaurant_id: string;
+      event_aggregate_id: string;
+      event_restaurant_id: string;
+      audit_target_id: string;
+      audit_restaurant_id: string;
+    }>(
+      `
+        select state.id as state_id,
+          state.restaurant_id as state_restaurant_id,
+          event.aggregate_id as event_aggregate_id,
+          event.restaurant_id as event_restaurant_id,
+          audit.target_id as audit_target_id,
+          audit.restaurant_id as audit_restaurant_id
+        from identity.permission_template_states state
+        join platform.outbox_messages event
+          on event.business_account_id = state.business_account_id
+         and event.aggregate_id = state.id
+         and event.event_type = 'identity.permission_template_deactivated.v1'
+        join audit.audit_events audit
+          on audit.business_account_id = state.business_account_id
+         and audit.target_id = state.id
+         and audit.action = 'identity.permission_template_deactivated'
+        where state.business_account_id = $1
+          and state.restaurant_id = $2
+          and state.template_key = 'cashier'
+      `,
+      [tenant.businessAccountId, tenant.restaurant.id],
+    );
+    expect(evidence.rows[0]).toMatchObject({
+      state_restaurant_id: tenant.restaurant.id,
+      event_restaurant_id: tenant.restaurant.id,
+      audit_restaurant_id: tenant.restaurant.id,
+    });
+    expect(evidence.rows[0]?.event_aggregate_id).toBe(
+      evidence.rows[0]?.state_id,
+    );
+    expect(evidence.rows[0]?.audit_target_id).toBe(evidence.rows[0]?.state_id);
   });
 
   it("rejects permission and branch delegation beyond the actor's own authority without partial writes", async () => {

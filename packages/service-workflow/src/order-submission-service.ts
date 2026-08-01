@@ -504,11 +504,12 @@ export class OrderSubmissionService {
         return order;
       }
 
-      const branch = await this.dependencies.restaurantConfiguration.getBranch(
-        transaction.sql,
-        actor.businessAccountId,
-        actor.branchId,
-      );
+      const branch =
+        await this.dependencies.restaurantConfiguration.lockBranchLifecycle(
+          transaction,
+          actor.businessAccountId,
+          actor.branchId,
+        );
       if (branch?.restaurantId !== actor.restaurantId) {
         throw new ApplicationError(
           "resource_not_found",

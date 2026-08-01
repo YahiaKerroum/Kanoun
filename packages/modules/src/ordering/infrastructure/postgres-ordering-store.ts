@@ -342,6 +342,26 @@ async function readCorrections(
 }
 
 export class PostgresOrderingStore implements OrderingStore {
+  public async branchHasActiveOrders(
+    sql: SqlExecutor,
+    businessAccountId: string,
+    branchId: string,
+  ): Promise<boolean> {
+    const result = await sql.query<{ exists: boolean }>(
+      `
+        select exists (
+          select 1
+          from ordering.orders
+          where business_account_id = $1
+            and branch_id = $2
+            and closure_state = 'active'
+        ) as exists
+      `,
+      [businessAccountId, branchId],
+    );
+    return result.rows[0]?.exists ?? false;
+  }
+
   public async createGuestSession(
     transaction: TransactionContext,
     input: CreateGuestSessionInput,

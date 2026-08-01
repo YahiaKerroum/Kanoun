@@ -1146,6 +1146,24 @@ export class MenuTablesService {
       rethrowTableCodeConflict(error);
     }
     if (!table) {
+      const current = await this.dependencies.tables.getTable(
+        this.dependencies.databasePool,
+        context.businessAccountId,
+        tableId,
+      );
+      if (
+        input.status === "inactive" &&
+        current?.version === input.expectedVersion &&
+        current.derivedState === "occupied"
+      ) {
+        throw new ApplicationError(
+          "invalid_state_transition",
+          409,
+          "Occupied table cannot be deactivated",
+          "Complete or move the active table session before deactivating this table.",
+          current.version,
+        );
+      }
       throw new ApplicationError(
         "concurrency_conflict",
         409,

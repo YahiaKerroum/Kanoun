@@ -342,7 +342,7 @@ test("builds, reviews, submits, tracks, and requests cancellation for an order",
   await expect(page.getByText("ORD-000012")).toBeVisible();
   await expect(page.getByText("Received")).toBeVisible();
   await page.getByRole("button", { name: "Refresh status" }).click();
-  await expect(page.getByText("Ready")).toBeVisible();
+  await expect(page.getByText("Ready", { exact: true })).toBeVisible();
 
   await page.getByRole("button", { name: "Request the bill" }).click();
   await expect(

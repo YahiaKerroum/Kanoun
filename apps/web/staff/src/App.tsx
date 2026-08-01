@@ -30,6 +30,12 @@ import { MenuWorkspace, TablesWorkspace } from "./OperationalWorkspaces.js";
 import { KitchenWorkspace } from "./KitchenWorkspace.js";
 import { OrdersWorkspace } from "./OrdersWorkspace.js";
 import { PaymentsWorkspace } from "./PaymentsWorkspace.js";
+import {
+  AuditWorkspace,
+  DashboardWorkspace,
+  NotificationInboxWorkspace,
+  SalesReportWorkspace,
+} from "./InsightsWorkspaces.js";
 
 type Section =
   | "Home"
@@ -42,7 +48,8 @@ type Section =
   | "Staff"
   | "Reports"
   | "Setup"
-  | "Audit";
+  | "Audit"
+  | "Notifications";
 
 interface NavigationItem {
   readonly label: Section;
@@ -55,6 +62,12 @@ interface NavigationItem {
 
 const navigationItems: readonly NavigationItem[] = [
   { label: "Home", icon: House, group: "service" },
+  {
+    label: "Notifications",
+    icon: Bell,
+    group: "service",
+    requiredFeature: "notifications",
+  },
   {
     label: "Orders",
     icon: ClipboardList,
@@ -143,6 +156,9 @@ const sessionSchema = z.object({
 
 const capabilitiesSchema = z.object({
   branchId: z.uuid(),
+  restaurantId: z.uuid(),
+  timeZone: z.string(),
+  currency: z.string().regex(/^[A-Z]{3}$/),
   permissions: z.array(z.string()),
   enabledFeatures: z.array(z.string()),
   configurationVersion: z.number().int().positive(),
@@ -282,44 +298,6 @@ function shortIdentifier(identifier: string): string {
   return `…${identifier.slice(-8)}`;
 }
 
-function resolveActiveRestaurantId(
-  session: StaffSession,
-  branchId: string,
-): string | null {
-  const exactBranchRestaurants = new Set(
-    session.grants
-      .filter(
-        (grant) =>
-          grant.branchId === branchId && grant.restaurantId !== undefined,
-      )
-      .map((grant) => grant.restaurantId)
-      .filter(
-        (restaurantId): restaurantId is string => restaurantId !== undefined,
-      ),
-  );
-  if (exactBranchRestaurants.size === 1) {
-    return [...exactBranchRestaurants][0] ?? null;
-  }
-  if (exactBranchRestaurants.size > 1) {
-    return null;
-  }
-
-  const restaurantScopedGrants = new Set(
-    session.grants
-      .filter(
-        (grant) =>
-          grant.branchId === undefined && grant.restaurantId !== undefined,
-      )
-      .map((grant) => grant.restaurantId)
-      .filter(
-        (restaurantId): restaurantId is string => restaurantId !== undefined,
-      ),
-  );
-  return restaurantScopedGrants.size === 1
-    ? ([...restaurantScopedGrants][0] ?? null)
-    : null;
-}
-
 export function App() {
   const [activeSection, setActiveSection] = useState<Section>("Home");
   const [portal, setPortal] = useState<PortalState>({ kind: "loading" });
@@ -381,9 +359,9 @@ export function App() {
   )
     ? activeSection
     : "Home";
-  const activeRestaurantId = resolveActiveRestaurantId(
-    portal.session,
-    portal.capabilities.branchId,
+  const activeRestaurantId = portal.capabilities.restaurantId;
+  const notificationsAvailable = availableNavigation.some(
+    (item) => item.label === "Notifications",
   );
 
   return (
@@ -483,8 +461,10 @@ export function App() {
               <button
                 className="icon-button"
                 type="button"
-                aria-label="Notifications are not implemented yet"
-                disabled
+                aria-label="Open notifications"
+                aria-pressed={visibleSection === "Notifications"}
+                disabled={!notificationsAvailable}
+                onClick={() => selectSection("Notifications")}
               >
                 <Bell aria-hidden="true" size={20} />
               </button>
@@ -497,6 +477,14 @@ export function App() {
                   destinationCount={availableNavigation.length}
                   readiness={readiness}
                   statusId={statusId}
+                  branchId={portal.capabilities.branchId}
+                  canViewReports={portal.capabilities.permissions.includes(
+                    "reports.view",
+                  )}
+                />
+              ) : visibleSection === "Notifications" ? (
+                <NotificationInboxWorkspace
+                  branchId={portal.capabilities.branchId}
                 />
               ) : visibleSection === "Orders" ? (
                 <OrdersWorkspace
@@ -571,6 +559,22 @@ export function App() {
                     "tables.view",
                   )}
                 />
+              ) : visibleSection === "Reports" ? (
+                <SalesReportWorkspace
+                  branchId={portal.capabilities.branchId}
+                  timeZone={portal.capabilities.timeZone}
+                  canView={portal.capabilities.permissions.includes(
+                    "reports.view",
+                  )}
+                />
+              ) : visibleSection === "Audit" ? (
+                <AuditWorkspace
+                  restaurantId={activeRestaurantId}
+                  branchId={portal.capabilities.branchId}
+                  canView={portal.capabilities.permissions.includes(
+                    "audit.view",
+                  )}
+                />
               ) : (
                 <DeferredWorkspace section={visibleSection} />
               )}
@@ -641,11 +645,15 @@ function HomeWorkspace({
   destinationCount,
   readiness,
   statusId,
+  branchId,
+  canViewReports,
 }: {
   readonly capabilities: PortalCapabilities;
   readonly destinationCount: number;
   readonly readiness: Readiness;
   readonly statusId: string;
+  readonly branchId: string;
+  readonly canViewReports: boolean;
 }) {
   const apiReady = readiness.kind === "ready";
 
@@ -768,6 +776,7 @@ function HomeWorkspace({
           <span className="working-name">Working product name</span>
         </section>
       </div>
+      <DashboardWorkspace branchId={branchId} canView={canViewReports} />
     </div>
   );
 }
