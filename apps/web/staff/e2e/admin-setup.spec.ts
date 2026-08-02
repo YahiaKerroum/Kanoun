@@ -43,6 +43,10 @@ test("administration begins at a protected, accessible sign-in state", async ({
     "autocomplete",
     "current-password",
   );
+  await captureReadmeScreenshot(
+    page,
+    "test-results/readme-admin-protected-sign-in.png",
+  );
 
   const results = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])

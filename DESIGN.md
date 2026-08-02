@@ -63,6 +63,17 @@ below 720px.
   brand-dark focus, disabled opacity.
 - **Accessibility:** keyboard operable with an accessible label.
 
+### Access indicator
+
+- **Structure:** a 36px warm-tinted tile containing one centered 19px line
+  icon, followed by a text summary and a compact state label.
+- **States:** ready, waiting, and unavailable use the established semantic
+  color tokens; the tile remains a non-interactive visual aid.
+- **Layout:** the tile is a centering grid and the state label is an inline
+  flex container. Text-only selectors must not override either display mode.
+- **Accessibility:** the icon is decorative because the adjacent copy names
+  the capability and its current state.
+
 ### Dish card
 
 - **Structure:** optional descriptive image, dish copy, price, availability,

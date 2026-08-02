@@ -525,12 +525,8 @@ button:disabled {
   border-bottom: 1px solid var(--line);
 }
 
-.check-list strong,
-.check-list span {
-  display: block;
-}
-
 .check-list strong {
+  display: block;
   font-size: 13px;
 }
 
@@ -554,6 +550,7 @@ button:disabled {
 }
 
 .access-icon svg {
+  display: block;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
@@ -1606,10 +1603,10 @@ button:disabled {
   }
 
   .navigation-item {
-    width: 74px;
+    width: 70px;
     height: 58px;
     min-height: 58px;
-    flex: 0 0 74px;
+    flex: 0 0 70px;
   }
 
   .navigation-item--group-start {

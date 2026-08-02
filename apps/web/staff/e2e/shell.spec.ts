@@ -53,6 +53,7 @@ const activeOrder = {
 interface PortalOverrides {
   readonly permissions?: readonly string[];
   readonly enabledFeatures?: readonly string[];
+  readonly includeReadmeNavigation?: boolean;
   readonly grants?: readonly {
     readonly permissionKey: string;
     readonly restaurantId?: string;
@@ -60,10 +61,112 @@ interface PortalOverrides {
   }[];
 }
 
+const readmeNavigationLabels = [
+  "Home",
+  "Notifications",
+  "Orders",
+  "Tables",
+  "Kitchen",
+  "Payments",
+  "Menu",
+  "Staff",
+  "Reports",
+  "Setup",
+  "Audit",
+] as const;
+
+const readmePermissions = [
+  "orders.view",
+  "tables.view",
+  "kitchen.view",
+  "payments.view",
+  "menu.view",
+  "employees.view",
+  "reports.view",
+  "features.manage",
+  "audit.view",
+] as const;
+
+const readmeFeatures = [
+  "restaurant_configuration",
+  "identity_access",
+  "menu",
+  "ordering",
+  "tables",
+  "kitchen",
+  "payments",
+  "notifications",
+  "reporting",
+  "audit",
+] as const;
+
+function withReadmeValues(
+  values: readonly string[] | undefined,
+  readmeValues: readonly string[],
+  includeReadmeNavigation: boolean,
+): readonly string[] | undefined {
+  if (!includeReadmeNavigation) {
+    return values;
+  }
+  return [...new Set([...readmeValues, ...(values ?? [])])];
+}
+
+async function expectCanonicalReadmeNavigation(page: Page): Promise<void> {
+  const navigation = page.getByRole("navigation", {
+    name: "Staff navigation",
+  });
+  await expect(navigation).toBeVisible();
+  const navigationBox = await navigation.boundingBox();
+  expect(navigationBox).not.toBeNull();
+  for (const label of readmeNavigationLabels) {
+    const destination = navigation.getByRole("button", {
+      name: label,
+      exact: true,
+    });
+    await expect(destination).toBeVisible();
+    const destinationBox = await destination.boundingBox();
+    expect(destinationBox).not.toBeNull();
+    if (navigationBox !== null && destinationBox !== null) {
+      expect(destinationBox.x).toBeGreaterThanOrEqual(navigationBox.x);
+      expect(destinationBox.x + destinationBox.width).toBeLessThanOrEqual(
+        navigationBox.x + navigationBox.width,
+      );
+    }
+  }
+  await expect(
+    navigation.getByRole("button", { name: "Stock", exact: true }),
+  ).toHaveCount(0);
+}
+
+async function resetReadmeCaptureScroll(page: Page): Promise<void> {
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve) => {
+        requestAnimationFrame(() =>
+          requestAnimationFrame(() => {
+            window.scrollTo(0, 0);
+            document.scrollingElement?.scrollTo(0, 0);
+            document.querySelector<HTMLElement>(".workspace")?.scrollTo(0, 0);
+            document
+              .querySelector<HTMLElement>(".navigation-rail__items")
+              ?.scrollTo(0, 0);
+            resolve();
+          }),
+        );
+      }),
+  );
+}
+
 async function captureReadmeScreenshot(
   page: Page,
   path: string,
+  options: { readonly scrollTarget?: string } = {},
 ): Promise<void> {
+  if (path.includes("readme-staff-")) {
+    await page.setViewportSize({ width: 820, height: 1200 });
+    await resetReadmeCaptureScroll(page);
+    await expectCanonicalReadmeNavigation(page);
+  }
   await page.evaluate(() => {
     const focusedElement = document.activeElement;
     if (focusedElement instanceof HTMLElement) {
@@ -85,6 +188,20 @@ async function captureReadmeScreenshot(
       width: viewport.width,
       height: Math.min(contentHeight, 1600),
     });
+    await resetReadmeCaptureScroll(page);
+    if (path.includes("readme-staff-")) {
+      await expectCanonicalReadmeNavigation(page);
+      await resetReadmeCaptureScroll(page);
+    }
+  }
+  if (options.scrollTarget !== undefined) {
+    await page.locator(options.scrollTarget).evaluate((element) => {
+      element.scrollIntoView({ block: "start" });
+      document
+        .querySelector<HTMLElement>(".navigation-rail__items")
+        ?.scrollTo(0, 0);
+    });
+    await expectCanonicalReadmeNavigation(page);
   }
   await page.screenshot({ path, fullPage: !isCompactCapture });
 }
@@ -93,6 +210,17 @@ async function mockReadyPortal(
   page: Page,
   overrides: PortalOverrides = {},
 ): Promise<void> {
+  const includeReadmeNavigation = overrides.includeReadmeNavigation ?? false;
+  const permissions = withReadmeValues(
+    overrides.permissions,
+    readmePermissions,
+    includeReadmeNavigation,
+  );
+  const enabledFeatures = withReadmeValues(
+    overrides.enabledFeatures,
+    readmeFeatures,
+    includeReadmeNavigation,
+  );
   await page.route("**/api/v1/auth/session", (route) =>
     route.fulfill({
       status: 200,
@@ -118,13 +246,13 @@ async function mockReadyPortal(
           restaurantId,
           timeZone: "Africa/Algiers",
           currency: "DZD",
-          permissions: overrides.permissions ?? [
+          permissions: permissions ?? [
             "orders.view",
             "kitchen.update",
             "menu.view",
             "audit.view",
           ],
-          enabledFeatures: overrides.enabledFeatures ?? [
+          enabledFeatures: enabledFeatures ?? [
             "restaurant_configuration",
             "identity_access",
             "ordering",
@@ -209,10 +337,37 @@ test("shows only destinations allowed by both permissions and enabled features",
   await expect(page.getByRole("button", { name: "Reports" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Setup" })).toHaveCount(0);
 
+  const accessIcons = page.locator(".access-icon");
+  await expect(accessIcons).toHaveCount(3);
+  for (const accessIcon of await accessIcons.all()) {
+    await expect(accessIcon).toHaveCSS("display", "grid");
+    const iconTile = await accessIcon.boundingBox();
+    const iconGlyph = await accessIcon.locator("svg").boundingBox();
+    expect(iconTile).not.toBeNull();
+    expect(iconGlyph).not.toBeNull();
+    if (iconTile === null || iconGlyph === null) {
+      continue;
+    }
+    expect(iconGlyph.x + iconGlyph.width / 2).toBeCloseTo(
+      iconTile.x + iconTile.width / 2,
+      1,
+    );
+    expect(iconGlyph.y + iconGlyph.height / 2).toBeCloseTo(
+      iconTile.y + iconTile.height / 2,
+      1,
+    );
+  }
+
+  await page.setViewportSize({ width: 375, height: 812 });
   await captureReadmeScreenshot(
     page,
-    "test-results/readme-staff-workspace.png",
+    "test-results/visual-qa-staff-workspace-mobile.png",
   );
+  expect(
+    await page
+      .locator("body")
+      .evaluate((body) => body.scrollWidth <= body.clientWidth),
+  ).toBe(true);
 });
 
 test("keeps order list and entry dependencies behind their exact permission gates", async ({
@@ -263,6 +418,7 @@ test("filters active orders, displays elapsed time, and preserves stale results"
 }) => {
   await page.setViewportSize({ width: 768, height: 1024 });
   await mockReadyPortal(page, {
+    includeReadmeNavigation: true,
     permissions: ["orders.view"],
     enabledFeatures: ["ordering"],
     grants: [
@@ -331,6 +487,7 @@ test("creates a menu- and table-backed staff order with CSRF and idempotency", a
     },
   ]);
   await mockReadyPortal(page, {
+    includeReadmeNavigation: true,
     permissions: ["orders.view", "orders.create", "menu.view", "tables.view"],
     enabledFeatures: ["ordering", "menu", "tables"],
     grants: [
@@ -475,6 +632,12 @@ test("creates a menu- and table-backed staff order with CSRF and idempotency", a
   await dialog.getByLabel("Preparation note (optional)").fill("No chilli");
   await dialog.getByRole("button", { name: "Add item" }).click();
   await expect(dialog.getByText("$21.00").first()).toBeVisible();
+  await page.setViewportSize({ width: 820, height: 1200 });
+  await resetReadmeCaptureScroll(page);
+  await expectCanonicalReadmeNavigation(page);
+  await dialog.screenshot({
+    path: "test-results/readme-staff-order-entry-tablet.png",
+  });
   await dialog.getByRole("button", { name: "Submit order" }).click();
   await expect(dialog.getByText("ORD-000021")).toBeVisible();
 
@@ -509,6 +672,7 @@ test("processes the grouped kitchen queue and ready-order collection accessibly"
     },
   ]);
   await mockReadyPortal(page, {
+    includeReadmeNavigation: true,
     permissions: [
       "orders.view",
       "orders.serve",
@@ -714,11 +878,12 @@ test("preserves the last verified kitchen queue and recovers authoritative state
   await expect(page.getByText(/may be stale/i)).toHaveCount(0);
 });
 
-test("keeps every authorized destination available in the tablet navigation dock", async ({
+test("keeps every current MVP destination available in the README navigation profile", async ({
   page,
 }) => {
-  await page.setViewportSize({ width: 768, height: 1024 });
+  await page.setViewportSize({ width: 820, height: 1200 });
   await mockReadyPortal(page, {
+    includeReadmeNavigation: true,
     permissions: [
       "orders.view",
       "tables.view",
@@ -740,6 +905,35 @@ test("keeps every authorized destination available in the tablet navigation dock
       "audit",
     ],
   });
+  await page.route("**/api/v1/staff/branches/*/dashboard", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        branch: {
+          branchName: "Hydra",
+          restaurantName: "Dar Nedjma",
+          timeZone: "Africa/Algiers",
+          currency: "DZD",
+        },
+        activeOrders: 2,
+        orderStates: [],
+        occupiedTables: 2,
+        pendingRequests: { bills: 0, cancellations: 0 },
+        kitchenWaiting: [],
+        dailySales: [
+          {
+            currency: "DZD",
+            grossAmount: "2750.00",
+            paidAmount: "2750.00",
+            refundedAmount: "0.00",
+            cancelledAmount: "0.00",
+          },
+        ],
+        enabledWidgets: ["orders", "tables", "kitchen", "payments"],
+      }),
+    }),
+  );
   await page.goto("/");
 
   const navigation = page.getByRole("navigation", {
@@ -748,10 +942,23 @@ test("keeps every authorized destination available in the tablet navigation dock
   await expect(navigation).toBeVisible();
   await expect(page.getByRole("button", { name: "Home" })).toBeVisible();
   await expect(
+    navigation.getByRole("button", { name: "Notifications", exact: true }),
+  ).toBeVisible();
+  await expect(
+    navigation.getByRole("button", { name: "Payments", exact: true }),
+  ).toBeVisible();
+  await expect(
     navigation.getByRole("button", { name: "Staff", exact: true }),
   ).toBeVisible();
   await expect(page.getByRole("button", { name: "Audit" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Stock" })).toHaveCount(0);
+  await captureReadmeScreenshot(
+    page,
+    "test-results/readme-staff-workspace.png",
+  );
+  await navigation.screenshot({
+    path: "test-results/readme-staff-tablet-navigation.png",
+  });
 });
 
 test("loads real read-only menu and derived table states for the active scope", async ({
@@ -759,6 +966,7 @@ test("loads real read-only menu and derived table states for the active scope", 
 }) => {
   await page.setViewportSize({ width: 768, height: 1024 });
   await mockReadyPortal(page, {
+    includeReadmeNavigation: true,
     permissions: ["menu.view", "tables.view"],
     enabledFeatures: ["menu", "tables"],
     grants: [
@@ -1028,6 +1236,7 @@ test("records payment and refund with confirmation in the responsive payment des
   let paid = false;
   let refunded = false;
   await mockReadyPortal(page, {
+    includeReadmeNavigation: true,
     permissions: ["payments.view", "payments.record", "payments.refund"],
     enabledFeatures: ["payments"],
     grants: [
@@ -1173,6 +1382,7 @@ test("records payment and refund with confirmation in the responsive payment des
     page,
     "test-results/readme-staff-payments-mobile.png",
   );
+  await page.setViewportSize({ width: 390, height: 844 });
 
   const results = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
@@ -1374,6 +1584,7 @@ test("keeps the staff insights workspaces usable across desktop, tablet, and mob
   const auditId = "00000000-0000-4000-8000-000000000152";
   const instant = "2026-08-01T12:00:00.000Z";
   await mockReadyPortal(page, {
+    includeReadmeNavigation: true,
     permissions: ["reports.view", "audit.view"],
     enabledFeatures: ["notifications", "reporting", "audit"],
     grants: [
@@ -1512,6 +1723,7 @@ test("keeps the staff insights workspaces usable across desktop, tablet, and mob
   await captureReadmeScreenshot(
     page,
     "test-results/readme-staff-dashboard.png",
+    { scrollTarget: "#dashboard-title" },
   );
 
   await page
@@ -1536,6 +1748,7 @@ test("keeps the staff insights workspaces usable across desktop, tablet, and mob
     page,
     "test-results/readme-staff-reports-mobile.png",
   );
+  await page.setViewportSize({ width: 390, height: 844 });
   const reportTable = page.getByLabel(
     "Sales report table. Scroll horizontally to view all columns.",
   );
@@ -1571,6 +1784,7 @@ test("keeps the staff insights workspaces usable across desktop, tablet, and mob
     page,
     "test-results/readme-staff-audit-mobile.png",
   );
+  await page.setViewportSize({ width: 390, height: 844 });
   const auditAccessibility = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
     .analyze();

@@ -339,6 +339,10 @@ test("builds, reviews, submits, tracks, and requests cancellation for an order",
     page.getByRole("button", { name: "Continue browsing" }),
   ).toBeFocused();
   await expect(dialog).toContainText("DZD 4,000");
+  await page.screenshot({
+    path: "test-results/readme-customer-order-review-mobile.png",
+    fullPage: true,
+  });
   await expectNoWcagViolations(page);
 
   await page.keyboard.press("Escape");
