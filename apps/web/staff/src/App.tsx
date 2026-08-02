@@ -1,8 +1,8 @@
 import {
   Bell,
+  BriefcaseBusiness,
   ChefHat,
   ClipboardList,
-  CircleCheckBig,
   CreditCard,
   History,
   House,
@@ -11,11 +11,11 @@ import {
   PackageOpen,
   RefreshCw,
   Settings,
-  ShieldCheck,
-  SlidersHorizontal,
+  KeyRound,
   TableProperties,
   Users,
   UserRound,
+  Wrench,
 } from "lucide-react";
 import type { LucideProps } from "lucide-react";
 import {
@@ -692,8 +692,8 @@ function HomeWorkspace({
           </div>
           <ul className="check-list">
             <li>
-              <span className="check-icon check-icon--ready" aria-hidden="true">
-                <CircleCheckBig size={19} strokeWidth={2.25} />
+              <span className="access-icon" aria-hidden="true">
+                <BriefcaseBusiness size={19} strokeWidth={2.25} />
               </span>
               <div>
                 <strong>{destinationCount} available workspaces</strong>
@@ -702,8 +702,8 @@ function HomeWorkspace({
               <span className="state-label state-label--ready">Ready</span>
             </li>
             <li>
-              <span className="check-icon check-icon--ready" aria-hidden="true">
-                <ShieldCheck size={19} strokeWidth={2.25} />
+              <span className="access-icon" aria-hidden="true">
+                <KeyRound size={19} strokeWidth={2.25} />
               </span>
               <div>
                 <strong>
@@ -714,8 +714,8 @@ function HomeWorkspace({
               <span className="state-label state-label--ready">Effective</span>
             </li>
             <li>
-              <span className="check-icon check-icon--ready" aria-hidden="true">
-                <SlidersHorizontal size={19} strokeWidth={2.25} />
+              <span className="access-icon" aria-hidden="true">
+                <Wrench size={19} strokeWidth={2.25} />
               </span>
               <div>
                 <strong>

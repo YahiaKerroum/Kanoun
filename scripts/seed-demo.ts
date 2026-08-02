@@ -38,7 +38,27 @@ const localGuestAccessSecret =
   "rms-demo-local-guest-access-secret-not-for-production";
 const executeFile = promisify(execFile);
 
-function metadata(now = new Date()) {
+function algerianServiceNoon(): Date {
+  const formattedParts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Africa/Algiers",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts();
+  const year = formattedParts.find((part) => part.type === "year")?.value;
+  const month = formattedParts.find((part) => part.type === "month")?.value;
+  const day = formattedParts.find((part) => part.type === "day")?.value;
+  if (!year || !month || !day) {
+    throw new Error(
+      "Could not resolve the Algerian business date for the demo seed.",
+    );
+  }
+  return new Date(`${year}-${month}-${day}T12:00:00.000+01:00`);
+}
+
+const demoNow = algerianServiceNoon();
+
+function metadata(now = demoNow) {
   const correlationId = randomUUID();
   return { correlationId, causationId: correlationId, now };
 }
@@ -79,6 +99,12 @@ async function main(): Promise<void> {
     "GUEST_ACCESS_SECRET",
     localGuestAccessSecret,
   );
+  const customerWebOrigin = configured(
+    "CUSTOMER_WEB_ORIGIN",
+    "http://127.0.0.1:5174",
+  );
+  const customerImageUrl = (filename: string): string =>
+    new URL(`/images/${filename}`, customerWebOrigin).toString();
   await applyMigrations(connectionString);
   const databasePool = createDatabasePool({
     connectionString,
@@ -127,8 +153,7 @@ async function main(): Promise<void> {
       restaurantConfiguration,
       audit,
       guestAccessSecret,
-      customerWebOrigin:
-        process.env.CUSTOMER_WEB_ORIGIN ?? "http://127.0.0.1:5174",
+      customerWebOrigin,
     });
     const orders = new OrderSubmissionService({
       databasePool,
@@ -283,7 +308,7 @@ async function main(): Promise<void> {
         name: "Couscous royale",
         description:
           "Steamed semolina with lamb, merguez, and seasonal vegetables.",
-        imageUrl: "/images/couscous-royale.webp",
+        imageUrl: customerImageUrl("couscous-royale.webp"),
         basePrice: { amount: "1850.00", currency: "DZD" },
         displayOrder: 1,
       },
@@ -296,7 +321,7 @@ async function main(): Promise<void> {
         categoryId: mains.id,
         name: "Rechta au poulet",
         description: "Hand-cut noodles with chicken, turnips, and chickpeas.",
-        imageUrl: "/images/rechta.webp",
+        imageUrl: customerImageUrl("rechta.webp"),
         basePrice: { amount: "2400.00", currency: "DZD" },
         displayOrder: 2,
       },
@@ -437,6 +462,7 @@ async function main(): Promise<void> {
       handlers: [notificationService, reportingService],
       leaseMilliseconds: 30_000,
       maximumAttempts: 5,
+      now: () => demoNow,
     });
     let outboxResult = await outbox.processNext();
     while (outboxResult === "processed") {

@@ -17,41 +17,43 @@
 
 ## Product tour
 
-The gallery covers the actual customer, staff, and administration applications,
-using deterministic browser fixtures with synthetic Algerian restaurant data. These are representative
+The gallery uses synthetic Algerian restaurant data. Customer and data-bearing
+staff captures below are live sessions against the seeded Dar Nedjma demo
+database; the capability-boundary workspace, administration, and narrow
+edge-state captures remain deterministic browser fixtures. They are representative
 operational states, not mockup artwork or a customer environment.
 
 ### Guest ordering
 
-| Current table menu                                                         | Order tracking on mobile                                                                              |
-| -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| ![Customer menu for table T-12](docs/assets/screenshots/customer-menu.png) | ![Customer order status on a mobile screen](docs/assets/screenshots/customer-order-status-mobile.png) |
+| Current table menu                                                                           | Order tracking on mobile                                                                              |
+| -------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| ![Seeded Dar Nedjma customer menu for table T-12](docs/assets/screenshots/customer-menu.png) | ![Customer order status on a mobile screen](docs/assets/screenshots/customer-order-status-mobile.png) |
 
 ### Staff operations
 
-| Current branch dashboard                                                                                      |
-| ------------------------------------------------------------------------------------------------------------- |
-| ![Current branch dashboard with orders, tables, and daily sales](docs/assets/screenshots/staff-dashboard.png) |
+| Current branch dashboard                                                                                     |
+| ------------------------------------------------------------------------------------------------------------ |
+| ![Seeded branch dashboard with orders, tables, and daily sales](docs/assets/screenshots/staff-dashboard.png) |
 
-| Staff workspace and access                                                                                                        |
-| --------------------------------------------------------------------------------------------------------------------------------- |
-| ![Staff workspace with explicit availability, permission, and service-control icons](docs/assets/screenshots/staff-workspace.png) |
+| Staff workspace and access                                                                                                            |
+| ------------------------------------------------------------------------------------------------------------------------------------- |
+| ![Seeded staff workspace with distinct workspace, permission, and service-control icons](docs/assets/screenshots/staff-workspace.png) |
 
-| Orders                                                                                    | Kitchen                                                                                      |
-| ----------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| ![Staff order queue with filtered active order](docs/assets/screenshots/staff-orders.png) | ![Kitchen preparation queue with a grouped order](docs/assets/screenshots/staff-kitchen.png) |
+| Orders                                                                                              | Kitchen                                                                                             |
+| --------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| ![Seeded staff order queue with payment and refund state](docs/assets/screenshots/staff-orders.png) | ![Seeded kitchen preparation queue with a grouped order](docs/assets/screenshots/staff-kitchen.png) |
 
-| Menu                                                                         | Tables                                                                     |
-| ---------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| ![Staff menu view with availability](docs/assets/screenshots/staff-menu.png) | ![Staff table availability view](docs/assets/screenshots/staff-tables.png) |
+| Menu                                                                                     | Tables                                                                            |
+| ---------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| ![Seeded staff menu with three available dishes](docs/assets/screenshots/staff-menu.png) | ![Seeded staff table availability view](docs/assets/screenshots/staff-tables.png) |
 
-| Payments and refunds                                                                                     | Notifications                                                                                |
-| -------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| ![Staff payment ledger and refund on a mobile screen](docs/assets/screenshots/staff-payments-mobile.png) | ![Staff notification inbox at tablet width](docs/assets/screenshots/staff-notifications.png) |
+| Payments and refunds                                                                                     | Notifications                                                                       |
+| -------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| ![Staff payment ledger and refund on a mobile screen](docs/assets/screenshots/staff-payments-mobile.png) | ![Seeded staff notification inbox](docs/assets/screenshots/staff-notifications.png) |
 
-| Sales reports                                                                                                               | Audit history                                                                                         |
-| --------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| ![Staff sales report with accessible scrollable evidence table on mobile](docs/assets/screenshots/staff-reports-mobile.png) | ![Staff append-only audit history on a mobile screen](docs/assets/screenshots/staff-audit-mobile.png) |
+| Sales reports                                                                                                                      | Audit history                                                                                         |
+| ---------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| ![Seeded staff sales report with accessible scrollable evidence table on mobile](docs/assets/screenshots/staff-reports-mobile.png) | ![Staff append-only audit history on a mobile screen](docs/assets/screenshots/staff-audit-mobile.png) |
 
 ### Administration
 
