@@ -331,6 +331,7 @@ test("builds, reviews, submits, tracks, and requests cancellation for an order",
   await page.getByLabel("Preparation note (optional)").fill("No chilli");
   await page.getByRole("button", { name: "Add to order" }).click();
 
+  await page.setViewportSize({ width: 390, height: 720 });
   const reviewButton = page.getByRole("button", { name: "Review order" });
   await reviewButton.click();
   const dialog = page.getByRole("dialog", { name: "Your order" });
@@ -339,10 +340,25 @@ test("builds, reviews, submits, tracks, and requests cancellation for an order",
     page.getByRole("button", { name: "Continue browsing" }),
   ).toBeFocused();
   await expect(dialog).toContainText("DZD 4,000");
-  await page.screenshot({
+  await expect(dialog).toHaveCSS("transform", "none");
+  const reviewBounds = await dialog.boundingBox();
+  const reviewViewport = page.viewportSize();
+  expect(reviewBounds).not.toBeNull();
+  expect(reviewViewport).not.toBeNull();
+  if (reviewBounds !== null && reviewViewport !== null) {
+    expect(reviewBounds.x).toBe(0);
+    expect(reviewBounds.y).toBe(0);
+    expect(reviewBounds.width).toBe(reviewViewport.width);
+    expect(reviewBounds.height).toBe(reviewViewport.height);
+  }
+  const reviewScreenshot = await page.screenshot({
     path: "test-results/readme-customer-order-review-mobile.png",
-    fullPage: true,
   });
+  if (reviewViewport !== null) {
+    expect(reviewScreenshot.readUInt32BE(20)).toBeLessThanOrEqual(
+      reviewViewport.height,
+    );
+  }
   await expectNoWcagViolations(page);
 
   await page.keyboard.press("Escape");

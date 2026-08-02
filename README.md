@@ -66,9 +66,23 @@ from a browser-supplied tenant identifier.
 
 ### Guest ordering
 
-| Browse the current table menu                                                       | Review the order before submission                                                                       | Track preparation and request service                                                                          |
-| ----------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| ![Dar Nedjma mobile menu for table T-12](docs/assets/screenshots/customer-menu.png) | ![Mobile customer order review for table T-12](docs/assets/screenshots/customer-order-review-mobile.png) | ![Mobile customer order status and service requests](docs/assets/screenshots/customer-order-status-mobile.png) |
+#### 1. Browse the current table menu
+
+<p align="center">
+  <img alt="Dar Nedjma mobile menu for table T-12" src="docs/assets/screenshots/customer-menu.png" width="390" />
+</p>
+
+#### 2. Review the order before submission
+
+<p align="center">
+  <img alt="Mobile customer order review for table T-12" src="docs/assets/screenshots/customer-order-review-mobile.png" width="390" />
+</p>
+
+#### 3. Track preparation and request service
+
+<p align="center">
+  <img alt="Mobile customer order status and service requests" src="docs/assets/screenshots/customer-order-status-mobile.png" width="390" />
+</p>
 
 Guests confirm the detected table, browse the current branch-visible menu,
 select structured options, and submit through a CSRF-protected guest session.
