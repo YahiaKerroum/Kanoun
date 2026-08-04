@@ -6,6 +6,12 @@ import {
   type SyntheticEvent,
 } from "react";
 import {
+  AnimatePresence,
+  motion,
+  MotionConfig,
+  type Variants,
+} from "framer-motion";
+import {
   CustomerRequestError,
   exchangeQrToken,
   getGuestMenu,
@@ -18,6 +24,47 @@ import {
   type GuestSession,
 } from "./api.js";
 import { copy } from "./copy.js";
+
+// ── Shared animation primitives ──────────────────────────────────────────────
+
+const tapSpring = { type: "spring", stiffness: 600, damping: 17 } as const;
+const bouncy = { type: "spring", stiffness: 320, damping: 19 } as const;
+const gentle = { type: "spring", stiffness: 260, damping: 24 } as const;
+
+const actionBtn: Variants = {
+  rest: { scale: 1 },
+  hover: { scale: 1.04, transition: gentle },
+  tap: { scale: 0.94, transition: tapSpring },
+};
+
+const addBtn: Variants = {
+  rest: { scale: 1 },
+  hover: { scale: 1.06, transition: bouncy },
+  tap: { scale: 0.88, transition: tapSpring },
+};
+
+const panelVariants: Variants = {
+  initial: { opacity: 0, y: 18, scale: 0.98 },
+  enter: { opacity: 1, y: 0, scale: 1, transition: { ...gentle, duration: 0.32 } },
+  exit: { opacity: 0, y: -10, scale: 0.98, transition: { duration: 0.16 } },
+};
+
+const staggerList: Variants = {
+  initial: {},
+  enter: { transition: { staggerChildren: 0.055, delayChildren: 0.06 } },
+};
+
+const fadeUp: Variants = {
+  initial: { opacity: 0, y: 14, scale: 0.98 },
+  enter: { opacity: 1, y: 0, scale: 1, transition: bouncy },
+};
+
+const slideUp: Variants = {
+  initial: { opacity: 0, y: 32 },
+  enter: { opacity: 1, y: 0, transition: bouncy },
+  exit: { opacity: 0, y: 32, transition: { duration: 0.18 } },
+};
+
 
 type Journey =
   | { readonly kind: "exchanging" }
@@ -127,7 +174,14 @@ function LoadingView(props: {
   readonly body: string;
 }) {
   return (
-    <section className="journey-panel loading-panel" aria-busy="true">
+    <motion.section
+      className="journey-panel loading-panel"
+      aria-busy="true"
+      variants={panelVariants}
+      initial="initial"
+      animate="enter"
+      exit="exit"
+    >
       <div className="loading-mark" aria-hidden="true">
         <span />
         <span />
@@ -136,7 +190,7 @@ function LoadingView(props: {
       <p className="eyebrow">{props.eyebrow}</p>
       <h1 tabIndex={-1}>{props.title}</h1>
       <p className="lead">{props.body}</p>
-    </section>
+    </motion.section>
   );
 }
 
@@ -145,7 +199,14 @@ function ErrorView(props: {
   readonly onRetry?: () => void;
 }) {
   return (
-    <section className="journey-panel error-panel" role="alert">
+    <motion.section
+      className="journey-panel error-panel"
+      role="alert"
+      variants={panelVariants}
+      initial="initial"
+      animate="enter"
+      exit="exit"
+    >
       <div className="error-symbol" aria-hidden="true">
         !
       </div>
@@ -157,15 +218,19 @@ function ErrorView(props: {
         {props.invalid ? copy.invalidBody : copy.unavailableBody}
       </p>
       {props.onRetry ? (
-        <button
+        <motion.button
           className="primary-action"
           type="button"
           onClick={props.onRetry}
+          variants={actionBtn}
+          initial="rest"
+          whileHover="hover"
+          whileTap="tap"
         >
           {copy.retry}
-        </button>
+        </motion.button>
       ) : null}
-    </section>
+    </motion.section>
   );
 }
 
@@ -183,7 +248,13 @@ function ConfirmationView(props: {
   }
 
   return (
-    <section className="journey-panel confirmation-panel">
+    <motion.section
+      className="journey-panel confirmation-panel"
+      variants={panelVariants}
+      initial="initial"
+      animate="enter"
+      exit="exit"
+    >
       <p className="eyebrow">
         {tableSpecific ? copy.tableEyebrow : copy.browseEyebrow}
       </p>
@@ -222,12 +293,19 @@ function ConfirmationView(props: {
         <span id="customer-name-hint" className="field-hint">
           {copy.nameHint}
         </span>
-        <button className="primary-action" type="submit">
+        <motion.button
+          className="primary-action"
+          type="submit"
+          variants={actionBtn}
+          initial="rest"
+          whileHover="hover"
+          whileTap="tap"
+        >
           {tableSpecific ? copy.confirmTable : copy.continueBrowsing}
-        </button>
+        </motion.button>
       </form>
       {tableSpecific ? <p className="scan-note">{copy.wrongTable}</p> : null}
-    </section>
+    </motion.section>
   );
 }
 
@@ -371,14 +449,18 @@ function DishRow(props: {
               />
             </label>
             <p className="note-disclaimer">{copy.noteDisclaimer}</p>
-            <button
+            <motion.button
               type="button"
               className="add-action"
               disabled={!selectionsValid}
               onClick={add}
+              variants={addBtn}
+              initial="rest"
+              whileHover="hover"
+              whileTap="tap"
             >
               {copy.addToOrder}
-            </button>
+            </motion.button>
           </div>
         ) : null}
       </div>
@@ -510,7 +592,7 @@ function MenuView(props: {
 
         {hasDishes ? (
           <div className="category-list">
-            {props.menu.categories.map((category, index) => (
+            {props.menu.categories.map((category, catIdx) => (
               <section
                 className="menu-category"
                 id={`category-${category.id}`}
@@ -518,20 +600,27 @@ function MenuView(props: {
               >
                 <div className="category-heading">
                   <span aria-hidden="true">
-                    {String(index + 1).padStart(2, "0")}
+                    {String(catIdx + 1).padStart(2, "00")}
                   </span>
                   <h2>{category.name}</h2>
                 </div>
-                <div className="category-dishes">
+                <motion.div
+                  className="category-dishes"
+                  variants={staggerList}
+                  initial="initial"
+                  whileInView="enter"
+                  viewport={{ once: true, margin: "-60px" }}
+                >
                   {category.dishes.map((dish) => (
-                    <DishRow
-                      key={dish.id}
-                      dish={dish}
-                      orderingEnabled={orderingEnabled}
-                      onAdd={(item) => setCart((current) => [...current, item])}
-                    />
+                    <motion.div key={dish.id} variants={fadeUp}>
+                      <DishRow
+                        dish={dish}
+                        orderingEnabled={orderingEnabled}
+                        onAdd={(item) => setCart((current) => [...current, item])}
+                      />
+                    </motion.div>
                   ))}
-                </div>
+                </motion.div>
               </section>
             ))}
           </div>
@@ -539,34 +628,51 @@ function MenuView(props: {
           <section className="empty-menu">
             <h2>{copy.emptyMenuTitle}</h2>
             <p>{copy.emptyMenuBody}</p>
-            <button
+            <motion.button
               type="button"
               className="text-action"
               onClick={props.onReload}
+              variants={actionBtn}
+              initial="rest"
+              whileHover="hover"
+              whileTap="tap"
             >
               {copy.reloadMenu}
-            </button>
+            </motion.button>
           </section>
         )}
       </main>
 
-      {orderingEnabled && cart.length > 0 ? (
-        <div className="cart-bar" aria-live="polite">
-          <div>
-            <strong>
-              {itemCount} {itemCount === 1 ? "item" : "items"}
-            </strong>
-            <span>{formatMinorUnits(cartTotal, props.menu.currency)}</span>
-          </div>
-          <button
-            ref={reviewTrigger}
-            type="button"
-            onClick={() => setReviewOpen(true)}
+      <AnimatePresence>
+        {orderingEnabled && cart.length > 0 ? (
+          <motion.div
+            className="cart-bar"
+            aria-live="polite"
+            variants={slideUp}
+            initial="initial"
+            animate="enter"
+            exit="exit"
           >
-            {copy.reviewOrder}
-          </button>
-        </div>
-      ) : null}
+            <div>
+              <strong>
+                {itemCount} {itemCount === 1 ? "item" : "items"}
+              </strong>
+              <span>{formatMinorUnits(cartTotal, props.menu.currency)}</span>
+            </div>
+            <motion.button
+              ref={reviewTrigger}
+              type="button"
+              onClick={() => setReviewOpen(true)}
+              variants={actionBtn}
+              initial="rest"
+              whileHover="hover"
+              whileTap="tap"
+            >
+              {copy.reviewOrder}
+            </motion.button>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
 
       <dialog
         ref={reviewDialog}
@@ -587,13 +693,25 @@ function MenuView(props: {
                 </p>
                 <h2 id="cart-title">{copy.cartTitle}</h2>
               </div>
-              <button type="button" onClick={closeReview}>
+              <motion.button
+                type="button"
+                onClick={closeReview}
+                variants={actionBtn}
+                initial="rest"
+                whileHover="hover"
+                whileTap="tap"
+              >
                 {copy.closeReview}
-              </button>
+              </motion.button>
             </div>
-            <div className="cart-items">
+            <motion.div
+              className="cart-items"
+              variants={staggerList}
+              initial="initial"
+              animate="enter"
+            >
               {cart.map((item) => (
-                <article key={item.clientId}>
+                <motion.article key={item.clientId} variants={fadeUp}>
                   <div>
                     <h3>{item.dish.name}</h3>
                     {item.optionIds.length > 0 ? (
@@ -610,24 +728,32 @@ function MenuView(props: {
                     {item.note ? <p>{item.note}</p> : null}
                   </div>
                   <div className="cart-item-actions">
-                    <button
+                    <motion.button
                       type="button"
                       aria-label={`Decrease ${item.dish.name} quantity`}
                       onClick={() => changeQuantity(item.clientId, -1)}
+                      variants={addBtn}
+                      initial="rest"
+                      whileHover="hover"
+                      whileTap="tap"
                     >
                       −
-                    </button>
+                    </motion.button>
                     <span aria-label={`${copy.quantity} ${item.quantity}`}>
                       {item.quantity}
                     </span>
-                    <button
+                    <motion.button
                       type="button"
                       aria-label={`Increase ${item.dish.name} quantity`}
                       onClick={() => changeQuantity(item.clientId, 1)}
+                      variants={addBtn}
+                      initial="rest"
+                      whileHover="hover"
+                      whileTap="tap"
                     >
                       +
-                    </button>
-                    <button
+                    </motion.button>
+                    <motion.button
                       type="button"
                       className="remove-action"
                       onClick={() =>
@@ -637,9 +763,13 @@ function MenuView(props: {
                           ),
                         )
                       }
+                      variants={actionBtn}
+                      initial="rest"
+                      whileHover="hover"
+                      whileTap="tap"
                     >
                       {copy.removeItem}
-                    </button>
+                    </motion.button>
                   </div>
                   <strong>
                     {formatMinorUnits(
@@ -647,9 +777,9 @@ function MenuView(props: {
                       props.menu.currency,
                     )}
                   </strong>
-                </article>
+                </motion.article>
               ))}
-            </div>
+            </motion.div>
             <div className="cart-total">
               <span>Total</span>
               <strong>
@@ -669,16 +799,20 @@ function MenuView(props: {
                 {copy.orderFailure}
               </p>
             ) : null}
-            <button
+            <motion.button
               type="button"
               className="primary-action submit-order"
               disabled={cart.length === 0 || submissionState === "pending"}
               onClick={() => void submit()}
+              variants={actionBtn}
+              initial="rest"
+              whileHover="hover"
+              whileTap="tap"
             >
               {submissionState === "pending"
                 ? copy.submittingOrder
                 : copy.submitOrder}
-            </button>
+            </motion.button>
           </>
         ) : null}
       </dialog>
@@ -786,136 +920,164 @@ function OrderView(props: {
               : copy.receivedStatus;
 
   return (
-    <main className="order-confirmation">
-      <header>
-        <a href="/" className="brand-link" aria-label={copy.brandHomeLabel}>
-          {copy.brand}
-        </a>
-        <div className="table-chip">
-          <span>{copy.tableLabel}</span>
-          <strong>{order.tableCode}</strong>
-        </div>
-      </header>
-      <section className="order-receipt">
-        <p className="eyebrow">{copy.orderAccepted}</p>
-        <h1>{copy.orderReference}</h1>
-        <strong className="order-reference">{order.reference}</strong>
-        <div className="order-status" aria-live="polite">
-          <span>{copy.orderProgress}</span>
-          <strong>{status}</strong>
-        </div>
-        {order.customerSafeStatusReason ? (
-          <p className="status-reason">{order.customerSafeStatusReason}</p>
-        ) : null}
-        <p
-          className={`order-freshness${refreshState === "stale" ? " is-stale" : ""}`}
-          role="status"
-        >
-          {refreshState === "stale"
-            ? copy.statusMayBeStale
-            : copy.statusUpdatesAutomatically}
-        </p>
-        <div className="receipt-items">
-          {order.items.map((item) => (
-            <article key={item.id}>
-              <span>{item.quantity}×</span>
-              <div>
-                <strong>{item.name}</strong>
-                {item.selectedOptions.length > 0 ? (
-                  <p>
-                    {item.selectedOptions
-                      .map((option) => option.optionName)
-                      .join(", ")}
-                  </p>
-                ) : null}
-                {item.note ? <p>{item.note}</p> : null}
-              </div>
-              <strong>
-                {formatMoney(item.total.amount, item.total.currency)}
-              </strong>
-            </article>
-          ))}
-        </div>
-        <div className="cart-total">
-          <span>Total</span>
-          <strong>
-            {formatMoney(order.total.amount, order.total.currency)}
-          </strong>
-        </div>
-        <div className="order-actions">
-          <button
-            type="button"
-            className="text-action"
-            disabled={refreshState === "pending"}
-            onClick={() => void refresh()}
-          >
-            {refreshState === "pending"
-              ? copy.refreshingStatus
-              : copy.refreshStatus}
-          </button>
-          <button
-            type="button"
-            className="primary-action"
-            onClick={props.onOrderMore}
-          >
-            {copy.addAnotherOrder}
-          </button>
-        </div>
-      </section>
-      {order.closure === "active" ? (
-        <section className="cancellation-request bill-request">
-          <h2>{copy.billTitle}</h2>
-          {billState === "sent" || order.billRequest ? (
-            <p role="status">{copy.billSent}</p>
-          ) : (
-            <>
-              {billState === "failed" ? (
-                <p role="alert">{copy.billFailure}</p>
-              ) : null}
-              <button
-                type="button"
-                disabled={billState === "pending"}
-                onClick={() => void requestBill()}
-              >
-                {billState === "pending" ? copy.billPending : copy.requestBill}
-              </button>
-            </>
-          )}
-        </section>
-      ) : null}
-      {order.closure === "active" && cancellationState !== "sent" ? (
-        <section className="cancellation-request">
-          <h2>{copy.cancellationTitle}</h2>
-          <label htmlFor="cancellation-reason">{copy.cancellationReason}</label>
-          <textarea
-            id="cancellation-reason"
-            maxLength={500}
-            rows={3}
-            value={reason}
-            placeholder={copy.cancellationPlaceholder}
-            onChange={(event) => setReason(event.currentTarget.value)}
-          />
-          {cancellationState === "failed" ? (
-            <p role="alert">{copy.cancellationFailure}</p>
+    <MotionConfig reducedMotion="user">
+      <motion.main
+        className="order-confirmation"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={gentle}
+      >
+        <header>
+          <a href="/" className="brand-link" aria-label={copy.brandHomeLabel}>
+            {copy.brand}
+          </a>
+          <div className="table-chip">
+            <span>{copy.tableLabel}</span>
+            <strong>{order.tableCode}</strong>
+          </div>
+        </header>
+        <section className="order-receipt">
+          <p className="eyebrow">{copy.orderAccepted}</p>
+          <h1>{copy.orderReference}</h1>
+          <strong className="order-reference">{order.reference}</strong>
+          <div className="order-status" aria-live="polite">
+            <span>{copy.orderProgress}</span>
+            <strong>{status}</strong>
+          </div>
+          {order.customerSafeStatusReason ? (
+            <p className="status-reason">{order.customerSafeStatusReason}</p>
           ) : null}
-          <button
-            type="button"
-            disabled={
-              reason.trim().length === 0 || cancellationState === "pending"
-            }
-            onClick={() => void cancel()}
+          <p
+            className={`order-freshness${refreshState === "stale" ? " is-stale" : ""}`}
+            role="status"
           >
-            {cancellationState === "pending"
-              ? copy.cancellationPending
-              : copy.requestCancellation}
-          </button>
+            {refreshState === "stale"
+              ? copy.statusMayBeStale
+              : copy.statusUpdatesAutomatically}
+          </p>
+          <motion.div
+            className="receipt-items"
+            variants={staggerList}
+            initial="initial"
+            animate="enter"
+          >
+            {order.items.map((item) => (
+              <motion.article key={item.id} variants={fadeUp}>
+                <span>{item.quantity}×</span>
+                <div>
+                  <strong>{item.name}</strong>
+                  {item.selectedOptions.length > 0 ? (
+                    <p>
+                      {item.selectedOptions
+                        .map((option) => option.optionName)
+                        .join(", ")}
+                    </p>
+                  ) : null}
+                  {item.note ? <p>{item.note}</p> : null}
+                </div>
+                <strong>
+                  {formatMoney(item.total.amount, item.total.currency)}
+                </strong>
+              </motion.article>
+            ))}
+          </motion.div>
+          <div className="cart-total">
+            <span>Total</span>
+            <strong>
+              {formatMoney(order.total.amount, order.total.currency)}
+            </strong>
+          </div>
+          <div className="order-actions">
+            <motion.button
+              type="button"
+              className="text-action"
+              disabled={refreshState === "pending"}
+              onClick={() => void refresh()}
+              variants={actionBtn}
+              initial="rest"
+              whileHover="hover"
+              whileTap="tap"
+            >
+              {refreshState === "pending"
+                ? copy.refreshingStatus
+                : copy.refreshStatus}
+            </motion.button>
+            <motion.button
+              type="button"
+              className="primary-action"
+              onClick={props.onOrderMore}
+              variants={actionBtn}
+              initial="rest"
+              whileHover="hover"
+              whileTap="tap"
+            >
+              {copy.addAnotherOrder}
+            </motion.button>
+          </div>
         </section>
-      ) : cancellationState === "sent" || order.cancellationRequested ? (
-        <p className="cancellation-sent" role="status">
-          {copy.cancellationSent}
-        </p>
-      ) : null}
-    </main>
+        {order.closure === "active" ? (
+          <section className="cancellation-request bill-request">
+            <h2>{copy.billTitle}</h2>
+            {billState === "sent" || order.billRequest ? (
+              <p role="status">{copy.billSent}</p>
+            ) : (
+              <>
+                {billState === "failed" ? (
+                  <p role="alert">{copy.billFailure}</p>
+                ) : null}
+                <motion.button
+                  type="button"
+                  disabled={billState === "pending"}
+                  onClick={() => void requestBill()}
+                  variants={actionBtn}
+                  initial="rest"
+                  whileHover="hover"
+                  whileTap="tap"
+                >
+                  {billState === "pending" ? copy.billPending : copy.requestBill}
+                </motion.button>
+              </>
+            )}
+          </section>
+        ) : null}
+        {order.closure === "active" && cancellationState !== "sent" ? (
+          <section className="cancellation-request">
+            <h2>{copy.cancellationTitle}</h2>
+            <label htmlFor="cancellation-reason">{copy.cancellationReason}</label>
+            <textarea
+              id="cancellation-reason"
+              maxLength={500}
+              rows={3}
+              value={reason}
+              placeholder={copy.cancellationPlaceholder}
+              onChange={(event) => setReason(event.currentTarget.value)}
+            />
+            {cancellationState === "failed" ? (
+              <p role="alert">{copy.cancellationFailure}</p>
+            ) : null}
+            <motion.button
+              type="button"
+              disabled={
+                reason.trim().length === 0 || cancellationState === "pending"
+              }
+              onClick={() => void cancel()}
+              variants={actionBtn}
+              initial="rest"
+              whileHover="hover"
+              whileTap="tap"
+            >
+              {cancellationState === "pending"
+                ? copy.cancellationPending
+                : copy.requestCancellation}
+            </motion.button>
+          </section>
+        ) : cancellationState === "sent" || order.cancellationRequested ? (
+          <p className="cancellation-sent" role="status">
+            {copy.cancellationSent}
+          </p>
+        ) : null}
+      </motion.main>
+    </MotionConfig>
   );
 }
 
@@ -978,15 +1140,17 @@ export function App() {
 
   if (journey.kind === "menu") {
     return (
-      <MenuView
-        session={journey.session}
-        menu={journey.menu}
-        customerName={name}
-        onReload={() => void loadMenu(journey.session)}
-        onAccepted={(order) =>
-          setJourney({ kind: "order", session: journey.session, order })
-        }
-      />
+      <MotionConfig reducedMotion="user">
+        <MenuView
+          session={journey.session}
+          menu={journey.menu}
+          customerName={name}
+          onReload={() => void loadMenu(journey.session)}
+          onAccepted={(order) =>
+            setJourney({ kind: "order", session: journey.session, order })
+          }
+        />
+      </MotionConfig>
     );
   }
 
@@ -1001,59 +1165,78 @@ export function App() {
   }
 
   return (
-    <main className="journey-shell">
-      <a className="journey-brand" href="/" aria-label={copy.brandHomeLabel}>
-        {copy.brand}
-      </a>
-      <div className="journey-frame">
-        {journey.kind === "exchanging" ? (
-          <LoadingView
-            eyebrow={copy.loadingQrEyebrow}
-            title={copy.loadingQrTitle}
-            body={copy.loadingQrBody}
-          />
-        ) : null}
-        {journey.kind === "invalid" ? <ErrorView invalid /> : null}
-        {journey.kind === "exchange-error" ? (
-          <ErrorView onRetry={() => setAttempt((value) => value + 1)} />
-        ) : null}
-        {journey.kind === "confirm" ? (
-          <ConfirmationView
-            session={journey.session}
-            name={name}
-            onNameChange={setName}
-            onContinue={() => void loadMenu(journey.session)}
-          />
-        ) : null}
-        {journey.kind === "loading-menu" ? (
-          <LoadingView
-            eyebrow={copy.loadingMenuEyebrow}
-            title={copy.loadingMenuTitle}
-            body={copy.loadingMenuBody}
-          />
-        ) : null}
-        {journey.kind === "menu-error" ? (
-          <section className="journey-panel error-panel" role="alert">
-            <div className="error-symbol" aria-hidden="true">
-              !
-            </div>
-            <p className="eyebrow">{copy.menuUpdateEyebrow}</p>
-            <h1 tabIndex={-1}>{copy.menuLoadErrorTitle}</h1>
-            <p className="lead">{copy.menuLoadErrorBody}</p>
-            <button
-              className="primary-action"
-              type="button"
-              onClick={() => void loadMenu(journey.session)}
-            >
-              {copy.reloadMenu}
-            </button>
-          </section>
-        ) : null}
-      </div>
-      <p className="journey-footnote">{copy.browseOnlyNotice}</p>
-      <div className="sr-only" aria-live="polite">
-        {journey.kind === "confirm" ? copy.tableVerifiedAnnouncement : ""}
-      </div>
-    </main>
+    <MotionConfig reducedMotion="user">
+      <main className="journey-shell">
+        <a className="journey-brand" href="/" aria-label={copy.brandHomeLabel}>
+          {copy.brand}
+        </a>
+        <div className="journey-frame">
+          <AnimatePresence mode="wait" initial={false}>
+            {journey.kind === "exchanging" ? (
+              <LoadingView
+                key="exchanging"
+                eyebrow={copy.loadingQrEyebrow}
+                title={copy.loadingQrTitle}
+                body={copy.loadingQrBody}
+              />
+            ) : journey.kind === "invalid" ? (
+              <ErrorView key="invalid" invalid />
+            ) : journey.kind === "exchange-error" ? (
+              <ErrorView
+                key="exchange-error"
+                onRetry={() => setAttempt((value) => value + 1)}
+              />
+            ) : journey.kind === "confirm" ? (
+              <ConfirmationView
+                key="confirm"
+                session={journey.session}
+                name={name}
+                onNameChange={setName}
+                onContinue={() => void loadMenu(journey.session)}
+              />
+            ) : journey.kind === "loading-menu" ? (
+              <LoadingView
+                key="loading-menu"
+                eyebrow={copy.loadingMenuEyebrow}
+                title={copy.loadingMenuTitle}
+                body={copy.loadingMenuBody}
+              />
+            ) : journey.kind === "menu-error" ? (
+              <motion.section
+                key="menu-error"
+                className="journey-panel error-panel"
+                role="alert"
+                variants={panelVariants}
+                initial="initial"
+                animate="enter"
+                exit="exit"
+              >
+                <div className="error-symbol" aria-hidden="true">
+                  !
+                </div>
+                <p className="eyebrow">{copy.menuUpdateEyebrow}</p>
+                <h1 tabIndex={-1}>{copy.menuLoadErrorTitle}</h1>
+                <p className="lead">{copy.menuLoadErrorBody}</p>
+                <motion.button
+                  className="primary-action"
+                  type="button"
+                  onClick={() => void loadMenu(journey.session)}
+                  variants={actionBtn}
+                  initial="rest"
+                  whileHover="hover"
+                  whileTap="tap"
+                >
+                  {copy.reloadMenu}
+                </motion.button>
+              </motion.section>
+            ) : null}
+          </AnimatePresence>
+        </div>
+        <p className="journey-footnote">{copy.browseOnlyNotice}</p>
+        <div className="sr-only" aria-live="polite">
+          {journey.kind === "confirm" ? copy.tableVerifiedAnnouncement : ""}
+        </div>
+      </main>
+    </MotionConfig>
   );
 }
