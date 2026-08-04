@@ -1,7 +1,13 @@
 import { CircleAlert, Clock3, Plus, RefreshCw, X } from "lucide-react";
 import { useEffect, useRef, useState, type SyntheticEvent } from "react";
 import { z } from "zod";
+import { motion } from "framer-motion";
 import { OrderOperations } from "./OrderOperations.js";
+import {
+  actionButtonVariants,
+  fadeUpItemVariants,
+  staggerContainerVariants,
+} from "./motion.js";
 
 const moneySchema = z.object({
   amount: z.string().regex(/^-?\d+(?:\.\d{1,2})?$/),
@@ -397,15 +403,18 @@ export function OrdersWorkspace(props: {
           </p>
         </div>
         {props.canCreate ? (
-          <button
+          <motion.button
             ref={entryTrigger}
             className="orders-primary-action"
             type="button"
             onClick={() => setEntryOpen(true)}
+            whileHover="hover"
+            whileTap="tap"
+            variants={actionButtonVariants}
           >
             <Plus aria-hidden="true" size={18} />
             Create order
-          </button>
+          </motion.button>
         ) : null}
       </header>
 
@@ -734,9 +743,14 @@ function OrdersList(props: {
           <p>Change the filters or wait for the next submission.</p>
         </div>
       ) : (
-        <ul className="orders-list">
+        <motion.ul
+          className="orders-list"
+          initial="initial"
+          animate="enter"
+          variants={staggerContainerVariants}
+        >
           {state.data.map((order) => (
-            <li key={order.id}>
+            <motion.li key={order.id} variants={fadeUpItemVariants}>
               <div className="order-reference-cell">
                 <strong>{order.reference}</strong>
                 <span>{formatSubmittedAt(order.submittedAt)}</span>
@@ -797,9 +811,9 @@ function OrdersList(props: {
                 canAssignTables={props.canAssignTables}
                 onChanged={props.onReload}
               />
-            </li>
+            </motion.li>
           ))}
-        </ul>
+        </motion.ul>
       )}
     </section>
   );
@@ -1215,14 +1229,17 @@ function OrderEntry(props: {
                   />
                 </label>
               </div>
-              <button
+              <motion.button
                 type="button"
                 className="order-add-item"
                 disabled={!dishId || configuration.kind !== "ready"}
                 onClick={addDraftItem}
+                whileHover="hover"
+                whileTap="tap"
+                variants={actionButtonVariants}
               >
                 Add item
-              </button>
+              </motion.button>
             </section>
           )}
 
@@ -1282,16 +1299,19 @@ function OrderEntry(props: {
                 : entryError}
             </p>
           ) : null}
-          <button
+          <motion.button
             className="order-submit"
             type="button"
             disabled={
               submission === "pending" || !tableId || draft.length === 0
             }
             onClick={() => void submit()}
+            whileHover="hover"
+            whileTap="tap"
+            variants={actionButtonVariants}
           >
             {submission === "pending" ? "Submitting…" : "Submit order"}
-          </button>
+          </motion.button>
         </>
       )}
     </div>

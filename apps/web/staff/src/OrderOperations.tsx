@@ -2,6 +2,8 @@ import { CircleAlert, Settings2 } from "lucide-react";
 import { useRef, useState, type SyntheticEvent } from "react";
 import { z } from "zod";
 import type { Order, Table } from "./OrdersWorkspace.js";
+import { motion } from "framer-motion";
+import { actionButtonVariants } from "./motion.js";
 
 const orderResponseSchema = z.object({
   id: z.uuid(),
@@ -89,10 +91,16 @@ export function OrderOperations(props: {
 
   return (
     <div className="order-operations">
-      <button type="button" onClick={() => setOpen((value) => !value)}>
+      <motion.button
+        type="button"
+        onClick={() => setOpen((value) => !value)}
+        whileHover="hover"
+        whileTap="tap"
+        variants={actionButtonVariants}
+      >
         <Settings2 aria-hidden="true" size={17} />
         {open ? "Close actions" : "Manage"}
-      </button>
+      </motion.button>
       {open ? (
         <div className="order-operation-panel">
           {props.canModify &&
@@ -234,9 +242,15 @@ function CorrectionForm(props: {
         />
       </label>
       {state === "failed" ? <p role="alert">{error}</p> : null}
-      <button type="submit" disabled={!reason.trim() || state === "pending"}>
+      <motion.button
+        type="submit"
+        disabled={!reason.trim() || state === "pending"}
+        whileHover="hover"
+        whileTap="tap"
+        variants={actionButtonVariants}
+      >
         {state === "pending" ? "Saving…" : "Save correction"}
-      </button>
+      </motion.button>
     </form>
   );
 }
@@ -304,9 +318,15 @@ function MoveTableForm(props: {
         </select>
       </label>
       {state === "failed" ? <p role="alert">{error}</p> : null}
-      <button type="submit" disabled={state === "pending"}>
+      <motion.button
+        type="submit"
+        disabled={state === "pending"}
+        whileHover="hover"
+        whileTap="tap"
+        variants={actionButtonVariants}
+      >
         {state === "pending" ? "Moving…" : "Move entire session"}
-      </button>
+      </motion.button>
     </form>
   );
 }

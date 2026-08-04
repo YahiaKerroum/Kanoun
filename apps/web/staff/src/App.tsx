@@ -19,6 +19,12 @@ import {
 } from "lucide-react";
 import type { LucideProps } from "lucide-react";
 import {
+  AnimatePresence,
+  motion,
+  MotionConfig,
+  type Variants,
+} from "framer-motion";
+import {
   startTransition,
   useCallback,
   useEffect,
@@ -28,6 +34,13 @@ import {
 } from "react";
 import { z } from "zod";
 import { checkApiReadiness, type Readiness } from "./health.js";
+import {
+  iconButtonVariants,
+  navItemVariants,
+  sectionContainerVariants,
+  staggerContainerVariants,
+  fadeUpItemVariants,
+} from "./motion.js";
 import { MenuWorkspace, TablesWorkspace } from "./OperationalWorkspaces.js";
 import { KitchenWorkspace } from "./KitchenWorkspace.js";
 import { OrdersWorkspace } from "./OrdersWorkspace.js";
@@ -364,7 +377,7 @@ export function App() {
   );
 
   return (
-    <>
+    <MotionConfig reducedMotion="user">
       <a className="skip-link" href="#workspace">
         Skip to workspace
       </a>
@@ -392,7 +405,7 @@ export function App() {
                 const isActive = visibleSection === item.label;
 
                 return (
-                  <button
+                  <motion.button
                     className={`navigation-item${
                       isActive ? " navigation-item--active" : ""
                     }${startsGroup ? " navigation-item--group-start" : ""}`}
@@ -400,10 +413,21 @@ export function App() {
                     key={item.label}
                     aria-current={isActive ? "page" : undefined}
                     onClick={() => selectSection(item.label)}
+                    whileHover="hover"
+                    whileTap="tap"
+                    animate={isActive ? "active" : "rest"}
+                    variants={navItemVariants}
                   >
+                    {isActive ? (
+                      <motion.span
+                        layoutId="active-nav-pill"
+                        className="navigation-item__pill"
+                        aria-hidden="true"
+                      />
+                    ) : null}
                     <Icon aria-hidden="true" size={21} />
                     <span>{item.label}</span>
-                  </button>
+                  </motion.button>
                 );
               })}
             </nav>
@@ -443,33 +467,48 @@ export function App() {
                   Checked {formatCheckedAt(readiness)}
                 </span>
               </div>
-              <button
+              <motion.button
                 className="icon-button"
                 type="button"
                 aria-label="Refresh staff access and API readiness"
                 aria-describedby={statusId}
                 disabled={readiness.kind === "checking"}
                 onClick={refresh}
+                whileHover="hover"
+                whileTap="tap"
+                variants={iconButtonVariants}
               >
                 <RefreshCw
                   aria-hidden="true"
                   size={20}
                   className={readiness.kind === "checking" ? "is-spinning" : ""}
                 />
-              </button>
-              <button
+              </motion.button>
+              <motion.button
                 className="icon-button"
                 type="button"
                 aria-label="Open notifications"
                 aria-pressed={visibleSection === "Notifications"}
                 disabled={!notificationsAvailable}
                 onClick={() => selectSection("Notifications")}
+                whileHover="hover"
+                whileTap="tap"
+                variants={iconButtonVariants}
               >
                 <Bell aria-hidden="true" size={20} />
-              </button>
+              </motion.button>
             </header>
 
             <main id="workspace" className="workspace" tabIndex={-1}>
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.div
+                  key={visibleSection}
+                  className="workspace__stage"
+                  variants={sectionContainerVariants}
+                  initial="initial"
+                  animate="enter"
+                  exit="exit"
+                >
               {visibleSection === "Home" ? (
                 <HomeWorkspace
                   capabilities={portal.capabilities}
@@ -577,11 +616,13 @@ export function App() {
               ) : (
                 <DeferredWorkspace section={visibleSection} />
               )}
+                </motion.div>
+              </AnimatePresence>
             </main>
           </div>
         </div>
       </div>
-    </>
+    </MotionConfig>
   );
 }
 
@@ -657,8 +698,17 @@ function HomeWorkspace({
   const apiReady = readiness.kind === "ready";
 
   return (
-    <div className="workspace__content">
-      <section className="launch-banner" aria-labelledby="launch-title">
+    <motion.div
+      className="workspace__content"
+      variants={staggerContainerVariants}
+      initial="initial"
+      animate="enter"
+    >
+      <motion.section
+        className="launch-banner"
+        variants={fadeUpItemVariants}
+        aria-labelledby="launch-title"
+      >
         <div>
           <p className="eyebrow">SERVICE OVERVIEW</p>
           <h2 id="launch-title">Your branch is ready for service.</h2>
@@ -677,10 +727,14 @@ function HomeWorkspace({
                 : "Service access loaded, but API readiness is not verified."}
           </span>
         </div>
-      </section>
+      </motion.section>
 
       <div className="workspace-grid">
-        <section className="workspace-panel" aria-labelledby="access-title">
+        <motion.section
+          className="workspace-panel"
+          variants={fadeUpItemVariants}
+          aria-labelledby="access-title"
+        >
           <div className="panel-heading">
             <div>
               <p className="eyebrow">TODAY'S ACCESS</p>
@@ -726,9 +780,13 @@ function HomeWorkspace({
               <span className="state-label state-label--ready">Current</span>
             </li>
           </ul>
-        </section>
+        </motion.section>
 
-        <section className="workspace-panel" aria-labelledby="boundary-title">
+        <motion.section
+          className="workspace-panel"
+          variants={fadeUpItemVariants}
+          aria-labelledby="boundary-title"
+        >
           <div className="panel-heading">
             <div>
               <p className="eyebrow">SERVICE STATUS</p>
@@ -750,10 +808,11 @@ function HomeWorkspace({
               <dd>Contact a branch administrator to update your assignment.</dd>
             </div>
           </dl>
-        </section>
+        </motion.section>
 
-        <section
+        <motion.section
           className="workspace-panel workspace-panel--accent"
+          variants={fadeUpItemVariants}
           aria-labelledby="design-title"
         >
           <div className="panel-heading">
@@ -768,10 +827,10 @@ function HomeWorkspace({
             keep the team focused through every service period.
           </p>
           <span className="working-name">MISE staff workspace</span>
-        </section>
+        </motion.section>
       </div>
       <DashboardWorkspace branchId={branchId} canView={canViewReports} />
-    </div>
+    </motion.div>
   );
 }
 

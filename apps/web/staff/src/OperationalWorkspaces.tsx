@@ -17,6 +17,8 @@ import {
   type ReactNode,
 } from "react";
 import { z } from "zod";
+import { motion } from "framer-motion";
+import { actionButtonVariants, fadeUpItemVariants, staggerContainerVariants } from "./motion.js";
 
 const copy = {
   menu: {
@@ -307,10 +309,17 @@ function ResourceFeedback({
         <p className="eyebrow">DATA UNAVAILABLE</p>
         <h2 id="load-error-title">The workspace could not be refreshed</h2>
         <p>{state.message}</p>
-        <button className="workspace-action" type="button" onClick={reload}>
+        <motion.button
+          className="workspace-action"
+          type="button"
+          onClick={reload}
+          whileHover="hover"
+          whileTap="tap"
+          variants={actionButtonVariants}
+        >
           <RefreshCw aria-hidden="true" size={18} />
           {copy.shared.reload}
-        </button>
+        </motion.button>
       </section>
     );
   }
@@ -333,11 +342,14 @@ function ResourceFeedback({
             ? copy.shared.stale
             : `${copy.shared.lastUpdated} ${formatVerifiedAt(state.verifiedAt)}`}
         </span>
-        <button
+        <motion.button
           className="workspace-action workspace-action--quiet"
           type="button"
           disabled={refreshing}
           onClick={reload}
+          whileHover="hover"
+          whileTap="tap"
+          variants={actionButtonVariants}
         >
           <RefreshCw
             className={refreshing ? "is-spinning" : ""}
@@ -345,7 +357,7 @@ function ResourceFeedback({
             size={17}
           />
           {refreshing ? "Reloading…" : copy.shared.reload}
-        </button>
+        </motion.button>
       </div>
       {children}
     </>
@@ -476,13 +488,19 @@ function MenuList({ data }: { readonly data: MenuData }) {
   }
 
   return (
-    <div className="menu-sections">
+    <motion.div
+      className="menu-sections"
+      initial="initial"
+      animate="enter"
+      variants={staggerContainerVariants}
+    >
       {categories.map((category) => {
         const dishes = dishesByCategory.get(category.id) ?? [];
         return (
-          <section
+          <motion.section
             className="menu-section"
             key={category.id}
+            variants={fadeUpItemVariants}
             aria-labelledby={`category-${category.id}`}
           >
             <header className="menu-section__heading">
@@ -535,7 +553,7 @@ function MenuList({ data }: { readonly data: MenuData }) {
                 })}
               </ul>
             )}
-          </section>
+          </motion.section>
         );
       })}
       {data.dishes.items.some(
@@ -550,7 +568,7 @@ function MenuList({ data }: { readonly data: MenuData }) {
           </span>
         </div>
       ) : null}
-    </div>
+    </motion.div>
   );
 }
 
@@ -696,13 +714,19 @@ function TablesList({ data }: { readonly data: TablesData }) {
   }
 
   return (
-    <div className="table-areas">
+    <motion.div
+      className="table-areas"
+      initial="initial"
+      animate="enter"
+      variants={staggerContainerVariants}
+    >
       {[...grouped.entries()]
         .sort(([left], [right]) => left.localeCompare(right))
         .map(([area, tables]) => (
-          <section
+          <motion.section
             className="table-area"
             key={area}
+            variants={fadeUpItemVariants}
             aria-labelledby={`area-${area.replaceAll(/\W+/g, "-")}`}
           >
             <header className="table-area__heading">
@@ -727,8 +751,8 @@ function TablesList({ data }: { readonly data: TablesData }) {
                 );
               })}
             </ul>
-          </section>
+          </motion.section>
         ))}
-    </div>
+    </motion.div>
   );
 }

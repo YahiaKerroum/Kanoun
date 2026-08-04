@@ -1,6 +1,12 @@
 import { CircleAlert, CreditCard, RefreshCw, RotateCcw } from "lucide-react";
 import { useEffect, useRef, useState, type SyntheticEvent } from "react";
 import { z } from "zod";
+import { motion } from "framer-motion";
+import {
+  actionButtonVariants,
+  fadeUpItemVariants,
+  staggerContainerVariants,
+} from "./motion.js";
 
 const moneySchema = z.object({
   amount: z.string().regex(/^-?\d+(?:\.\d{1,2})?$/),
@@ -254,13 +260,16 @@ export function PaymentsWorkspace(props: {
             payments.
           </p>
         </div>
-        <button
+        <motion.button
           type="button"
           onClick={() => setReloadSequence((value) => value + 1)}
+          whileHover="hover"
+          whileTap="tap"
+          variants={actionButtonVariants}
         >
           <RefreshCw aria-hidden="true" size={18} />
           Refresh
-        </button>
+        </motion.button>
       </header>
 
       <p className="payments-live-status" role="status" aria-live="polite">
@@ -294,9 +303,14 @@ export function PaymentsWorkspace(props: {
               <p>New customer bill requests will appear automatically.</p>
             </section>
           ) : (
-            <ul className="bill-request-list">
+            <motion.ul
+              className="bill-request-list"
+              initial="initial"
+              animate="enter"
+              variants={staggerContainerVariants}
+            >
               {items.map((item) => (
-                <li key={item.id}>
+                <motion.li key={item.id} variants={fadeUpItemVariants}>
                   <LedgerSummary ledger={item} />
                   {props.canRecord && !item.payment ? (
                     <RecordPaymentForm
@@ -304,9 +318,9 @@ export function PaymentsWorkspace(props: {
                       onRecorded={() => setReloadSequence((value) => value + 1)}
                     />
                   ) : null}
-                </li>
+                </motion.li>
               ))}
-            </ul>
+            </motion.ul>
           )}
         </>
       )}
@@ -323,9 +337,15 @@ export function PaymentsWorkspace(props: {
               placeholder="UUID"
               onChange={(event) => setLookupOrderId(event.currentTarget.value)}
             />
-            <button type="submit" disabled={lookup.kind === "loading"}>
+            <motion.button
+              type="submit"
+              disabled={lookup.kind === "loading"}
+              whileHover="hover"
+              whileTap="tap"
+              variants={actionButtonVariants}
+            >
               {lookup.kind === "loading" ? "Finding…" : "Find ledger"}
-            </button>
+            </motion.button>
           </div>
         </form>
         {lookup.kind === "error" ? <p role="alert">{lookup.message}</p> : null}
@@ -469,9 +489,15 @@ function RecordPaymentForm(props: {
           Payment was not recorded. Reload the bill and verify the balance.
         </p>
       ) : null}
-      <button type="submit" disabled={!confirmed || state === "pending"}>
+      <motion.button
+        type="submit"
+        disabled={!confirmed || state === "pending"}
+        whileHover="hover"
+        whileTap="tap"
+        variants={actionButtonVariants}
+      >
         {state === "pending" ? "Recording…" : "Record payment"}
-      </button>
+      </motion.button>
     </form>
   );
 }
@@ -586,14 +612,17 @@ function RefundForm(props: {
           required, then reload the ledger.
         </p>
       ) : null}
-      <button
+      <motion.button
         type="submit"
         disabled={
           !amount.trim() || !reason.trim() || !confirmed || state === "pending"
         }
+        whileHover="hover"
+        whileTap="tap"
+        variants={actionButtonVariants}
       >
         {state === "pending" ? "Recording…" : "Record refund"}
-      </button>
+      </motion.button>
     </form>
   );
 }

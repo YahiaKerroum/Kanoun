@@ -8,10 +8,27 @@ import {
 import { createRoot } from "react-dom/client";
 import { z } from "zod";
 import {
+  AnimatePresence,
+  motion,
+  MotionConfig,
+} from "framer-motion";
+import {
   MenuTablesAdministration,
   type MenuTablesPermissions,
 } from "./MenuTablesAdministration.js";
 import { InsightsAdministration } from "./InsightsAdministration.js";
+import {
+  AdministrationNavigation,
+  administrationPages,
+  type AdministrationPage,
+  useAdministrationPage,
+} from "./AdminNavigation.js";
+import {
+  actionButtonVariants,
+  sectionContainerVariants,
+  staggerContainerVariants,
+  fadeUpItemVariants,
+} from "./motion.js";
 import "./styles.css";
 
 const permissionGrantSchema = z.object({
@@ -177,6 +194,7 @@ interface Workspace {
 }
 
 function App() {
+  const { page: requestedPage, navigate } = useAdministrationPage();
   const [state, setState] = useState<
     | { readonly kind: "loading" }
     | { readonly kind: "signed-out" }
@@ -603,49 +621,72 @@ function App() {
 
   if (state.kind === "loading")
     return (
-      <main className="loading-state" aria-live="polite">
-        Verifying session…
-      </main>
+      <MotionConfig reducedMotion="user">
+        <motion.main
+          className="loading-state"
+          aria-live="polite"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.25 }}
+        >
+          Verifying session…
+        </motion.main>
+      </MotionConfig>
     );
   if (state.kind === "signed-out")
     return (
-      <main className="sign-in-stage">
-        <section className="brand-panel" aria-labelledby="brand-title">
-          <p>MISE · ADMINISTRATION</p>
-          <h1 id="brand-title">
-            Restaurant access starts with verified scope.
-          </h1>
-          <span>
-            Employee, permission, branch, and feature changes are tenant-scoped,
-            versioned, and audited by the server.
-          </span>
-        </section>
-        <form className="sign-in-form" onSubmit={(event) => void signIn(event)}>
-          <p className="eyebrow">Protected access</p>
-          <h2>Sign in to administration</h2>
-          <label>
-            Business code
-            <input name="businessCode" autoComplete="organization" required />
-          </label>
-          <label>
-            Email
-            <input name="email" type="email" autoComplete="username" required />
-          </label>
-          <label>
-            Password
-            <input
-              name="password"
-              type="password"
-              autoComplete="current-password"
-              required
-            />
-          </label>
-          <button type="submit">Continue</button>
-          <p className="form-status" role="status">
-            {message}
-          </p>
-        </form>
-      </main>
+      <MotionConfig reducedMotion="user">
+        <motion.main
+          className="sign-in-stage"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3 }}
+        >
+          <section className="brand-panel" aria-labelledby="brand-title">
+            <p>MISE · ADMINISTRATION</p>
+            <h1 id="brand-title">
+              Restaurant access starts with verified scope.
+            </h1>
+            <span>
+              Employee, permission, branch, and feature changes are tenant-scoped,
+              versioned, and audited by the server.
+            </span>
+          </section>
+          <form className="sign-in-form" onSubmit={(event) => void signIn(event)}>
+            <p className="eyebrow">Protected access</p>
+            <h2>Sign in to administration</h2>
+            <label>
+              Business code
+              <input name="businessCode" autoComplete="organization" required />
+            </label>
+            <label>
+              Email
+              <input name="email" type="email" autoComplete="username" required />
+            </label>
+            <label>
+              Password
+              <input
+                name="password"
+                type="password"
+                autoComplete="current-password"
+                required
+              />
+            </label>
+            <motion.button
+              type="submit"
+              variants={actionButtonVariants}
+              initial="rest"
+              whileHover="hover"
+              whileTap="tap"
+            >
+              Continue
+            </motion.button>
+            <p className="form-status" role="status">
+              {message}
+            </p>
+          </form>
+        </motion.main>
+      </MotionConfig>
     );
 
   const activeBranch = state.branches.find(
@@ -687,6 +728,12 @@ function App() {
   const canViewReports = activePermissionKeys.has("reports.view");
   const canViewAudit = activePermissionKeys.has("audit.view");
   const canManageFeatures = activePermissionKeys.has("features.manage");
+  const canViewEmployees =
+    activePermissionKeys.has("employees.view") ||
+    activePermissionKeys.has("employees.manage");
+  const canManagePermissions = activePermissionKeys.has(
+    "employees.manage_permissions",
+  );
   const canViewTenantAudit = state.session.grants.some(
     (grant) =>
       grant.permissionKey === "audit.view" &&
@@ -697,8 +744,37 @@ function App() {
     ...(state.restaurantFeatures?.configuration.values ?? {}),
     ...(state.features?.configuration.values ?? {}),
   };
+  const pageAvailability: Readonly<Record<AdministrationPage, boolean>> = {
+    context: true,
+    employees: canViewEmployees,
+    permissions: canManagePermissions,
+    menu:
+      menuTablesPermissions.menuView ||
+      menuTablesPermissions.menuManage ||
+      menuTablesPermissions.menuManagePrices ||
+      menuTablesPermissions.menuManageAvailability,
+    tables:
+      menuTablesPermissions.tablesView ||
+      menuTablesPermissions.tablesManage ||
+      menuTablesPermissions.qrManage,
+    insights: canViewReports || canViewAudit || canManageFeatures,
+    features: canManageFeatures,
+  };
+  const availableNavigation = administrationPages.filter(
+    (item) => pageAvailability[item.id],
+  );
+  const activePage = pageAvailability[requestedPage]
+    ? requestedPage
+    : "context";
+  const activePageLabel =
+    administrationPages.find((item) => item.id === activePage)?.label ??
+    "Context";
+  const activeRestaurant = state.restaurants.find(
+    (restaurant) => restaurant.id === activeBranch?.restaurantId,
+  );
 
   return (
+    <MotionConfig reducedMotion="user">
     <div className="admin-stage">
       <a className="skip-link" href="#main-content">
         Skip to administration content
@@ -729,325 +805,415 @@ function App() {
         </label>
       </header>
       <main className="setup-workspace" id="main-content" tabIndex={-1}>
-        <nav aria-label="Administration sections">
-          <a href="#context">Context</a>
-          <a href="#employees">Employees</a>
-          <a href="#permissions">Permissions</a>
-          <a href="#menu">Menu</a>
-          <a href="#tables">Tables &amp; QR</a>
-          {canViewReports || canViewAudit || canManageFeatures ? (
-            <a href="#insights">Insights</a>
-          ) : null}
-          <a href="#features">Features</a>
-        </nav>
-        <section className="setup-content">
-          <div className="workspace-heading" id="context">
+        <AdministrationNavigation
+          activePage={activePage}
+          items={availableNavigation}
+          onNavigate={navigate}
+        />
+        <section className="setup-content" tabIndex={-1}>
+          <div className="workspace-heading">
             <div>
               <p className="eyebrow">Tenant-scoped administration</p>
-              <h2>{activeBranch?.name ?? "Select a branch"}</h2>
+              <h2>{activePageLabel}</h2>
             </div>
             <span
               className={`service-state service-state--${activeBranch?.serviceStatus ?? "closed"}`}
             >
-              {activeBranch?.serviceStatus.replaceAll("_", " ") ??
-                "No branch selected"}
+              {activeBranch
+                ? `${activeBranch.name} · ${activeBranch.serviceStatus.replaceAll("_", " ")}`
+                : "No branch selected"}
             </span>
           </div>
           <p className="status-line" role="status" aria-live="polite">
             {message}
           </p>
+          <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={activePage}
+            variants={sectionContainerVariants}
+            initial="initial"
+            animate="enter"
+            exit="exit"
+          >
 
-          <section id="employees" className="admin-section">
-            <div className="section-heading">
-              <div>
-                <p className="eyebrow">Employee profiles</p>
-                <h3>Workforce</h3>
-              </div>
-              <span>{state.employees.length} profiles</span>
-            </div>
-            <form
-              className="inline-form"
-              onSubmit={(event) => void createEmployee(event)}
-            >
-              <label>
-                Display name
-                <input name="displayName" maxLength={160} required />
-              </label>
-              <label>
-                Work email
-                <input name="email" type="email" maxLength={320} required />
-              </label>
-              <button type="submit" disabled={!activeBranch}>
-                Add employee
-              </button>
-              <p>
-                Creates a profile for the active branch. Login credentials are
-                added separately through an invitation.
-              </p>
-            </form>
-            <ul className="employee-list" aria-label="Employee profiles">
-              {state.employees.map((employee) => (
-                <li key={employee.id}>
-                  <button
-                    type="button"
-                    className={
-                      selectedEmployeeId === employee.id ? "is-selected" : ""
-                    }
-                    onClick={() => void selectEmployee(employee.id)}
-                  >
-                    <span>
-                      <strong>{employee.displayName}</strong>
-                      <small>{employee.email}</small>
-                    </span>
-                    <span className="employee-meta">
-                      {employee.status} · {employee.branchIds.length} branch
-                      {employee.branchIds.length === 1 ? "" : "es"}
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </section>
-
-          <section id="permissions" className="admin-section">
-            <div className="section-heading">
-              <div>
-                <p className="eyebrow">Grants only · copy on apply</p>
-                <h3>Permissions</h3>
-              </div>
-              <span>
-                {selectedEmployee
-                  ? selectedEmployee.displayName
-                  : "Select an employee"}
-              </span>
-            </div>
-            {!selectedEmployee || !permissionSet ? (
-              <p className="empty-state">
-                Select an employee to review independently scoped permissions.
-              </p>
-            ) : (
-              <>
-                <div
-                  className="template-actions"
-                  aria-label="Permission templates"
-                >
-                  {state.templates.map((template) => (
-                    <div className="template-action" key={template.key}>
-                      <span>
-                        <strong>{template.displayName}</strong>
-                        <small>
-                          {template.active
-                            ? `Version ${template.version} · available`
-                            : `Version ${template.version} · inactive`}
-                        </small>
-                      </span>
-                      <button
-                        type="button"
-                        disabled={!template.active}
-                        onClick={() => void applyTemplate(template)}
-                      >
-                        Apply
-                      </button>
-                      <button
-                        type="button"
-                        disabled={!template.active}
-                        onClick={() => void deactivateTemplate(template)}
-                      >
-                        Deactivate
-                      </button>
-                    </div>
-                  ))}
+          {activePage === "context" ? (
+            <section className="admin-section" aria-labelledby="context-title">
+              <div className="section-heading">
+                <div>
+                  <p className="eyebrow">Verified administration scope</p>
+                  <h3 id="context-title">Current context</h3>
                 </div>
-                <label className="reason-field">
-                  Reason for template deactivation
-                  <input
-                    value={templateReason}
-                    minLength={8}
-                    maxLength={500}
-                    onChange={(event) =>
-                      setTemplateReason(event.currentTarget.value)
-                    }
-                    placeholder="Describe why future template use must stop"
-                  />
+                <span>{state.session.employeeId}</span>
+              </div>
+              <motion.ul
+                className="feature-list"
+                variants={staggerContainerVariants}
+                initial="initial"
+                animate="enter"
+              >
+                {[
+                  { label: "Restaurant", value: activeRestaurant?.name ?? "Not selected" },
+                  { label: "Branch", value: activeBranch?.name ?? "Not selected" },
+                  { label: "Employee profiles", value: String(state.employees.length) },
+                  { label: "Effective permissions", value: String(activePermissionKeys.size) },
+                ].map((item) => (
+                  <motion.li key={item.label} variants={fadeUpItemVariants}>
+                    <strong>{item.label}</strong>
+                    <span>{item.value}</span>
+                  </motion.li>
+                ))}
+              </motion.ul>
+            </section>
+          ) : null}
+
+          {activePage === "employees" ? (
+            <section className="admin-section">
+              <div className="section-heading">
+                <div>
+                  <p className="eyebrow">Employee profiles</p>
+                  <h3>Workforce</h3>
+                </div>
+                <span>{state.employees.length} profiles</span>
+              </div>
+              <form
+                className="inline-form"
+                onSubmit={(event) => void createEmployee(event)}
+              >
+                <label>
+                  Display name
+                  <input name="displayName" maxLength={160} required />
                 </label>
-                <div className="permission-groups">
-                  {Object.entries(groupedPermissions).map(
-                    ([module, definitions]) => (
-                      <fieldset key={module}>
-                        <legend>{module.replaceAll("_", " ")}</legend>
-                        {definitions.map((definition) =>
-                          definition.scope === "branch" ? (
-                            <div
-                              className="permission-row"
-                              key={definition.key}
-                            >
-                              <strong>{definition.key}</strong>
-                              <div>
-                                {selectedEmployee.branchIds.map((branchId) => {
-                                  const grant = grantFor(
-                                    definition,
-                                    selectedEmployee,
-                                    branchId,
-                                  );
-                                  const branch = state.branches.find(
-                                    (item) => item.id === branchId,
-                                  );
-                                  const id = grantId(grant);
-                                  return (
-                                    <label key={branchId}>
-                                      <input
-                                        type="checkbox"
-                                        checked={draftGrantIds.has(id)}
-                                        onChange={(event) =>
-                                          toggleGrant(id, event.target.checked)
-                                        }
-                                      />
-                                      {branch?.name ?? "Assigned branch"}
-                                    </label>
-                                  );
-                                })}
+                <label>
+                  Work email
+                  <input name="email" type="email" maxLength={320} required />
+                </label>
+                <motion.button
+                  type="submit"
+                  disabled={!activeBranch}
+                  variants={actionButtonVariants}
+                  initial="rest"
+                  whileHover="hover"
+                  whileTap="tap"
+                >
+                  Add employee
+                </motion.button>
+                <p>
+                  Creates a profile for the active branch. Login credentials are
+                  added separately through an invitation.
+                </p>
+              </form>
+              <motion.ul
+                className="employee-list"
+                aria-label="Employee profiles"
+                variants={staggerContainerVariants}
+                initial="initial"
+                animate="enter"
+              >
+                {state.employees.map((employee) => (
+                  <motion.li key={employee.id} variants={fadeUpItemVariants}>
+                    <motion.button
+                      type="button"
+                      className={
+                        selectedEmployeeId === employee.id ? "is-selected" : ""
+                      }
+                      onClick={() => void selectEmployee(employee.id)}
+                      variants={actionButtonVariants}
+                      initial="rest"
+                      whileHover="hover"
+                      whileTap="tap"
+                    >
+                      <span>
+                        <strong>{employee.displayName}</strong>
+                        <small>{employee.email}</small>
+                      </span>
+                      <span className="employee-meta">
+                        {employee.status} · {employee.branchIds.length} branch
+                        {employee.branchIds.length === 1 ? "" : "es"}
+                      </span>
+                    </motion.button>
+                  </motion.li>
+                ))}
+              </motion.ul>
+            </section>
+          ) : null}
+
+          {activePage === "permissions" ? (
+            <section className="admin-section">
+              <div className="section-heading">
+                <div>
+                  <p className="eyebrow">Grants only · copy on apply</p>
+                  <h3>Permissions</h3>
+                </div>
+                <span>
+                  {selectedEmployee
+                    ? selectedEmployee.displayName
+                    : "Select an employee"}
+                </span>
+              </div>
+              {!selectedEmployee || !permissionSet ? (
+                <p className="empty-state">
+                  Select an employee to review independently scoped permissions.
+                </p>
+              ) : (
+                <>
+                  <div
+                    className="template-actions"
+                    aria-label="Permission templates"
+                  >
+                    {state.templates.map((template) => (
+                      <div className="template-action" key={template.key}>
+                        <span>
+                          <strong>{template.displayName}</strong>
+                          <small>
+                            {template.active
+                              ? `Version ${template.version} · available`
+                              : `Version ${template.version} · inactive`}
+                          </small>
+                        </span>
+                        <motion.button
+                          type="button"
+                          disabled={!template.active}
+                          onClick={() => void applyTemplate(template)}
+                          variants={actionButtonVariants}
+                          initial="rest"
+                          whileHover="hover"
+                          whileTap="tap"
+                        >
+                          Apply
+                        </motion.button>
+                        <motion.button
+                          type="button"
+                          disabled={!template.active}
+                          onClick={() => void deactivateTemplate(template)}
+                          variants={actionButtonVariants}
+                          initial="rest"
+                          whileHover="hover"
+                          whileTap="tap"
+                        >
+                          Deactivate
+                        </motion.button>
+                      </div>
+                    ))}
+                  </div>
+                  <label className="reason-field">
+                    Reason for template deactivation
+                    <input
+                      value={templateReason}
+                      minLength={8}
+                      maxLength={500}
+                      onChange={(event) =>
+                        setTemplateReason(event.currentTarget.value)
+                      }
+                      placeholder="Describe why future template use must stop"
+                    />
+                  </label>
+                  <div className="permission-groups">
+                    {Object.entries(groupedPermissions).map(
+                      ([module, definitions]) => (
+                        <fieldset key={module}>
+                          <legend>{module.replaceAll("_", " ")}</legend>
+                          {definitions.map((definition) =>
+                            definition.scope === "branch" ? (
+                              <div
+                                className="permission-row"
+                                key={definition.key}
+                              >
+                                <strong>{definition.key}</strong>
+                                <div>
+                                  {selectedEmployee.branchIds.map(
+                                    (branchId) => {
+                                      const grant = grantFor(
+                                        definition,
+                                        selectedEmployee,
+                                        branchId,
+                                      );
+                                      const branch = state.branches.find(
+                                        (item) => item.id === branchId,
+                                      );
+                                      const id = grantId(grant);
+                                      return (
+                                        <label key={branchId}>
+                                          <input
+                                            type="checkbox"
+                                            checked={draftGrantIds.has(id)}
+                                            onChange={(event) =>
+                                              toggleGrant(
+                                                id,
+                                                event.target.checked,
+                                              )
+                                            }
+                                          />
+                                          {branch?.name ?? "Assigned branch"}
+                                        </label>
+                                      );
+                                    },
+                                  )}
+                                </div>
                               </div>
-                            </div>
-                          ) : (
-                            <label
-                              className="permission-row"
-                              key={definition.key}
-                            >
-                              <input
-                                type="checkbox"
-                                checked={draftGrantIds.has(
-                                  grantId(
-                                    grantFor(definition, selectedEmployee),
-                                  ),
-                                )}
-                                onChange={(event) =>
-                                  toggleGrant(
+                            ) : (
+                              <label
+                                className="permission-row"
+                                key={definition.key}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={draftGrantIds.has(
                                     grantId(
                                       grantFor(definition, selectedEmployee),
                                     ),
-                                    event.target.checked,
-                                  )
-                                }
-                              />
-                              <span>
-                                <strong>{definition.key}</strong>
-                                <small>{definition.risk} risk</small>
-                              </span>
-                            </label>
-                          ),
-                        )}
-                      </fieldset>
-                    ),
-                  )}
-                </div>
-                <button
-                  className="primary-action"
-                  type="button"
-                  onClick={() => void savePermissions()}
-                >
-                  Save permission set
-                </button>
-              </>
-            )}
-          </section>
+                                  )}
+                                  onChange={(event) =>
+                                    toggleGrant(
+                                      grantId(
+                                        grantFor(definition, selectedEmployee),
+                                      ),
+                                      event.target.checked,
+                                    )
+                                  }
+                                />
+                                <span>
+                                  <strong>{definition.key}</strong>
+                                  <small>{definition.risk} risk</small>
+                                </span>
+                              </label>
+                            ),
+                          )}
+                        </fieldset>
+                      ),
+                    )}
+                  </div>
+                  <motion.button
+                    className="primary-action"
+                    type="button"
+                    onClick={() => void savePermissions()}
+                    variants={actionButtonVariants}
+                    initial="rest"
+                    whileHover="hover"
+                    whileTap="tap"
+                  >
+                    Save permission set
+                  </motion.button>
+                </>
+              )}
+            </section>
+          ) : null}
 
-          {activeBranch ? (
-            <MenuTablesAdministration
-              key={activeBranch.id}
-              branch={activeBranch}
-              permissions={menuTablesPermissions}
-              features={{
-                menu: persistedFeatureValues["CFG-003"] !== "disabled",
-                qrMenu: persistedFeatureValues["CFG-004"] !== "disabled",
-                tables: persistedFeatureValues["CFG-006"] !== "disabled",
-              }}
+          {activeBranch &&
+          (activePage === "menu" || activePage === "tables") ? (
+            <div
+              className={`administration-route administration-route--${activePage}`}
+            >
+              <MenuTablesAdministration
+                key={`${activeBranch.id}-${activePage}`}
+                branch={activeBranch}
+                permissions={menuTablesPermissions}
+                features={{
+                  menu: persistedFeatureValues["CFG-003"] !== "disabled",
+                  qrMenu: persistedFeatureValues["CFG-004"] !== "disabled",
+                  tables: persistedFeatureValues["CFG-006"] !== "disabled",
+                }}
+              />
+            </div>
+          ) : null}
+
+          {activePage === "insights" ? (
+            <InsightsAdministration
+              restaurants={state.restaurants}
+              branches={state.branches}
+              activeBranchId={state.activeBranchId}
+              canViewReports={canViewReports}
+              canViewCrossBranch={activePermissionKeys.has(
+                "reports.view_cross_branch",
+              )}
+              canViewAudit={canViewAudit}
+              canViewTenantAudit={canViewTenantAudit}
+              canManageFeatures={canManageFeatures}
             />
           ) : null}
 
-          <InsightsAdministration
-            restaurants={state.restaurants}
-            branches={state.branches}
-            activeBranchId={state.activeBranchId}
-            canViewReports={canViewReports}
-            canViewCrossBranch={activePermissionKeys.has(
-              "reports.view_cross_branch",
-            )}
-            canViewAudit={canViewAudit}
-            canViewTenantAudit={canViewTenantAudit}
-            canManageFeatures={canManageFeatures}
-          />
-
-          <section id="features" className="admin-section">
-            <div className="section-heading">
-              <div>
-                <p className="eyebrow">Immutable versioned settings</p>
-                <h3>Branch features</h3>
+          {activePage === "features" ? (
+            <section className="admin-section">
+              <div className="section-heading">
+                <div>
+                  <p className="eyebrow">Immutable versioned settings</p>
+                  <h3>Branch features</h3>
+                </div>
+                <span>
+                  Branch v{state.features?.configuration.version ?? "—"} ·
+                  Restaurant v
+                  {state.restaurantFeatures?.configuration.version ?? "—"}
+                </span>
               </div>
-              <span>
-                Branch v{state.features?.configuration.version ?? "—"} ·
-                Restaurant v
-                {state.restaurantFeatures?.configuration.version ?? "—"}
-              </span>
-            </div>
-            <form onSubmit={(event) => void saveFeatures(event)}>
-              <ul className="feature-list">
-                {configurableFeatures.map((feature) => {
-                  const value =
-                    featureDraft[feature.id] ?? feature.defaultState;
-                  return (
-                    <li key={feature.id}>
-                      <div>
-                        <strong>{feature.key.replaceAll("_", " ")}</strong>
-                        <small>
-                          {feature.id}
-                          {feature.dependsOn.length
-                            ? ` · requires ${feature.dependsOn.join(", ")}`
-                            : ""}
-                        </small>
-                      </div>
-                      {feature.mutableInMvp ? (
-                        <label className="feature-toggle">
-                          <input
-                            type="checkbox"
-                            checked={value === "enabled"}
-                            onChange={(event) =>
-                              setFeatureDraft((current) => ({
-                                ...current,
-                                [feature.id]: event.target.checked
-                                  ? "enabled"
-                                  : "disabled",
-                              }))
-                            }
-                          />
-                          {value}
-                        </label>
-                      ) : (
-                        <span className="fixed-value">
-                          {value} · fixed in MVP
-                        </span>
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
-              <label className="reason-field">
-                Reason for feature change
-                <input
-                  name="reason"
-                  minLength={8}
-                  maxLength={500}
-                  required
-                  placeholder="Describe the operational reason"
-                />
-              </label>
-              <button className="primary-action" type="submit">
-                Save feature version
-              </button>
-            </form>
-          </section>
+              <form onSubmit={(event) => void saveFeatures(event)}>
+                <ul className="feature-list">
+                  {configurableFeatures.map((feature) => {
+                    const value =
+                      featureDraft[feature.id] ?? feature.defaultState;
+                    return (
+                      <li key={feature.id}>
+                        <div>
+                          <strong>{feature.key.replaceAll("_", " ")}</strong>
+                          <small>
+                            {feature.id}
+                            {feature.dependsOn.length
+                              ? ` · requires ${feature.dependsOn.join(", ")}`
+                              : ""}
+                          </small>
+                        </div>
+                        {feature.mutableInMvp ? (
+                          <label className="feature-toggle">
+                            <input
+                              type="checkbox"
+                              checked={value === "enabled"}
+                              onChange={(event) =>
+                                setFeatureDraft((current) => ({
+                                  ...current,
+                                  [feature.id]: event.target.checked
+                                    ? "enabled"
+                                    : "disabled",
+                                }))
+                              }
+                            />
+                            {value}
+                          </label>
+                        ) : (
+                          <span className="fixed-value">
+                            {value} · fixed in MVP
+                          </span>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+                <label className="reason-field">
+                  Reason for feature change
+                  <input
+                    name="reason"
+                    minLength={8}
+                    maxLength={500}
+                    required
+                    placeholder="Describe the operational reason"
+                  />
+                </label>
+                <motion.button
+                  className="primary-action"
+                  type="submit"
+                  variants={actionButtonVariants}
+                  initial="rest"
+                  whileHover="hover"
+                  whileTap="tap"
+                >
+                  Save feature version
+                </motion.button>
+              </form>
+            </section>
+          ) : null}
+          </motion.div>
+          </AnimatePresence>
         </section>
       </main>
     </div>
+    </MotionConfig>
   );
 }
 

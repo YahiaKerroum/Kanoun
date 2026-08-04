@@ -7,6 +7,13 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { z } from "zod";
+import { motion } from "framer-motion";
+import {
+  actionButtonVariants,
+  iconButtonVariants,
+  staggerContainerVariants,
+  fadeUpItemVariants,
+} from "./motion.js";
 
 const problemSchema = z.object({
   title: z.string().optional(),
@@ -168,13 +175,16 @@ export function NotificationInboxWorkspace({
             work addressed to your active identity and branch permissions.
           </p>
         </div>
-        <button
+        <motion.button
           type="button"
           className="secondary-action"
           onClick={() => void load()}
+          whileHover="hover"
+          whileTap="tap"
+          variants={actionButtonVariants}
         >
           <RefreshCw aria-hidden="true" size={18} /> Reload inbox
-        </button>
+        </motion.button>
       </section>
       <p className="stream-status" role="status">
         <span
@@ -206,11 +216,17 @@ export function NotificationInboxWorkspace({
           </p>
         </div>
       ) : (
-        <ol className="notification-list">
+        <motion.ol
+          className="notification-list"
+          initial="initial"
+          animate="enter"
+          variants={staggerContainerVariants}
+        >
           {items.map((item) => (
-            <li
+            <motion.li
               className={`notification-card notification-card--${item.taskState}`}
               key={item.id}
+              variants={fadeUpItemVariants}
             >
               <div>
                 <span className="status-pill">{item.taskState}</span>
@@ -225,25 +241,31 @@ export function NotificationInboxWorkspace({
               </div>
               <div className="notification-card__actions">
                 {!item.readAt ? (
-                  <button
+                  <motion.button
                     type="button"
                     onClick={() => void update(item.id, "read")}
+                    whileHover="hover"
+                    whileTap="tap"
+                    variants={actionButtonVariants}
                   >
                     Mark read
-                  </button>
+                  </motion.button>
                 ) : null}
                 {item.taskState === "unhandled" ? (
-                  <button
+                  <motion.button
                     type="button"
                     onClick={() => void update(item.id, "acknowledge")}
+                    whileHover="hover"
+                    whileTap="tap"
+                    variants={actionButtonVariants}
                   >
                     <CheckCheck aria-hidden="true" size={17} /> Acknowledge
-                  </button>
+                  </motion.button>
                 ) : null}
               </div>
-            </li>
+            </motion.li>
           ))}
-        </ol>
+        </motion.ol>
       )}
     </div>
   );
@@ -348,14 +370,17 @@ export function DashboardWorkspace({
             applied.
           </p>
         </div>
-        <button
+        <motion.button
           type="button"
           className="icon-button"
           aria-label="Reload dashboard"
           onClick={() => void load()}
+          whileHover="hover"
+          whileTap="tap"
+          variants={iconButtonVariants}
         >
           <RefreshCw aria-hidden="true" size={18} />
-        </button>
+        </motion.button>
       </div>
       {error ? (
         <div className="inline-alert" role="alert">
@@ -370,40 +395,45 @@ export function DashboardWorkspace({
             {dashboard.branch.restaurantName} · {dashboard.branch.branchName} ·{" "}
             {dashboard.branch.timeZone}
           </p>
-          <div className="metric-grid">
+          <motion.div
+            className="metric-grid"
+            initial="initial"
+            animate="enter"
+            variants={staggerContainerVariants}
+          >
             {dashboard.enabledWidgets.includes("orders") ? (
-              <article>
+              <motion.article variants={fadeUpItemVariants}>
                 <span>Active orders</span>
                 <strong>{dashboard.activeOrders}</strong>
-              </article>
+              </motion.article>
             ) : null}
             {dashboard.enabledWidgets.includes("tables") ? (
-              <article>
+              <motion.article variants={fadeUpItemVariants}>
                 <span>Occupied tables</span>
                 <strong>{dashboard.occupiedTables}</strong>
-              </article>
+              </motion.article>
             ) : null}
             {dashboard.enabledWidgets.includes("orders") ||
             dashboard.enabledWidgets.includes("payments") ? (
-              <article>
+              <motion.article variants={fadeUpItemVariants}>
                 <span>Pending requests</span>
                 <strong>
                   {dashboard.pendingRequests.bills +
                     dashboard.pendingRequests.cancellations}
                 </strong>
-              </article>
+              </motion.article>
             ) : null}
             {dashboard.enabledWidgets.includes("payments") ? (
-              <article>
+              <motion.article variants={fadeUpItemVariants}>
                 <span>Recorded today</span>
                 <strong>
                   {dashboard.dailySales[0]
                     ? `${dashboard.dailySales[0].paidAmount} ${dashboard.dailySales[0].currency}`
                     : "—"}
                 </strong>
-              </article>
+              </motion.article>
             ) : null}
-          </div>
+          </motion.div>
           {dashboard.enabledWidgets.includes("kitchen") ? (
             <div className="waiting-list">
               <h3>Kitchen elapsed time</h3>
@@ -589,7 +619,14 @@ export function SalesReportWorkspace({
             <option value="cancelled">Cancelled</option>
           </select>
         </label>
-        <button type="submit">Apply filters</button>
+        <motion.button
+          type="submit"
+          whileHover="hover"
+          whileTap="tap"
+          variants={actionButtonVariants}
+        >
+          Apply filters
+        </motion.button>
       </form>
       {error ? (
         <div className="inline-alert" role="alert">
@@ -664,21 +701,27 @@ export function SalesReportWorkspace({
         ) : null}
       </div>
       <div className="report-pagination" aria-label="Sales report pages">
-        <button
+        <motion.button
           type="button"
           disabled={!report || report.page === 0}
           onClick={() => setPage((current) => Math.max(0, current - 1))}
+          whileHover="hover"
+          whileTap="tap"
+          variants={actionButtonVariants}
         >
           Previous page
-        </button>
+        </motion.button>
         <span>Page {(report?.page ?? 0) + 1}</span>
-        <button
+        <motion.button
           type="button"
           disabled={!report?.hasMore}
           onClick={() => setPage((current) => current + 1)}
+          whileHover="hover"
+          whileTap="tap"
+          variants={actionButtonVariants}
         >
           Next page
-        </button>
+        </motion.button>
       </div>
     </div>
   );
@@ -787,7 +830,14 @@ export function AuditWorkspace({
             placeholder="payments.payment_refunded"
           />
         </label>
-        <button type="submit">Search history</button>
+        <motion.button
+          type="submit"
+          whileHover="hover"
+          whileTap="tap"
+          variants={actionButtonVariants}
+        >
+          Search history
+        </motion.button>
       </form>
       {error ? (
         <div className="inline-alert" role="alert">
@@ -797,9 +847,14 @@ export function AuditWorkspace({
       {items.length === 0 ? (
         <div className="empty-panel">No audit evidence matches this scope.</div>
       ) : (
-        <ol className="audit-list">
+        <motion.ol
+          className="audit-list"
+          initial="initial"
+          animate="enter"
+          variants={staggerContainerVariants}
+        >
           {items.map((item) => (
-            <li key={item.id}>
+            <motion.li key={item.id} variants={fadeUpItemVariants}>
               <div>
                 <span className="status-pill">{item.outcome}</span>
                 <strong>{item.action}</strong>
@@ -823,26 +878,32 @@ export function AuditWorkspace({
                   </pre>
                 </details>
               ) : null}
-            </li>
+            </motion.li>
           ))}
-        </ol>
+        </motion.ol>
       )}
       <div className="report-pagination" aria-label="Audit history pages">
-        <button
+        <motion.button
           type="button"
           disabled={auditPage.page === 0}
           onClick={() => setPage((current) => Math.max(0, current - 1))}
+          whileHover="hover"
+          whileTap="tap"
+          variants={actionButtonVariants}
         >
           Previous page
-        </button>
+        </motion.button>
         <span>Page {auditPage.page + 1}</span>
-        <button
+        <motion.button
           type="button"
           disabled={!auditPage.hasMore}
           onClick={() => setPage((current) => current + 1)}
+          whileHover="hover"
+          whileTap="tap"
+          variants={actionButtonVariants}
         >
           Next page
-        </button>
+        </motion.button>
       </div>
     </div>
   );

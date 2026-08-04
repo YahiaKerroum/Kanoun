@@ -8,6 +8,13 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { z } from "zod";
+import { motion } from "framer-motion";
+import {
+  actionButtonVariants,
+  cardHoverVariants,
+  fadeUpItemVariants,
+  staggerContainerVariants,
+} from "./motion.js";
 
 const kitchenItemSchema = z.object({
   id: z.uuid(),
@@ -334,10 +341,16 @@ export function KitchenWorkspace(props: {
             readiness. The view reloads after reconnect and every two seconds.
           </p>
         </div>
-        <button type="button" onClick={() => void reload()}>
+        <motion.button
+          type="button"
+          onClick={() => void reload()}
+          whileHover="hover"
+          whileTap="tap"
+          variants={actionButtonVariants}
+        >
           <RefreshCw aria-hidden="true" size={18} />
           Refresh queue
-        </button>
+        </motion.button>
       </header>
 
       <div className="kitchen-status" aria-live="polite">
@@ -364,9 +377,15 @@ export function KitchenWorkspace(props: {
           <CircleAlert aria-hidden="true" size={26} />
           <h3>Kitchen queue unavailable</h3>
           <p>{state.message}</p>
-          <button type="button" onClick={() => void reload()}>
+          <motion.button
+            type="button"
+            onClick={() => void reload()}
+            whileHover="hover"
+            whileTap="tap"
+            variants={actionButtonVariants}
+          >
             Try again
-          </button>
+          </motion.button>
         </section>
       ) : state.kind === "loading" ? (
         <section className="kitchen-empty" aria-busy="true">
@@ -395,9 +414,18 @@ export function KitchenWorkspace(props: {
                 Ready orders appear here with their reference and table.
               </p>
             ) : (
-              <div className="ready-order-grid">
+              <motion.div
+                className="ready-order-grid"
+                initial="initial"
+                animate="enter"
+                variants={staggerContainerVariants}
+              >
                 {readyGroups.map((group) => (
-                  <article key={group.orderId}>
+                  <motion.article
+                    key={group.orderId}
+                    variants={cardHoverVariants}
+                    whileHover="hover"
+                  >
                     <div>
                       <strong>{group.reference}</strong>
                       <span>Table {group.tableCode}</span>
@@ -411,7 +439,7 @@ export function KitchenWorkspace(props: {
                       {group.items.length === 1 ? "" : "s"}
                     </span>
                     {props.canServe ? (
-                      <button
+                      <motion.button
                         type="button"
                         disabled={pendingId === group.orderId}
                         onClick={() =>
@@ -421,20 +449,23 @@ export function KitchenWorkspace(props: {
                             `${group.reference} was marked served.`,
                           )
                         }
+                        whileHover="hover"
+                        whileTap="tap"
+                        variants={actionButtonVariants}
                       >
                         <Utensils aria-hidden="true" size={18} />
                         {pendingId === group.orderId
                           ? "Marking served…"
                           : "Collect · mark served"}
-                      </button>
+                      </motion.button>
                     ) : (
                       <span className="kitchen-permission-note">
                         Serving permission required
                       </span>
                     )}
-                  </article>
+                  </motion.article>
                 ))}
-              </div>
+              </motion.div>
             )}
           </section>
 
@@ -456,9 +487,19 @@ export function KitchenWorkspace(props: {
                 <p>New accepted orders will appear automatically.</p>
               </div>
             ) : (
-              <div className="kitchen-order-grid">
+              <motion.div
+                className="kitchen-order-grid"
+                initial="initial"
+                animate="enter"
+                variants={staggerContainerVariants}
+              >
                 {preparingGroups.map((group) => (
-                  <article className="kitchen-order" key={group.orderId}>
+                  <motion.article
+                    className="kitchen-order"
+                    key={group.orderId}
+                    variants={cardHoverVariants}
+                    whileHover="hover"
+                  >
                     <header>
                       <div>
                         <strong>{group.reference}</strong>
@@ -500,8 +541,8 @@ export function KitchenWorkspace(props: {
                           ) : null}
                           <div className="kitchen-item__footer">
                             <span>Waiting {elapsed(item.queuedAt, now)}</span>
-                            {props.canUpdate && item.state === "queued" ? (
-                              <button
+                              {props.canUpdate && item.state === "queued" ? (
+                              <motion.button
                                 type="button"
                                 disabled={pendingId === item.id}
                                 onClick={() =>
@@ -511,14 +552,17 @@ export function KitchenWorkspace(props: {
                                     `${item.itemName} is preparing.`,
                                   )
                                 }
+                                whileHover="hover"
+                                whileTap="tap"
+                                variants={actionButtonVariants}
                               >
                                 {pendingId === item.id
                                   ? "Starting…"
                                   : "Start preparation"}
-                              </button>
+                              </motion.button>
                             ) : props.canUpdate &&
                               item.state === "preparing" ? (
-                              <button
+                              <motion.button
                                 type="button"
                                 disabled={pendingId === item.id}
                                 onClick={() =>
@@ -528,19 +572,22 @@ export function KitchenWorkspace(props: {
                                     `${item.itemName} is ready.`,
                                   )
                                 }
+                                whileHover="hover"
+                                whileTap="tap"
+                                variants={actionButtonVariants}
                               >
                                 {pendingId === item.id
                                   ? "Finishing…"
                                   : "Mark ready"}
-                              </button>
+                              </motion.button>
                             ) : null}
                           </div>
                         </li>
                       ))}
                     </ul>
-                  </article>
+                  </motion.article>
                 ))}
-              </div>
+              </motion.div>
             )}
           </section>
         </>
