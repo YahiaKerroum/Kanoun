@@ -505,6 +505,7 @@ export function MenuTablesAdministration({
     const form = event.currentTarget;
     const values = new FormData(form);
     const description = formString(values, "description");
+    const imageUrl = formString(values, "imageUrl");
     void mutate(
       "Creating dish",
       () =>
@@ -517,6 +518,7 @@ export function MenuTablesAdministration({
               categoryId: formString(values, "categoryId"),
               name: formString(values, "name"),
               ...(description ? { description } : {}),
+              ...(imageUrl ? { imageUrl } : {}),
               basePrice: {
                 amount: formString(values, "basePrice"),
                 currency: branch.currency,
@@ -535,11 +537,13 @@ export function MenuTablesAdministration({
     event.preventDefault();
     const values = new FormData(event.currentTarget);
     const description = formString(values, "description");
+    const imageUrl = formString(values, "imageUrl");
     const payload: Record<string, unknown> = {};
     if (permissions.menuManage) {
       Object.assign(payload, {
         name: formString(values, "name"),
         description: description || null,
+        imageUrl: imageUrl || null,
         categoryId: formString(values, "categoryId"),
         displayOrder: formNumber(values, "displayOrder"),
         status: formString(values, "status"),
@@ -983,6 +987,36 @@ function MenuAdministration({
     [data.dishes],
   );
 
+  // Controlled category name for suggestion pills
+  const [categoryName, setCategoryName] = useState("");
+  // Live preview URL for new dish image
+  const [newDishImageUrl, setNewDishImageUrl] = useState("");
+  // Live preview URL for selected dish image edit — syncs when dish selection changes
+  const [editDishImageUrl, setEditDishImageUrl] = useState(
+    selectedDish?.imageUrl ?? "",
+  );
+
+  useEffect(() => {
+    setEditDishImageUrl(selectedDish?.imageUrl ?? "");
+  }, [selectedDish?.id, selectedDish?.imageUrl]);
+
+  const SUGGESTED_CATEGORIES = [
+    "Starters",
+    "Salads",
+    "Soups",
+    "Pizza",
+    "Pasta",
+    "Sandwiches",
+    "Burgers",
+    "Grills",
+    "Seafood",
+    "Wraps",
+    "Desserts",
+    "Drinks",
+    "Specials",
+  ] as const;
+
+
   return (
     <section
       id="menu"
@@ -1021,11 +1055,32 @@ function MenuAdministration({
             {permissions.menuManage ? (
               <form
                 className="compact-form compact-form--category"
-                onSubmit={onCreateCategory}
+                onSubmit={(event) => {
+                  onCreateCategory(event);
+                  setCategoryName("");
+                }}
               >
+                <div className="category-suggestions" aria-label="Common category names">
+                  {SUGGESTED_CATEGORIES.map((suggestion) => (
+                    <button
+                      key={suggestion}
+                      type="button"
+                      className="suggestion-pill"
+                      onClick={() => setCategoryName(suggestion)}
+                    >
+                      {suggestion}
+                    </button>
+                  ))}
+                </div>
                 <label>
                   Category name
-                  <input name="name" maxLength={160} required />
+                  <input
+                    name="name"
+                    maxLength={160}
+                    required
+                    value={categoryName}
+                    onChange={(event) => setCategoryName(event.currentTarget.value)}
+                  />
                 </label>
                 <label>
                   Display order
@@ -1109,7 +1164,10 @@ function MenuAdministration({
             {permissions.menuManage && sortedCategories.length > 0 ? (
               <form
                 className="compact-form compact-form--dish"
-                onSubmit={onCreateDish}
+                onSubmit={(event) => {
+                  onCreateDish(event);
+                  setNewDishImageUrl("");
+                }}
               >
                 <label>
                   Dish name
@@ -1149,6 +1207,28 @@ function MenuAdministration({
                 <label className="compact-form__wide">
                   Description (optional)
                   <input name="description" maxLength={1000} />
+                </label>
+                <label className="compact-form__wide compact-form__image-row">
+                  Image URL (optional)
+                  <div className="image-input-row">
+                    <input
+                      name="imageUrl"
+                      type="url"
+                      maxLength={2048}
+                      placeholder="https://example.com/image.jpg"
+                      value={newDishImageUrl}
+                      onChange={(event) => setNewDishImageUrl(event.currentTarget.value)}
+                    />
+                    {newDishImageUrl ? (
+                      <img
+                        className="dish-image-preview"
+                        src={newDishImageUrl}
+                        alt="Dish preview"
+                        onError={(event) => { event.currentTarget.style.display = "none"; }}
+                        onLoad={(event) => { event.currentTarget.style.display = ""; }}
+                      />
+                    ) : null}
+                  </div>
                 </label>
                 <button type="submit" disabled={pending || !featureEnabled}>
                   Add dish
@@ -1262,6 +1342,35 @@ function MenuAdministration({
                     maxLength={1000}
                     disabled={!permissions.menuManage}
                   />
+                </label>
+                <label className="record-editor__wide record-editor__image-row">
+                  Image URL
+                  <div className="image-input-row">
+                    <input
+                      name="imageUrl"
+                      type="url"
+                      maxLength={2048}
+                      placeholder="https://example.com/image.jpg"
+                      defaultValue={selectedDish.imageUrl ?? ""}
+                      disabled={!permissions.menuManage}
+                      onChange={(event) =>
+                        setEditDishImageUrl(event.currentTarget.value)
+                      }
+                    />
+                    {editDishImageUrl ? (
+                      <img
+                        className="dish-image-preview"
+                        src={editDishImageUrl}
+                        alt="Dish preview"
+                        onError={(event) => {
+                          event.currentTarget.style.display = "none";
+                        }}
+                        onLoad={(event) => {
+                          event.currentTarget.style.display = "";
+                        }}
+                      />
+                    ) : null}
+                  </div>
                 </label>
                 <label>
                   Status
