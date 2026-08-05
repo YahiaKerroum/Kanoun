@@ -476,6 +476,7 @@ function MenuView(props: {
   readonly onAccepted: (order: GuestOrder) => void;
 }) {
   const [cart, setCart] = useState<readonly CartItem[]>([]);
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [reviewOpen, setReviewOpen] = useState(false);
   const [submissionState, setSubmissionState] = useState<
     "idle" | "pending" | "failed" | "conflict"
@@ -492,6 +493,10 @@ function MenuView(props: {
     0,
   );
   const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+  const visibleCategories = activeCategory
+    ? props.menu.categories.filter((c) => c.id === activeCategory)
+    : props.menu.categories;
 
   useEffect(() => {
     const dialog = reviewDialog.current;
@@ -580,11 +585,39 @@ function MenuView(props: {
           <p className="eyebrow">{copy.menuEyebrow}</p>
           <h1 tabIndex={-1}>{copy.menuTitle}</h1>
           {props.menu.categories.length > 1 ? (
-            <nav aria-label={copy.menuCategoriesLabel}>
+            <nav aria-label={copy.menuCategoriesLabel} className="category-tabs">
+              <button
+                type="button"
+                className="category-tab"
+                aria-current={activeCategory === null ? "true" : undefined}
+                onClick={() => setActiveCategory(null)}
+              >
+                {activeCategory === null ? (
+                  <motion.span
+                    className="category-tab__pill"
+                    layoutId="cat-pill"
+                    transition={bouncy}
+                  />
+                ) : null}
+                <span className="category-tab__label">All</span>
+              </button>
               {props.menu.categories.map((category) => (
-                <a key={category.id} href={`#category-${category.id}`}>
-                  {category.name}
-                </a>
+                <button
+                  key={category.id}
+                  type="button"
+                  className="category-tab"
+                  aria-current={activeCategory === category.id ? "true" : undefined}
+                  onClick={() => setActiveCategory(category.id)}
+                >
+                  {activeCategory === category.id ? (
+                    <motion.span
+                      className="category-tab__pill"
+                      layoutId="cat-pill"
+                      transition={bouncy}
+                    />
+                  ) : null}
+                  <span className="category-tab__label">{category.name}</span>
+                </button>
               ))}
             </nav>
           ) : null}
@@ -592,37 +625,42 @@ function MenuView(props: {
 
         {hasDishes ? (
           <div className="category-list">
-            {props.menu.categories.map((category, catIdx) => (
-              <section
-                className="menu-category"
-                id={`category-${category.id}`}
-                key={category.id}
-              >
-                <div className="category-heading">
-                  <span aria-hidden="true">
-                    {String(catIdx + 1).padStart(2, "00")}
-                  </span>
-                  <h2>{category.name}</h2>
-                </div>
-                <motion.div
-                  className="category-dishes"
-                  variants={staggerList}
-                  initial="initial"
-                  whileInView="enter"
-                  viewport={{ once: true, margin: "-60px" }}
+            <AnimatePresence mode="popLayout" initial={false}>
+              {visibleCategories.map((category, catIdx) => (
+                <motion.section
+                  className="menu-category"
+                  id={`category-${category.id}`}
+                  key={category.id}
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0, transition: bouncy }}
+                  exit={{ opacity: 0, y: -12, transition: { duration: 0.15 } }}
                 >
-                  {category.dishes.map((dish) => (
-                    <motion.div key={dish.id} variants={fadeUp}>
-                      <DishRow
-                        dish={dish}
-                        orderingEnabled={orderingEnabled}
-                        onAdd={(item) => setCart((current) => [...current, item])}
-                      />
-                    </motion.div>
-                  ))}
-                </motion.div>
-              </section>
-            ))}
+                  <div className="category-heading">
+                    <span aria-hidden="true">
+                      {String(catIdx + 1).padStart(2, "00")}
+                    </span>
+                    <h2>{category.name}</h2>
+                  </div>
+                  <motion.div
+                    className="category-dishes"
+                    variants={staggerList}
+                    initial="initial"
+                    whileInView="enter"
+                    viewport={{ once: true, margin: "-60px" }}
+                  >
+                    {category.dishes.map((dish) => (
+                      <motion.div key={dish.id} variants={fadeUp}>
+                        <DishRow
+                          dish={dish}
+                          orderingEnabled={orderingEnabled}
+                          onAdd={(item) => setCart((current) => [...current, item])}
+                        />
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                </motion.section>
+              ))}
+            </AnimatePresence>
           </div>
         ) : (
           <section className="empty-menu">
