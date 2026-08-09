@@ -1,7 +1,9 @@
 import { randomUUID } from "node:crypto";
 import { execFile } from "node:child_process";
 import { existsSync } from "node:fs";
+import { resolve } from "node:path";
 import process from "node:process";
+import { pathToFileURL } from "node:url";
 import { promisify } from "node:util";
 import {
   createDatabasePool,
@@ -30,12 +32,16 @@ import {
   PostgresServiceWorkflow,
   TenantOwnerService,
 } from "@rms/service-workflow";
+import { resetDemoDatabase } from "./demo-database.js";
+import { parseDemoConfig, type DemoConfig } from "./demo-config.js";
+import { generatedDemoPassword, generatedDemoSecret } from "./demo-secrets.js";
+import {
+  DEMO_ROLE_DEFINITIONS,
+  DEMO_SCENARIO,
+  type DemoSeedResult,
+} from "./demo-types.js";
 
 const demoBusinessCode = "dar-nedjma-demo";
-const localDatabaseUrl = "postgresql://rms:rms_local_only@127.0.0.1:5432/rms";
-const localSessionSecret = "rms-demo-local-session-secret-not-for-production";
-const localGuestAccessSecret =
-  "rms-demo-local-guest-access-secret-not-for-production";
 const executeFile = promisify(execFile);
 
 function algerianServiceNoon(): Date {
@@ -63,13 +69,6 @@ function metadata(now = demoNow) {
   return { correlationId, causationId: correlationId, now };
 }
 
-function password(): string {
-  const value = process.env.DEMO_SEED_PASSWORD;
-  if (!value)
-    throw new Error("DEMO_SEED_PASSWORD is required for the demo seed.");
-  return value;
-}
-
 async function applyMigrations(connectionString: string): Promise<void> {
   await executeFile(
     process.execPath,
@@ -86,23 +85,23 @@ function configured(name: string, fallback: string): string {
   return value && value.length > 0 ? value : fallback;
 }
 
-async function main(): Promise<void> {
-  if (existsSync(".env")) process.loadEnvFile(".env");
-  if (process.env.NODE_ENV === "production") {
-    throw new Error("The demo seed is disabled in production.");
-  }
+export interface DemoSeedOptions {
+  readonly config: DemoConfig;
+  readonly password: string;
+  readonly sessionSecret: string;
+  readonly guestAccessSecret: string;
+  readonly customerWebOrigin: string;
+}
 
-  const connectionString = configured("DATABASE_URL", localDatabaseUrl);
-  const demoPassword = password();
-  const sessionSecret = configured("SESSION_SECRET", localSessionSecret);
-  const guestAccessSecret = configured(
-    "GUEST_ACCESS_SECRET",
-    localGuestAccessSecret,
-  );
-  const customerWebOrigin = configured(
-    "CUSTOMER_WEB_ORIGIN",
-    "http://127.0.0.1:5174",
-  );
+export async function seedDemo(
+  options: DemoSeedOptions,
+): Promise<DemoSeedResult> {
+  const connectionString = options.config.databaseUrl;
+  const demoPassword = options.password;
+  const sessionSecret = options.sessionSecret;
+  const guestAccessSecret = options.guestAccessSecret;
+  const customerWebOrigin = options.customerWebOrigin;
+  await resetDemoDatabase(options.config);
   const customerImageUrl = (filename: string): string =>
     new URL(`/images/${filename}`, customerWebOrigin).toString();
   await applyMigrations(connectionString);
@@ -112,15 +111,6 @@ async function main(): Promise<void> {
   });
 
   try {
-    const existing = await databasePool.query<{ id: string }>(
-      "select id from restaurant.business_accounts where code = $1 limit 1",
-      [demoBusinessCode],
-    );
-    if (existing.rowCount) {
-      console.log("Demo seed already exists; no records were changed.");
-      return;
-    }
-
     const workflow = new PostgresServiceWorkflow(databasePool);
     const restaurantConfiguration = new PostgresRestaurantConfigurationStore();
     const identityAccess = new PostgresIdentityAccessStore();
@@ -243,17 +233,13 @@ async function main(): Promise<void> {
       metadata(),
     );
 
-    for (const [displayName, email, templateKey] of [
-      ["Imane Khellaf", "imane.khellaf@dar-nedjma.demo", "general_staff"],
-      ["Yacine Bensaid", "yacine.bensaid@dar-nedjma.demo", "kitchen_staff"],
-      ["Samira Bouzid", "samira.bouzid@dar-nedjma.demo", "cashier"],
-    ] as const) {
+    for (const role of DEMO_ROLE_DEFINITIONS.slice(1)) {
       const employee = await tenantOwner.createEmployee(
         ownerContext,
         {
           restaurantId: bootstrapped.restaurant.id,
-          displayName,
-          email,
+          displayName: role.displayName,
+          email: role.email,
           branchIds: [branch.id],
         },
         metadata(),
@@ -265,7 +251,7 @@ async function main(): Promise<void> {
       await tenantOwner.applyPermissionTemplate(
         ownerContext,
         employee.id,
-        templateKey,
+        role.templateKey,
         permissionSet.version,
         "Apply the demo staff role.",
         metadata(),
@@ -339,7 +325,7 @@ async function main(): Promise<void> {
       },
       metadata(),
     );
-    const [mainTable, terraceTable, salonTable] = await Promise.all([
+    const [mainTable, terraceTable] = await Promise.all([
       menuTables.createTable(
         ownerContext,
         branch.id,
@@ -359,6 +345,11 @@ async function main(): Promise<void> {
         metadata(),
       ),
     ]);
+    const mainTableQr = await menuTables.issueTableQrCode(
+      ownerContext,
+      mainTable.id,
+      metadata(),
+    );
     const menuVersion = await menuTables.getMenuVersion(
       ownerContext,
       bootstrapped.restaurant.id,
@@ -471,13 +462,53 @@ async function main(): Promise<void> {
     console.log(
       `Seeded ${demoBusinessCode}: ${bootstrapped.restaurant.name} / ${branch.name} with staff, menu, tables, orders, payments, refunds, audit, notifications, and reports.`,
     );
-    void salonTable;
+    return {
+      businessCode: demoBusinessCode,
+      businessName: "Dar Nedjma Hospitality",
+      restaurantName: bootstrapped.restaurant.name,
+      branchName: branch.name,
+      roles: DEMO_ROLE_DEFINITIONS.map((role) => ({
+        key: role.key,
+        label: role.label,
+        displayName: role.displayName,
+        email: role.email,
+        target: role.target,
+        password: demoPassword,
+      })),
+      customerUrls: [{ tableCode: mainTable.code, url: mainTableQr.qrUrl }],
+      scenario: DEMO_SCENARIO,
+    };
   } finally {
     await databasePool.end();
   }
 }
 
-main().catch((error: unknown) => {
-  console.error(error instanceof Error ? error.message : error);
-  process.exitCode = 1;
-});
+async function main(): Promise<void> {
+  if (existsSync(".env")) {
+    process.loadEnvFile(".env");
+  }
+  const config = parseDemoConfig(process.env);
+  const result = await seedDemo({
+    config,
+    password: config.seedPassword ?? generatedDemoPassword(),
+    sessionSecret: configured("SESSION_SECRET", generatedDemoSecret()),
+    guestAccessSecret: configured("GUEST_ACCESS_SECRET", generatedDemoSecret()),
+    customerWebOrigin: configured(
+      "CUSTOMER_WEB_ORIGIN",
+      "http://127.0.0.1:5174",
+    ),
+  });
+  console.log(
+    `Demo seed ready for ${result.businessCode}: ${result.roles.length} roles and ${result.customerUrls.length} table QR URL.`,
+  );
+}
+
+const entrypoint = process.argv[1]
+  ? pathToFileURL(resolve(process.argv[1])).href
+  : undefined;
+if (entrypoint === import.meta.url) {
+  main().catch((error: unknown) => {
+    console.error(error instanceof Error ? error.message : error);
+    process.exitCode = 1;
+  });
+}

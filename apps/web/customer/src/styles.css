@@ -1,3 +1,4 @@
+@import url("../../design-system.css");
 @import url("https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600..800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
 
 :root {
@@ -6,15 +7,6 @@
   font-family: "Plus Jakarta Sans", system-ui, sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
-  --brand-fill: #ffb300;
-  --brand-700: #6e4700;
-  --brand-100: #fff0cc;
-  --canvas: #faf8f4;
-  --surface: #ffffff;
-  --line: #efe7da;
-  --text: #1e1b14;
-  --muted: #565044;
-  --danger: #c22c23;
 }
 
 * {
@@ -307,8 +299,9 @@ h1[tabindex="-1"]:focus {
 }
 
 .menu-shell {
-  min-height: 100vh;
-  background: var(--canvas);
+  width: min(1280px, 100%);
+  min-height: calc(100svh - clamp(24px, 6vw, 56px));
+  margin: 0 auto;
 }
 
 .menu-header {

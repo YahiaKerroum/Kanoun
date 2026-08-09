@@ -45,7 +45,12 @@ const addBtn: Variants = {
 
 const panelVariants: Variants = {
   initial: { opacity: 0, y: 18, scale: 0.98 },
-  enter: { opacity: 1, y: 0, scale: 1, transition: { ...gentle, duration: 0.32 } },
+  enter: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { ...gentle, duration: 0.32 },
+  },
   exit: { opacity: 0, y: -10, scale: 0.98, transition: { duration: 0.16 } },
 };
 
@@ -64,7 +69,6 @@ const slideUp: Variants = {
   enter: { opacity: 1, y: 0, transition: bouncy },
   exit: { opacity: 0, y: 32, transition: { duration: 0.18 } },
 };
-
 
 type Journey =
   | { readonly kind: "exchanging" }
@@ -558,307 +562,321 @@ function MenuView(props: {
   }
 
   return (
-    <div className="menu-shell">
-      <header className="menu-header">
-        <div>
-          <a
-            href="#menu-content"
-            className="brand-link"
-            aria-label={copy.brandMenuTopLabel}
-          >
-            {copy.brand}
-          </a>
-          <p>{copy.menuUpdated}</p>
-        </div>
-        {props.session.tableCode ? (
-          <div className="table-chip">
-            <span>{copy.tableLabel}</span>
-            <strong>{props.session.tableCode}</strong>
+    <div className="menu-stage mise-stage">
+      <div className="menu-shell mise-shell">
+        <header className="menu-header">
+          <div>
+            <a
+              href="#menu-content"
+              className="brand-link"
+              aria-label={copy.brandMenuTopLabel}
+            >
+              {copy.brand}
+            </a>
+            <p>{copy.menuUpdated}</p>
           </div>
-        ) : (
-          <span className="browse-chip">{copy.browseOnly}</span>
-        )}
-      </header>
+          {props.session.tableCode ? (
+            <div className="table-chip">
+              <span>{copy.tableLabel}</span>
+              <strong>{props.session.tableCode}</strong>
+            </div>
+          ) : (
+            <span className="browse-chip">{copy.browseOnly}</span>
+          )}
+        </header>
 
-      <main id="menu-content" className="menu-content">
-        <section className="menu-intro">
-          <p className="eyebrow">{copy.menuEyebrow}</p>
-          <h1 tabIndex={-1}>{copy.menuTitle}</h1>
-          {props.menu.categories.length > 1 ? (
-            <nav aria-label={copy.menuCategoriesLabel} className="category-tabs">
-              <button
-                type="button"
-                className="category-tab"
-                aria-current={activeCategory === null ? "true" : undefined}
-                onClick={() => setActiveCategory(null)}
+        <main id="menu-content" className="menu-content">
+          <section className="menu-intro">
+            <p className="eyebrow">{copy.menuEyebrow}</p>
+            <h1 tabIndex={-1}>{copy.menuTitle}</h1>
+            {props.menu.categories.length > 1 ? (
+              <nav
+                aria-label={copy.menuCategoriesLabel}
+                className="category-tabs"
               >
-                {activeCategory === null ? (
-                  <motion.span
-                    className="category-tab__pill"
-                    layoutId="cat-pill"
-                    transition={bouncy}
-                  />
-                ) : null}
-                <span className="category-tab__label">All</span>
-              </button>
-              {props.menu.categories.map((category) => (
                 <button
-                  key={category.id}
                   type="button"
                   className="category-tab"
-                  aria-current={activeCategory === category.id ? "true" : undefined}
-                  onClick={() => setActiveCategory(category.id)}
+                  aria-current={activeCategory === null ? "true" : undefined}
+                  onClick={() => setActiveCategory(null)}
                 >
-                  {activeCategory === category.id ? (
+                  {activeCategory === null ? (
                     <motion.span
                       className="category-tab__pill"
                       layoutId="cat-pill"
                       transition={bouncy}
                     />
                   ) : null}
-                  <span className="category-tab__label">{category.name}</span>
+                  <span className="category-tab__label">All</span>
                 </button>
-              ))}
-            </nav>
-          ) : null}
-        </section>
-
-        {hasDishes ? (
-          <div className="category-list">
-            <AnimatePresence mode="popLayout" initial={false}>
-              {visibleCategories.map((category, catIdx) => (
-                <motion.section
-                  className="menu-category"
-                  id={`category-${category.id}`}
-                  key={category.id}
-                  initial={{ opacity: 0, y: 16 }}
-                  animate={{ opacity: 1, y: 0, transition: bouncy }}
-                  exit={{ opacity: 0, y: -12, transition: { duration: 0.15 } }}
-                >
-                  <div className="category-heading">
-                    <span aria-hidden="true">
-                      {String(catIdx + 1).padStart(2, "00")}
-                    </span>
-                    <h2>{category.name}</h2>
-                  </div>
-                  <motion.div
-                    className="category-dishes"
-                    variants={staggerList}
-                    initial="initial"
-                    whileInView="enter"
-                    viewport={{ once: true, margin: "-60px" }}
+                {props.menu.categories.map((category) => (
+                  <button
+                    key={category.id}
+                    type="button"
+                    className="category-tab"
+                    aria-current={
+                      activeCategory === category.id ? "true" : undefined
+                    }
+                    onClick={() => setActiveCategory(category.id)}
                   >
-                    {category.dishes.map((dish) => (
-                      <motion.div key={dish.id} variants={fadeUp}>
-                        <DishRow
-                          dish={dish}
-                          orderingEnabled={orderingEnabled}
-                          onAdd={(item) => setCart((current) => [...current, item])}
-                        />
-                      </motion.div>
-                    ))}
-                  </motion.div>
-                </motion.section>
-              ))}
-            </AnimatePresence>
-          </div>
-        ) : (
-          <section className="empty-menu">
-            <h2>{copy.emptyMenuTitle}</h2>
-            <p>{copy.emptyMenuBody}</p>
-            <motion.button
-              type="button"
-              className="text-action"
-              onClick={props.onReload}
-              variants={actionBtn}
-              initial="rest"
-              whileHover="hover"
-              whileTap="tap"
-            >
-              {copy.reloadMenu}
-            </motion.button>
+                    {activeCategory === category.id ? (
+                      <motion.span
+                        className="category-tab__pill"
+                        layoutId="cat-pill"
+                        transition={bouncy}
+                      />
+                    ) : null}
+                    <span className="category-tab__label">{category.name}</span>
+                  </button>
+                ))}
+              </nav>
+            ) : null}
           </section>
-        )}
-      </main>
 
-      <AnimatePresence>
-        {orderingEnabled && cart.length > 0 ? (
-          <motion.div
-            className="cart-bar"
-            aria-live="polite"
-            variants={slideUp}
-            initial="initial"
-            animate="enter"
-            exit="exit"
-          >
-            <div>
-              <strong>
-                {itemCount} {itemCount === 1 ? "item" : "items"}
-              </strong>
-              <span>{formatMinorUnits(cartTotal, props.menu.currency)}</span>
+          {hasDishes ? (
+            <div className="category-list">
+              <AnimatePresence mode="popLayout" initial={false}>
+                {visibleCategories.map((category, catIdx) => (
+                  <motion.section
+                    className="menu-category"
+                    id={`category-${category.id}`}
+                    key={category.id}
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0, transition: bouncy }}
+                    exit={{
+                      opacity: 0,
+                      y: -12,
+                      transition: { duration: 0.15 },
+                    }}
+                  >
+                    <div className="category-heading">
+                      <span aria-hidden="true">
+                        {String(catIdx + 1).padStart(2, "00")}
+                      </span>
+                      <h2>{category.name}</h2>
+                    </div>
+                    <motion.div
+                      className="category-dishes"
+                      variants={staggerList}
+                      initial="initial"
+                      whileInView="enter"
+                      viewport={{ once: true, margin: "-60px" }}
+                    >
+                      {category.dishes.map((dish) => (
+                        <motion.div key={dish.id} variants={fadeUp}>
+                          <DishRow
+                            dish={dish}
+                            orderingEnabled={orderingEnabled}
+                            onAdd={(item) =>
+                              setCart((current) => [...current, item])
+                            }
+                          />
+                        </motion.div>
+                      ))}
+                    </motion.div>
+                  </motion.section>
+                ))}
+              </AnimatePresence>
             </div>
-            <motion.button
-              ref={reviewTrigger}
-              type="button"
-              onClick={() => setReviewOpen(true)}
-              variants={actionBtn}
-              initial="rest"
-              whileHover="hover"
-              whileTap="tap"
-            >
-              {copy.reviewOrder}
-            </motion.button>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
-
-      <dialog
-        ref={reviewDialog}
-        className="cart-review"
-        aria-labelledby="cart-title"
-        onCancel={closeReview}
-        onClose={() => {
-          setReviewOpen(false);
-          reviewTrigger.current?.focus();
-        }}
-      >
-        {reviewOpen ? (
-          <>
-            <div className="cart-review__header">
-              <div>
-                <p className="eyebrow">
-                  {copy.tableLabel} {props.session.tableCode}
-                </p>
-                <h2 id="cart-title">{copy.cartTitle}</h2>
-              </div>
+          ) : (
+            <section className="empty-menu">
+              <h2>{copy.emptyMenuTitle}</h2>
+              <p>{copy.emptyMenuBody}</p>
               <motion.button
                 type="button"
-                onClick={closeReview}
+                className="text-action"
+                onClick={props.onReload}
                 variants={actionBtn}
                 initial="rest"
                 whileHover="hover"
                 whileTap="tap"
               >
-                {copy.closeReview}
+                {copy.reloadMenu}
               </motion.button>
-            </div>
+            </section>
+          )}
+        </main>
+
+        <AnimatePresence>
+          {orderingEnabled && cart.length > 0 ? (
             <motion.div
-              className="cart-items"
-              variants={staggerList}
+              className="cart-bar"
+              aria-live="polite"
+              variants={slideUp}
               initial="initial"
               animate="enter"
+              exit="exit"
             >
-              {cart.map((item) => (
-                <motion.article key={item.clientId} variants={fadeUp}>
-                  <div>
-                    <h3>{item.dish.name}</h3>
-                    {item.optionIds.length > 0 ? (
-                      <p>
-                        {item.dish.optionGroups
-                          .flatMap((group) => group.options)
-                          .filter((option) =>
-                            item.optionIds.includes(option.id),
-                          )
-                          .map((option) => option.name)
-                          .join(", ")}
-                      </p>
-                    ) : null}
-                    {item.note ? <p>{item.note}</p> : null}
-                  </div>
-                  <div className="cart-item-actions">
-                    <motion.button
-                      type="button"
-                      aria-label={`Decrease ${item.dish.name} quantity`}
-                      onClick={() => changeQuantity(item.clientId, -1)}
-                      variants={addBtn}
-                      initial="rest"
-                      whileHover="hover"
-                      whileTap="tap"
-                    >
-                      −
-                    </motion.button>
-                    <span aria-label={`${copy.quantity} ${item.quantity}`}>
-                      {item.quantity}
-                    </span>
-                    <motion.button
-                      type="button"
-                      aria-label={`Increase ${item.dish.name} quantity`}
-                      onClick={() => changeQuantity(item.clientId, 1)}
-                      variants={addBtn}
-                      initial="rest"
-                      whileHover="hover"
-                      whileTap="tap"
-                    >
-                      +
-                    </motion.button>
-                    <motion.button
-                      type="button"
-                      className="remove-action"
-                      onClick={() =>
-                        setCart((current) =>
-                          current.filter(
-                            (candidate) => candidate.clientId !== item.clientId,
-                          ),
-                        )
-                      }
-                      variants={actionBtn}
-                      initial="rest"
-                      whileHover="hover"
-                      whileTap="tap"
-                    >
-                      {copy.removeItem}
-                    </motion.button>
-                  </div>
-                  <strong>
-                    {formatMinorUnits(
-                      cartItemMinorUnits(item),
-                      props.menu.currency,
-                    )}
-                  </strong>
-                </motion.article>
-              ))}
+              <div>
+                <strong>
+                  {itemCount} {itemCount === 1 ? "item" : "items"}
+                </strong>
+                <span>{formatMinorUnits(cartTotal, props.menu.currency)}</span>
+              </div>
+              <motion.button
+                ref={reviewTrigger}
+                type="button"
+                onClick={() => setReviewOpen(true)}
+                variants={actionBtn}
+                initial="rest"
+                whileHover="hover"
+                whileTap="tap"
+              >
+                {copy.reviewOrder}
+              </motion.button>
             </motion.div>
-            <div className="cart-total">
-              <span>Total</span>
-              <strong>
-                {formatMinorUnits(cartTotal, props.menu.currency)}
-              </strong>
-            </div>
-            {submissionState === "conflict" ? (
-              <p className="submit-message" role="alert">
-                {copy.orderConflict}{" "}
-                <button type="button" onClick={props.onReload}>
-                  {copy.reloadMenu}
-                </button>
-              </p>
-            ) : null}
-            {submissionState === "failed" ? (
-              <p className="submit-message" role="alert">
-                {copy.orderFailure}
-              </p>
-            ) : null}
-            <motion.button
-              type="button"
-              className="primary-action submit-order"
-              disabled={cart.length === 0 || submissionState === "pending"}
-              onClick={() => void submit()}
-              variants={actionBtn}
-              initial="rest"
-              whileHover="hover"
-              whileTap="tap"
-            >
-              {submissionState === "pending"
-                ? copy.submittingOrder
-                : copy.submitOrder}
-            </motion.button>
-          </>
-        ) : null}
-      </dialog>
+          ) : null}
+        </AnimatePresence>
 
-      <footer>
-        <span>{copy.brand}</span>
-        <p>{orderingEnabled ? copy.noteDisclaimer : copy.browseOnlyNotice}</p>
-      </footer>
+        <dialog
+          ref={reviewDialog}
+          className="cart-review"
+          aria-labelledby="cart-title"
+          onCancel={closeReview}
+          onClose={() => {
+            setReviewOpen(false);
+            reviewTrigger.current?.focus();
+          }}
+        >
+          {reviewOpen ? (
+            <>
+              <div className="cart-review__header">
+                <div>
+                  <p className="eyebrow">
+                    {copy.tableLabel} {props.session.tableCode}
+                  </p>
+                  <h2 id="cart-title">{copy.cartTitle}</h2>
+                </div>
+                <motion.button
+                  type="button"
+                  onClick={closeReview}
+                  variants={actionBtn}
+                  initial="rest"
+                  whileHover="hover"
+                  whileTap="tap"
+                >
+                  {copy.closeReview}
+                </motion.button>
+              </div>
+              <motion.div
+                className="cart-items"
+                variants={staggerList}
+                initial="initial"
+                animate="enter"
+              >
+                {cart.map((item) => (
+                  <motion.article key={item.clientId} variants={fadeUp}>
+                    <div>
+                      <h3>{item.dish.name}</h3>
+                      {item.optionIds.length > 0 ? (
+                        <p>
+                          {item.dish.optionGroups
+                            .flatMap((group) => group.options)
+                            .filter((option) =>
+                              item.optionIds.includes(option.id),
+                            )
+                            .map((option) => option.name)
+                            .join(", ")}
+                        </p>
+                      ) : null}
+                      {item.note ? <p>{item.note}</p> : null}
+                    </div>
+                    <div className="cart-item-actions">
+                      <motion.button
+                        type="button"
+                        aria-label={`Decrease ${item.dish.name} quantity`}
+                        onClick={() => changeQuantity(item.clientId, -1)}
+                        variants={addBtn}
+                        initial="rest"
+                        whileHover="hover"
+                        whileTap="tap"
+                      >
+                        −
+                      </motion.button>
+                      <span aria-label={`${copy.quantity} ${item.quantity}`}>
+                        {item.quantity}
+                      </span>
+                      <motion.button
+                        type="button"
+                        aria-label={`Increase ${item.dish.name} quantity`}
+                        onClick={() => changeQuantity(item.clientId, 1)}
+                        variants={addBtn}
+                        initial="rest"
+                        whileHover="hover"
+                        whileTap="tap"
+                      >
+                        +
+                      </motion.button>
+                      <motion.button
+                        type="button"
+                        className="remove-action"
+                        onClick={() =>
+                          setCart((current) =>
+                            current.filter(
+                              (candidate) =>
+                                candidate.clientId !== item.clientId,
+                            ),
+                          )
+                        }
+                        variants={actionBtn}
+                        initial="rest"
+                        whileHover="hover"
+                        whileTap="tap"
+                      >
+                        {copy.removeItem}
+                      </motion.button>
+                    </div>
+                    <strong>
+                      {formatMinorUnits(
+                        cartItemMinorUnits(item),
+                        props.menu.currency,
+                      )}
+                    </strong>
+                  </motion.article>
+                ))}
+              </motion.div>
+              <div className="cart-total">
+                <span>Total</span>
+                <strong>
+                  {formatMinorUnits(cartTotal, props.menu.currency)}
+                </strong>
+              </div>
+              {submissionState === "conflict" ? (
+                <p className="submit-message" role="alert">
+                  {copy.orderConflict}{" "}
+                  <button type="button" onClick={props.onReload}>
+                    {copy.reloadMenu}
+                  </button>
+                </p>
+              ) : null}
+              {submissionState === "failed" ? (
+                <p className="submit-message" role="alert">
+                  {copy.orderFailure}
+                </p>
+              ) : null}
+              <motion.button
+                type="button"
+                className="primary-action submit-order"
+                disabled={cart.length === 0 || submissionState === "pending"}
+                onClick={() => void submit()}
+                variants={actionBtn}
+                initial="rest"
+                whileHover="hover"
+                whileTap="tap"
+              >
+                {submissionState === "pending"
+                  ? copy.submittingOrder
+                  : copy.submitOrder}
+              </motion.button>
+            </>
+          ) : null}
+        </dialog>
+
+        <footer>
+          <span>{copy.brand}</span>
+          <p>{orderingEnabled ? copy.noteDisclaimer : copy.browseOnlyNotice}</p>
+        </footer>
+      </div>
     </div>
   );
 }
@@ -1072,7 +1090,9 @@ function OrderView(props: {
                   whileHover="hover"
                   whileTap="tap"
                 >
-                  {billState === "pending" ? copy.billPending : copy.requestBill}
+                  {billState === "pending"
+                    ? copy.billPending
+                    : copy.requestBill}
                 </motion.button>
               </>
             )}
@@ -1081,7 +1101,9 @@ function OrderView(props: {
         {order.closure === "active" && cancellationState !== "sent" ? (
           <section className="cancellation-request">
             <h2>{copy.cancellationTitle}</h2>
-            <label htmlFor="cancellation-reason">{copy.cancellationReason}</label>
+            <label htmlFor="cancellation-reason">
+              {copy.cancellationReason}
+            </label>
             <textarea
               id="cancellation-reason"
               maxLength={500}

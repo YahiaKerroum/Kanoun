@@ -47,6 +47,8 @@ Exact workspace commands:
 - start local PostgreSQL: `docker compose up -d postgres`
 - apply migrations: `corepack pnpm db:migrate`
 - develop API, worker, and staff web: `corepack pnpm dev`
+- develop the isolated professional demo environment: `corepack pnpm dev:demo`
+- open isolated Playwright demo contexts: `corepack pnpm demo:contexts`
 - develop one process: `corepack pnpm dev:api`, `corepack pnpm dev:worker`, or `corepack pnpm dev:staff`
 - format: `corepack pnpm format` or verify with `corepack pnpm format:check`
 - lint: `corepack pnpm lint`

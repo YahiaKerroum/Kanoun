@@ -40,6 +40,8 @@ remote-ref publication remain unfinished)
   `slice-008-notifications-reporting-and-audit`, based on verified `main` at
   `1a5c265a455a9fa758c5495b3a963570849b9181`. No Slice 008 completion or
   publication claim has been completed.
+- `PR-01 — one-command-professional-demo`: complete, verified on 2026-08-09,
+  and being published in the requested commit.
 
 ## Completed
 
@@ -173,6 +175,27 @@ remote-ref publication remain unfinished)
 - The planned Slice 008 change declaration was created at
   `docs/delivery/slice-008-notifications-reporting-and-audit.md` before
   application behavior was changed.
+
+## PR-01 completion evidence
+
+- The one-command `corepack pnpm dev:demo` path was manually run on Node
+  `24.18.0` with Docker unavailable. It used the restricted-local-role
+  fallback, started an owned loopback PostgreSQL 18 cluster, seeded the
+  deterministic Dar Nedjma / Hydra scenario, started API, worker, Customer,
+  Staff, Administration, and the launcher, and completed the real-stack role
+  login and T-12 QR smoke path.
+
+- `corepack pnpm check` passed; the production dependency audit passed; and
+  the complete browser/WCAG suite passed serially with 26 tests. The default
+  parallel browser run had one timing failure in the existing Administration
+  route-navigation test, which passed in isolation and in the serial suite.
+
+- Fresh desktop/mobile launcher and customer captures are stored under the
+  ignored `output/playwright/pr01-demo-20260809/` directory. Two independent
+  visual gate reviewers returned PASS with no blocking findings.
+
+- The requested commit and push are the PR-01 publication; no pull request or
+  PR-02 implementation is part of this run.
 
 ## In progress
 

@@ -341,22 +341,40 @@ corepack pnpm --filter @rms/admin-web dev
 The API, worker, and migration commands load `.env` when present. Never commit
 `.env` or replace example secrets with real credentials.
 
-### Synthetic demo restaurant
+### One-command professional demo
 
-To create a fresh local database and populate Dar Nedjma / Hydra, choose a
-local-only password and run:
+Copy `.env.example` to `.env` and run the complete local demo:
 
 ```powershell
-$env:DEMO_SEED_PASSWORD = "<local demo password>"
-corepack pnpm db:setup:demo
+Copy-Item .env.example .env
+corepack pnpm dev:demo
 ```
 
-The idempotent seed starts the repository PostgreSQL service, applies pending
-migrations, and creates synthetic Algerian staff and customers, menu
-photography, tables, kitchen work, paid/refunded history, notifications,
-reporting projections, and audit evidence. The chosen password applies to the
-owner and demo staff accounts and is never printed. Seeding refuses to run in
-production and is never part of application startup.
+The command builds the workspace, verifies and safely resets only the explicitly
+marked loopback `rms_demo` database, applies all migrations, seeds Dar Nedjma /
+Hydra, starts API, worker, customer, staff, and administration, waits for
+readiness, and prints a loopback launcher address. The launcher provides four
+role entry points, a run-scoped password reveal/copy control, and a real
+table-specific customer URL. If Docker is unavailable and the local PostgreSQL
+role cannot create databases, the supervisor uses a temporary owned loopback
+PostgreSQL 18 cluster and removes it on shutdown.
+
+Use separate browser contexts for each role. To open them automatically with
+Playwright, run `corepack pnpm demo:contexts` in another terminal. Stop with
+`Ctrl+C`; the supervisor terminates only the processes it started and leaves
+the isolated demo database in place. Run `corepack pnpm dev:demo` again to
+reset stale data or recover a forgotten password.
+
+The lower-level seed command remains available for focused database work:
+
+```powershell
+corepack pnpm db:seed:demo
+```
+
+It requires the same explicit demo safety variables, refuses production and
+unexpected databases, and creates only synthetic data. See
+[`docs/operations/local-demo.md`](docs/operations/local-demo.md) for the
+cross-platform Docker/local-PostgreSQL behavior and safety boundary.
 
 ## Verification
 

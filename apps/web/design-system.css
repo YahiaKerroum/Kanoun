@@ -1,0 +1,27 @@
+:root {
+  color-scheme: light;
+  --brand-fill: #ffb300;
+  --brand-700: #6e4700;
+  --brand-100: #fff0cc;
+  --canvas: #faf8f4;
+  --surface: #ffffff;
+  --line: #efe7da;
+  --text: #1e1b14;
+  --muted: #565044;
+  --success: #1e7a47;
+  --danger: #c22c23;
+}
+
+.mise-stage {
+  min-height: 100svh;
+  padding: clamp(12px, 3vw, 28px);
+  background: var(--brand-fill);
+}
+
+.mise-shell {
+  overflow: hidden;
+  border: 1px solid rgb(110 71 0 / 18%);
+  border-radius: 20px;
+  background: var(--canvas);
+  box-shadow: 0 24px 64px rgb(110 71 0 / 20%);
+}
