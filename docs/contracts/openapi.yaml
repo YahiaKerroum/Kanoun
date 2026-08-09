@@ -2021,13 +2021,36 @@ components:
   schemas:
     StaffSession:
       type: object
-      required: [employeeId, activeBranchId, authorizedBranchIds, grants, expiresAt]
+      required: [employeeId, activeBranchId, authorizedBranchIds, grants, expiresAt, profile]
       properties:
         employeeId: {type: string, format: uuid}
         activeBranchId: {type: [string, "null"], format: uuid}
         authorizedBranchIds: {type: array, items: {type: string, format: uuid}}
         grants: {type: array, items: {$ref: "#/components/schemas/PermissionGrant"}}
         expiresAt: {type: string, format: date-time}
+        profile:
+          type: object
+          required: [employee, restaurant, activeBranch]
+          properties:
+            employee:
+              type: object
+              required: [id, displayName, email]
+              properties:
+                id: {type: string, format: uuid}
+                displayName: {type: string}
+                email: {type: string, format: email}
+            restaurant:
+              type: object
+              required: [id, name]
+              properties:
+                id: {type: string, format: uuid}
+                name: {type: string}
+            activeBranch:
+              type: [object, "null"]
+              required: [id, name]
+              properties:
+                id: {type: string, format: uuid}
+                name: {type: string}
 
     Employee:
       type: object

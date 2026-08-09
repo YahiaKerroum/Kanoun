@@ -42,4 +42,5 @@ export {
   createIdentityAccessRouter,
   type IdentityHttpUseCases,
   type IdentityRouterDependencies,
+  type StaffSessionProfile,
 } from "./http/router.js";

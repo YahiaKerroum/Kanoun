@@ -18,12 +18,7 @@ import {
   Wrench,
 } from "lucide-react";
 import type { LucideProps } from "lucide-react";
-import {
-  AnimatePresence,
-  motion,
-  MotionConfig,
-  type Variants,
-} from "framer-motion";
+import { AnimatePresence, motion, MotionConfig } from "framer-motion";
 import {
   startTransition,
   useCallback,
@@ -51,6 +46,13 @@ import {
   NotificationInboxWorkspace,
   SalesReportWorkspace,
 } from "./InsightsWorkspaces.js";
+import { StaffAuthRoutes } from "./AuthRoutes.js";
+import {
+  authPath,
+  authRouteForPath,
+  replaceLocation,
+  safeInternalPath,
+} from "./auth-navigation.js";
 
 type Section =
   | "Home"
@@ -167,6 +169,19 @@ const sessionSchema = z.object({
     }),
   ),
   expiresAt: z.iso.datetime(),
+  profile: z
+    .object({
+      employee: z.object({
+        id: z.uuid(),
+        displayName: z.string().min(1),
+        email: z.email(),
+      }),
+      restaurant: z.object({ id: z.uuid(), name: z.string().min(1) }),
+      activeBranch: z
+        .object({ id: z.uuid(), name: z.string().min(1) })
+        .nullable(),
+    })
+    .optional(),
 });
 
 const capabilitiesSchema = z.object({
@@ -182,6 +197,55 @@ const capabilitiesSchema = z.object({
 
 type StaffSession = z.infer<typeof sessionSchema>;
 type PortalCapabilities = z.infer<typeof capabilitiesSchema>;
+
+const responsibilityLabels: readonly [string, readonly string[]][] = [
+  [
+    "Restaurant administration",
+    ["restaurant.", "branches.", "features.", "employees."],
+  ],
+  ["Orders", ["orders."]],
+  ["Kitchen flow", ["kitchen."]],
+  ["Payments", ["payments."]],
+  ["Menu and tables", ["menu.", "tables.", "qr."]],
+  ["Reports and audit", ["reports.", "audit."]],
+  ["Notifications", ["notifications."]],
+];
+
+function effectiveResponsibilities(session: StaffSession): readonly string[] {
+  const permissions = session.grants.map((grant) => grant.permissionKey);
+  return responsibilityLabels
+    .filter(([, prefixes]) =>
+      permissions.some((permission) =>
+        prefixes.some((prefix) => permission.startsWith(prefix)),
+      ),
+    )
+    .map(([label]) => label);
+}
+
+function readCsrfCookie(): string {
+  return (
+    document.cookie
+      .split(";")
+      .map((item) => item.trim())
+      .find((item) => item.startsWith("rms_csrf="))
+      ?.slice("rms_csrf=".length) ?? ""
+  );
+}
+
+function canOpenAdministration(session: StaffSession): boolean {
+  return session.grants.some((grant) =>
+    [
+      "restaurant.view",
+      "restaurant.edit",
+      "branches.view",
+      "branches.manage",
+      "employees.view",
+      "employees.manage",
+      "employees.manage_permissions",
+      "features.manage",
+    ].includes(grant.permissionKey),
+  );
+}
 
 type PortalState =
   | { readonly kind: "loading" }
@@ -315,9 +379,22 @@ export function App() {
   const [portal, setPortal] = useState<PortalState>({ kind: "loading" });
   const [readiness, setReadiness] = useState<Readiness>({ kind: "checking" });
   const [refreshSequence, setRefreshSequence] = useState(0);
+  const [locationPath, setLocationPath] = useState(
+    () => window.location.pathname,
+  );
+  const [logoutState, setLogoutState] = useState<"idle" | "pending">("idle");
+  const [logoutMessage, setLogoutMessage] = useState("");
   const statusId = useId();
+  const authRoute = authRouteForPath(locationPath);
 
   useEffect(() => {
+    const synchronizeLocation = () => setLocationPath(window.location.pathname);
+    window.addEventListener("popstate", synchronizeLocation);
+    return () => window.removeEventListener("popstate", synchronizeLocation);
+  }, []);
+
+  useEffect(() => {
+    if (authRoute) return;
     const abortController = new AbortController();
     setReadiness({ kind: "checking" });
     setPortal({ kind: "loading" });
@@ -349,7 +426,21 @@ export function App() {
     });
 
     return () => abortController.abort();
-  }, [refreshSequence]);
+  }, [authRoute, refreshSequence]);
+
+  useEffect(() => {
+    const handleSessionEnded = () => {
+      setPortal({ kind: "signed-out" });
+      replaceLocation(
+        `${authPath("sign-in")}?notice=session-ended&returnTo=${encodeURIComponent(
+          safeInternalPath(window.location.pathname),
+        )}`,
+      );
+    };
+    window.addEventListener("mise:session-ended", handleSessionEnded);
+    return () =>
+      window.removeEventListener("mise:session-ended", handleSessionEnded);
+  }, []);
 
   const selectSection = useCallback((section: Section) => {
     startTransition(() => setActiveSection(section));
@@ -358,6 +449,42 @@ export function App() {
   const refresh = useCallback(() => {
     setRefreshSequence((sequence) => sequence + 1);
   }, []);
+
+  const signOut = useCallback(async () => {
+    setLogoutState("pending");
+    setLogoutMessage("Signing out…");
+    try {
+      const response = await fetch("/api/v1/auth/logout", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: {
+          accept: "application/json",
+          "x-csrf-token": readCsrfCookie(),
+        },
+      });
+      if (response.status === 401) {
+        replaceLocation("/auth/sign-in?notice=session-ended");
+        return;
+      }
+      if (!response.ok) {
+        setLogoutMessage(
+          response.status === 403
+            ? "Sign-out could not be verified. Your session remains active."
+            : "Sign-out could not be confirmed. Your session remains active.",
+        );
+        return;
+      }
+      replaceLocation("/auth/sign-in?notice=signed-out");
+    } catch {
+      setLogoutMessage(
+        "The network could not confirm sign-out. Your session remains active.",
+      );
+    } finally {
+      setLogoutState("idle");
+    }
+  }, []);
+
+  if (authRoute) return <StaffAuthRoutes route={authRoute} />;
 
   if (portal.kind !== "ready") {
     return <AccessBoundary portal={portal} onRetry={refresh} />;
@@ -375,6 +502,21 @@ export function App() {
   const notificationsAvailable = availableNavigation.some(
     (item) => item.label === "Notifications",
   );
+  const profile = portal.session.profile ?? {
+    employee: {
+      id: portal.session.employeeId,
+      displayName: "Staff account",
+      email: "",
+    },
+    restaurant: { id: activeRestaurantId, name: "Current restaurant" },
+    activeBranch: {
+      id: portal.capabilities.branchId,
+      name: portal.capabilities.branchName,
+    },
+  };
+  const responsibilities = effectiveResponsibilities(portal.session);
+  const administrationOrigin =
+    import.meta.env.VITE_ADMIN_WEB_ORIGIN ?? "http://127.0.0.1:5175";
 
   return (
     <MotionConfig reducedMotion="user">
@@ -437,7 +579,7 @@ export function App() {
                 <UserRound size={19} />
               </span>
               <span className="visually-hidden">
-                Authenticated employee {portal.session.employeeId}
+                Authenticated employee {profile.employee.displayName}
               </span>
             </div>
           </aside>
@@ -497,6 +639,47 @@ export function App() {
               >
                 <Bell aria-hidden="true" size={20} />
               </motion.button>
+              <details className="account-context">
+                <summary>
+                  <UserRound aria-hidden="true" size={18} />
+                  <span>{profile.employee.displayName}</span>
+                </summary>
+                <div className="account-context__panel">
+                  <strong>{profile.restaurant.name}</strong>
+                  <span>
+                    {profile.activeBranch?.name ?? "No active branch"}
+                  </span>
+                  <span className="account-context__label">
+                    Effective responsibilities
+                  </span>
+                  <ul>
+                    {responsibilities.length > 0 ? (
+                      responsibilities.map((item) => <li key={item}>{item}</li>)
+                    ) : (
+                      <li>Assigned staff access</li>
+                    )}
+                  </ul>
+                  {canOpenAdministration(portal.session) ? (
+                    <a href={`${administrationOrigin}/context`}>
+                      Open administration
+                    </a>
+                  ) : null}
+                  <button
+                    type="button"
+                    onClick={() => void signOut()}
+                    disabled={logoutState === "pending"}
+                  >
+                    {logoutState === "pending" ? "Signing out…" : "Sign out"}
+                  </button>
+                  <p
+                    className="account-context__message"
+                    role="status"
+                    aria-live="polite"
+                  >
+                    {logoutMessage}
+                  </p>
+                </div>
+              </details>
             </header>
 
             <main id="workspace" className="workspace" tabIndex={-1}>
@@ -509,113 +692,113 @@ export function App() {
                   animate="enter"
                   exit="exit"
                 >
-              {visibleSection === "Home" ? (
-                <HomeWorkspace
-                  capabilities={portal.capabilities}
-                  destinationCount={availableNavigation.length}
-                  readiness={readiness}
-                  statusId={statusId}
-                  branchId={portal.capabilities.branchId}
-                  canViewReports={portal.capabilities.permissions.includes(
-                    "reports.view",
+                  {visibleSection === "Home" ? (
+                    <HomeWorkspace
+                      capabilities={portal.capabilities}
+                      destinationCount={availableNavigation.length}
+                      readiness={readiness}
+                      statusId={statusId}
+                      branchId={portal.capabilities.branchId}
+                      canViewReports={portal.capabilities.permissions.includes(
+                        "reports.view",
+                      )}
+                    />
+                  ) : visibleSection === "Notifications" ? (
+                    <NotificationInboxWorkspace
+                      branchId={portal.capabilities.branchId}
+                    />
+                  ) : visibleSection === "Orders" ? (
+                    <OrdersWorkspace
+                      branchId={portal.capabilities.branchId}
+                      restaurantId={activeRestaurantId}
+                      employeeId={portal.session.employeeId}
+                      canView={portal.capabilities.permissions.includes(
+                        "orders.view",
+                      )}
+                      canCreate={portal.capabilities.permissions.includes(
+                        "orders.create",
+                      )}
+                      canViewMenu={portal.capabilities.permissions.includes(
+                        "menu.view",
+                      )}
+                      canViewTables={portal.capabilities.permissions.includes(
+                        "tables.view",
+                      )}
+                      canModify={portal.capabilities.permissions.includes(
+                        "orders.modify",
+                      )}
+                      canCancel={portal.capabilities.permissions.includes(
+                        "orders.cancel",
+                      )}
+                      canComplete={portal.capabilities.permissions.includes(
+                        "orders.complete",
+                      )}
+                      canCompleteUnpaid={portal.capabilities.permissions.includes(
+                        "orders.complete_unpaid",
+                      )}
+                      canAssignTables={portal.capabilities.permissions.includes(
+                        "tables.assign",
+                      )}
+                    />
+                  ) : visibleSection === "Kitchen" ? (
+                    <KitchenWorkspace
+                      branchId={portal.capabilities.branchId}
+                      canView={portal.capabilities.permissions.includes(
+                        "kitchen.view",
+                      )}
+                      canUpdate={portal.capabilities.permissions.includes(
+                        "kitchen.update",
+                      )}
+                      canServe={portal.capabilities.permissions.includes(
+                        "orders.serve",
+                      )}
+                    />
+                  ) : visibleSection === "Payments" ? (
+                    <PaymentsWorkspace
+                      branchId={portal.capabilities.branchId}
+                      canView={portal.capabilities.permissions.includes(
+                        "payments.view",
+                      )}
+                      canRecord={portal.capabilities.permissions.includes(
+                        "payments.record",
+                      )}
+                      canRefund={portal.capabilities.permissions.includes(
+                        "payments.refund",
+                      )}
+                    />
+                  ) : visibleSection === "Menu" ? (
+                    <MenuWorkspace
+                      restaurantId={activeRestaurantId}
+                      canView={portal.capabilities.permissions.includes(
+                        "menu.view",
+                      )}
+                    />
+                  ) : visibleSection === "Tables" ? (
+                    <TablesWorkspace
+                      branchId={portal.capabilities.branchId}
+                      canView={portal.capabilities.permissions.includes(
+                        "tables.view",
+                      )}
+                    />
+                  ) : visibleSection === "Reports" ? (
+                    <SalesReportWorkspace
+                      branchId={portal.capabilities.branchId}
+                      timeZone={portal.capabilities.timeZone}
+                      canView={portal.capabilities.permissions.includes(
+                        "reports.view",
+                      )}
+                    />
+                  ) : visibleSection === "Audit" ? (
+                    <AuditWorkspace
+                      restaurantId={activeRestaurantId}
+                      branchId={portal.capabilities.branchId}
+                      canView={portal.capabilities.permissions.includes(
+                        "audit.view",
+                      )}
+                    />
+                  ) : (
+                    <DeferredWorkspace section={visibleSection} />
                   )}
-                />
-              ) : visibleSection === "Notifications" ? (
-                <NotificationInboxWorkspace
-                  branchId={portal.capabilities.branchId}
-                />
-              ) : visibleSection === "Orders" ? (
-                <OrdersWorkspace
-                  branchId={portal.capabilities.branchId}
-                  restaurantId={activeRestaurantId}
-                  employeeId={portal.session.employeeId}
-                  canView={portal.capabilities.permissions.includes(
-                    "orders.view",
-                  )}
-                  canCreate={portal.capabilities.permissions.includes(
-                    "orders.create",
-                  )}
-                  canViewMenu={portal.capabilities.permissions.includes(
-                    "menu.view",
-                  )}
-                  canViewTables={portal.capabilities.permissions.includes(
-                    "tables.view",
-                  )}
-                  canModify={portal.capabilities.permissions.includes(
-                    "orders.modify",
-                  )}
-                  canCancel={portal.capabilities.permissions.includes(
-                    "orders.cancel",
-                  )}
-                  canComplete={portal.capabilities.permissions.includes(
-                    "orders.complete",
-                  )}
-                  canCompleteUnpaid={portal.capabilities.permissions.includes(
-                    "orders.complete_unpaid",
-                  )}
-                  canAssignTables={portal.capabilities.permissions.includes(
-                    "tables.assign",
-                  )}
-                />
-              ) : visibleSection === "Kitchen" ? (
-                <KitchenWorkspace
-                  branchId={portal.capabilities.branchId}
-                  canView={portal.capabilities.permissions.includes(
-                    "kitchen.view",
-                  )}
-                  canUpdate={portal.capabilities.permissions.includes(
-                    "kitchen.update",
-                  )}
-                  canServe={portal.capabilities.permissions.includes(
-                    "orders.serve",
-                  )}
-                />
-              ) : visibleSection === "Payments" ? (
-                <PaymentsWorkspace
-                  branchId={portal.capabilities.branchId}
-                  canView={portal.capabilities.permissions.includes(
-                    "payments.view",
-                  )}
-                  canRecord={portal.capabilities.permissions.includes(
-                    "payments.record",
-                  )}
-                  canRefund={portal.capabilities.permissions.includes(
-                    "payments.refund",
-                  )}
-                />
-              ) : visibleSection === "Menu" ? (
-                <MenuWorkspace
-                  restaurantId={activeRestaurantId}
-                  canView={portal.capabilities.permissions.includes(
-                    "menu.view",
-                  )}
-                />
-              ) : visibleSection === "Tables" ? (
-                <TablesWorkspace
-                  branchId={portal.capabilities.branchId}
-                  canView={portal.capabilities.permissions.includes(
-                    "tables.view",
-                  )}
-                />
-              ) : visibleSection === "Reports" ? (
-                <SalesReportWorkspace
-                  branchId={portal.capabilities.branchId}
-                  timeZone={portal.capabilities.timeZone}
-                  canView={portal.capabilities.permissions.includes(
-                    "reports.view",
-                  )}
-                />
-              ) : visibleSection === "Audit" ? (
-                <AuditWorkspace
-                  restaurantId={activeRestaurantId}
-                  branchId={portal.capabilities.branchId}
-                  canView={portal.capabilities.permissions.includes(
-                    "audit.view",
-                  )}
-                />
-              ) : (
-                <DeferredWorkspace section={visibleSection} />
-              )}
                 </motion.div>
               </AnimatePresence>
             </main>
@@ -674,6 +857,17 @@ function AccessBoundary({
           <button type="button" onClick={onRetry}>
             Retry access check
           </button>
+        ) : null}
+        {portal.kind === "signed-out" ? (
+          <a
+            className="access-boundary__action"
+            href={authPath(
+              "sign-in",
+              safeInternalPath(window.location.pathname),
+            )}
+          >
+            Sign in to staff access
+          </a>
         ) : null}
       </main>
     </div>

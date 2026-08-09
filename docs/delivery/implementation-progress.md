@@ -3,18 +3,20 @@ id: IMPLEMENTATION-PROGRESS
 status: active
 version: 1.0
 owner: engineering
-last_reviewed: 2026-08-01
+last_reviewed: 2026-08-09
 ---
 
 # Implementation Progress
 
 ## Current slice
 
-`SLICE-008 — notifications_reporting_and_audit` (implementation is paused at
-the tenth context-compaction checkpoint on its dedicated branch; application
-changes have passing preliminary final-suite evidence but the slice is not
-complete because visual review, final documentation, cleanup, commit, push, and
-remote-ref publication remain unfinished)
+`PR-00 — re-establish a truthful green baseline` from
+`docs/delivery/professional-readiness-plan.md` is complete for this run.
+`PR-01 — one-command professional demo environment` is complete and published.
+`PR-02 — access and account lifecycle` is complete and is being published in
+the requested commit. Slice 008 is already integrated into `main`; the observed integration merge is
+`b38375bb2bd80b0c8ba98011b0591880d44dc072`, and the current `main` head is
+`67ea0c28653390054f999f494d3269f05dcbb0f1`.
 
 ## Slice status
 
@@ -35,13 +37,16 @@ remote-ref publication remain unfinished)
   remote feature branch and integrated into `main`; the main-publication
   record is published at
   `1a5c265a455a9fa758c5495b3a963570849b9181` and its exact CI passed.
-- `SLICE-008 — notifications_reporting_and_audit`: in progress but paused at
-  the mandatory tenth context-compaction checkpoint on
-  `slice-008-notifications-reporting-and-audit`, based on verified `main` at
-  `1a5c265a455a9fa758c5495b3a963570849b9181`. No Slice 008 completion or
-  publication claim has been completed.
-- `PR-01 — one-command-professional-demo`: complete, verified on 2026-08-09,
-  and being published in the requested commit.
+- `SLICE-008 — notifications_reporting_and_audit`: complete, implemented at
+  `ec2264e492e191ecd0acc38f56d6f783dd52791e`, published on the feature branch
+  through `e3f210892a072adc0eaab00e6c34fa3f82f459dd`, and integrated into
+  `main` by merge `b38375bb2bd80b0c8ba98011b0591880d44dc072`. Later `main`
+  commits include the current Administration URL-navigation/category/image
+  work and customer menu updates.
+- `PR-01 — one-command-professional-demo`: complete in the current working
+  tree, verified on 2026-08-09, and being published in the requested commit.
+- `PR-02 — access-and-account-lifecycle`: complete in the current working
+  tree, verified on 2026-08-09, and being published in the requested commit.
 
 ## Completed
 
@@ -176,6 +181,24 @@ remote-ref publication remain unfinished)
   `docs/delivery/slice-008-notifications-reporting-and-audit.md` before
   application behavior was changed.
 
+## PR-00 completion evidence
+
+- PR-00 completed on 2026-08-08 under Node `v24.18.0` and pnpm `11.17.0`.
+  Frozen install, format, lint, strict typecheck, PostgreSQL-backed tests,
+  architecture checks, contract validation, production build, browser/WCAG
+  tests, the full non-browser check, and the production dependency audit all
+  passed. The PostgreSQL-backed suite passed 207 tests across 28 files; the
+  browser suite passed 26 tests.
+- The existing Administration URL navigation and category/image surface was
+  verified at desktop (1440px), tablet (1024px), and mobile (390px) widths.
+  Fresh local captures are stored under the ignored
+  `output/playwright/pr00-admin-qa-20260808-r4/` directory and are not source
+  evidence for formatting or lint checks.
+- Existing user-owned worktree changes remain unreset, uncleaned, and
+  uncommitted. PR-01 completion evidence is recorded below.
+- The B02/D04/E04 product-source conflicts identified in the professional
+  readiness plan remain open and are not being resolved by PR-00.
+
 ## PR-01 completion evidence
 
 - The one-command `corepack pnpm dev:demo` path was manually run on Node
@@ -184,35 +207,63 @@ remote-ref publication remain unfinished)
   deterministic Dar Nedjma / Hydra scenario, started API, worker, Customer,
   Staff, Administration, and the launcher, and completed the real-stack role
   login and T-12 QR smoke path.
-
 - `corepack pnpm check` passed; the production dependency audit passed; and
   the complete browser/WCAG suite passed serially with 26 tests. The default
   parallel browser run had one timing failure in the existing Administration
   route-navigation test, which passed in isolation and in the serial suite.
-
 - Fresh desktop/mobile launcher and customer captures are stored under the
   ignored `output/playwright/pr01-demo-20260809/` directory. Two independent
   visual gate reviewers returned PASS with no blocking findings.
+- The requested commit and push are the PR-01 publication; PR-02 completion
+  evidence is recorded below and is being published separately in this run.
 
-- The requested commit and push are the PR-01 publication; no pull request or
-  PR-02 implementation is part of this run.
+## PR-02 completion evidence
 
-## In progress
+- The Identity Access session contract now returns safe self context for the
+  authenticated employee, restaurant, active branch, and effective
+  responsibilities. Staff and Administration have stable sign-in, recovery,
+  invitation, logout, and session-ended routes with internal return-path
+  validation and token URL-history redaction.
+- CSRF-aware logout waits for server-confirmed revocation. Administration
+  exposes permission-gated staff navigation and employee lifecycle controls;
+  profile edits, branch replacement, invitations, deactivation, profile
+  reactivation, and final-administrator removal/transfer use the existing
+  module contracts and workflow guards.
+- The local demo recovery inbox is loopback-only and in-memory. It is a safe
+  manual QA mechanism and does not change production delivery policy.
+- Under Node `24.18.0` and pnpm `11.17.0`, the focused Identity Access HTTP
+  tests passed, the PostgreSQL service-workflow integration suite passed 20
+  tests, contracts passed, Staff and Administration builds passed, the focused
+  PR-02 browser suite passed 5 tests, and the full browser suite passed 31
+  tests. The final non-browser check passed 31 test files/218 tests, architecture
+  checks, contracts, and production builds; the production dependency audit
+  reported no known vulnerabilities.
+- The real `corepack pnpm dev:demo` stack was exercised with Docker unavailable
+  using the restricted local PostgreSQL fallback. Owner, general, kitchen, and
+  cashier entry points; self context; recovery completion and existing-session
+  invalidation; logout; the loopback recovery inbox; and Administration
+  employee lifecycle controls were observed manually.
+- Fresh auth captures at 375px, 768px, and 1280px show the MISE visual system
+  without horizontal overflow. The automated accessibility/visual browser
+  oracle and an independent visual review both returned `PASS`.
 
-- Slice 008 is verified locally on Node `v24.18.0`, pnpm `11.17.0`, and
-  isolated PostgreSQL 18.1. The final application verification passed frozen
-  installation, formatting, lint, strict typecheck, 207 PostgreSQL-backed
-  tests across 28 files, 154-module/295-dependency architecture checks, 43
-  event contracts, production build, full check, and production dependency
-  audit. The final browser/WCAG suite passed 25 Playwright tests.
+## Historical Slice 008 checkpoint
+
+- The following entries preserve the earlier Slice 008 checkpoint narrative.
+  They describe the state before the observed `main` integration merge and
+  must not be read as the current publication state.
+- Slice 008 was verified locally on Node `v24.18.0`, pnpm `11.17.0`, and
+  isolated PostgreSQL 18.1. The checkpoint application verification passed
+  frozen installation, formatting, lint, strict typecheck, 207 PostgreSQL-
+  backed tests across 28 files, 154-module/295-dependency architecture
+  checks, 43 event contracts, production build, full check, and production
+  dependency audit. The checkpoint browser/WCAG suite passed 25 Playwright
+  tests.
 - Responsive visual review at desktop (1440px), tablet (1024px), and mobile
   (390px) covered the staff dashboard, inbox, report, audit workspace, and
-  administration evidence workspace. It added keyboard-focusable report
-  scrolling, a visible scroll instruction, accurate underlying-order wording,
-  and responsive administration action styling. Publication of the feature
-  branch completed at `ec2264e492e191ecd0acc38f56d6f783dd52791e`; its remote
-  ref was independently verified. No pull request was opened and `main` was
-  not modified.
+  administration evidence workspace. Publication of the feature branch
+  completed at `ec2264e492e191ecd0acc38f56d6f783dd52791e`; its remote ref was
+  independently verified. No pull request was opened at that checkpoint.
 - Context compacted a tenth time after the ninth-continuation reconciliation,
   a lint-only test fix, isolated PostgreSQL migration verification, and the
   repository command suite. Work stopped under the mandatory compaction rule.
@@ -386,7 +437,7 @@ remote-ref publication remain unfinished)
   present and their complete browser/WCAG suite passes. Kitchen processing,
   payment/completion/correction, and bill-request operations are now present;
   durable notification delivery, reporting projections, and audit-query
-  screens remain in Slice 008.
+  screens from Slice 008 are present in the integrated `main` history.
 - Slice 005 persists item notes and carries them into queued Kitchen work, but
   it does not claim completion of configurable free-text note policy or later
   employee note presentation. Optional customer-name configuration also
@@ -406,8 +457,6 @@ remote-ref publication remain unfinished)
 
 ## Next slice
 
-Resume only from
-`docs/delivery/continuation-prompt-2026-07-29-slice-008-compaction-8.md`.
-Re-establish the required normative context from source, inspect every
-unverified edit, and complete Slice 008 without repeating the finished Slice
-007 publication or branch-establishment actions. Do not begin another slice.
+PR-02 is complete in this working tree and is being published in the requested
+commit. The earlier Slice 008 continuation prompts remain historical records
+only.

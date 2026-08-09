@@ -74,6 +74,18 @@ below 720px.
 - **Accessibility:** the icon is decorative because the adjacent copy names
   the capability and its current state.
 
+### Administration section navigation
+
+- **Structure:** URL-backed links inside the administration shell; one link is
+  current and one page owns the content scroll region.
+- **States:** default, hover, keyboard focus, and current page. The current page
+  uses the saffron selection surface and `aria-current="page"`.
+- **Responsive layout:** a fixed vertical rail on wide screens and a visible,
+  horizontally scrollable navigation reel below 760px. Navigation is never
+  removed at tablet or mobile widths.
+- **Accessibility:** native links support direct URLs, browser history, opening
+  in a new tab, and keyboard navigation. Every target remains at least 44px.
+
 ### Dish card
 
 - **Structure:** optional descriptive image, dish copy, price, availability,
@@ -82,6 +94,36 @@ below 720px.
   disabled order action.
 - **Layout:** responsive grid item; source images preserve aspect ratio with
   `object-fit: cover` and meaningful alternative text.
+
+### Local demo launcher
+
+- **Structure:** a saffron-framed, loopback-only entry page with a clear local-synthetic label, business and branch context, four role links, one run-scoped password reveal/copy control, customer table-menu links, and the golden scenario.
+- **States:** ready, unavailable, and reset-by-restart guidance. The launcher never presents production credentials or claims public access.
+- **Layout:** two-column operational overview on wide screens, one readable column below 820px, and role cards that remain keyboard reachable at narrow widths.
+- **Accessibility:** native links and buttons, visible focus, live copy feedback, semantic headings/lists, and no status communicated by color alone.
+
+### Auth and account lifecycle
+
+- **Structure:** stable public sign-in, recovery, and invitation routes; the
+  signed-out staff boundary always exposes a sign-in action with a validated
+  internal return target. Authenticated shells expose the employee display name,
+  restaurant, active branch, effective responsibility labels, and a discoverable
+  sign-out action.
+- **States:** default, hover, focus, pressed, disabled, pending, success,
+  validation error, invalid/expired/used, revoked, and session-ended. Sensitive
+  URL tokens are captured once and removed from browser history immediately.
+- **Lifecycle controls:** Administration keeps employee profile editing,
+  branch replacement, reactivation, invitation copy, deactivation confirmation,
+  administrator transfer, and final-administrator protection in the existing
+  tenant-scoped surfaces. Invitation URLs are held in memory only and are never
+  written to local storage, analytics, logs, or error text.
+- **Responsive behavior:** auth forms remain usable at 320px and 200% zoom;
+  account context stacks below the shell header at narrow widths; focus moves to
+  the first heading or actionable error after route/state changes.
+- **Accessibility:** every field has a visible label and autocomplete hint,
+  validation is announced through a live region, errors are associated with
+  fields, keyboard order is logical, contrast is WCAG AA, and reduced motion
+  removes non-essential transitions.
 
 ## 6. Motion & Interaction
 

@@ -6,6 +6,13 @@ document:
   last_reviewed: 2026-08-09
 
 vertical_slices:
+  application_bootstrap:
+    implements: [NFR-02, NFR-03, NFR-12, NFR-13]
+    obeys: [PD-031, ADR-0001, ADR-0002, ADR-0003, ADR-0004, ADR-0005, ADR-0006, BR-024]
+    modules: [platform, service_workflow]
+    operations: [getLiveness, getReadiness]
+    tests: [TEST-MIGRATION-001, TEST-ARCH-001, TEST-CONTRACT-001, TEST-API-HEALTH-001, TEST-RESPONSIVE-001, TEST-A11Y-001]
+
   professional_demo:
     implements: [AC-NFR-01-04, NFR-06, NFR-07, NFR-08, NFR-13, BR-001, BR-002, BR-024]
     obeys: [PD-001, PD-006, PD-007, PD-010, PD-013, PD-015, PD-017, ADR-0003, ADR-0005, CFG-001, CFG-002, CFG-003, CFG-004, CFG-005, CFG-006, CFG-007, CFG-008, CFG-009, CFG-010, CFG-011, CFG-012, CFG-013, CFG-014, CFG-015]
@@ -13,13 +20,6 @@ vertical_slices:
     operations: [getLiveness, getReadiness, loginStaff, exchangeTableQr]
     tests: [TEST-DEMO-CONFIG-001, TEST-DEMO-DATABASE-001, TEST-DEMO-POSTGRES-001, TEST-DEMO-STACK-001, TEST-DEMO-BROWSER-001]
     pr_01_verified_acceptance: [AC-NFR-01-04]
-
-  application_bootstrap:
-    implements: [NFR-02, NFR-03, NFR-12, NFR-13]
-    obeys: [PD-031, ADR-0001, ADR-0002, ADR-0003, ADR-0004, ADR-0005, ADR-0006, BR-024]
-    modules: [platform, service_workflow]
-    operations: [getLiveness, getReadiness]
-    tests: [TEST-MIGRATION-001, TEST-ARCH-001, TEST-CONTRACT-001, TEST-API-HEALTH-001, TEST-RESPONSIVE-001, TEST-A11Y-001]
 
   tenant_branch_and_owner_bootstrap:
     implements: [US-A01, US-A02, US-A04, US-R01, US-R02, US-R03, US-R04, NFR-03, NFR-07, NFR-08, NFR-10, NFR-12]
@@ -45,12 +45,20 @@ vertical_slices:
     obeys: [PD-004, PD-005, PD-027, PD-028, BR-002, BR-003, BR-004, BR-005, BR-025]
     modules: [identity_access, restaurant_configuration, audit]
     operations: [listEmployees, createEmployee, getEmployee, updateEmployee, replaceEmployeeBranches, getEmployeePermissions, replaceEmployeePermissions, listPermissionTemplates, applyPermissionTemplate, createSupportAccessGrant, inspectTenantWithSupportAccess, revokeSupportAccessGrant]
-    tests: [TEST-AUTH-001, TEST-EMPLOYEE-001, TEST-EMPLOYEE-EMAIL-001, TEST-PERM-001, TEST-PERM-002, TEST-PERM-SESSION-001, TEST-LAST-ADMIN-001, TEST-SUPPORT-001, TEST-SUPPORT-HTTP-001, TEST-SUPPORT-REVOCATION-001, TEST-PORTAL-001, TEST-A11Y-ADMIN-001, TEST-A11Y-STAFF-001]
+    tests: [TEST-AUTH-001, TEST-EMPLOYEE-001, TEST-EMPLOYEE-EMAIL-001, TEST-PERM-001, TEST-PERM-002, TEST-PERM-SESSION-001, TEST-LAST-ADMIN-001, TEST-SUPPORT-001, TEST-SUPPORT-HTTP-001, TEST-SUPPORT-REVOCATION-001, TEST-PORTAL-001, TEST-ADMIN-ROUTES-001, TEST-A11Y-ADMIN-001, TEST-A11Y-STAFF-001]
     slice_003_verified_acceptance: [AC-US-C01-01, AC-US-C01-02, AC-US-C01-03, AC-US-C01-04, AC-US-C02-01, AC-US-C02-02, AC-US-C02-03, AC-US-C02-04, AC-US-C02-05, AC-US-C03-01, AC-US-C03-02, AC-US-C03-03, AC-US-C04-01, AC-US-C04-02, AC-US-C04-03, AC-US-C04-04, AC-US-C06-01, AC-US-C06-02, AC-US-C06-03, AC-US-C07-03, AC-US-C08-01, AC-US-C08-02, AC-US-C08-03, AC-US-R05-01, AC-US-R05-02, AC-US-R05-03, AC-US-R05-04]
     cross_slice_acceptance:
       AC-US-C07-01: Slice 003 creates stable loginless employee references; assignment and reporting use is verified only when those modules exist.
       AC-US-C07-02: Updating task-module work on a loginless employee's behalf is not implemented or claimed by Slice 003.
       AC-US-R05-04: The implemented direct grant token expires and revokes immediately; the private adapter creates no derived support session or real-time subscription to terminate.
+
+  pr_02_access_and_account_lifecycle:
+    implements: [US-C01, US-C06, US-C08, US-R01, US-R02, US-R03, US-R04, NFR-01, NFR-03, NFR-07, NFR-09, NFR-13, NFR-16, BR-002, BR-003, BR-004, BR-005, BR-024]
+    obeys: [PD-004, PD-005, PD-027, PD-028, ADR-0005, CFG-002, CFG-015, PERM-006, PERM-007, PERM-008]
+    modules: [identity_access, restaurant_configuration, audit, service_workflow, staff_web, administration_web]
+    operations: [loginStaff, getStaffSession, logoutStaff, requestStaffCredentialRecovery, completeStaffCredentialRecovery, acceptStaffInvitation, inviteExistingEmployee, updateEmployee, replaceEmployeeBranches, deactivateEmployeeIdentity, removeAdministrator, transferAdministrator]
+    tests: [TEST-PR02-HTTP-001, TEST-PR02-DB-001, TEST-PR02-BROWSER-001, TEST-PR02-REAL-STACK-001, TEST-PR02-VISUAL-001]
+    pr_02_verified_acceptance: [AC-US-R01-01, AC-US-R01-02, AC-US-R01-03, AC-US-R01-04, AC-US-R02-01, AC-US-R02-02, AC-US-R02-03, AC-US-R02-04, AC-US-R03-01, AC-US-R03-02, AC-US-R03-03, AC-US-R03-04, AC-US-R04-01, AC-US-R04-02, AC-US-R04-03]
 
   menu:
     implements: [US-D01, US-D02, US-D03, US-D04]

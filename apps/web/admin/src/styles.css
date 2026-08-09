@@ -216,6 +216,7 @@ a:focus-visible {
   z-index: 0;
 }
 .setup-workspace nav a[aria-current="page"] {
+  background: var(--gold);
   color: #241a00;
 }
 .admin-nav-pill {
@@ -243,12 +244,18 @@ a:focus-visible {
 .workspace-heading {
   display: flex;
   align-items: flex-end;
+  flex-wrap: wrap;
   justify-content: space-between;
+  gap: 16px;
   border-bottom: 1px solid var(--line);
   padding-bottom: 24px;
 }
+.workspace-heading > div {
+  min-width: 0;
+}
 .workspace-heading h2 {
   margin: 0;
+  overflow-wrap: anywhere;
   font: 800 42px "Bricolage Grotesque";
 }
 .service-state {
@@ -380,7 +387,13 @@ a:focus-visible {
 }
 .employee-list button span:first-child {
   display: grid;
+  min-width: 0;
   gap: 4px;
+}
+.employee-list button span:first-child,
+.employee-meta,
+.feature-list li > div {
+  overflow-wrap: anywhere;
 }
 .employee-list small,
 .feature-list small,
@@ -469,6 +482,7 @@ a:focus-visible {
 }
 .feature-list li > div {
   display: grid;
+  min-width: 0;
   gap: 4px;
 }
 .feature-toggle {
@@ -825,7 +839,10 @@ textarea:disabled {
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.03em;
-  transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+  transition:
+    background 120ms ease,
+    color 120ms ease,
+    border-color 120ms ease;
 }
 
 .suggestion-pill:hover {
@@ -1302,5 +1319,473 @@ textarea:disabled {
 @media (min-width: 761px) and (max-width: 1050px) {
   .insight-filters {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.auth-stage {
+  display: grid;
+  min-height: 100dvh;
+  place-items: center;
+  padding: clamp(12px, 3vw, 32px);
+  background: var(--gold);
+}
+
+.auth-shell {
+  display: grid;
+  width: min(1120px, 100%);
+  min-height: min(720px, calc(100dvh - 64px));
+  grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
+  overflow: hidden;
+  border-radius: 24px;
+  background: white;
+  box-shadow: 0 22px 70px rgba(71, 46, 0, 0.2);
+}
+
+.auth-intro {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: clamp(32px, 7vw, 96px);
+  background: #fff0cc;
+}
+
+.auth-intro h1 {
+  max-width: 620px;
+  margin: 0;
+  font: 800 clamp(38px, 6vw, 78px)/0.98 "Bricolage Grotesque";
+  letter-spacing: -0.05em;
+}
+
+.auth-intro > p:last-child {
+  max-width: 560px;
+  margin: 24px 0 0;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.auth-brand {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: auto;
+  color: #1e1b14;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.auth-brand .brand-mark {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 13px;
+  background: var(--gold);
+}
+
+.auth-card {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  justify-content: center;
+  padding: clamp(28px, 5vw, 72px);
+  background: white;
+}
+
+.auth-card__heading h2 {
+  margin: 0;
+  font: 700 clamp(28px, 4vw, 42px) "Bricolage Grotesque";
+  letter-spacing: -0.04em;
+}
+
+.auth-card__heading > p:last-child {
+  margin: 12px 0 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.auth-form {
+  display: grid;
+  gap: 16px;
+  margin-top: 28px;
+}
+
+.auth-form label {
+  display: grid;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.auth-form input {
+  min-height: 48px;
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0 13px;
+  color: #1e1b14;
+  background: var(--canvas);
+  font: inherit;
+}
+
+.auth-form button,
+.account-context__panel button {
+  min-height: 44px;
+  border: 0;
+  border-radius: 11px;
+  padding: 0 16px;
+  color: #261b00;
+  background: var(--gold);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.auth-form button:disabled,
+.account-context__panel button:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+.auth-feedback,
+.auth-notice,
+.field-help {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.55;
+}
+
+.auth-feedback--error {
+  color: #c22c23;
+}
+
+.auth-feedback--success,
+.auth-notice {
+  color: #1e7a47;
+}
+
+.auth-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 18px;
+  margin-top: 22px;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.auth-links a,
+.account-context__panel a {
+  color: var(--brown);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.account-context {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.account-context summary {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  padding: 0 11px;
+  background: white;
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 800;
+  list-style: none;
+}
+
+.account-context summary::-webkit-details-marker {
+  display: none;
+}
+
+.account-context__avatar {
+  display: inline-grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  border-radius: 50%;
+  color: #261b00;
+  background: var(--gold);
+  font-size: 0.7rem;
+}
+
+.account-context__panel {
+  position: absolute;
+  z-index: 10;
+  top: calc(100% + 8px);
+  right: 0;
+  display: grid;
+  width: min(300px, calc(100vw - 32px));
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 16px;
+  color: #1e1b14;
+  background: white;
+  box-shadow: 0 18px 40px rgba(71, 46, 0, 0.16);
+}
+
+.account-context__panel > span {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.account-context__label {
+  margin-top: 6px;
+  color: #1e1b14 !important;
+  font-size: 0.7rem !important;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.account-context__panel ul {
+  display: grid;
+  gap: 4px;
+  margin: 0 0 4px;
+  padding-left: 18px;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.account-context__message {
+  min-height: 20px;
+  margin: 0;
+  color: #c22c23;
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+
+@media (max-width: 760px) {
+  .auth-shell {
+    min-height: 0;
+    grid-template-columns: 1fr;
+  }
+
+  .auth-intro {
+    min-height: 300px;
+  }
+
+  .auth-brand {
+    margin-bottom: 56px;
+  }
+
+  .admin-stage > header .account-context {
+    margin-left: auto;
+  }
+}
+
+@media (max-width: 520px) {
+  .auth-stage {
+    padding: 0;
+  }
+
+  .auth-shell {
+    width: 100%;
+    border-radius: 0;
+  }
+
+  .auth-intro,
+  .auth-card {
+    padding: 28px 22px;
+  }
+
+  .admin-stage > header .account-context summary span:last-child {
+    max-width: 115px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.employee-lifecycle {
+  display: grid;
+  gap: 18px;
+  margin-top: 28px;
+  border-top: 1px solid var(--line);
+  padding-top: 26px;
+}
+
+.employee-lifecycle h4 {
+  margin: 0;
+  font: 700 23px "Bricolage Grotesque";
+}
+
+.record-editor {
+  display: grid;
+  grid-template-columns: minmax(160px, 1fr) minmax(220px, 1.2fr) auto;
+  align-items: end;
+  gap: 12px;
+}
+
+.record-editor label,
+.branch-check-grid label,
+.checkbox-line {
+  display: grid;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.record-editor input,
+.record-editor select,
+.employee-lifecycle input,
+.employee-lifecycle select {
+  min-height: 44px;
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 0 11px;
+  color: #1e1b14;
+  background: var(--canvas);
+  font: inherit;
+}
+
+.record-editor button,
+.lifecycle-block > button,
+.invitation-output > button {
+  min-height: 44px;
+  border: 0;
+  border-radius: 9px;
+  padding: 0 15px;
+  color: #261b00;
+  background: var(--gold);
+  font-weight: 800;
+}
+
+.lifecycle-block {
+  display: grid;
+  gap: 14px;
+  border-top: 1px solid var(--line);
+  padding-top: 18px;
+}
+
+.lifecycle-block--critical {
+  border: 1px solid #e8c7bd;
+  border-radius: 12px;
+  padding: 18px;
+  background: #fff8f5;
+}
+
+.lifecycle-block__heading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.lifecycle-block__heading div {
+  display: grid;
+  gap: 4px;
+}
+
+.lifecycle-block__heading small {
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 400;
+  line-height: 1.45;
+}
+
+.lifecycle-block__heading > span {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.branch-check-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 8px;
+}
+
+.branch-check-grid label,
+.checkbox-line {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 8px 10px;
+  background: white;
+}
+
+.branch-check-grid input,
+.checkbox-line input {
+  width: 18px;
+  min-height: 18px;
+  flex: 0 0 18px;
+}
+
+.record-editor--compact {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(200px, 1fr);
+}
+
+.record-editor--compact button:first-child {
+  color: #8b211b;
+  background: #fce2dc;
+}
+
+.record-editor--compact .checkbox-line {
+  grid-column: 1 / -1;
+}
+
+.invitation-output {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid #f0c773;
+  border-radius: 10px;
+  background: #fffaf0;
+}
+
+.invitation-output label {
+  display: grid;
+  grid-column: 1 / -1;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.invitation-output > span,
+.invitation-output > p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.invitation-output > p {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 760px) {
+  .record-editor,
+  .record-editor--compact,
+  .invitation-output {
+    grid-template-columns: 1fr;
+  }
+
+  .record-editor--compact .checkbox-line,
+  .invitation-output label,
+  .invitation-output > p {
+    grid-column: auto;
+  }
+
+  .record-editor button,
+  .lifecycle-block > button,
+  .invitation-output > button {
+    width: 100%;
   }
 }

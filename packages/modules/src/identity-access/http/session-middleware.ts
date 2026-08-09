@@ -37,6 +37,7 @@ export interface SessionMiddlewareDependencies {
   >;
   readonly hashCsrfToken: (rawToken: string) => string;
   readonly webOrigin: string;
+  readonly webOrigins?: readonly string[];
 }
 
 export function createStaffSessionMiddleware(
@@ -92,8 +93,9 @@ export function createCsrfProtection(
     }
     const origin = request.get("origin");
     const rawToken = request.get("x-csrf-token");
+    const allowedOrigins = dependencies.webOrigins ?? [dependencies.webOrigin];
     if (
-      origin !== dependencies.webOrigin ||
+      !allowedOrigins.includes(origin ?? "") ||
       !rawToken ||
       !secretsMatch(dependencies.hashCsrfToken(rawToken), context.csrfTokenHash)
     ) {

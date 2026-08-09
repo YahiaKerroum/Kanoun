@@ -29,6 +29,15 @@ const context: StaffRequestContext = {
   authenticatedAtUtc: new Date(),
   expiresAtUtc: new Date(Date.now() + 60 * 60_000),
 };
+const sessionProfile = {
+  employee: {
+    id: context.employeeId,
+    displayName: "Demo owner",
+    email: "owner@example.test",
+  },
+  restaurant: { id: context.restaurantId, name: "Dar Nedjma" },
+  activeBranch: { id: context.activeBranchId, name: "Hydra" },
+} as const;
 
 function createTestApplication(overrides?: Partial<IdentityHttpUseCases>) {
   const useCases = {
@@ -38,6 +47,7 @@ function createTestApplication(overrides?: Partial<IdentityHttpUseCases>) {
       context,
     }),
     logout: vi.fn().mockResolvedValue(undefined),
+    getSessionProfile: vi.fn().mockResolvedValue(sessionProfile),
     switchBranch: vi.fn().mockResolvedValue(undefined),
     inviteStaff: vi.fn().mockResolvedValue({
       invitationToken: "invitation-token",
@@ -84,7 +94,8 @@ function createTestApplication(overrides?: Partial<IdentityHttpUseCases>) {
       ),
     ),
     hashCsrfToken: (token: string) => security.hashToken(token),
-    webOrigin: "http://127.0.0.1:5173",
+    webOrigin: "http://127.0.0.1:5175",
+    webOrigins: ["http://127.0.0.1:5173", "http://127.0.0.1:5175"],
   };
   const router = createIdentityAccessRouter({
     ...sessionDependencies,
@@ -161,6 +172,21 @@ describe("identity HTTP adapter", () => {
     expect(useCases.switchBranch).toHaveBeenCalledWith(
       expect.objectContaining(context),
       branchId,
+    );
+  });
+
+  it("returns safe self identity context without requiring employee listing permission", async () => {
+    const { app, useCases } = createTestApplication();
+    const response = await request(app)
+      .get("/api/v1/auth/session")
+      .set("Cookie", `rms_staff_session=${sessionToken}`)
+      .expect(200);
+
+    expect(response.body).toEqual(
+      expect.objectContaining({ profile: sessionProfile }),
+    );
+    expect(useCases.getSessionProfile).toHaveBeenCalledWith(
+      expect.objectContaining({ employeeId: context.employeeId }),
     );
   });
 

@@ -29,6 +29,7 @@ export interface DemoLauncherOptions {
   readonly apiOrigin: string;
   readonly adminOrigin: string;
   readonly staffOrigin: string;
+  readonly recoveryOrigin: string;
   readonly host: string;
   readonly port: number;
 }
@@ -260,6 +261,11 @@ function page(options: DemoLauncherOptions): string {
             <p class="eyebrow">Guest entry</p>
             <h3 style="margin-top: 6px;">Customer table menus</h3>
             <ul class="customer-list" style="margin-top: 8px;">${customerLinks}</ul>
+            <div style="height: 28px;"></div>
+            <p class="eyebrow">Safe local recovery</p>
+            <h3 style="margin-top: 6px;">Loopback recovery inbox</h3>
+            <p style="color: var(--muted);">Recovery requests are accepted generically. In this synthetic run, the configured delivery substitute is available only on loopback.</p>
+            <p><a class="button button-small" href="${escapeHtml(options.recoveryOrigin)}" target="_blank" rel="noreferrer">Open recovery inbox <span aria-hidden="true">↗</span></a></p>
           </section>
         </div>
         <section style="background: var(--canvas);" aria-labelledby="safety-title">

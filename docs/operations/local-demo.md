@@ -44,6 +44,13 @@ links perform the existing server-side login contract before redirecting to
 the appropriate application. The customer link is issued by the existing
 Tables service contract and is retained only in the local run and launcher.
 
+The launcher also links to a loopback-only recovery inbox on port `4171`. It is
+an in-memory delivery substitute for this synthetic run: the API still returns
+the same generic recovery response, no email or production delivery is claimed,
+and the inbox disappears when `corepack pnpm dev:demo` stops. Use it only to
+exercise the recovery completion form locally; do not capture the one-time URL
+in screenshots or retain it outside the run.
+
 ## Browser isolation
 
 Use a separate browser context or profile for every role. The repository

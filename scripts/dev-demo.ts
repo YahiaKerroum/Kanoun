@@ -10,6 +10,10 @@ import {
   type DemoConfig,
 } from "./demo-config.js";
 import { startDemoLauncher, type DemoLauncher } from "./demo-launcher.js";
+import {
+  startDemoRecoveryDelivery,
+  type DemoRecoveryDelivery,
+} from "./demo-recovery-delivery.js";
 import { generatedDemoPassword, generatedDemoSecret } from "./demo-secrets.js";
 import {
   inspectDemoPostgresCapabilities,
@@ -31,6 +35,7 @@ const apiOrigin = "http://127.0.0.1:3000";
 const staffOrigin = "http://127.0.0.1:5173";
 const customerOrigin = "http://127.0.0.1:5174";
 const adminOrigin = "http://127.0.0.1:5175";
+const recoveryDeliveryOrigin = "http://127.0.0.1:4171";
 const workerReadyMessage = "Worker process is ready; outbox dispatch is active";
 
 interface PostgresRuntime {
@@ -46,6 +51,7 @@ function runtimeEnvironment(config: DemoConfig): {
 } {
   const password = config.seedPassword ?? generatedDemoPassword();
   const secrets = [
+    generatedDemoSecret(),
     generatedDemoSecret(),
     generatedDemoSecret(),
     generatedDemoSecret(),
@@ -67,7 +73,10 @@ function runtimeEnvironment(config: DemoConfig): {
       GUEST_ACCESS_SECRET: secrets[3],
       SESSION_COOKIE_SECURE: "false",
       WEB_ORIGIN: adminOrigin,
+      STAFF_WEB_ORIGIN: staffOrigin,
       CUSTOMER_WEB_ORIGIN: customerOrigin,
+      RECOVERY_DELIVERY_URL: `${recoveryDeliveryOrigin}/deliver`,
+      RECOVERY_DELIVERY_SECRET: secrets[4],
       WORKER_ID: "rms-demo-worker",
       LOG_LEVEL: "info",
       OUTBOX_LEASE_MS: "30000",
@@ -288,6 +297,7 @@ async function main(): Promise<void> {
   const postgres = await ensurePostgres(config);
   const runtime = runtimeEnvironment(postgres.config);
   const processes: ManagedDemoProcess[] = [];
+  let recoveryDelivery: DemoRecoveryDelivery | undefined;
   let launcher: DemoLauncher | undefined;
   try {
     process.stdout.write(
@@ -299,6 +309,12 @@ async function main(): Promise<void> {
       sessionSecret: runtime.environment.SESSION_SECRET ?? "",
       guestAccessSecret: runtime.environment.GUEST_ACCESS_SECRET ?? "",
       customerWebOrigin: customerOrigin,
+    });
+    recoveryDelivery = await startDemoRecoveryDelivery({
+      host: "127.0.0.1",
+      port: 4171,
+      authorizationSecret: runtime.environment.RECOVERY_DELIVERY_SECRET ?? "",
+      staffOrigin,
     });
     const specs = processSpecs(runtime.environment, runtime.secrets);
     const api = startManagedDemoProcess(specs[0]);
@@ -320,6 +336,7 @@ async function main(): Promise<void> {
       apiOrigin,
       adminOrigin,
       staffOrigin,
+      recoveryOrigin: recoveryDelivery.origin,
       host: postgres.config.launcherHost,
       port: postgres.config.launcherPort,
     });
@@ -334,6 +351,7 @@ async function main(): Promise<void> {
     });
   } finally {
     await launcher?.close().catch(() => undefined);
+    await recoveryDelivery?.close().catch(() => undefined);
     await closeProcesses(processes);
     await stopManagedPostgres(postgres);
   }

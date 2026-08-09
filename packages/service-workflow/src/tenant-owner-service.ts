@@ -26,6 +26,7 @@ import {
   type PermissionTemplateKey,
   type RestaurantConfigurationStore,
   type RestaurantRecord,
+  type StaffSessionProfile,
   type StaffRequestContext,
   type SupportTenantSnapshot,
   type TablesStore,
@@ -397,6 +398,75 @@ export class TenantOwnerService {
       sessionToken: session.raw,
       csrfToken: csrf.raw,
       context,
+    };
+  }
+
+  public async getSessionProfile(
+    context: StaffRequestContext,
+  ): Promise<StaffSessionProfile> {
+    const employee =
+      await this.dependencies.restaurantConfiguration.getEmployee(
+        this.dependencies.databasePool,
+        context.businessAccountId,
+        context.employeeId,
+      );
+    if (employee?.status !== "active") {
+      throw new ApplicationError(
+        "authentication_required",
+        401,
+        "Authentication required",
+      );
+    }
+    if (employee.restaurantId !== context.restaurantId) {
+      throw new ApplicationError(
+        "authentication_required",
+        401,
+        "Authentication required",
+      );
+    }
+
+    const restaurant =
+      await this.dependencies.restaurantConfiguration.getRestaurant(
+        this.dependencies.databasePool,
+        employee.businessAccountId,
+        employee.restaurantId,
+      );
+    const activeBranch = context.activeBranchId
+      ? await this.dependencies.restaurantConfiguration.getBranch(
+          this.dependencies.databasePool,
+          employee.businessAccountId,
+          context.activeBranchId,
+        )
+      : undefined;
+    if (!restaurant) {
+      throw new ApplicationError(
+        "authentication_required",
+        401,
+        "Authentication required",
+      );
+    }
+    if (
+      context.activeBranchId !== undefined &&
+      (activeBranch?.restaurantId !== employee.restaurantId ||
+        !context.authorizedBranchIds.includes(activeBranch.id))
+    ) {
+      throw new ApplicationError(
+        "authentication_required",
+        401,
+        "Authentication required",
+      );
+    }
+
+    return {
+      employee: {
+        id: employee.id,
+        displayName: employee.displayName,
+        email: employee.email,
+      },
+      restaurant: { id: restaurant.id, name: restaurant.name },
+      activeBranch: activeBranch
+        ? { id: activeBranch.id, name: activeBranch.name }
+        : null,
     };
   }
 

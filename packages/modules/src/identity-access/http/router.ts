@@ -45,6 +45,22 @@ interface LoginResult {
   readonly context: StaffRequestContext;
 }
 
+export interface StaffSessionProfile {
+  readonly employee: {
+    readonly id: string;
+    readonly displayName: string;
+    readonly email: string;
+  };
+  readonly restaurant: {
+    readonly id: string;
+    readonly name: string;
+  };
+  readonly activeBranch: {
+    readonly id: string;
+    readonly name: string;
+  } | null;
+}
+
 export interface IdentityHttpUseCases {
   login(
     input: z.infer<typeof loginSchema>,
@@ -54,6 +70,7 @@ export interface IdentityHttpUseCases {
     context: StaffRequestContext,
     metadata: RequestMetadata,
   ): Promise<void>;
+  getSessionProfile(context: StaffRequestContext): Promise<StaffSessionProfile>;
   switchBranch(context: StaffRequestContext, branchId: string): Promise<void>;
   inviteStaff(
     context: StaffRequestContext,
@@ -205,6 +222,9 @@ export function createIdentityAccessRouter(
   router.post("/auth/login", loginLimiter, async (request, response) => {
     const input = parse(loginSchema, request.body);
     const result = await dependencies.useCases.login(input, metadata(request));
+    const profile = await dependencies.useCases.getSessionProfile(
+      result.context,
+    );
     const maxAge = result.context.expiresAtUtc.getTime() - Date.now();
     response.cookie(
       staffSessionCookieName,
@@ -222,19 +242,26 @@ export function createIdentityAccessRouter(
       authorizedBranchIds: result.context.authorizedBranchIds,
       grants: result.context.grants,
       expiresAt: result.context.expiresAtUtc.toISOString(),
+      profile,
     });
   });
 
-  router.get("/auth/session", requireStaffSession(), (request, response) => {
-    const context = requireContext(request);
-    response.send({
-      employeeId: context.employeeId,
-      activeBranchId: context.activeBranchId ?? null,
-      authorizedBranchIds: context.authorizedBranchIds,
-      grants: context.grants,
-      expiresAt: context.expiresAtUtc.toISOString(),
-    });
-  });
+  router.get(
+    "/auth/session",
+    requireStaffSession(),
+    async (request, response) => {
+      const context = requireContext(request);
+      const profile = await dependencies.useCases.getSessionProfile(context);
+      response.send({
+        employeeId: context.employeeId,
+        activeBranchId: context.activeBranchId ?? null,
+        authorizedBranchIds: context.authorizedBranchIds,
+        grants: context.grants,
+        expiresAt: context.expiresAtUtc.toISOString(),
+        profile,
+      });
+    },
+  );
 
   router.post(
     "/auth/logout",

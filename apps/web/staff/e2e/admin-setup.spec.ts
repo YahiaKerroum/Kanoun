@@ -219,12 +219,32 @@ test("employee, permission, and feature administration is responsive and accessi
     }
     return route.fulfill({ status: 404 });
   });
-  await page.goto("http://127.0.0.1:5175");
+  await page.goto("http://127.0.0.1:5175/employees");
 
   await expect(
     page.getByRole("heading", { name: "People & configuration" }),
   ).toBeVisible();
   await expect(page.getByRole("heading", { name: "Workforce" })).toBeVisible();
+  await page
+    .getByRole("button", { name: /Imane Khellaf imane\.khellaf@/ })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "Profile and access lifecycle" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Create invitation URL" }),
+  ).toBeVisible();
+  await page
+    .getByRole("navigation", { name: "Administration sections" })
+    .getByRole("link", { name: "Permissions" })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "Permissions", level: 3 }),
+  ).toBeVisible();
+  await page
+    .getByRole("navigation", { name: "Administration sections" })
+    .getByRole("link", { name: "Features" })
+    .click();
   await expect(page.getByText("automatic · fixed in MVP")).toBeVisible();
   await page.screenshot({
     path: "test-results/readme-admin-workforce.png",
@@ -555,9 +575,8 @@ test("menu, table, branch override, and QR administration use the real contracts
     return route.fulfill({ status: 404 });
   });
 
-  await page.goto("http://127.0.0.1:5175");
+  await page.goto("http://127.0.0.1:5175/menu");
   const menu = page.getByRole("region", { name: "Menu" });
-  const tables = page.getByRole("region", { name: "Tables & QR" });
 
   await expect(
     menu.getByRole("heading", { name: "Couscous royale" }),
@@ -565,7 +584,7 @@ test("menu, table, branch override, and QR administration use the real contracts
   await expect(menu.getByLabel("Current options")).toHaveValue(
     /Fresh kesra \| 250\.00 \| active/,
   );
-  await menu.getByLabel("Category name").fill("Desserts");
+  await menu.getByRole("textbox", { name: "Category name" }).fill("Desserts");
   await menu.getByRole("button", { name: "Add category" }).click();
   await expect(page.getByText("Category created.")).toBeVisible();
   expect(categoryWrites).toEqual([{ name: "Desserts", displayOrder: 1 }]);
@@ -582,6 +601,11 @@ test("menu, table, branch override, and QR administration use the real contracts
     },
   ]);
 
+  await page
+    .getByRole("navigation", { name: "Administration sections" })
+    .getByRole("link", { name: "Tables & QR" })
+    .click();
+  const tables = page.getByRole("region", { name: "Tables & QR" });
   await expect(
     tables.getByRole("heading", { name: "T-12", exact: true }),
   ).toBeVisible();
@@ -768,7 +792,7 @@ test("keeps administration evidence responsive across desktop, tablet, and mobil
   });
 
   await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto("http://127.0.0.1:5175");
+  await page.goto("http://127.0.0.1:5175/insights");
   const insights = page.locator("#insights");
   await expect(
     insights.getByRole("heading", {

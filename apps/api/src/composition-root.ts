@@ -156,6 +156,10 @@ export function composeApi(config: ApiConfig): ApiComposition {
       tenantOwnerService.authenticateSession(token),
     hashCsrfToken: (token: string) => identitySecurity.hashToken(token),
     webOrigin: config.webOrigin,
+    webOrigins: [
+      config.webOrigin,
+      ...(config.staffWebOrigin ? [config.staffWebOrigin] : []),
+    ],
   };
   const guestSessionDependencies = {
     authenticateGuestSession: (token: string) =>

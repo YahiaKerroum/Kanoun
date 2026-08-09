@@ -22,6 +22,7 @@ const configSchema = z
     GUEST_ACCESS_SECRET: z.string().min(32),
     SESSION_COOKIE_SECURE: booleanFromString.default(false),
     WEB_ORIGIN: z.url(),
+    STAFF_WEB_ORIGIN: z.url().optional(),
     CUSTOMER_WEB_ORIGIN: z.url(),
     RECOVERY_DELIVERY_URL: z.url().optional(),
     RECOVERY_DELIVERY_SECRET: z.string().min(32).optional(),
@@ -58,6 +59,7 @@ export interface ApiConfig {
   readonly guestAccessSecret: string;
   readonly sessionCookieSecure: boolean;
   readonly webOrigin: string;
+  readonly staffWebOrigin?: string;
   readonly customerWebOrigin: string;
   readonly recoveryDeliveryUrl?: string;
   readonly recoveryDeliverySecret?: string;
@@ -86,6 +88,9 @@ export function loadApiConfig(environment: NodeJS.ProcessEnv): ApiConfig {
     guestAccessSecret: result.data.GUEST_ACCESS_SECRET,
     sessionCookieSecure: result.data.SESSION_COOKIE_SECURE,
     webOrigin: result.data.WEB_ORIGIN,
+    ...(result.data.STAFF_WEB_ORIGIN
+      ? { staffWebOrigin: result.data.STAFF_WEB_ORIGIN }
+      : {}),
     customerWebOrigin: result.data.CUSTOMER_WEB_ORIGIN,
     ...(result.data.RECOVERY_DELIVERY_URL
       ? { recoveryDeliveryUrl: result.data.RECOVERY_DELIVERY_URL }
