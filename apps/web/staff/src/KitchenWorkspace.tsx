@@ -541,7 +541,7 @@ export function KitchenWorkspace(props: {
                           ) : null}
                           <div className="kitchen-item__footer">
                             <span>Waiting {elapsed(item.queuedAt, now)}</span>
-                              {props.canUpdate && item.state === "queued" ? (
+                            {props.canUpdate && item.state === "queued" ? (
                               <motion.button
                                 type="button"
                                 disabled={pendingId === item.id}

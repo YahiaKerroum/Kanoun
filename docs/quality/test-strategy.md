@@ -45,6 +45,26 @@ Prioritize complete vertical flows:
 6. Disable a capability while an active order exists and preserve its completion path.
 7. Prove one guest, branch, or tenant cannot access another's records or event stream.
 
+PR-03 adds focused coverage for the guided owner setup route and its server-
+derived readiness model: cross-day overnight-hour overlap, restaurant/branch
+optimistic concurrency, tenant-scoped lifecycle authorization, reasoned service-
+status changes, permission-aware workforce loading, scope-aware Staff handoff,
+workforce/menu/table/QR readiness states, deep links, responsive fallback,
+keyboard/focus behavior, and the Staff handoff gate. The existing branch-closure
+acceptance authority remains the source of truth for order acceptance; PR-03
+adds the approved branch status update reason to the existing branch update
+contract.
+
+## PR-03 evidence matrix
+
+- `TEST-PR03-UNIT-001`: `corepack pnpm exec vitest run apps/web/admin/src/setup-readiness-api.test.ts apps/web/admin/src/setup-readiness-model.test.ts apps/web/admin/src/use-setup-readiness-data.test.ts packages/service-workflow/src/tenant-owner-service.test.ts` — 16 tests covering caller cancellation, stale/unmounted reload cleanup, readiness state matrices, selected-restaurant context, split-period round trips, overnight-hour validation, and service-status reason enforcement.
+- `TEST-PR03-HTTP-001`: `corepack pnpm exec vitest run apps/api/src/restaurant-configuration-routes.test.ts` — six route validation and service-forwarding tests.
+- `TEST-PR03-DB-001`: pinned `corepack pnpm test` with `TEST_DATABASE_URL` — 35 files and 237 tests, including branch status persistence, explicit order-override behavior, tenant isolation, optimistic concurrency, permission-check ordering, audit, and outbox paths.
+- `TEST-PR03-BROWSER-001`: the committed PR-03 E2E set — 31 tests across the setup, accessibility, responsiveness, and route suites; the open/closed/open mutation and two-restaurant readiness-context switch are covered by `apps/web/staff/e2e/pr-03-guided-setup.spec.ts`.
+- `TEST-PR03-A11Y-001`: the committed browser set includes axe, keyboard/focus, and responsive assertions; the separate untracked user-owned `admin-routes.spec.ts` file is excluded.
+- `TEST-PR03-REAL-STACK-001`: pinned `corepack pnpm dev:demo` with real PostgreSQL, API, worker, and the focused `test:browser:pr03:real-stack` journey. The owner creates a restaurant and branch through Administration, opens service with an operational reason, and reaches the server-derived setup gate; the manual continuation covers Staff handoff, Staff workspace, and customer table QR menu.
+- `TEST-PR03-VISUAL-001`: fresh 1280x900 and 375x844 captures covering ready, closed, and restored-open setup states, reviewed by two independent read-only visual oracles.
+
 ## Mandatory negative coverage
 
 For every protected resource:

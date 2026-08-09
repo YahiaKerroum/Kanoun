@@ -92,6 +92,7 @@ export const updateBranchSchema = z
       .optional(),
     allowOrderOverride: z.boolean().optional(),
     openingHours: z.array(openingPeriodSchema).min(1).max(28).optional(),
+    reason: z.string().trim().min(8).max(500).optional(),
   })
   .refine((input) => Object.keys(input).length > 0, {
     message: "At least one field must be changed.",

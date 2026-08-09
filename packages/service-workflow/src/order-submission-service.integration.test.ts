@@ -614,6 +614,7 @@ describeWithDatabase("order submission service against PostgreSQL", () => {
         branchId: setup.branchId,
         expectedVersion: branch.version,
         serviceStatus: "closed",
+        reason: "Temporary service pause for maintenance",
       },
       metadata(),
     );

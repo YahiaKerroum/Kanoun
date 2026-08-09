@@ -12,6 +12,7 @@ import {
   MenuTablesAdministration,
   type MenuTablesPermissions,
 } from "./MenuTablesAdministration.js";
+import { SetupReadinessAdministration } from "./SetupReadinessAdministration.js";
 import { InsightsAdministration } from "./InsightsAdministration.js";
 import {
   AdministrationNavigation,
@@ -228,6 +229,23 @@ class ApiRequestError extends Error {
   }
 }
 
+async function optionalApi<T>(
+  path: string,
+  schema: z.ZodType<T>,
+): Promise<T | null> {
+  try {
+    return await api(path, schema);
+  } catch (error) {
+    if (
+      error instanceof ApiRequestError &&
+      (error.status === 403 || error.status === 404)
+    ) {
+      return null;
+    }
+    throw error;
+  }
+}
+
 function grantId(grant: z.infer<typeof permissionGrantSchema>) {
   return `${grant.permissionKey}:${grant.restaurantId ?? "*"}:${grant.branchId ?? "*"}`;
 }
@@ -291,13 +309,13 @@ function App() {
     const employees = (
       await Promise.all(
         restaurants.items.map((restaurant) =>
-          api(
+          optionalApi(
             `/api/v1/staff/employees?restaurantId=${restaurant.id}`,
             z.object({ items: z.array(employeeSchema) }),
           ),
         ),
       )
-    ).flatMap((result) => result.items);
+    ).flatMap((result) => result?.items ?? []);
     const activeBranchId =
       preferredBranchId ??
       session.activeBranchId ??
@@ -1069,9 +1087,12 @@ function App() {
   const canViewReports = activePermissionKeys.has("reports.view");
   const canViewAudit = activePermissionKeys.has("audit.view");
   const canManageFeatures = activePermissionKeys.has("features.manage");
-  const canViewEmployees =
-    activePermissionKeys.has("employees.view") ||
-    activePermissionKeys.has("employees.manage");
+  const canViewEmployees = activePermissionKeys.has("employees.view");
+  const canViewSetup =
+    activePermissionKeys.has("restaurant.view") &&
+    activePermissionKeys.has("branches.view");
+  const canEditRestaurants = activePermissionKeys.has("restaurant.edit");
+  const canManageBranches = activePermissionKeys.has("branches.manage");
   const canManagePermissions = activePermissionKeys.has(
     "employees.manage_permissions",
   );
@@ -1086,7 +1107,8 @@ function App() {
     ...(state.features?.configuration.values ?? {}),
   };
   const pageAvailability: Readonly<Record<AdministrationPage, boolean>> = {
-    context: true,
+    setup: canViewSetup,
+    context: canViewSetup,
     employees: canViewEmployees,
     permissions: canManagePermissions,
     menu:
@@ -1133,11 +1155,35 @@ function App() {
   const responsibilities = responsibilitiesFor(state.session);
   const staffOrigin =
     import.meta.env.VITE_STAFF_WEB_ORIGIN ?? "http://127.0.0.1:5173";
-  const canOpenStaff = state.session.grants.some((grant) =>
-    ["orders.", "kitchen.", "payments.", "menu.", "tables."].some((prefix) =>
-      grant.permissionKey.startsWith(prefix),
+  const hasCoreSetup = Boolean(
+    activeRestaurant?.status === "active" &&
+    activeBranch?.status === "active" &&
+    activeBranch.serviceStatus === "open" &&
+    activeBranch.openingHours.length > 0 &&
+    state.features &&
+    state.restaurantFeatures &&
+    state.employees.some(
+      (employee) =>
+        employee.status === "active" &&
+        employee.branchIds.includes(activeBranch.id),
     ),
   );
+  const canUseStaffWorkspace = (
+    branch: { readonly id: string; readonly restaurantId: string } | undefined,
+  ): boolean =>
+    Boolean(
+      branch &&
+      state.session.authorizedBranchIds.includes(branch.id) &&
+      state.session.grants.some(
+        (grant) =>
+          ["orders.", "kitchen.", "payments.", "menu.", "tables."].some(
+            (prefix) => grant.permissionKey.startsWith(prefix),
+          ) &&
+          (!grant.restaurantId || grant.restaurantId === branch.restaurantId) &&
+          (!grant.branchId || grant.branchId === branch.id),
+      ),
+    );
+  const canOpenStaff = hasCoreSetup && canUseStaffWorkspace(activeBranch);
 
   return (
     <MotionConfig reducedMotion="user">
@@ -1243,6 +1289,17 @@ function App() {
                 animate="enter"
                 exit="exit"
               >
+                {activePage === "setup" ? (
+                  <SetupReadinessAdministration
+                    initialBranchId={state.activeBranchId}
+                    staffOrigin={staffOrigin}
+                    canUseStaffWorkspace={canUseStaffWorkspace}
+                    canEditRestaurants={canEditRestaurants}
+                    canManageBranches={canManageBranches}
+                    canViewEmployees={canViewEmployees}
+                  />
+                ) : null}
+
                 {activePage === "context" ? (
                   <section
                     className="admin-section"

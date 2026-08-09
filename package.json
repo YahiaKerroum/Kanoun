@@ -28,6 +28,7 @@
     "test": "vitest run --passWithNoTests",
     "test:architecture": "dependency-cruiser --config dependency-cruiser.config.cjs apps packages && vitest run tests/architecture",
     "test:browser": "playwright test",
+    "test:browser:pr03:real-stack": "playwright test --config playwright.pr03-real-stack.config.ts",
     "typecheck": "tsc --noEmit -p tsconfig.check.json"
   },
   "devDependencies": {

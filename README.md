@@ -64,6 +64,12 @@ Administration starts behind a verified staff session. Business, restaurant,
 branch, permission, and feature scope come from server-owned session data, not
 from a browser-supplied tenant identifier.
 
+The `/setup` Administration route is the guided owner handoff. Its readiness
+checklist is recalculated from fresh server responses and links directly to
+restaurant and branch editors, Workforce, features, Menu, and Tables & QR. It
+keeps the Staff workspace behind the server-derived core setup gate, so an
+owner can refresh or resume the setup URL without a client-side completion flag.
+
 ### Guest ordering
 
 #### 1. Browse the current table menu

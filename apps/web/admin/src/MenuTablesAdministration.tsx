@@ -1016,7 +1016,6 @@ function MenuAdministration({
     "Specials",
   ] as const;
 
-
   return (
     <section
       id="menu"
@@ -1060,7 +1059,10 @@ function MenuAdministration({
                   setCategoryName("");
                 }}
               >
-                <div className="category-suggestions" aria-label="Common category names">
+                <div
+                  className="category-suggestions"
+                  aria-label="Common category names"
+                >
                   {SUGGESTED_CATEGORIES.map((suggestion) => (
                     <button
                       key={suggestion}
@@ -1079,7 +1081,9 @@ function MenuAdministration({
                     maxLength={160}
                     required
                     value={categoryName}
-                    onChange={(event) => setCategoryName(event.currentTarget.value)}
+                    onChange={(event) =>
+                      setCategoryName(event.currentTarget.value)
+                    }
                   />
                 </label>
                 <label>
@@ -1217,15 +1221,21 @@ function MenuAdministration({
                       maxLength={2048}
                       placeholder="https://example.com/image.jpg"
                       value={newDishImageUrl}
-                      onChange={(event) => setNewDishImageUrl(event.currentTarget.value)}
+                      onChange={(event) =>
+                        setNewDishImageUrl(event.currentTarget.value)
+                      }
                     />
                     {newDishImageUrl ? (
                       <img
                         className="dish-image-preview"
                         src={newDishImageUrl}
                         alt="Dish preview"
-                        onError={(event) => { event.currentTarget.style.display = "none"; }}
-                        onLoad={(event) => { event.currentTarget.style.display = ""; }}
+                        onError={(event) => {
+                          event.currentTarget.style.display = "none";
+                        }}
+                        onLoad={(event) => {
+                          event.currentTarget.style.display = "";
+                        }}
                       />
                     ) : null}
                   </div>

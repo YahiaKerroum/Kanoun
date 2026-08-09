@@ -13,10 +13,12 @@ last_reviewed: 2026-08-09
 `PR-00 — re-establish a truthful green baseline` from
 `docs/delivery/professional-readiness-plan.md` is complete for this run.
 `PR-01 — one-command professional demo environment` is complete and published.
-`PR-02 — access and account lifecycle` is complete and is being published in
-the requested commit. Slice 008 is already integrated into `main`; the observed integration merge is
-`b38375bb2bd80b0c8ba98011b0591880d44dc072`, and the current `main` head is
-`67ea0c28653390054f999f494d3269f05dcbb0f1`.
+`PR-02 — access and account lifecycle` is complete and published at
+`e729438a11100d347c2bf8c77a0ad85ecbb84540`. `PR-03 — guided owner setup and
+workforce readiness` is verified. Slice 008 is already integrated into
+`main`; the observed integration merge is
+`b38375bb2bd80b0c8ba98011b0591880d44dc072`, and the PR-03 baseline `main`
+head is `e729438a11100d347c2bf8c77a0ad85ecbb84540`.
 
 ## Slice status
 
@@ -47,6 +49,8 @@ the requested commit. Slice 008 is already integrated into `main`; the observed 
   tree, verified on 2026-08-09, and being published in the requested commit.
 - `PR-02 — access-and-account-lifecycle`: complete in the current working
   tree, verified on 2026-08-09, and being published in the requested commit.
+- `PR-03 — guided-owner-setup-and-workforce-readiness`: verified; PR-04 and
+  PR-05 are not started.
 
 ## Completed
 
@@ -214,8 +218,8 @@ the requested commit. Slice 008 is already integrated into `main`; the observed 
 - Fresh desktop/mobile launcher and customer captures are stored under the
   ignored `output/playwright/pr01-demo-20260809/` directory. Two independent
   visual gate reviewers returned PASS with no blocking findings.
-- The requested commit and push are the PR-01 publication; PR-02 completion
-  evidence is recorded below and is being published separately in this run.
+- The requested PR-01 commit and push are published; PR-02 completion evidence
+  is recorded below and is published at `e729438a11100d347c2bf8c77a0ad85ecbb84540`.
 
 ## PR-02 completion evidence
 
@@ -246,6 +250,15 @@ the requested commit. Slice 008 is already integrated into `main`; the observed 
 - Fresh auth captures at 375px, 768px, and 1280px show the MISE visual system
   without horizontal overflow. The automated accessibility/visual browser
   oracle and an independent visual review both returned `PASS`.
+
+## PR-03 current evidence
+
+- The PR-03 declaration is recorded in `docs/delivery/pr-03-guided-owner-setup-and-workforce-readiness.md`; PR-04 and PR-05 remain out of scope.
+- Administration now has a stable `/setup` route with a server-derived, resumable readiness checklist, direct editor links, refresh/deep-link behavior, and a Staff handoff gate.
+- Restaurant and branch lifecycle editors use the existing tenant-scoped contracts and expected-version writes. Branch hours retain Sunday-first day mapping, closed days, overnight periods, branch time-zone context, and the accepted-orders-after-close warning; dated closure enforcement remains server-side because no closure-editing HTTP contract is exposed.
+- The focused service-workflow suite passes six tests, the restaurant-configuration HTTP suite passes six tests, the readiness model suite passes eight tests including split-period and selected-restaurant context round trips, the setup API and reload-guard cancellation regressions pass, and the focused PR-03 browser/accessibility test passes the open/closed/open mutation plus the two-restaurant context switch at desktop and mobile widths.
+- Final verification passes `corepack pnpm check` with 35 test files and 237 PostgreSQL-backed tests, the committed PR-03 browser/accessibility set with 31 tests, `corepack pnpm audit --prod --audit-level high`, and two independent visual reviewers on fresh 1280px and 375px captures. The separate untracked user-owned `apps/web/staff/e2e/admin-routes.spec.ts` test remains untouched and is excluded from the PR-03 evidence.
+- The pinned real-stack walkthrough verified Administration `/setup`, server-derived core readiness with one optional browse-only QR item, the branch-editor deep link, reasoned closed-state gating, restored Staff handoff, the live Staff workspace, and the live customer table menu. Temporary demo diagnostics remain outside the commit in ignored local evidence; PR-04 and PR-05 remain out of scope.
 
 ## Historical Slice 008 checkpoint
 
@@ -457,6 +470,6 @@ the requested commit. Slice 008 is already integrated into `main`; the observed 
 
 ## Next slice
 
-PR-02 is complete in this working tree and is being published in the requested
-commit. The earlier Slice 008 continuation prompts remain historical records
-only.
+PR-03 is verified from the exact published PR-02 baseline. PR-04 and PR-05
+remain unstarted; the earlier Slice 008 continuation prompts remain historical
+records only.

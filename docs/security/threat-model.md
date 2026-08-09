@@ -53,6 +53,12 @@ flowchart LR
 | THR-013 | Outbox payload leakage | Minimum payload, tenant context, encrypted transport/storage, retention cleanup, restricted worker access. |
 | THR-014 | Backup exposure | Encryption, restricted restore access, tenant-safe recovery process, restore audit, key rotation. |
 
+PR-03 does not add a new trust boundary. The guided setup client sends no tenant
+identifier as an authority: protected restaurant, branch, workforce, feature,
+menu, table, and QR reads/writes continue through the authenticated staff
+session and server-side permission/tenant checks. QR raw tokens remain one-time
+delivery values and are not persisted or logged by the setup surface.
+
 ## Security verification gates
 
 - Threat-model review for new public endpoints or external integrations.
@@ -61,4 +67,3 @@ flowchart LR
 - Dependency and secret scanning in CI after bootstrap.
 - Static analysis, input-validation tests, CSRF/XSS tests, and rate-limit tests.
 - Restore and support-access exercises before production.
-

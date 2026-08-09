@@ -125,6 +125,22 @@ below 720px.
   fields, keyboard order is logical, contrast is WCAG AA, and reduced motion
   removes non-essential transitions.
 
+### Guided setup and readiness
+
+- **Structure:** a server-derived checklist sits above direct restaurant,
+  branch, hours, workforce, menu, table, and QR links. The checklist never
+  stores a client-owned completion flag.
+- **States:** loading, unavailable, blocked, needs setup, ready, pending,
+  conflict, and successful refresh. Status uses an icon, label, and copy, not
+  color alone.
+- **Layout:** the Administration `setup-content` region is the single vertical
+  scroll owner. Readiness rows use an intrinsic grid and wrap into one column
+  below the existing 760px navigation breakpoint; branch hours use a labelled
+  day row with explicit closed-day and overnight guidance.
+- **Accessibility:** every editor field has a visible label, native controls,
+  focus-visible treatment, actionable errors, and 44px primary actions. The
+  Staff handoff link is rendered only after the core server state is ready.
+
 ## 6. Motion & Interaction
 
 Use only `transform` and `opacity`. Controls use 160–200ms ease-out feedback.

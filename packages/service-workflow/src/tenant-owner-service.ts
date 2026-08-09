@@ -175,33 +175,68 @@ function grantsContainAdministrator(
   );
 }
 
-function assertOpeningHoursDoNotOverlap(
+export function assertOpeningHoursDoNotOverlap(
   openingHours: readonly OpeningPeriod[],
 ): void {
-  const expandedByDay = new Map<number, { start: number; end: number }[]>();
   const minute = (value: string): number => {
     const [hours = "0", minutes = "0"] = value.split(":");
     return Number(hours) * 60 + Number(minutes);
   };
+  const minutesPerDay = 24 * 60;
+  const minutesPerWeek = 7 * minutesPerDay;
+  const intervals = openingHours.map((period) => {
+    const start = period.dayOfWeek * minutesPerDay + minute(period.opensAt);
+    const close = minute(period.closesAt);
+    const duration =
+      close <= minute(period.opensAt)
+        ? close + minutesPerDay - minute(period.opensAt)
+        : close - minute(period.opensAt);
+    return { start, end: start + duration };
+  });
 
-  for (const period of openingHours) {
-    const start = minute(period.opensAt);
-    let end = minute(period.closesAt);
-    if (end <= start) {
-      end += 24 * 60;
-    }
-    const periods = expandedByDay.get(period.dayOfWeek) ?? [];
-    if (
-      periods.some((existing) => start < existing.end && end > existing.start)
+  for (let leftIndex = 0; leftIndex < intervals.length; leftIndex += 1) {
+    const left = intervals[leftIndex];
+    if (!left) continue;
+    for (
+      let rightIndex = leftIndex + 1;
+      rightIndex < intervals.length;
+      rightIndex += 1
     ) {
-      throw new ApplicationError(
-        "validation_error",
-        422,
-        "Opening hours overlap",
-      );
+      const right = intervals[rightIndex];
+      if (!right) continue;
+      const overlaps = [-1, 0, 1].some((weekOffset) => {
+        const shiftedStart = right.start + weekOffset * minutesPerWeek;
+        const shiftedEnd = right.end + weekOffset * minutesPerWeek;
+        return left.start < shiftedEnd && left.end > shiftedStart;
+      });
+      if (overlaps) {
+        throw new ApplicationError(
+          "validation_error",
+          422,
+          "Opening hours overlap",
+        );
+      }
     }
-    periods.push({ start, end });
-    expandedByDay.set(period.dayOfWeek, periods);
+  }
+}
+
+export function assertServiceStatusChangeHasReason(
+  beforeStatus: BranchRecord["serviceStatus"],
+  nextStatus: BranchRecord["serviceStatus"] | undefined,
+  reason: string | undefined,
+): void {
+  if (
+    nextStatus !== undefined &&
+    nextStatus !== beforeStatus &&
+    nextStatus !== "open" &&
+    (reason?.trim().length ?? 0) < 8
+  ) {
+    throw new ApplicationError(
+      "validation_error",
+      422,
+      "Service status explanation required",
+      "Explain why the branch is closed or temporarily unavailable.",
+    );
   }
 }
 
@@ -798,6 +833,7 @@ export class TenantOwnerService {
       readonly serviceStatus?: BranchRecord["serviceStatus"] | undefined;
       readonly allowOrderOverride?: boolean | undefined;
       readonly openingHours?: readonly OpeningPeriod[] | undefined;
+      readonly reason?: string | undefined;
     },
     metadata: RequestMetadata,
   ): Promise<BranchRecord> {
@@ -807,6 +843,11 @@ export class TenantOwnerService {
       "branches.manage",
       before.restaurantId,
       before.id,
+    );
+    assertServiceStatusChangeHasReason(
+      before.serviceStatus,
+      input.serviceStatus,
+      input.reason,
     );
     if (input.openingHours) {
       assertOpeningHoursDoNotOverlap(input.openingHours);
@@ -898,6 +939,7 @@ export class TenantOwnerService {
         aggregateVersion: branch.version,
         beforeData: before,
         afterData: branch,
+        ...(input.reason ? { reason: input.reason } : {}),
         metadata,
         now,
       });
@@ -2891,6 +2933,7 @@ export class TenantOwnerService {
       readonly restaurantId: string;
       readonly branchId?: string;
       readonly aggregateVersion: number;
+      readonly reason?: string;
       readonly beforeData?: unknown;
       readonly afterData?: unknown;
       readonly metadata: RequestMetadata;
@@ -2906,6 +2949,7 @@ export class TenantOwnerService {
       targetType: input.targetType,
       targetId: input.targetId,
       outcome: "succeeded",
+      ...(input.reason ? { reason: input.reason } : {}),
       correlationId: input.metadata.correlationId,
       ...(input.beforeData ? { beforeData: input.beforeData } : {}),
       ...(input.afterData ? { afterData: input.afterData } : {}),

@@ -117,7 +117,6 @@ h1[tabindex="-1"]:focus {
   /* entry animation handled by framer-motion panelVariants */
 }
 
-
 .journey-panel h1,
 .menu-intro h1 {
   max-width: 650px;
@@ -410,7 +409,9 @@ h1[tabindex="-1"]:focus {
   font-size: 0.84rem;
   font-weight: 700;
   white-space: nowrap;
-  transition: border-color 160ms ease, color 160ms ease;
+  transition:
+    border-color 160ms ease,
+    color 160ms ease;
 }
 
 .category-tab:hover {

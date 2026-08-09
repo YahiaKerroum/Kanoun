@@ -263,6 +263,54 @@ describe("restaurant configuration HTTP adapter", () => {
     expect(useCases.updateFeatureConfiguration).not.toHaveBeenCalled();
   });
 
+  it("forwards restaurant and branch lifecycle edits with version and reason", async () => {
+    const { app, useCases } = createTestApplication();
+    await authenticated(
+      request(app).patch(`/api/v1/staff/restaurants/${restaurantId}`),
+    )
+      .set("If-Match", '"1"')
+      .send({ name: "Updated Restaurant", status: "active" })
+      .expect(200);
+    expect(useCases.updateRestaurant).toHaveBeenCalledWith(
+      expect.objectContaining(context),
+      {
+        restaurantId,
+        expectedVersion: 1,
+        name: "Updated Restaurant",
+        status: "active",
+      },
+      expect.anything(),
+    );
+
+    await authenticated(
+      request(app).patch(`/api/v1/staff/branches/${branchId}`),
+    )
+      .set("If-Match", '"1"')
+      .send({
+        serviceStatus: "temporarily_unavailable",
+        reason: "Kitchen maintenance is underway",
+      })
+      .expect(200);
+    expect(useCases.updateBranch).toHaveBeenCalledWith(
+      expect.objectContaining(context),
+      {
+        branchId,
+        expectedVersion: 1,
+        serviceStatus: "temporarily_unavailable",
+        reason: "Kitchen maintenance is underway",
+      },
+      expect.anything(),
+    );
+
+    await authenticated(
+      request(app).patch(`/api/v1/staff/branches/${branchId}`),
+    )
+      .set("If-Match", '"1"')
+      .send({ serviceStatus: "closed", reason: "short" })
+      .expect(422);
+    expect(useCases.updateBranch).toHaveBeenCalledTimes(1);
+  });
+
   it("forwards the authenticated branch capability query", async () => {
     const { app, useCases } = createTestApplication();
     const response = await request(app)

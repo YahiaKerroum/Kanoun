@@ -312,6 +312,39 @@ describeWithDatabase("tenant, branch, and owner bootstrap", () => {
     expect(after.rows[0]?.count).toBe(before.rows[0]?.count);
   });
 
+  it("checks branch management before service-status reason validation", async () => {
+    const ownerLogin = await service.login(
+      {
+        businessCode: firstCode,
+        email: `owner-${firstCode}@example.test`,
+        password: "Correct-Horse-42",
+      },
+      metadata(),
+    );
+    const viewOnlyContext = {
+      ...ownerLogin.context,
+      grants: ownerLogin.context.grants.filter(
+        (grant) => grant.permissionKey !== "branches.manage",
+      ),
+    };
+
+    await expect(
+      service.updateBranch(
+        viewOnlyContext,
+        {
+          branchId: first.branch.id,
+          expectedVersion: first.branch.version,
+          serviceStatus: "closed",
+          reason: "short",
+        },
+        metadata(),
+      ),
+    ).rejects.toMatchObject({
+      code: "permission_denied",
+      status: 403,
+    });
+  });
+
   it("keeps invitations single-use and does not add grants during acceptance", async () => {
     const ownerLogin = await service.login(
       {

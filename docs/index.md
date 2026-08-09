@@ -50,11 +50,12 @@ source_of_truth_for:
 | Slice 005 implementation declaration | `docs/delivery/slice-005-order-submission.md` | Verified and integrated |
 | Slice 006 implementation declaration | `docs/delivery/slice-006-kitchen-and-serving.md` | Verified, integrated, and published |
 | Slice 007 implementation declaration | `docs/delivery/slice-007-payment-completion-and-correction.md` | Verified, feature branch published, and integrated |
-| Current engineering handoff | `docs/delivery/professional-readiness-plan.md` | PR-00 remains in the user-owned working tree; PR-01 is published; PR-02 is being published in the requested commit; Slice 008 integration is confirmed in `main` |
+| Current engineering handoff | `docs/delivery/professional-readiness-plan.md` | PR-00 remains in the user-owned working tree; PR-01 is published; PR-02 is published at `e729438a11100d347c2bf8c77a0ad85ecbb84540`; PR-03 is verified; PR-04 and PR-05 are not started |
 | Slice 008 implementation declaration | `docs/delivery/slice-008-notifications-reporting-and-audit.md` | Verified, feature branch published, and integrated into `main` via `b38375b` |
 | Slice 008 historical checkpoint | `docs/delivery/handoff-2026-07-29-slice-008-checkpoint.md` | Historical pre-integration handoff |
 | PR-01 implementation declaration | `docs/delivery/pr-01-one-command-professional-demo.md` | Verified and published |
-| PR-02 implementation declaration | `docs/delivery/pr-02-access-and-account-lifecycle.md` | Verified and being published in the requested commit |
+| PR-02 implementation declaration | `docs/delivery/pr-02-access-and-account-lifecycle.md` | Verified and published at `e729438a11100d347c2bf8c77a0ad85ecbb84540` |
+| PR-03 implementation declaration | `docs/delivery/pr-03-guided-owner-setup-and-workforce-readiness.md` | Verified; PR-04 and PR-05 remain out of scope |
 | Slice 006 publication handoff | `docs/delivery/handoff-2026-07-28-slice-006-checkpoint.md` | Slice 006 published; historical Slice 007 starting point |
 | Slice 005 publication handoff | `docs/delivery/handoff-2026-07-28-slice-005-checkpoint.md` | Slice 005 feature branch published; main integration pending |
 | Slice 004 publication handoff | `docs/delivery/handoff-2026-07-28-slice-004-checkpoint.md` | Slice 004 published — historical baseline |

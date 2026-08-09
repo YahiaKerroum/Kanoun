@@ -14,7 +14,7 @@ source_of_truth_for:
 
 - Customer web: mobile-first QR menu, cart, order tracking, and cancellation request.
 - Staff web: tablet/desktop order board, kitchen queue, serving, and payments.
-- Administration web: desktop/tablet configuration, employees, menu, reports, and audit.
+- Administration web: desktop/tablet guided setup, configuration, employees, menu, reports, and audit.
 
 ## Responsive baseline
 
@@ -45,6 +45,16 @@ Every state-changing action shows one of: pending, succeeded, failed, or conflic
 - Reloads a snapshot after reconnect.
 - Never blindly replays state-sensitive commands.
 - Gives a specific recovery action for version or menu conflicts.
+
+The guided Administration setup route uses the existing `.setup-content` shell
+scroll owner, preserves `/setup` deep links and browser history, and derives
+readiness from server state after refresh. Restaurant and branch editors expose
+pending, success, validation, unauthorized, unavailable, and stale-version
+states; service-status changes require an actionable explanation when closing or
+temporarily disabling a branch. Workforce readiness tolerates a missing optional
+employee-view grant, while the Staff handoff requires a grant scoped to the
+active restaurant/branch. Dated branch-closure overrides remain server-enforced
+through the existing acceptance authority.
 
 ## Localization
 

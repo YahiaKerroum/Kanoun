@@ -63,6 +63,27 @@ describe("branch order acceptance", () => {
     ).toBe(false);
   });
 
+  it("allows an explicit order override but never bypasses a dated closure", () => {
+    expect(
+      isBranchAcceptingOrders(
+        { ...branch, serviceStatus: "closed", allowOrderOverride: true },
+        new Date("2026-07-27T03:30:00.000Z"),
+        false,
+      ),
+    ).toBe(true);
+    expect(
+      isBranchAcceptingOrders(
+        {
+          ...branch,
+          serviceStatus: "temporarily_unavailable",
+          allowOrderOverride: true,
+        },
+        new Date("2026-07-27T03:30:00.000Z"),
+        true,
+      ),
+    ).toBe(false);
+  });
+
   it("derives the local business date in the branch time zone", () => {
     expect(
       branchLocalDate(new Date("2026-07-27T23:30:00.000Z"), "Africa/Algiers"),

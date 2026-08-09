@@ -44,6 +44,15 @@ links perform the existing server-side login contract before redirecting to
 the appropriate application. The customer link is issued by the existing
 Tables service contract and is retained only in the local run and launcher.
 
+For the owner walkthrough, open Administration and choose Setup. Confirm the
+server-derived checklist, select the provisioned restaurant and branch, review
+the branch time zone/currency and Sunday-first hours editor, then follow the
+Workforce, Menu, and Tables & QR links. Refresh after each server-side change;
+the Staff workspace link appears only after the core identity, branch, hours,
+service-status, feature, and workforce prerequisites are ready. The existing
+branch-closure authority remains server-side; no closure-editing URL is
+invented by the demo guide.
+
 The launcher also links to a loopback-only recovery inbox on port `4171`. It is
 an in-memory delivery substitute for this synthetic run: the API still returns
 the same generic recovery response, no email or production delivery is claimed,

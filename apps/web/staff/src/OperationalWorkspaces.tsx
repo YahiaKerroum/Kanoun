@@ -18,7 +18,11 @@ import {
 } from "react";
 import { z } from "zod";
 import { motion } from "framer-motion";
-import { actionButtonVariants, fadeUpItemVariants, staggerContainerVariants } from "./motion.js";
+import {
+  actionButtonVariants,
+  fadeUpItemVariants,
+  staggerContainerVariants,
+} from "./motion.js";
 
 const copy = {
   menu: {

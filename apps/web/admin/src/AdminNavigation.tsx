@@ -6,14 +6,11 @@ import {
   useState,
   type MouseEvent,
 } from "react";
-import {
-  AnimatePresence,
-  motion,
-  MotionConfig,
-} from "framer-motion";
+import { AnimatePresence, motion, MotionConfig } from "framer-motion";
 import { navItemVariants } from "./motion.js";
 
 export const administrationPages = [
+  { id: "setup", label: "Setup", path: "/setup" },
   { id: "context", label: "Context", path: "/context" },
   { id: "employees", label: "Employees", path: "/employees" },
   { id: "permissions", label: "Permissions", path: "/permissions" },
@@ -144,7 +141,11 @@ export function AdministrationNavigation({
               whileTap="tap"
               animate={isActive ? "active" : "rest"}
               variants={navItemVariants}
-              style={{ position: "relative", display: "inline-flex", alignItems: "center" }}
+              style={{
+                position: "relative",
+                display: "inline-flex",
+                alignItems: "center",
+              }}
             >
               <AnimatePresence>
                 {isActive ? (

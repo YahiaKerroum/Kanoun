@@ -9,6 +9,46 @@
   --line: #e9e0d2;
   --muted: #625b50;
   --brown: #6e4700;
+  --text: #1e1b14;
+  --text-on-gold: #261b00;
+  --surface: #ffffff;
+  --surface-soft: #fffaf0;
+  --surface-warm: #fff7e0;
+  --line-strong: #ddcfae;
+  --gold-light: #fff7e0;
+  --state-ready-line: #c5e4cf;
+  --state-ready-surface: #e4f6ea;
+  --state-ready-text: #1e7a47;
+  --state-attention-surface: #fff0cc;
+  --state-blocked-line: #f0b88f;
+  --state-blocked-surface: #fffaf6;
+  --state-blocked-icon-surface: #ffe9dc;
+  --state-blocked-text: #a03c00;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 28px;
+  --space-8: 32px;
+  --radius-sm: 9px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-xl: 14px;
+  --radius-pill: 999px;
+  --control-size: 44px;
+  --control-size-compact: 42px;
+  --text-body-size: 14px;
+  --text-meta-size: 12px;
+  --text-label-size: 11px;
+  --text-micro-size: 10px;
+  --text-title-size: 15px;
+  --text-summary-size: 24px;
+  --text-hero-size: clamp(30px, 4vw, 48px);
+  --status-icon-size: 30px;
+  --line-body: 1.65;
+  --line-copy: 1.5;
 }
 * {
   box-sizing: border-box;
@@ -1104,6 +1144,337 @@ textarea:disabled {
 @media (prefers-reduced-motion: reduce) {
   * {
     transition: none !important;
+  }
+}
+
+.setup-readiness {
+  min-inline-size: 0;
+}
+
+.setup-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 0.34fr);
+  gap: var(--space-7);
+  border-bottom: 1px solid var(--line);
+  padding: var(--space-7) 0 var(--space-8);
+}
+
+.setup-hero h3 {
+  max-inline-size: 720px;
+  margin: 0;
+  font-family: "Bricolage Grotesque";
+  font-size: var(--text-hero-size);
+  font-weight: 800;
+  line-height: 1.02;
+  letter-spacing: -0.035em;
+}
+
+.setup-hero p:not(.eyebrow) {
+  max-inline-size: 720px;
+  margin: var(--space-3) 0 0;
+  color: var(--muted);
+  font-size: var(--text-body-size);
+  line-height: var(--line-body);
+}
+
+.setup-hero__summary {
+  display: grid;
+  align-content: center;
+  gap: var(--space-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl);
+  padding: var(--space-5);
+  background: var(--surface-soft);
+}
+
+.setup-hero__summary strong {
+  font: 700 var(--text-summary-size) "Bricolage Grotesque";
+}
+
+.setup-hero__summary span {
+  color: var(--muted);
+  font-size: var(--text-label-size);
+}
+
+.setup-hero__summary button,
+.setup-final-actions .primary-action,
+.setup-final-actions .secondary-action {
+  display: inline-flex;
+  min-block-size: var(--control-size);
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  padding: 0 var(--space-3);
+  color: var(--brown);
+  background: var(--ivory);
+  cursor: pointer;
+  font-size: var(--text-label-size);
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.readiness-list {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.readiness-item {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) auto auto;
+  gap: var(--space-3);
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3);
+  background: var(--surface);
+}
+
+.readiness-item--ready {
+  border-color: var(--state-ready-line);
+}
+
+.readiness-item--blocked {
+  border-color: var(--state-blocked-line);
+  background: var(--state-blocked-surface);
+}
+
+.readiness-item__icon {
+  display: grid;
+  inline-size: var(--status-icon-size);
+  block-size: var(--status-icon-size);
+  place-items: center;
+  border-radius: var(--radius-pill);
+  color: var(--brown);
+  background: var(--state-attention-surface);
+  font-weight: 900;
+}
+
+.readiness-item--ready .readiness-item__icon {
+  color: var(--state-ready-text);
+  background: var(--state-ready-surface);
+}
+
+.readiness-item--blocked .readiness-item__icon {
+  color: var(--state-blocked-text);
+  background: var(--state-blocked-icon-surface);
+}
+
+.readiness-item h4 {
+  margin: 0;
+  font: 700 var(--text-title-size) "Bricolage Grotesque";
+}
+
+.readiness-item p {
+  margin: var(--space-1) 0 0;
+  color: var(--muted);
+  font-size: var(--text-body-size);
+  line-height: var(--line-copy);
+  overflow-wrap: anywhere;
+}
+
+.readiness-item__status {
+  color: var(--muted);
+  font-size: var(--text-label-size);
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.readiness-item a {
+  display: inline-flex;
+  min-block-size: var(--control-size);
+  align-items: center;
+  padding: 0 var(--space-1);
+  color: var(--brown);
+  font-size: var(--text-meta-size);
+  font-weight: 800;
+}
+
+.setup-form-grid {
+  grid-template-columns: repeat(3, minmax(150px, 1fr));
+}
+
+.setup-form-note {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--text-body-size);
+  line-height: var(--line-body);
+}
+
+.setup-select-label,
+.setup-field-grid label,
+.setup-branch-editor > label {
+  display: grid;
+  gap: var(--space-2);
+  color: var(--muted);
+  font-size: var(--text-label-size);
+  font-weight: 700;
+}
+
+.setup-select-label select,
+.setup-field-grid input,
+.setup-branch-editor > label input,
+.setup-branch-editor > label select {
+  min-block-size: var(--control-size);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: 0 var(--space-2);
+  background: var(--canvas);
+}
+
+.setup-fieldset {
+  min-inline-size: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3);
+}
+
+.setup-fieldset legend {
+  padding: 0 var(--space-1);
+  color: var(--brown);
+  font-size: var(--text-label-size);
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.setup-field-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.hours-editor {
+  display: grid;
+  gap: var(--space-2);
+  border-top: 1px solid var(--line);
+  padding-top: var(--space-5);
+}
+
+.hours-editor__heading {
+  display: grid;
+  gap: var(--space-1);
+  margin-bottom: var(--space-1);
+}
+
+.hours-editor__heading span {
+  color: var(--muted);
+  font-size: var(--text-meta-size);
+  line-height: var(--line-copy);
+}
+
+.hours-row {
+  display: grid;
+  grid-template-columns: minmax(150px, 1fr) minmax(0, 2fr);
+  gap: var(--space-3);
+  align-items: end;
+  border-top: 1px solid var(--line);
+  padding-top: var(--space-2);
+}
+
+.hours-row__periods {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.hours-period-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(120px, 0.5fr)) auto;
+  gap: var(--space-3);
+  align-items: end;
+}
+
+.hours-period-row label {
+  display: grid;
+  gap: var(--space-1);
+  color: var(--muted);
+  font-size: var(--text-micro-size);
+  font-weight: 700;
+}
+
+.hours-row input[type="time"] {
+  min-block-size: var(--control-size-compact);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 0 var(--space-2);
+  background: var(--canvas);
+}
+
+.hours-period-row .subtle-action,
+.hours-row__periods > .subtle-action {
+  min-block-size: var(--control-size-compact);
+}
+
+.hours-row__day,
+.checkbox-line {
+  display: inline-flex;
+  min-block-size: var(--control-size);
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text);
+  font-size: var(--text-meta-size);
+  font-weight: 700;
+}
+
+.hours-row__day input,
+.checkbox-line input {
+  inline-size: 20px;
+  block-size: 20px;
+}
+
+.setup-final-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-5);
+}
+
+.setup-final-actions .primary-action.setup-link-button {
+  border-color: var(--gold);
+  color: var(--text-on-gold);
+  background: var(--gold);
+}
+
+@media (min-width: 761px) and (max-width: 1050px) {
+  .setup-hero,
+  .setup-form-grid,
+  .setup-field-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .setup-hero__summary,
+  .setup-form-grid > p,
+  .setup-fieldset,
+  .setup-branch-editor > .record-editor__wide,
+  .setup-branch-editor > button,
+  .setup-form-note {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 760px) {
+  .setup-hero,
+  .setup-form-grid,
+  .setup-field-grid,
+  .hours-row {
+    grid-template-columns: 1fr;
+  }
+
+  .hours-period-row {
+    grid-template-columns: 1fr;
+  }
+
+  .readiness-item {
+    grid-template-columns: 34px minmax(0, 1fr) auto;
+  }
+
+  .readiness-item__status,
+  .readiness-item a {
+    grid-column: 2 / -1;
+  }
+
+  .setup-hero__summary {
+    grid-column: auto;
   }
 }
 

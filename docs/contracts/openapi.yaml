@@ -2716,6 +2716,7 @@ components:
         serviceStatus: {type: string, enum: [open, closed, temporarily_unavailable]}
         allowOrderOverride: {type: boolean}
         openingHours: {type: array, minItems: 1, maxItems: 28, items: {$ref: "#/components/schemas/OpeningPeriod"}}
+        reason: {type: string, minLength: 8, maxLength: 500, description: Required when serviceStatus changes to closed or temporarily_unavailable.}
 
     TenantBootstrapRequest:
       type: object

@@ -60,6 +60,15 @@ vertical_slices:
     tests: [TEST-PR02-HTTP-001, TEST-PR02-DB-001, TEST-PR02-BROWSER-001, TEST-PR02-REAL-STACK-001, TEST-PR02-VISUAL-001]
     pr_02_verified_acceptance: [AC-US-R01-01, AC-US-R01-02, AC-US-R01-03, AC-US-R01-04, AC-US-R02-01, AC-US-R02-02, AC-US-R02-03, AC-US-R02-04, AC-US-R03-01, AC-US-R03-02, AC-US-R03-03, AC-US-R03-04, AC-US-R04-01, AC-US-R04-02, AC-US-R04-03]
 
+  pr_03_guided_owner_setup_and_workforce_readiness:
+    implements: [US-A01, US-A02, US-A04, US-B01, US-B03, US-B04, US-C01, US-C02, US-C03, US-C04, US-C06, US-E01, US-F01, AC-US-A01-01, AC-US-A01-02, AC-US-A01-03, AC-US-A01-04, AC-US-A02-01, AC-US-A02-02, AC-US-A02-03, AC-US-A02-04, AC-US-A04-01, AC-US-A04-02, AC-NFR-01-04, NFR-01, NFR-02, NFR-03, NFR-07, NFR-08, NFR-10, NFR-13, NFR-15, NFR-16, BR-001, BR-002, BR-003, BR-004, BR-005, BR-006, BR-007, BR-008, BR-009, BR-021, BR-024]
+    obeys: [PD-001, PD-002, PD-003, PD-004, PD-005, PD-007, PD-026, PD-027, PD-035, ADR-0002, ADR-0003, ADR-0004, ADR-0005, ADR-0006, CFG-001, CFG-002, CFG-003, CFG-004, CFG-005, CFG-006, CFG-007, CFG-008, PERM-001, PERM-002, PERM-003, PERM-004, PERM-005, PERM-006, PERM-007, PERM-008, PERM-009, PERM-010, PERM-011, PERM-012, PERM-013, PERM-014, PERM-015, PERM-016, PERM-017]
+    modules: [restaurant_configuration, identity_access, menu, tables, audit, service_workflow, administration_web]
+    operations: [listRestaurants, createRestaurant, getRestaurant, updateRestaurant, listAssignedBranches, createBranch, getAssignedBranch, updateBranch, listEmployees, getFeatureConfiguration, getRestaurantFeatureConfiguration, listMenuCategories, listMenuDishes, listTables, listQrCodes]
+    tests: [TEST-PR03-UNIT-001, TEST-PR03-HTTP-001, TEST-PR03-DB-001, TEST-PR03-BROWSER-001, TEST-PR03-A11Y-001, TEST-PR03-REAL-STACK-001, TEST-PR03-VISUAL-001]
+    pr_03_verified_acceptance: [AC-US-A01-01, AC-US-A01-02, AC-US-A01-03, AC-US-A01-04, AC-US-A02-01, AC-US-A02-02, AC-US-A02-03, AC-US-A02-04, AC-US-A04-01, AC-US-A04-02, AC-NFR-01-04]
+    status: verified
+
   menu:
     implements: [US-D01, US-D02, US-D03, US-D04]
     obeys: [PD-003, PD-018, PD-033, CFG-003, PERM-009, PERM-010, PERM-011, PERM-012, BR-001, BR-002, BR-003, BR-006, BR-011, BR-012, BR-013, BR-014]

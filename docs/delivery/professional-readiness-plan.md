@@ -304,12 +304,16 @@ without Administration as a workaround.
 
 ### PR-03 — Guided owner setup and workforce readiness
 
+**Status (2026-08-09): verified from published PR-02 commit
+`e729438a11100d347c2bf8c77a0ad85ecbb84540`. PR-04 and PR-05 are not started.**
+
 **Goal:** allow a protected owner to turn a provisioned tenant into a service-
 ready restaurant entirely through Administration.
 
 - `implements`: `US-A01`, `US-A02`, `US-A04`, `US-B01`, `US-B03`, `US-B04`,
-  `US-C01` through `US-C04`, `US-C06`, `US-E01`, `US-F01`; the ten currently
-  unlisted A01/A02/A04 acceptance criteria; `AC-NFR-01-04`.
+  `US-C01` through `US-C04`, `US-C06`, `US-E01`, `US-F01`; `AC-US-A01-01`
+  through `AC-US-A01-04`, `AC-US-A02-01` through `AC-US-A02-04`,
+  `AC-US-A04-01`, `AC-US-A04-02`, and `AC-NFR-01-04`.
 - `obeys`: `PD-001` through `PD-005`, `PD-007`, `PD-026`, `PD-027`, `PD-035`,
   `CFG-001` through `CFG-008`, `PERM-001` through `PERM-017`, `BR-001` through
   `BR-009`, `BR-021`.
@@ -319,8 +323,10 @@ ready restaurant entirely through Administration.
     features, workforce, permissions, menu, tables, and QR publication.
   - Expose existing create/view/edit/activate/deactivate restaurant operations.
   - Expose create/view/edit branch operations including address, contact, IANA
-    time zone, currency, overnight hours, closure overrides, active state, and
-    service status with optimistic-concurrency recovery.
+    time zone, currency, overnight hours, active state, and service status with
+    optimistic-concurrency recovery. Dated closure enforcement remains owned by
+    the existing server acceptance authority; this slice does not invent a
+    closure-editing HTTP contract that is not present in the approved surface.
   - Complete employee profile, branch employment, template, permission,
     invitation, and lifecycle actions from PR-02.
   - Make QR issuance, rotation, revocation, download/print, table identity, and
@@ -336,7 +342,8 @@ ready restaurant entirely through Administration.
     keyboard/zoom/accessibility; mobile read-only fallback.
   - Explicitly verify every A01, A02, A04 acceptance criterion in traceability.
 - `docs`: `DESIGN.md` setup primitives, traceability, setup support guide, any
-  changed OpenAPI contracts, and a decision record if public signup is desired.
+  changed OpenAPI contracts, affected security/operations/test guidance, and a
+  decision record if public signup is desired.
 - **Exit:** after controlled owner provisioning, no database/API knowledge is
   required to configure and publish the restaurant.
 

@@ -76,13 +76,11 @@ export function isBranchAcceptingOrders(
   now: Date,
   hasDatedClosure: boolean,
 ): boolean {
-  if (
-    branch.status !== "active" ||
-    branch.serviceStatus !== "open" ||
-    hasDatedClosure
-  ) {
+  if (branch.status !== "active" || hasDatedClosure) {
     return false;
   }
+  if (branch.allowOrderOverride) return true;
+  if (branch.serviceStatus !== "open") return false;
   if (branch.openingHours.length === 0) {
     return true;
   }
