@@ -4,6 +4,7 @@ import { findFreeLoopbackPort } from "./demo-postgres.js";
 import { isLoopbackHost, type DemoConfig } from "./demo-config.js";
 
 const targetNamePattern = /^rms_e2e_[a-z0-9_]+$/u;
+const postgresIdentifierMaximumLength = 63;
 
 export interface RealE2eConfig extends DemoConfig {
   readonly runId: string;
@@ -13,6 +14,8 @@ export interface RealE2eConfig extends DemoConfig {
   readonly adminOrigin: string;
   readonly controlOrigin: string;
   readonly controlSecret: string;
+  readonly recoveryOrigin: string;
+  readonly recoverySecret: string;
   readonly workerId: string;
 }
 
@@ -36,6 +39,11 @@ function requireSafeTarget(
   databaseName: string,
   configuredName?: string,
 ): void {
+  if (databaseName.length > postgresIdentifierMaximumLength) {
+    throw new Error(
+      `Real E2E database names must be at most ${postgresIdentifierMaximumLength} characters.`,
+    );
+  }
   if (!targetNamePattern.test(databaseName)) {
     throw new Error(
       "Real E2E refuses a database outside the rms_e2e_ safety namespace.",
@@ -83,6 +91,7 @@ export async function createRealE2eConfig(
   const staffPort = await findFreeLoopbackPort();
   const customerPort = await findFreeLoopbackPort();
   const adminPort = await findFreeLoopbackPort();
+  const recoveryPort = await findFreeLoopbackPort();
   const host = "127.0.0.1";
   return {
     databaseUrl: target.toString(),
@@ -100,6 +109,8 @@ export async function createRealE2eConfig(
     adminOrigin: `http://${host}:${adminPort}`,
     controlOrigin: `http://${host}:${workerControlPort}`,
     controlSecret: randomUUID().replaceAll("-", ""),
+    recoveryOrigin: `http://${host}:${recoveryPort}`,
+    recoverySecret: randomUUID().replaceAll("-", ""),
     workerId: `rms-real-e2e-${runId}`,
   };
 }

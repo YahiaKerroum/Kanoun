@@ -146,9 +146,18 @@ export function NotificationInboxWorkspace({
       stream.close();
     });
     stream.addEventListener("error", () => setStreamState("reconnecting"));
+    const handleOffline = () => setStreamState("reconnecting");
+    const handleOnline = () => {
+      setStreamState("connecting");
+      void load().then(() => setStreamState("live"));
+    };
+    window.addEventListener("offline", handleOffline);
+    window.addEventListener("online", handleOnline);
     return () => {
       controller.abort();
       stream.close();
+      window.removeEventListener("offline", handleOffline);
+      window.removeEventListener("online", handleOnline);
     };
   }, [branchId, load]);
 

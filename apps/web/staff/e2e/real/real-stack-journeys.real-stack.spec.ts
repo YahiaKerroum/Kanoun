@@ -49,6 +49,7 @@ interface TableResponse {
 }
 
 interface QrResponse {
+  readonly qrCode: { readonly id: string };
   readonly qrUrl: string;
 }
 
@@ -68,53 +69,6 @@ interface StaffOrder {
 
 interface StaffOrderPage {
   readonly items: readonly StaffOrder[];
-}
-
-interface KitchenWorkItem {
-  readonly id: string;
-  readonly orderId: string;
-  readonly version: number;
-}
-
-type KitchenQueueResponse = readonly KitchenWorkItem[];
-
-interface KitchenTransitionResponse {
-  readonly version: number;
-  readonly state: string;
-}
-
-interface BillRequest {
-  readonly orderId: string;
-  readonly total: string;
-}
-
-interface BillRequestResponse {
-  readonly items: readonly BillRequest[];
-}
-
-interface PaymentResponse {
-  readonly payment: { readonly id: string };
-  readonly order: { readonly version: number };
-}
-
-interface ServedResponse {
-  readonly fulfilment: string;
-}
-
-interface CompletionResponse {
-  readonly closure: string;
-}
-
-interface RefundResponse {
-  readonly order: { readonly financial: string };
-}
-
-interface CorrectionResponse {
-  readonly currentItemRevision: number;
-}
-
-interface CancellationResponse {
-  readonly closure: string;
 }
 
 interface FeatureConfigurationResponse {
@@ -179,6 +133,8 @@ let kitchenContext!: BrowserContext;
 let kitchenPage: Page;
 let cashierContext!: BrowserContext;
 let cashierPage: Page;
+let administratorContext!: BrowserContext;
+let administratorPage: Page;
 let categoryId = "";
 let dishId = "";
 let dishName = "";
@@ -188,6 +144,7 @@ let menuVersion = "";
 let generalRole: RoleCredentials;
 let kitchenRole: RoleCredentials;
 let cashierRole: RoleCredentials;
+let administratorRole: RoleCredentials;
 let firstOrder!: OrderRun;
 
 function assertHarness(): void {
@@ -278,7 +235,7 @@ async function apiJson<T = JsonRecord>(
 }
 
 async function provisionRole(
-  role: "general_staff" | "kitchen_staff" | "cashier",
+  role: "administrator" | "general_staff" | "kitchen_staff" | "cashier",
   label: string,
 ): Promise<RoleCredentials> {
   const suffix = `${process.env.REAL_E2E_RUN_ID}-${role}`;
@@ -472,6 +429,10 @@ test.describe.serial("PR-05 real-stack evidence", () => {
     generalRole = await provisionRole("general_staff", "PR-05 general staff");
     kitchenRole = await provisionRole("kitchen_staff", "PR-05 kitchen staff");
     cashierRole = await provisionRole("cashier", "PR-05 cashier");
+    administratorRole = await provisionRole(
+      "administrator",
+      "PR-05 administrator",
+    );
     generalContext = await browser.newContext();
     generalPage = await login(
       generalContext,
@@ -493,6 +454,13 @@ test.describe.serial("PR-05 real-stack evidence", () => {
       cashierRole,
       "/payments",
     );
+    administratorContext = await browser.newContext();
+    administratorPage = await login(
+      administratorContext,
+      staffOrigin,
+      administratorRole,
+      "/orders",
+    );
   });
 
   test.afterAll(async () => {
@@ -501,6 +469,7 @@ test.describe.serial("PR-05 real-stack evidence", () => {
       generalContext.close(),
       kitchenContext.close(),
       cashierContext.close(),
+      administratorContext.close(),
       firstOrder.context.close(),
     ]);
   });
@@ -522,6 +491,38 @@ test.describe.serial("PR-05 real-stack evidence", () => {
     await expect(
       customer.page.getByText(dishName, { exact: true }).first(),
     ).toBeVisible();
+    const malformedContext = await browser.newContext();
+    const malformedPage = await malformedContext.newPage();
+    await malformedPage.goto(`${customerOrigin}/qr/short`);
+    await expect(
+      malformedPage.getByRole("heading", {
+        name: "This menu link is incomplete",
+      }),
+    ).toBeVisible();
+    const revoked = await apiJson<QrResponse>(
+      ownerContext,
+      "POST",
+      `/api/v1/staff/tables/${tableId}/qr-codes`,
+    );
+    await apiJson(
+      ownerContext,
+      "POST",
+      `/api/v1/staff/qr-codes/${revoked.qrCode.id}/revocations`,
+      { reason: "PR-05 revoked link verification" },
+    );
+    await malformedPage.goto(revoked.qrUrl);
+    await expect(
+      malformedPage.getByRole("heading", {
+        name: "This menu link is no longer available",
+      }),
+    ).toBeVisible();
+    const fresh = await apiJson<QrResponse>(
+      ownerContext,
+      "POST",
+      `/api/v1/staff/tables/${tableId}/qr-codes`,
+    );
+    qrUrl = fresh.qrUrl;
+    await malformedContext.close();
   });
 
   test("TEST-E2E-PR05-J3-ORDER-IDEMPOTENCY-001: retrying the same customer command returns one persisted order", async () => {
@@ -547,59 +548,38 @@ test.describe.serial("PR-05 real-stack evidence", () => {
   });
 
   test("TEST-E2E-PR05-J4-SERVICE-CLOSE-001: kitchen, service, cashier, and refund operations close the real order", async () => {
+    await kitchenPage.goto(
+      `${staffOrigin}/kitchen?order=${firstOrder.order.id}`,
+    );
     await expect(
       kitchenPage.getByRole("heading", { name: /Kitchen/i }).first(),
     ).toBeVisible();
-    const queue = await apiJson<KitchenQueueResponse>(
-      kitchenContext,
-      "GET",
-      `/api/v1/staff/kitchen/queue?branchId=${primary.branchId}`,
+    const kitchenOrder = kitchenPage
+      .locator("article.kitchen-order")
+      .filter({ hasText: firstOrder.order.reference });
+    await expect(kitchenOrder).toBeVisible();
+    await kitchenOrder
+      .getByRole("button", { name: "Start preparation" })
+      .click();
+    await kitchenOrder.getByRole("button", { name: "Mark ready" }).click();
+    await administratorPage.goto(
+      `${staffOrigin}/kitchen?order=${firstOrder.order.id}`,
     );
-    const workItem = queue.find((item) => item.orderId === firstOrder.order.id);
-    if (!workItem)
-      throw new Error(
-        "The worker did not project the order into kitchen work.",
-      );
-    const started = await apiJson<KitchenTransitionResponse>(
-      kitchenContext,
-      "POST",
-      `/api/v1/staff/kitchen/items/${workItem.id}/start`,
-      {},
-      200,
-      {
-        "if-match": `"${workItem.version}"`,
-        "idempotency-key": randomUUID(),
-      },
+    const readyOrder = administratorPage
+      .locator(".ready-order-grid article")
+      .filter({ hasText: firstOrder.order.reference });
+    await expect(readyOrder).toBeVisible();
+    await readyOrder
+      .getByRole("button", { name: "Collect · mark served" })
+      .click();
+    await administratorPage.goto(
+      `${staffOrigin}/orders?order=${firstOrder.order.id}`,
     );
-    const ready = await apiJson<KitchenTransitionResponse>(
-      kitchenContext,
-      "POST",
-      `/api/v1/staff/kitchen/items/${workItem.id}/ready`,
-      {},
-      200,
-      {
-        "if-match": `"${started.version}"`,
-        "idempotency-key": randomUUID(),
-      },
+    const servedOrder = administratorPage.locator(
+      "li.order-list-item--selected",
     );
-    const servedSource = await currentStaffOrder(
-      generalContext,
-      firstOrder.order.id,
-    );
-    const served = await apiJson<ServedResponse>(
-      generalContext,
-      "POST",
-      `/api/v1/staff/orders/${firstOrder.order.id}/served`,
-      {},
-      200,
-      {
-        "if-match": `"${servedSource.version}"`,
-        "idempotency-key": randomUUID(),
-      },
-    );
-    expect(started.state).toBe("preparing");
-    expect(ready.state).toBe("ready");
-    expect(served.fulfilment).toBe("served");
+    await expect(servedOrder).toContainText(firstOrder.order.reference);
+    await expect(servedOrder).toContainText(/served/i);
     await firstOrder.page
       .getByRole("button", { name: "Request the bill" })
       .click();
@@ -608,54 +588,54 @@ test.describe.serial("PR-05 real-stack evidence", () => {
         exact: true,
       }),
     ).toBeVisible();
+    await cashierPage.goto(
+      `${staffOrigin}/payments?order=${firstOrder.order.id}`,
+    );
     await expect(
-      cashierPage.getByRole("heading", { name: /Bill requests/i }).first(),
+      cashierPage.getByRole("heading", { name: "Bill requests" }),
     ).toBeVisible();
-    const bills = await apiJson<BillRequestResponse>(
-      cashierContext,
-      "GET",
-      `/api/v1/staff/payments/bill-requests?branchId=${primary.branchId}`,
+    await expect(
+      cashierPage.getByRole("heading", { name: "Selected order ledger" }),
+    ).toBeVisible();
+    const paymentLedger = cashierPage.locator(".payment-ledger-result");
+    await paymentLedger.getByLabel(/Confirm receipt of exactly/i).check();
+    await paymentLedger.getByRole("button", { name: "Record payment" }).click();
+    await expect(paymentLedger).toContainText("Paid");
+    await administratorPage.goto(
+      `${staffOrigin}/orders?order=${firstOrder.order.id}`,
     );
-    const bill = bills.items.find(
-      (item) => item.orderId === firstOrder.order.id,
+    const selectedOrder = administratorPage.locator(
+      "li.order-list-item--selected",
     );
-    if (!bill) throw new Error("The cashier did not receive the bill request.");
-    const payment = await apiJson<PaymentResponse>(
-      cashierContext,
-      "POST",
-      `/api/v1/staff/orders/${firstOrder.order.id}/payments`,
-      {
-        amount: bill.total,
-        method: "cash",
-      },
-      201,
-      { "idempotency-key": randomUUID() },
+    await expect(selectedOrder).toContainText(firstOrder.order.reference);
+    const selectedManage = selectedOrder.getByRole("button", {
+      name: "Manage",
+    });
+    if ((await selectedManage.count()) > 0) await selectedManage.click();
+    await selectedOrder
+      .getByLabel("Confirm moving this order to completed history.")
+      .check();
+    await selectedOrder.getByRole("button", { name: "Complete order" }).click();
+    await expect(selectedOrder).toContainText(/Completed/i);
+    await administratorPage.goto(
+      `${staffOrigin}/payments?order=${firstOrder.order.id}`,
     );
-    const completed = await apiJson<CompletionResponse>(
-      cashierContext,
-      "POST",
-      `/api/v1/staff/orders/${firstOrder.order.id}/completion`,
-      {},
-      200,
-      {
-        "if-match": `"${payment.order.version}"`,
-        "idempotency-key": randomUUID(),
-      },
-    );
-    const refund = await apiJson<RefundResponse>(
-      ownerContext,
-      "POST",
-      `/api/v1/staff/payments/${payment.payment.id}/refunds`,
-      {
-        amount: bill.total,
-        reason: "PR-05 refund verification",
-        confirmed: true,
-      },
-      201,
-      { "idempotency-key": randomUUID() },
-    );
-    expect(completed.closure).toBe("completed");
-    expect(refund.order.financial).toBe("refunded");
+    await expect(
+      administratorPage.getByRole("heading", { name: "Selected order ledger" }),
+    ).toBeVisible();
+    await administratorPage.getByLabel("Amount (DZD)").fill("1200.00");
+    await administratorPage
+      .getByLabel("Reason")
+      .fill("PR-05 refund verification");
+    await administratorPage
+      .getByLabel("Confirm this append-only refund.")
+      .check();
+    await administratorPage
+      .getByRole("button", { name: "Record refund" })
+      .click();
+    await expect(
+      administratorPage.getByText("Refunded", { exact: true }).last(),
+    ).toBeVisible();
     const invariant = await readLatestRealE2eOrder(
       databaseUrl,
       primary.businessCode,
@@ -672,26 +652,46 @@ test.describe.serial("PR-05 real-stack evidence", () => {
       browser,
       "PR-05 correction",
     );
-    const before = await currentStaffOrder(
-      generalContext,
+    const staleSource = await currentStaffOrder(
+      administratorContext,
       correctionOrder.order.id,
     );
-    const corrected = await apiJson<CorrectionResponse>(
-      ownerContext,
-      "POST",
-      `/api/v1/staff/orders/${correctionOrder.order.id}/corrections`,
-      {
-        menuVersion,
-        items: [{ dishId, quantity: 2, optionIds: [], note: null }],
-        reason: "PR-05 correction verification",
-      },
-      200,
-      {
-        "if-match": `"${before.version}"`,
-        "idempotency-key": randomUUID(),
-      },
+    await administratorPage.goto(
+      `${staffOrigin}/orders?order=${correctionOrder.order.id}`,
     );
-    expect(corrected.currentItemRevision).toBeGreaterThan(1);
+    const correctionCard = administratorPage.locator(
+      "li.order-list-item--selected",
+    );
+    await expect(correctionCard).toContainText(correctionOrder.order.reference);
+    const correctionManage = correctionCard.getByRole("button", {
+      name: "Manage",
+    });
+    if ((await correctionManage.count()) > 0) await correctionManage.click();
+    await correctionCard.locator("input[type=number]").fill("2");
+    await correctionCard
+      .getByLabel("Correction reason")
+      .fill("PR-05 correction verification");
+    await correctionCard
+      .getByRole("button", { name: "Save correction" })
+      .click();
+    await expect(correctionCard).toContainText(/Corrected · revision/);
+    await expect(
+      apiJson<ProblemResponse>(
+        administratorContext,
+        "POST",
+        `/api/v1/staff/orders/${correctionOrder.order.id}/corrections`,
+        {
+          menuVersion,
+          items: [{ dishId, quantity: 2, optionIds: [], note: null }],
+          reason: "PR-05 stale correction verification",
+        },
+        409,
+        {
+          "if-match": `"${staleSource.version}"`,
+          "idempotency-key": randomUUID(),
+        },
+      ),
+    ).resolves.toMatchObject({ code: "concurrency_conflict" });
     const cancellationOrder = await submitCustomerOrder(
       browser,
       "PR-05 cancellation",
@@ -708,25 +708,30 @@ test.describe.serial("PR-05 real-stack evidence", () => {
         { exact: true },
       ),
     ).toBeVisible();
-    const cancellationBefore = await currentStaffOrder(
-      generalContext,
-      cancellationOrder.order.id,
+    await administratorPage.goto(
+      `${staffOrigin}/orders?order=${cancellationOrder.order.id}`,
     );
-    const cancelled = await apiJson<CancellationResponse>(
-      ownerContext,
-      "POST",
-      `/api/v1/staff/orders/${cancellationOrder.order.id}/cancellation`,
-      {
-        reason: "PR-05 staff cancellation verification",
-      },
-      200,
-      {
-        "if-match": `"${cancellationBefore.version}"`,
-        "idempotency-key": randomUUID(),
-      },
+    const cancellationCard = administratorPage.locator(
+      "li.order-list-item--selected",
     );
-    expect(cancelled.closure).toBe("cancelled");
-    expect(cancellationBefore.version).toBeGreaterThanOrEqual(1);
+    await expect(cancellationCard).toContainText(
+      cancellationOrder.order.reference,
+    );
+    const cancellationManage = cancellationCard.getByRole("button", {
+      name: "Manage",
+    });
+    if ((await cancellationManage.count()) > 0)
+      await cancellationManage.click();
+    await cancellationCard
+      .getByLabel("Reason", { exact: true })
+      .fill("PR-05 staff cancellation verification");
+    await cancellationCard
+      .getByLabel("Confirm cancellation and any required append-only refund.")
+      .check();
+    await cancellationCard
+      .getByRole("button", { name: "Cancel order" })
+      .click();
+    await expect(cancellationCard).toContainText("Cancelled");
     const invariants = await readRealE2eInvariants(
       databaseUrl,
       primary.businessCode,
@@ -740,6 +745,16 @@ test.describe.serial("PR-05 real-stack evidence", () => {
   test("TEST-E2E-PR05-J6-FEATURE-DISABLEMENT-001: disabling ordering blocks new work while preserving reads", async ({
     browser,
   }) => {
+    const activeOrder = await submitCustomerOrder(
+      browser,
+      "PR-05 active during disablement",
+    );
+    await administratorPage.goto(
+      `${staffOrigin}/orders?order=${activeOrder.order.id}`,
+    );
+    await expect(
+      administratorPage.locator("li.order-list-item--selected"),
+    ).toContainText(activeOrder.order.reference);
     const configuration = await apiJson<FeatureConfigurationResponse>(
       ownerContext,
       "GET",
@@ -763,6 +778,11 @@ test.describe.serial("PR-05 real-stack evidence", () => {
         "if-match": `"${configuration.configuration.version}"`,
       },
     );
+    const activeWhileDisabled = await currentStaffOrder(
+      administratorContext,
+      activeOrder.order.id,
+    );
+    expect(activeWhileDisabled.id).toBe(activeOrder.order.id);
     const blocked = await submitCustomerOrderExpectingBlocked(browser);
     expect(blocked).toBe(409);
     const enabled = await apiJson<FeatureConfiguration>(
@@ -786,6 +806,56 @@ test.describe.serial("PR-05 real-stack evidence", () => {
     expect(enabled.version).toBeGreaterThan(
       configuration.configuration.version,
     );
+
+    await kitchenPage.goto(
+      `${staffOrigin}/kitchen?order=${activeOrder.order.id}`,
+    );
+    const activeKitchenOrder = kitchenPage
+      .locator("article.kitchen-order")
+      .filter({ hasText: activeOrder.order.reference });
+    await expect(activeKitchenOrder).toBeVisible();
+    await activeKitchenOrder
+      .getByRole("button", { name: "Start preparation" })
+      .click();
+    await activeKitchenOrder
+      .getByRole("button", { name: "Mark ready" })
+      .click();
+    await administratorPage.goto(
+      `${staffOrigin}/kitchen?order=${activeOrder.order.id}`,
+    );
+    const activeReadyOrder = administratorPage
+      .locator(".ready-order-grid article")
+      .filter({ hasText: activeOrder.order.reference });
+    await expect(activeReadyOrder).toBeVisible();
+    await activeReadyOrder
+      .getByRole("button", { name: "Collect · mark served" })
+      .click();
+    await activeOrder.page
+      .getByRole("button", { name: "Request the bill" })
+      .click();
+    await cashierPage.goto(
+      `${staffOrigin}/payments?order=${activeOrder.order.id}`,
+    );
+    const activePaymentLedger = cashierPage.locator(".payment-ledger-result");
+    await activePaymentLedger.getByLabel(/Confirm receipt of exactly/i).check();
+    await activePaymentLedger
+      .getByRole("button", { name: "Record payment" })
+      .click();
+    await expect(activePaymentLedger).toContainText("Paid");
+    await administratorPage.goto(
+      `${staffOrigin}/orders?order=${activeOrder.order.id}`,
+    );
+    const activeCard = administratorPage.locator(
+      "li.order-list-item--selected",
+    );
+    const activeManage = activeCard.getByRole("button", { name: "Manage" });
+    if ((await activeManage.count()) > 0) await activeManage.click();
+    await activeCard
+      .getByLabel("Confirm moving this order to completed history.")
+      .check();
+    await activeCard.getByRole("button", { name: "Complete order" }).click();
+    await expect(activeCard).toContainText("Completed");
+    await activeOrder.context.close();
   });
 
   test("TEST-E2E-PR05-J7-ISOLATION-001: a second tenant cannot read the primary branch or records", async ({
@@ -828,8 +898,34 @@ test.describe.serial("PR-05 real-stack evidence", () => {
     await isolatedContext.close();
   });
 
-  test("TEST-E2E-PR05-R-WORKER-001: worker restart restores readiness without browser interception", async () => {
-    const response = await fetch(
+  test("TEST-E2E-PR05-R-WORKER-001: stopped worker leaves lag and restart drains the real backlog", async ({
+    browser,
+  }) => {
+    const before = await readRealE2eInvariants(
+      databaseUrl,
+      primary.businessCode,
+    );
+    const stopped = await fetch(
+      `${process.env.REAL_E2E_CONTROL_ORIGIN}/worker/stop`,
+      {
+        method: "POST",
+        headers: {
+          authorization: `Bearer ${process.env.REAL_E2E_CONTROL_SECRET}`,
+        },
+      },
+    );
+    expect(stopped.status).toBe(204);
+    const backlogOrder = await submitCustomerOrder(
+      browser,
+      "PR-05 worker backlog",
+    );
+    const lagging = await readRealE2eInvariants(
+      databaseUrl,
+      primary.businessCode,
+    );
+    expect(lagging.orderCount).toBeGreaterThan(before.orderCount);
+    expect(lagging.outboxCount).toBeGreaterThan(lagging.processedOutboxCount);
+    const restarted = await fetch(
       `${process.env.REAL_E2E_CONTROL_ORIGIN}/worker/restart`,
       {
         method: "POST",
@@ -838,7 +934,24 @@ test.describe.serial("PR-05 real-stack evidence", () => {
         },
       },
     );
-    expect(response.status).toBe(204);
+    expect(restarted.status).toBe(204);
+    await expect
+      .poll(
+        async () =>
+          (await readRealE2eInvariants(databaseUrl, primary.businessCode))
+            .processedOutboxCount,
+        { timeout: 30_000 },
+      )
+      .toBeGreaterThanOrEqual(lagging.outboxCount);
+    await kitchenPage.goto(
+      `${staffOrigin}/kitchen?order=${backlogOrder.order.id}`,
+    );
+    await expect(
+      kitchenPage
+        .locator("article.kitchen-order")
+        .filter({ hasText: backlogOrder.order.reference }),
+    ).toBeVisible();
+    await backlogOrder.context.close();
     await expect(
       generalPage.getByRole("heading", { name: /Orders/i }).first(),
     ).toBeVisible();
@@ -849,11 +962,44 @@ test.describe.serial("PR-05 real-stack evidence", () => {
     await expect(
       generalPage.getByRole("heading", { name: /notification|inbox/i }).first(),
     ).toBeVisible();
+    await expect(
+      generalPage
+        .getByRole("status")
+        .filter({ hasText: "Live hints connected" }),
+    ).toBeVisible();
     await generalContext.setOffline(true);
+    await generalPage.evaluate(() =>
+      window.dispatchEvent(new Event("offline")),
+    );
+    await expect(
+      generalPage.getByRole("status").filter({ hasText: "Reconnecting" }),
+    ).toBeVisible({ timeout: 15_000 });
     await generalContext.setOffline(false);
-    await generalPage.reload();
+    await generalPage.evaluate(() => window.dispatchEvent(new Event("online")));
+    await generalPage.getByRole("button", { name: "Reload inbox" }).click();
     await expect(
       generalPage.getByRole("heading", { name: /notification|inbox/i }).first(),
+    ).toBeVisible();
+    await expect(
+      generalPage
+        .getByRole("status")
+        .filter({ hasText: "Live hints connected" }),
+    ).toBeVisible();
+  });
+
+  test("TEST-E2E-PR05-R-RECOVERY-001: recovery request keeps account eligibility generic", async () => {
+    await generalPage.goto(`${staffOrigin}/auth/recover`);
+    await expect(
+      generalPage.getByRole("heading", { name: "Recover staff access" }),
+    ).toBeVisible();
+    await generalPage.getByLabel("Business code").fill(primary.businessCode);
+    await generalPage.getByLabel("Work email").fill(generalRole.email);
+    await generalPage.getByRole("button", { name: "Request recovery" }).click();
+    await expect(
+      generalPage.getByText(
+        "This response does not confirm whether an account exists.",
+        { exact: false },
+      ),
     ).toBeVisible();
   });
 

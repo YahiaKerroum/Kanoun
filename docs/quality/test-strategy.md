@@ -87,12 +87,14 @@ The browser commands have an explicit confidence classification:
 - `TEST-E2E-PR05-GUARD-001`: `corepack pnpm exec tsx
   scripts/real-e2e-guard.ts` rejects first-party route interception in the real
   suite.
-- `TEST-E2E-PR05-JOURNEYS-001`: the ten real-stack cases prove owner setup;
-  menu/table/QR; idempotent order retry; kitchen/service/cashier/refund close;
-  correction/cancellation/refund invariants; dependency-safe feature
-  disablement; cross-tenant isolation; worker restart; SSE recovery; and
-  session revocation. `packages/test-support/src/real-e2e-readers.ts` performs
-  read-only persisted-invariant checks.
+- `TEST-E2E-PR05-JOURNEYS-001`: the eleven real-stack cases prove owner setup;
+  menu/table/QR including malformed and revoked links; idempotent order retry;
+  kitchen/service/cashier/refund close; correction/cancellation/refund
+  invariants and stale-version conflict; dependency-safe feature disablement
+  with active work completion; cross-tenant isolation; worker stop/backlog
+  drain; SSE recovery; generic recovery delivery; and session revocation.
+  `packages/test-support/src/real-e2e-readers.ts` performs read-only
+  persisted-invariant checks.
 
 The real suite provisions its own synthetic tenants and does not write directly
 to PostgreSQL to advance a journey. It uses one Playwright worker for ordered

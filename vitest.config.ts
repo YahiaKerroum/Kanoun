@@ -1,6 +1,12 @@
 import { defineConfig } from "vitest/config";
 import { fileURLToPath } from "node:url";
 
+if (process.env.CI === "true" && !process.env.TEST_DATABASE_URL) {
+  throw new Error(
+    "CI PostgreSQL integration tests require TEST_DATABASE_URL; refusing to run with skipped database coverage.",
+  );
+}
+
 export default defineConfig({
   resolve: {
     alias: {

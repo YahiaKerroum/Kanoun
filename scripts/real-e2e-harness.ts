@@ -16,6 +16,10 @@ import {
 } from "./demo-process.js";
 import { createRealE2eConfig, type RealE2eConfig } from "./real-e2e-config.js";
 import {
+  startDemoRecoveryDelivery,
+  type DemoRecoveryDelivery,
+} from "./demo-recovery-delivery.js";
+import {
   inspectDemoPostgresCapabilities,
   selectDemoPostgresMode,
   startIsolatedDemoPostgres,
@@ -70,6 +74,7 @@ function runtimeEnvironment(config: RealE2eConfig): {
     generatedDemoSecret(),
     generatedDemoSecret(),
     generatedDemoSecret(),
+    config.recoverySecret,
   ] as const;
   return {
     bootstrapSecret: secrets[1],
@@ -92,6 +97,8 @@ function runtimeEnvironment(config: RealE2eConfig): {
       WORKER_ID: config.workerId,
       LOG_LEVEL: "info",
       API_PROXY_ORIGIN: config.apiOrigin,
+      RECOVERY_DELIVERY_URL: `${config.recoveryOrigin}/deliver`,
+      RECOVERY_DELIVERY_SECRET: config.recoverySecret,
     },
   };
 }
@@ -252,6 +259,7 @@ async function provisionTenant(
 
 function controlServer(
   config: RealE2eConfig,
+  stopWorker: () => Promise<void>,
   restartWorker: () => Promise<void>,
 ): Promise<Server> {
   const server = createServer((request, response) => {
@@ -260,12 +268,16 @@ function controlServer(
       response.end();
       return;
     }
-    if (request.url !== "/worker/restart" || request.method !== "POST") {
+    if (
+      (request.url !== "/worker/stop" && request.url !== "/worker/restart") ||
+      request.method !== "POST"
+    ) {
       response.statusCode = 404;
       response.end();
       return;
     }
-    void restartWorker()
+    const action = request.url === "/worker/stop" ? stopWorker : restartWorker;
+    void action()
       .then(() => {
         response.statusCode = 204;
         response.end();
@@ -296,15 +308,26 @@ export async function startRealE2eHarness(
   const processes: ManagedDemoProcess[] = [];
   let worker: ManagedDemoProcess | undefined;
   let control: Server | undefined;
+  let recovery: DemoRecoveryDelivery | undefined;
   let closed = false;
-  const restartWorker = async (): Promise<void> => {
+  const stopWorker = async (): Promise<void> => {
     await worker?.terminate();
+    worker = undefined;
+  };
+  const restartWorker = async (): Promise<void> => {
+    await stopWorker();
     const spec = processSpecs(config, runtime.environment, runtime.secrets)[1];
     if (!spec) throw new Error("Real E2E worker specification is missing.");
     worker = startManagedDemoProcess(spec);
     await worker.waitForText(workerReadyMessage);
   };
   try {
+    recovery = await startDemoRecoveryDelivery({
+      host: config.databaseHost,
+      port: Number(new URL(config.recoveryOrigin).port),
+      authorizationSecret: config.recoverySecret,
+      staffOrigin: config.staffOrigin,
+    });
     const specs = processSpecs(config, runtime.environment, runtime.secrets);
     const apiSpec = specs[0];
     if (!apiSpec) throw new Error("Real E2E API specification is missing.");
@@ -331,7 +354,7 @@ export async function startRealE2eHarness(
       runtime.bootstrapSecret,
       `${config.runId}-b`,
     );
-    control = await controlServer(config, restartWorker);
+    control = await controlServer(config, stopWorker, restartWorker);
     const exposedEnvironment = {
       ...runtime.environment,
       REAL_E2E_RUN_ID: config.runId,
@@ -365,6 +388,7 @@ export async function startRealE2eHarness(
           (resolve) => control?.close(() => resolve()) ?? resolve(),
         );
         await worker?.terminate().catch(() => undefined);
+        await recovery?.close().catch(() => undefined);
         for (const processHandle of [...processes].reverse()) {
           await processHandle.terminate().catch(() => undefined);
         }
@@ -377,6 +401,7 @@ export async function startRealE2eHarness(
       (resolve) => control?.close(() => resolve()) ?? resolve(),
     );
     await worker?.terminate().catch(() => undefined);
+    await recovery?.close().catch(() => undefined);
     for (const processHandle of [...processes].reverse()) {
       await processHandle.terminate().catch(() => undefined);
     }

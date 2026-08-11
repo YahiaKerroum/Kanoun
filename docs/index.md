@@ -58,6 +58,7 @@ source_of_truth_for:
 | PR-03 implementation declaration | `docs/delivery/pr-03-guided-owner-setup-and-workforce-readiness.md` | Verified; PR-04 follows this boundary |
 | PR-04 implementation declaration | `docs/delivery/pr-04-operational-workspaces.md` | Verified; PR-05 remains out of scope |
 | PR-05 implementation declaration | `docs/delivery/pr-05-real-stack-e2e.md` | Verified; PR-06 remains out of scope |
+| PR-05 verification evidence | `docs/delivery/pr-05-real-stack-evidence.md` | Two independent built real-stack runs, 11/11 each |
 | Slice 006 publication handoff | `docs/delivery/handoff-2026-07-28-slice-006-checkpoint.md` | Slice 006 published; historical Slice 007 starting point |
 | Slice 005 publication handoff | `docs/delivery/handoff-2026-07-28-slice-005-checkpoint.md` | Slice 005 feature branch published; main integration pending |
 | Slice 004 publication handoff | `docs/delivery/handoff-2026-07-28-slice-004-checkpoint.md` | Slice 004 published — historical baseline |

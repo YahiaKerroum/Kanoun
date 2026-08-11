@@ -3,10 +3,8 @@ import { join } from "node:path";
 import { glob } from "node:fs/promises";
 
 const forbiddenPatterns = [
-  /\bpage\.route\s*\(/u,
-  /\bcontext\.route\s*\(/u,
-  /\bbrowserContext\.route\s*\(/u,
-  /\broute\.(?:fulfill|continue|fallback)\s*\(/u,
+  /\b(?:page|context|browserContext)\.(?:route|routeFromHAR)\s*\(/u,
+  /\broute\.(?:fulfill|continue|fallback|abort|fetch)\s*\(/u,
 ];
 
 export async function assertRealE2eSourceClean(

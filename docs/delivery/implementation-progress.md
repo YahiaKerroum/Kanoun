@@ -274,13 +274,14 @@ head is `e729438a11100d347c2bf8c77a0ad85ecbb84540`.
 - The mocked browser command is now explicitly classified as UI/contract
   component coverage. The real browser command is the primary product gate and
   rejects first-party route interception before Playwright starts.
-- Two independent fresh built real-stack runs passed all 10 ordered journeys on 2026-08-11. Each used
+- Two independent fresh built real-stack runs passed all 11 ordered journeys on 2026-08-11. Each used
   a marked run-scoped PostgreSQL database, migrations, two synthetic tenants,
-  separate owner/general/kitchen/cashier/customer contexts, API/worker and
+  separate owner/general/kitchen/cashier/administrator/customer contexts, API/worker and
   three production-like previews, and read-only persisted invariant checks.
-- The same run observed setup, QR/menu, idempotency, service close,
-  correction/cancellation/refund, dependency-safe feature disablement, tenant
-  isolation, worker restart, SSE recovery, and session revocation. Failed runs
+- The same run observed setup, QR/menu, malformed/revoked links, idempotency,
+  service close, correction/cancellation/refund, dependency-safe feature
+  disablement with active-work completion, tenant isolation, worker backlog
+  drain, SSE recovery, generic recovery delivery, and session revocation. Failed runs
   retain Playwright artifacts under `output/playwright/real`; successful runs
   remove them, and CI uploads the failure directory.
 

@@ -407,7 +407,7 @@ validated automated cases** across the main executable suites:
 | Architecture                        | 3 passed; 154 modules and 295 dependencies checked with no violations       |
 | Contracts                           | OpenAPI valid; 43 integration event contracts validated                     |
 | Browser and automated accessibility | 25 passed across the prior customer/staff/administration baseline           |
-| PR-05 real-stack product gate       | 10 passed in each of two fresh isolated PostgreSQL runs                     |
+| PR-05 real-stack product gate       | 11 passed in each of two fresh isolated PostgreSQL runs                     |
 | Strict TypeScript                   | Passed                                                                      |
 | Staff production build              | Passed                                                                      |
 | Formatting and changed-file linting | Passed                                                                      |

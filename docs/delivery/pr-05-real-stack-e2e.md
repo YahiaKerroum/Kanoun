@@ -26,7 +26,7 @@ last_reviewed: 2026-08-11
   previews; read-only database evidence helpers; the real-stack browser suite;
   mocked-suite naming; CI jobs and failure-artifact upload; and verification
   documentation.
-- `tests`: the ten `TEST-E2E-PR05-*` cases in
+- `tests`: the eleven `TEST-E2E-PR05-*` cases in
   `apps/web/staff/e2e/real/real-stack-journeys.real-stack.spec.ts`, plus the
   source guard that rejects first-party Playwright request interception.
 - `docs`: `AGENTS.md`, `README.md`, `docs/quality/test-strategy.md`,
@@ -45,21 +45,24 @@ loopback PostgreSQL and the target namespace is mandatory. The original
 `corepack pnpm test:browser:mocked` suite remains available as UI/contract
 component coverage; it is not the real-stack product gate.
 
-The real suite uses separate owner, general-staff, kitchen, cashier, and
-customer browser contexts. First-party API calls are not intercepted; the
-source guard rejects `route`, `fulfill`, `continue`, and `fallback` usage in the
-real suite. Database access is limited to read-only invariant assertions and
-never advances a user journey.
+The real suite uses separate owner, general-staff, kitchen, cashier,
+administrator, and customer browser contexts. First-party API calls are not
+intercepted; the source guard rejects route interception and HAR replay usage
+in the real suite. Database access is limited to read-only invariant assertions
+and never advances a user journey. Recovery delivery is a run-scoped,
+loopback-only in-memory substitute; no external email is used.
 
 ## Verification evidence
 
-On 2026-08-11, the real-stack suite passed all 10 tests in each of two fresh
-built runs, each with its own run-scoped database. The suite observed the built Administration setup flow, customer QR
-menu and order submission, same-key idempotent retry, kitchen/service/cashier
+On 2026-08-11, the real-stack suite passed all 11 tests in each of two fresh
+built runs, each with its own run-scoped database. The suite observed the built
+Administration setup flow, customer QR menu and order submission, malformed and
+revoked QR handling, same-key idempotent retry, kitchen/service/cashier
 handoffs, payment/refund ledger, append-only correction and cancellation,
 dependency-safe feature disablement with preserved reads and blocked new work,
-cross-tenant 404 isolation, worker restart readiness, offline-to-online
-notification recovery, and revoked-session rejection followed by sign-in UI.
+cross-tenant 404 isolation, worker backlog after stop and drain after restart,
+offline-to-online notification recovery, generic recovery request delivery, and
+revoked-session rejection followed by sign-in UI.
 
 The runner retains Playwright screenshot, video, trace, and error-context
 artifacts only for failed runs and removes successful-run output. CI uploads the
