@@ -13,6 +13,22 @@ pnpm 11.17.0 via Corepack
 PostgreSQL integration enabled through TEST_DATABASE_URL loaded from .env
 ```
 
+## Publication closure on 2026-08-11
+
+The pushed candidate `ad32def598fdaf42eece912d83a869adff81b45b` was checked
+unchanged in a clean detached worktree before the final gate. It reproduced
+two committed lint errors: an unnecessary `journey.kind` conditional in
+`apps/web/customer/src/App.tsx:1264` and an unused `fadeUpItemVariants` import
+in `apps/web/staff/src/KitchenWorkspace.tsx:15`, both reported by
+`@typescript-eslint`. The closure patch removed those failures, restored
+heading focus after animated customer views, stabilized the committed
+customer browser assertion until animations settled, scoped Staff session
+guards to Staff routes so the public QR session flow remains reachable, and
+redacted request URLs and response `set-cookie` headers in API logs.
+
+The final results below apply to that surgical closure patch. The original
+worktree's unrelated unstaged changes were not used, staged, or modified.
+
 ## Automated verification
 
 Command:

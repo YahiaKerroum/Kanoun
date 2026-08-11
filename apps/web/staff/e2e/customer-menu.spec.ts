@@ -15,6 +15,14 @@ const activeToken = "active-table-token-00000000000000000001";
 const csrfToken = "customer-csrf-token-000000000000000001";
 
 async function expectNoWcagViolations(page: Page): Promise<void> {
+  await page.evaluate(async () => {
+    await Promise.all(
+      document
+        .getAnimations()
+        .map((animation) => animation.finished.catch(() => undefined)),
+    );
+  });
+  await page.waitForTimeout(400);
   const results = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
     .analyze();

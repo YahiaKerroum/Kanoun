@@ -206,7 +206,7 @@ export function createRestaurantConfigurationRouter(
     legacyHeaders: false,
   });
 
-  router.use(requireStaffSession());
+  router.use("/staff", requireStaffSession());
 
   router.get("/staff/restaurants", async (request, response) => {
     const items = await dependencies.useCases.listRestaurants(context(request));

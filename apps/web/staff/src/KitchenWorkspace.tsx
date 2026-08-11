@@ -12,7 +12,6 @@ import { motion } from "framer-motion";
 import {
   actionButtonVariants,
   cardHoverVariants,
-  fadeUpItemVariants,
   staggerContainerVariants,
 } from "./motion.js";
 

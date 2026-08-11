@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -88,6 +89,8 @@ type Journey =
     }
   | { readonly kind: "menu-error"; readonly session: GuestSession };
 
+type HeadingFocusCallback = (heading: HTMLHeadingElement | null) => void;
+
 type MenuDish = CustomerMenu["categories"][number]["dishes"][number];
 
 interface CartItem {
@@ -176,6 +179,7 @@ function LoadingView(props: {
   readonly eyebrow: string;
   readonly title: string;
   readonly body: string;
+  readonly onHeadingMount: HeadingFocusCallback;
 }) {
   return (
     <motion.section
@@ -192,7 +196,9 @@ function LoadingView(props: {
         <span />
       </div>
       <p className="eyebrow">{props.eyebrow}</p>
-      <h1 tabIndex={-1}>{props.title}</h1>
+      <h1 ref={props.onHeadingMount} tabIndex={-1}>
+        {props.title}
+      </h1>
       <p className="lead">{props.body}</p>
     </motion.section>
   );
@@ -201,6 +207,7 @@ function LoadingView(props: {
 function ErrorView(props: {
   readonly invalid?: boolean;
   readonly onRetry?: () => void;
+  readonly onHeadingMount: HeadingFocusCallback;
 }) {
   return (
     <motion.section
@@ -215,7 +222,7 @@ function ErrorView(props: {
         !
       </div>
       <p className="eyebrow">{copy.menuAccessEyebrow}</p>
-      <h1 tabIndex={-1}>
+      <h1 ref={props.onHeadingMount} tabIndex={-1}>
         {props.invalid ? copy.invalidTitle : copy.unavailableTitle}
       </h1>
       <p className="lead">
@@ -243,6 +250,7 @@ function ConfirmationView(props: {
   readonly name: string;
   readonly onNameChange: (name: string) => void;
   readonly onContinue: () => void;
+  readonly onHeadingMount: HeadingFocusCallback;
 }) {
   const tableSpecific = props.session.tableCode !== null;
 
@@ -262,7 +270,7 @@ function ConfirmationView(props: {
       <p className="eyebrow">
         {tableSpecific ? copy.tableEyebrow : copy.browseEyebrow}
       </p>
-      <h1 tabIndex={-1}>
+      <h1 ref={props.onHeadingMount} tabIndex={-1}>
         {tableSpecific ? copy.tableTitle : copy.browseTitle}
       </h1>
       {tableSpecific ? (
@@ -478,6 +486,7 @@ function MenuView(props: {
   readonly customerName: string;
   readonly onReload: () => void;
   readonly onAccepted: (order: GuestOrder) => void;
+  readonly onHeadingMount: HeadingFocusCallback;
 }) {
   const [cart, setCart] = useState<readonly CartItem[]>([]);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
@@ -588,7 +597,9 @@ function MenuView(props: {
         <main id="menu-content" className="menu-content">
           <section className="menu-intro">
             <p className="eyebrow">{copy.menuEyebrow}</p>
-            <h1 tabIndex={-1}>{copy.menuTitle}</h1>
+            <h1 ref={props.onHeadingMount} tabIndex={-1}>
+              {copy.menuTitle}
+            </h1>
             {props.menu.categories.length > 1 ? (
               <nav
                 aria-label={copy.menuCategoriesLabel}
@@ -1149,6 +1160,28 @@ export function App() {
     token ? { kind: "exchanging" } : { kind: "invalid" },
   );
   const headingFocusPending = useRef(false);
+  const focusHeading = useCallback<HeadingFocusCallback>((heading) => {
+    if (!heading || !headingFocusPending.current) return;
+    const focus = () => {
+      if (!headingFocusPending.current) return;
+      headingFocusPending.current = false;
+      heading.focus({ preventScroll: true });
+    };
+    const waitForMotion = async () => {
+      for (;;) {
+        const animations = document
+          .getAnimations()
+          .filter((animation) => animation.playState !== "finished");
+        if (animations.length === 0) return;
+        await Promise.all(
+          animations.map((animation) =>
+            animation.finished.catch(() => undefined),
+          ),
+        );
+      }
+    };
+    void waitForMotion().then(focus);
+  }, []);
 
   useEffect(() => {
     if (!token) return;
@@ -1171,14 +1204,6 @@ export function App() {
       current = false;
     };
   }, [attempt, token]);
-
-  useEffect(() => {
-    if (!headingFocusPending.current) return;
-    headingFocusPending.current = false;
-    document.querySelector<HTMLElement>("h1[tabindex='-1']")?.focus({
-      preventScroll: true,
-    });
-  }, [journey.kind]);
 
   async function loadMenu(session: GuestSession) {
     persistName(name.trim());
@@ -1206,6 +1231,7 @@ export function App() {
           menu={journey.menu}
           customerName={name}
           onReload={() => void loadMenu(journey.session)}
+          onHeadingMount={focusHeading}
           onAccepted={(order) =>
             setJourney({ kind: "order", session: journey.session, order })
           }
@@ -1238,13 +1264,15 @@ export function App() {
                 eyebrow={copy.loadingQrEyebrow}
                 title={copy.loadingQrTitle}
                 body={copy.loadingQrBody}
+                onHeadingMount={focusHeading}
               />
             ) : journey.kind === "invalid" ? (
-              <ErrorView key="invalid" invalid />
+              <ErrorView key="invalid" invalid onHeadingMount={focusHeading} />
             ) : journey.kind === "exchange-error" ? (
               <ErrorView
                 key="exchange-error"
                 onRetry={() => setAttempt((value) => value + 1)}
+                onHeadingMount={focusHeading}
               />
             ) : journey.kind === "confirm" ? (
               <ConfirmationView
@@ -1253,6 +1281,7 @@ export function App() {
                 name={name}
                 onNameChange={setName}
                 onContinue={() => void loadMenu(journey.session)}
+                onHeadingMount={focusHeading}
               />
             ) : journey.kind === "loading-menu" ? (
               <LoadingView
@@ -1260,8 +1289,9 @@ export function App() {
                 eyebrow={copy.loadingMenuEyebrow}
                 title={copy.loadingMenuTitle}
                 body={copy.loadingMenuBody}
+                onHeadingMount={focusHeading}
               />
-            ) : journey.kind === "menu-error" ? (
+            ) : (
               <motion.section
                 key="menu-error"
                 className="journey-panel error-panel"
@@ -1275,7 +1305,9 @@ export function App() {
                   !
                 </div>
                 <p className="eyebrow">{copy.menuUpdateEyebrow}</p>
-                <h1 tabIndex={-1}>{copy.menuLoadErrorTitle}</h1>
+                <h1 ref={focusHeading} tabIndex={-1}>
+                  {copy.menuLoadErrorTitle}
+                </h1>
                 <p className="lead">{copy.menuLoadErrorBody}</p>
                 <motion.button
                   className="primary-action"
@@ -1289,7 +1321,7 @@ export function App() {
                   {copy.reloadMenu}
                 </motion.button>
               </motion.section>
-            ) : null}
+            )}
           </AnimatePresence>
         </div>
         <p className="journey-footnote">{copy.browseOnlyNotice}</p>

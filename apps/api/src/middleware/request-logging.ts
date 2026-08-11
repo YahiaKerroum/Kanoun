@@ -23,6 +23,8 @@ export function createRequestLogger(logger: Logger) {
         "req.headers.cookie",
         "req.headers.x-bootstrap-secret",
         "req.headers.x-csrf-token",
+        "req.url",
+        'res.headers["set-cookie"]',
         "req.body.password",
         "req.body.token",
       ],

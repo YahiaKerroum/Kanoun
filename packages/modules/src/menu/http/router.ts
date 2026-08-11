@@ -161,7 +161,7 @@ export function createMenuRouter(dependencies: MenuRouterDependencies): Router {
     legacyHeaders: false,
   });
 
-  router.use(requireStaffSession());
+  router.use("/staff", requireStaffSession());
 
   router.get(
     "/staff/restaurants/:restaurantId/menu/categories",

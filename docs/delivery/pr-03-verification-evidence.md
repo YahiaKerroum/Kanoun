@@ -3,6 +3,13 @@
 This record is the inspectable verification index for PR-03. PR-04 and PR-05
 remain out of scope.
 
+The pushed candidate `ad32def598fdaf42eece912d83a869adff81b45b` did not pass
+the untouched clean-tree lint check: the customer `App.tsx` unnecessary
+conditional and Staff `KitchenWorkspace.tsx` unused import were committed in
+that candidate. The results in this record are the final isolated verification
+of the surgical PR-03 closure patch; unrelated original-worktree changes remain
+outside the patch and unstaged.
+
 ## Toolchain and scope
 
 - Node.js `24.18.0`, pnpm `11.17.0`, PostgreSQL `18.1`.

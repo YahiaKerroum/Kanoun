@@ -120,7 +120,7 @@ export function createTablesRouter(
     legacyHeaders: false,
   });
 
-  router.use(requireStaffSession());
+  router.use("/staff", requireStaffSession());
 
   router.get("/staff/branches/:branchId/tables", async (request, response) => {
     const parameters = parse(branchParametersSchema, request.params);
