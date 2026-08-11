@@ -48,11 +48,11 @@ export class DemoSafetyError extends Error {
 
 export interface DemoConfig {
   readonly databaseUrl: string;
-  readonly databaseName: typeof DEMO_DATABASE_NAME;
+  readonly databaseName: string;
   readonly databaseHost: string;
   readonly databasePort: number;
   readonly adminDatabaseUrl: string;
-  readonly databaseMarker: typeof DEMO_DATABASE_MARKER;
+  readonly databaseMarker: string;
   readonly launcherHost: string;
   readonly launcherPort: number;
   readonly seedPassword?: string;

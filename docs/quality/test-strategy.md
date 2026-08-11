@@ -73,6 +73,33 @@ contract.
 - `TEST-PR04-REAL-STACK-001`: the manual `corepack pnpm dev:demo` gate covers the separate owner, staff, customer, kitchen, cashier, and manager contexts through submission, preparation, serving, billing, payment, completion, table release, notification, report, audit, and permitted refund/correction handoffs.
 - `TEST-PR04-VISUAL-001`: fresh 375px Customer, 768px Staff, and 1280px Staff/Administration captures cover navigation, task links, payment ledger, refund, loading/empty/error/stale/session-ended states, focus, reduced motion, zoom, and kitchen readability, with independent visual review.
 
+## PR-05 evidence matrix
+
+The browser commands have an explicit confidence classification:
+
+- `TEST-BROWSER-MOCKED-001`: `corepack pnpm test:browser:mocked` runs the
+  existing intercepted UI/contract component suite. It is useful for fast
+  deterministic states but is not evidence that the full product stack works.
+- `TEST-E2E-PR05-REAL-001`: `corepack pnpm test:browser:real` builds the
+  workspace, creates an isolated run-scoped PostgreSQL database, applies
+  migrations, starts API/worker/Customer/Staff/Administration previews, and
+  runs `playwright.real-stack.config.ts`. It is the primary product CI gate.
+- `TEST-E2E-PR05-GUARD-001`: `corepack pnpm exec tsx
+  scripts/real-e2e-guard.ts` rejects first-party route interception in the real
+  suite.
+- `TEST-E2E-PR05-JOURNEYS-001`: the ten real-stack cases prove owner setup;
+  menu/table/QR; idempotent order retry; kitchen/service/cashier/refund close;
+  correction/cancellation/refund invariants; dependency-safe feature
+  disablement; cross-tenant isolation; worker restart; SSE recovery; and
+  session revocation. `packages/test-support/src/real-e2e-readers.ts` performs
+  read-only persisted-invariant checks.
+
+The real suite provisions its own synthetic tenants and does not write directly
+to PostgreSQL to advance a journey. It uses one Playwright worker for ordered
+stateful evidence and a fresh database per run; the harness tears down owned
+processes and only databases carrying its safety marker. CI retains
+Playwright trace/video/screenshot/error-context artifacts for failed real runs.
+
 ## Mandatory negative coverage
 
 For every protected resource:

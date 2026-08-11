@@ -132,3 +132,29 @@ export async function verifyDemoDatabaseMarker(
     await adminPool.end();
   }
 }
+
+export async function removeMarkedDatabase(config: DemoConfig): Promise<void> {
+  const adminPool = createDatabasePool({
+    connectionString: config.adminDatabaseUrl,
+    applicationName: "rms-real-e2e-database-cleanup",
+    maximumConnections: 1,
+  });
+  let lockHeld = false;
+  try {
+    await acquireLock(adminPool);
+    lockHeld = true;
+    const existing = await databaseMarker(adminPool, config.databaseName);
+    if (!existing) {
+      return;
+    }
+    assertDemoDatabaseMarker(existing.marker, config.databaseMarker);
+    await adminPool.query(
+      `drop database ${quoteIdentifier(config.databaseName)} with (force)`,
+    );
+  } finally {
+    if (lockHeld) {
+      await releaseLock(adminPool);
+    }
+    await adminPool.end();
+  }
+}

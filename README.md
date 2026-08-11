@@ -406,7 +406,8 @@ validated automated cases** across the main executable suites:
 | Unit and module tests               | 138 passed; 1 PostgreSQL-dependent test skipped without `TEST_DATABASE_URL` |
 | Architecture                        | 3 passed; 154 modules and 295 dependencies checked with no violations       |
 | Contracts                           | OpenAPI valid; 43 integration event contracts validated                     |
-| Browser and automated accessibility | 25 passed across customer, staff, and administration critical flows         |
+| Browser and automated accessibility | 25 passed across the prior customer/staff/administration baseline           |
+| PR-05 real-stack product gate       | 10 passed in each of two fresh isolated PostgreSQL runs                     |
 | Strict TypeScript                   | Passed                                                                      |
 | Staff production build              | Passed                                                                      |
 | Formatting and changed-file linting | Passed                                                                      |
@@ -417,18 +418,20 @@ environment shown below.
 
 Run the exact repository checks with the pinned toolchain:
 
-| Goal                                      | Command                                         |
-| ----------------------------------------- | ----------------------------------------------- |
-| Format                                    | `corepack pnpm format:check`                    |
-| Lint                                      | `corepack pnpm lint`                            |
-| Strict types                              | `corepack pnpm typecheck`                       |
-| Unit and PostgreSQL integration tests     | `corepack pnpm test`                            |
-| Module-boundary checks                    | `corepack pnpm test:architecture`               |
-| OpenAPI and event validation              | `corepack pnpm contracts:lint`                  |
-| Production builds                         | `corepack pnpm build`                           |
-| Browser and automated accessibility tests | `corepack pnpm test:browser`                    |
-| Full non-browser gate                     | `corepack pnpm check`                           |
-| Production dependency audit               | `corepack pnpm audit --prod --audit-level high` |
+| Goal                                    | Command                                         |
+| --------------------------------------- | ----------------------------------------------- |
+| Format                                  | `corepack pnpm format:check`                    |
+| Lint                                    | `corepack pnpm lint`                            |
+| Strict types                            | `corepack pnpm typecheck`                       |
+| Unit and PostgreSQL integration tests   | `corepack pnpm test`                            |
+| Module-boundary checks                  | `corepack pnpm test:architecture`               |
+| OpenAPI and event validation            | `corepack pnpm contracts:lint`                  |
+| Production builds                       | `corepack pnpm build`                           |
+| Mocked UI/contract browser tests        | `corepack pnpm test:browser:mocked`             |
+| Real-stack product browser gate         | `corepack pnpm test:browser:real`               |
+| Browser suites (mocked plus real-stack) | `corepack pnpm test:browser`                    |
+| Full non-browser gate                   | `corepack pnpm check`                           |
+| Production dependency audit             | `corepack pnpm audit --prod --audit-level high` |
 
 Enable the PostgreSQL integration path locally before `test` or `check`:
 
@@ -438,9 +441,11 @@ corepack pnpm test
 ```
 
 CI applies migrations and supplies `TEST_DATABASE_URL`, so integration tests
-must not silently skip there. The browser suite exercises critical customer,
-staff, and administration flows, includes automated WCAG A/AA checks, and
-captures representative desktop, tablet, and mobile states.
+must not silently skip there. The mocked browser suite exercises deterministic
+UI/contract states and includes automated WCAG A/AA checks. The separate
+real-stack gate builds and runs API, worker, Customer, Staff, and Administration
+against a fresh run-scoped PostgreSQL database without first-party API
+interception; see [`docs/delivery/pr-05-real-stack-e2e.md`](docs/delivery/pr-05-real-stack-e2e.md).
 
 ## Documentation authority
 

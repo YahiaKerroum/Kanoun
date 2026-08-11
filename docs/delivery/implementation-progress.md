@@ -16,7 +16,8 @@ last_reviewed: 2026-08-09
 `PR-02 — access and account lifecycle` is complete and published at
 `e729438a11100d347c2bf8c77a0ad85ecbb84540`. `PR-03 — guided owner setup and
 workforce readiness` is verified. `PR-04 — join the operational workspaces
-into one service` is implemented and under final publication verification.
+into one service` and `PR-05 — real-stack E2E proof` are verified in isolated
+publication worktrees.
 Slice 008 is already integrated into
 `main`; the observed integration merge is
 `b38375bb2bd80b0c8ba98011b0591880d44dc072`, and the PR-03 baseline `main`
@@ -53,8 +54,9 @@ head is `e729438a11100d347c2bf8c77a0ad85ecbb84540`.
   tree, verified on 2026-08-09, and being published in the requested commit.
 - `PR-03 — guided-owner-setup-and-workforce-readiness`: verified.
 - `PR-04 — join-the-operational-workspaces-into-one-service`: implementation
-  verified in the isolated publication worktree; PR-05 real-stack CI
-  conversion remains explicitly out of scope.
+  verified in the isolated publication worktree.
+- `PR-05 — replace-simulated-e2e-confidence-with-real-stack-proof`: verified
+  in the isolated publication worktree; PR-06 remains explicitly out of scope.
 
 ## Completed
 
@@ -263,6 +265,24 @@ head is `e729438a11100d347c2bf8c77a0ad85ecbb84540`.
 - The focused service-workflow suite passes six tests, the restaurant-configuration HTTP suite passes six tests, the readiness model suite passes eight tests including split-period and selected-restaurant context round trips, the setup API and reload-guard cancellation regressions pass, and the focused PR-03 browser/accessibility test passes the open/closed/open mutation plus the two-restaurant context switch at desktop and mobile widths.
 - Final verification passes `corepack pnpm check` with 35 test files and 237 PostgreSQL-backed tests, the committed PR-03 browser/accessibility set with 31 tests, `corepack pnpm audit --prod --audit-level high`, and two independent visual reviewers on fresh 1280px and 375px captures. The separate untracked user-owned `apps/web/staff/e2e/admin-routes.spec.ts` test remains untouched and is excluded from the PR-03 evidence.
 - The pinned real-stack walkthrough verified Administration `/setup`, server-derived core readiness with one optional browse-only QR item, the branch-editor deep link, reasoned closed-state gating, restored Staff handoff, the live Staff workspace, and the live customer table menu. Temporary demo diagnostics remain outside the commit in ignored local evidence; PR-04 and PR-05 remain out of scope.
+
+## PR-05 current evidence
+
+- The PR-05 declaration is recorded in
+  `docs/delivery/pr-05-real-stack-e2e.md`; the original worktree remains
+  outside this publication worktree and PR-06 is not included.
+- The mocked browser command is now explicitly classified as UI/contract
+  component coverage. The real browser command is the primary product gate and
+  rejects first-party route interception before Playwright starts.
+- Two independent fresh built real-stack runs passed all 10 ordered journeys on 2026-08-11. Each used
+  a marked run-scoped PostgreSQL database, migrations, two synthetic tenants,
+  separate owner/general/kitchen/cashier/customer contexts, API/worker and
+  three production-like previews, and read-only persisted invariant checks.
+- The same run observed setup, QR/menu, idempotency, service close,
+  correction/cancellation/refund, dependency-safe feature disablement, tenant
+  isolation, worker restart, SSE recovery, and session revocation. Failed runs
+  retain Playwright artifacts under `output/playwright/real`; successful runs
+  remove them, and CI uploads the failure directory.
 
 ## Historical Slice 008 checkpoint
 
@@ -474,6 +494,7 @@ head is `e729438a11100d347c2bf8c77a0ad85ecbb84540`.
 
 ## Next slice
 
-PR-03 is verified from the exact published PR-02 baseline. PR-04 and PR-05
-remain unstarted; the earlier Slice 008 continuation prompts remain historical
-records only.
+PR-03 is verified from the exact published PR-02 baseline. PR-04 and PR-05 are
+verified in isolated publication worktrees; PR-06 is the next out-of-scope
+slice. The earlier Slice 008 continuation prompts remain historical records
+only.

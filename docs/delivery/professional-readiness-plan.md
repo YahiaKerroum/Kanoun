@@ -305,7 +305,8 @@ without Administration as a workaround.
 ### PR-03 — Guided owner setup and workforce readiness
 
 **Status (2026-08-11): PR-03 remains verified from its published baseline;
-PR-04 is the active publication slice and PR-05 is not started.**
+PR-04 and PR-05 are verified for this publication; PR-06 remains out of
+scope.**
 
 **Goal:** allow a protected owner to turn a provisioned tenant into a service-
 ready restaurant entirely through Administration.
@@ -350,7 +351,8 @@ ready restaurant entirely through Administration.
 ### PR-04 — Join the operational workspaces into one service
 
 **Status (2026-08-11): implementation verified in the isolated publication
-worktree; publication is limited to PR-04 and PR-05 is not started.**
+worktree; PR-05 real-stack verification is now complete in its isolated
+publication worktree.**
 
 **Goal:** remove navigation and identifier friction from the golden journey.
 
@@ -390,6 +392,8 @@ worktree; publication is limited to PR-04 and PR-05 is not started.**
   windows in 20–30 minutes without copying an internal identifier.
 
 ### PR-05 — Replace simulated E2E confidence with real-stack proof
+
+**Status (2026-08-11): verified in the isolated PR-05 worktree.**
 
 **Goal:** make “the product works” a reproducible automated release gate.
 

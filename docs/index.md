@@ -50,13 +50,14 @@ source_of_truth_for:
 | Slice 005 implementation declaration | `docs/delivery/slice-005-order-submission.md` | Verified and integrated |
 | Slice 006 implementation declaration | `docs/delivery/slice-006-kitchen-and-serving.md` | Verified, integrated, and published |
 | Slice 007 implementation declaration | `docs/delivery/slice-007-payment-completion-and-correction.md` | Verified, feature branch published, and integrated |
-| Current engineering handoff | `docs/delivery/professional-readiness-plan.md` | PR-01 through PR-04 are verified for this publication; PR-05 is not started |
+| Current engineering handoff | `docs/delivery/professional-readiness-plan.md` | PR-01 through PR-05 are verified for this publication; PR-06 remains out of scope |
 | Slice 008 implementation declaration | `docs/delivery/slice-008-notifications-reporting-and-audit.md` | Verified, feature branch published, and integrated into `main` via `b38375b` |
 | Slice 008 historical checkpoint | `docs/delivery/handoff-2026-07-29-slice-008-checkpoint.md` | Historical pre-integration handoff |
 | PR-01 implementation declaration | `docs/delivery/pr-01-one-command-professional-demo.md` | Verified and published |
 | PR-02 implementation declaration | `docs/delivery/pr-02-access-and-account-lifecycle.md` | Verified and published at `e729438a11100d347c2bf8c77a0ad85ecbb84540` |
 | PR-03 implementation declaration | `docs/delivery/pr-03-guided-owner-setup-and-workforce-readiness.md` | Verified; PR-04 follows this boundary |
 | PR-04 implementation declaration | `docs/delivery/pr-04-operational-workspaces.md` | Verified; PR-05 remains out of scope |
+| PR-05 implementation declaration | `docs/delivery/pr-05-real-stack-e2e.md` | Verified; PR-06 remains out of scope |
 | Slice 006 publication handoff | `docs/delivery/handoff-2026-07-28-slice-006-checkpoint.md` | Slice 006 published; historical Slice 007 starting point |
 | Slice 005 publication handoff | `docs/delivery/handoff-2026-07-28-slice-005-checkpoint.md` | Slice 005 feature branch published; main integration pending |
 | Slice 004 publication handoff | `docs/delivery/handoff-2026-07-28-slice-004-checkpoint.md` | Slice 004 published — historical baseline |
@@ -67,6 +68,7 @@ source_of_truth_for:
 | Deployment and recovery | `docs/operations/deployment-and-recovery.md` | Proposed until hosting ADR |
 | Observability and operations | `docs/operations/observability-and-runbook.md` | Approved baseline |
 | Local professional demo operation | `docs/operations/local-demo.md` | Approved |
+| Real-stack browser verification | `docs/operations/real-e2e.md` | Approved |
 | Agent operating rules | `AGENTS.md` | Approved |
 | Repository onboarding | `README.md` | Approved |
 

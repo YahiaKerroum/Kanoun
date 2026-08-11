@@ -96,7 +96,7 @@ async function waitForDatabase(
   throw new DemoPostgresError("waiting for the owned PostgreSQL cluster");
 }
 
-async function findFreeLoopbackPort(): Promise<number> {
+export async function findFreeLoopbackPort(): Promise<number> {
   const server = createServer();
   await new Promise<void>((resolve, reject) => {
     server.once("error", reject);
