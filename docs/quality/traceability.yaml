@@ -153,6 +153,14 @@ vertical_slices:
     tests: [TEST-AUDIT-001, TEST-DEACTIVATE-001]
     slice_008_verified_acceptance: [AC-US-A03-01, AC-US-A03-02, AC-US-A03-03, AC-US-Q01-01, AC-US-Q01-02, AC-US-Q01-03, AC-US-Q02-01, AC-US-Q02-02, AC-US-Q02-03]
 
+  pr_04_operational_workspaces:
+    implements: [US-C08, US-E02, US-E03, US-E04, US-F02, US-F04, US-F05, US-G01, US-G02, US-G03, US-G04, US-G05, US-G06, US-H02, US-H03, US-H04, US-H05, US-I01, US-I03, US-I04, US-J01, US-J03, US-K01, US-K02, US-K03, US-K04, US-O01, US-O02, US-O03, US-P01, US-P02, US-Q01, US-Q02, NFR-01, NFR-02, NFR-03, NFR-06, NFR-07, NFR-08, NFR-10, NFR-13, NFR-16, NFR-17, NFR-18, BR-001, BR-002, BR-003, BR-004, BR-005, BR-006, BR-007, BR-008, BR-009, BR-010, BR-011, BR-012, BR-013, BR-014, BR-015, BR-016, BR-017, BR-018, BR-019, BR-020, BR-021, BR-022, BR-023, BR-024]
+    obeys: [PD-006, PD-007, PD-008, PD-009, PD-010, PD-011, PD-012, PD-013, PD-014, PD-015, PD-016, PD-017, PD-018, PD-019, PD-022, PD-023, PD-024, PD-026, PD-029, PD-030, PD-032, PD-033, PD-034, PD-035, PD-036, ADR-0001, ADR-0002, ADR-0003, ADR-0004, ADR-0005, ADR-0006, CFG-003, CFG-004, CFG-005, CFG-006, CFG-007, CFG-008, CFG-009, CFG-010, CFG-011, CFG-012, CFG-013, CFG-014, CFG-015, PERM-009, PERM-010, PERM-011, PERM-012, PERM-013, PERM-014, PERM-015, PERM-016, PERM-017, PERM-018, PERM-019, PERM-020, PERM-021, PERM-022, PERM-023, PERM-024, PERM-025, PERM-026, PERM-027, PERM-028, PERM-029, PERM-030, PERM-031, PERM-032, PERM-033, PERM-034]
+    modules: [identity_access, restaurant_configuration, menu, tables, ordering, kitchen, payments, notifications, reporting, audit, service_workflow]
+    operations: [getStaffOrders, getKitchenQueue, startKitchenWorkItem, markKitchenWorkItemReady, markOrderServed, requestGuestOrderBill, listOpenBillRequests, getOrderPaymentLedger, recordOrderPayment, recordPaymentRefund, correctOrder, cancelOrder, moveOrderTableSession, completeOrder, listNotifications, listReports, listAuditEntries]
+    tests: [TEST-PR04-UNIT-001, TEST-PR04-BROWSER-001, TEST-PR04-A11Y-001, TEST-ROUTING-001, TEST-RETURN-TARGET-001, TEST-LANDING-001, TEST-BILL-001, TEST-PAYMENT-001, TEST-REFUND-001, TEST-COMPLETE-001, TEST-RECONNECT-001, TEST-IDEMPOTENCY-001, TEST-CONCURRENCY-001, TEST-TENANT-001, TEST-PERM-001, TEST-AUDIT-001, TEST-PR04-REAL-STACK-001, TEST-PR04-VISUAL-001]
+    status: verified_in_isolated_worktree_pr04_only
+
 nfr_verification:
   NFR-01: [TEST-E2E-SETUP-001, TEST-UX-001]
   NFR-02: [TEST-RESPONSIVE-001]

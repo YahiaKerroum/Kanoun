@@ -229,6 +229,10 @@ export function KitchenWorkspace(props: {
   const [feedback, setFeedback] = useState<string | null>(null);
   const [now, setNow] = useState(Date.now());
   const previousReadyOrders = useRef<ReadonlySet<string>>(new Set());
+  const targetOrderId = useMemo(() => {
+    const value = new URLSearchParams(window.location.search).get("order");
+    return value !== null && z.uuid().safeParse(value).success ? value : null;
+  }, []);
 
   const reload = useCallback(
     async (signal?: AbortSignal, background = false) => {
@@ -297,6 +301,17 @@ export function KitchenWorkspace(props: {
   const preparingGroups = groups.filter(
     (group) => group.fulfilment !== "ready",
   );
+  const orderedReadyGroups = [...readyGroups].sort((left, right) => {
+    if (left.orderId === targetOrderId) return -1;
+    if (right.orderId === targetOrderId) return 1;
+    return 0;
+  });
+  const orderedPreparingGroups = [...preparingGroups].sort((left, right) => {
+    if (left.orderId === targetOrderId) return -1;
+    if (right.orderId === targetOrderId) return 1;
+    return 0;
+  });
+  const selectedGroup = groups.find((group) => group.orderId === targetOrderId);
 
   async function runAction(
     id: string,
@@ -360,6 +375,21 @@ export function KitchenWorkspace(props: {
             : `${groups.length} active order${groups.length === 1 ? "" : "s"} · last verified ${state.updatedAt.toLocaleTimeString()}`}
         {feedback ? ` ${feedback}` : ""}
       </div>
+      {targetOrderId ? (
+        selectedGroup ? (
+          <p className="kitchen-route-status" role="status">
+            Selected kitchen handoff: {selectedGroup.reference} at table{" "}
+            {selectedGroup.tableCode}.
+          </p>
+        ) : (
+          <p className="kitchen-route-status" role="status">
+            This order is no longer in the active kitchen queue.{" "}
+            <a href={`/orders?order=${encodeURIComponent(targetOrderId)}`}>
+              Open order evidence
+            </a>
+          </p>
+        )
+      ) : null}
 
       {state.kind === "stale" ? (
         <div className="kitchen-stale" role="status">
@@ -419,9 +449,14 @@ export function KitchenWorkspace(props: {
                 animate="enter"
                 variants={staggerContainerVariants}
               >
-                {readyGroups.map((group) => (
+                {orderedReadyGroups.map((group) => (
                   <motion.article
                     key={group.orderId}
+                    className={
+                      group.orderId === targetOrderId
+                        ? "kitchen-order--selected"
+                        : undefined
+                    }
                     variants={cardHoverVariants}
                     whileHover="hover"
                   >
@@ -429,6 +464,11 @@ export function KitchenWorkspace(props: {
                       <strong>{group.reference}</strong>
                       <span>Table {group.tableCode}</span>
                     </div>
+                    <a
+                      href={`/orders?order=${encodeURIComponent(group.orderId)}`}
+                    >
+                      Open order detail
+                    </a>
                     <span>
                       {group.items.reduce(
                         (sum, item) => sum + item.quantity,
@@ -492,9 +532,13 @@ export function KitchenWorkspace(props: {
                 animate="enter"
                 variants={staggerContainerVariants}
               >
-                {preparingGroups.map((group) => (
+                {orderedPreparingGroups.map((group) => (
                   <motion.article
-                    className="kitchen-order"
+                    className={`kitchen-order${
+                      group.orderId === targetOrderId
+                        ? " kitchen-order--selected"
+                        : ""
+                    }`}
                     key={group.orderId}
                     variants={cardHoverVariants}
                     whileHover="hover"
@@ -504,6 +548,11 @@ export function KitchenWorkspace(props: {
                         <strong>{group.reference}</strong>
                         <span>Table {group.tableCode}</span>
                       </div>
+                      <a
+                        href={`/orders?order=${encodeURIComponent(group.orderId)}`}
+                      >
+                        Open order detail
+                      </a>
                       <span className="kitchen-elapsed">
                         <Clock3 aria-hidden="true" size={16} />
                         {elapsed(group.submittedAt, now)}

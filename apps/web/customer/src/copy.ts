@@ -68,12 +68,11 @@ export const copy = {
     "The menu changed. Reload the current menu, review your choices, and submit again.",
   orderFailure:
     "The order was not submitted. Check your connection and try again—the same retry will not create a duplicate.",
-  orderAccepted: "Order accepted",
   orderReference: "Order reference",
   orderProgress: "Order progress",
   receivedStatus: "Received",
   preparingStatus: "Preparing",
-  readyStatus: "Ready",
+  readyStatus: "Ready for service",
   servedStatus: "Served",
   cancelledStatus: "Cancelled",
   rejectedStatus: "Not accepted",

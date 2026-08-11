@@ -1,15 +1,95 @@
 :root {
   color-scheme: light;
   --brand-fill: #ffb300;
+  --brand-600: #8a5a00;
+  --brand-500: #e09a00;
+  --brand-400: #f5c24d;
+  --brand-200: #ffe49a;
+  --brand-050: #fff8e8;
   --brand-700: #6e4700;
   --brand-100: #fff0cc;
   --canvas: #faf8f4;
   --surface: #ffffff;
+  --surface-soft: #fffaf0;
+  --surface-warm: #fff7e0;
   --line: #efe7da;
+  --line-strong: #e9e0d2;
   --text: #1e1b14;
+  --text-on-brand: #261b00;
+  --text-on-surface: #3e2b04;
   --muted: #565044;
+  --subtle: #776e60;
   --success: #1e7a47;
+  --success-soft: #e4f6ea;
+  --warning: #a03c00;
+  --warning-soft: #ffe9dc;
   --danger: #c22c23;
+  --danger-soft: #fde8e6;
+  --state-warning-line: #d78a57;
+  --state-warning-surface: #fff0e3;
+  --state-warning-text: #6e3514;
+  --state-success-line: #1e6d55;
+  --state-success-surface: #eaf8f0;
+  --state-success-text: #174c3c;
+  --brand-border: rgb(110 71 0 / 14%);
+  --brand-shadow: 0 4px 12px rgb(110 71 0 / 22%);
+  --overlay-ink: rgb(30 27 20 / 42%);
+  --surface-glass: rgb(255 255 255 / 62%);
+  --surface-highlight: rgb(255 255 255 / 74%);
+  --shadow-overlay: -18px 0 50px rgb(30 27 20 / 16%);
+  --shadow-card: 0 10px 26px rgb(62 42 20 / 7%);
+  --shadow-soft: 0 8px 22px rgb(79 57 8 / 8%);
+  --state-ready-line: #c5e4cf;
+  --state-ready-surface: #e4f6ea;
+  --state-ready-text: #1e7a47;
+  --state-attention-surface: #fff0cc;
+  --state-blocked-line: #f0b88f;
+  --state-blocked-surface: #fffaf6;
+  --state-blocked-icon-surface: #ffe9dc;
+  --state-blocked-text: #a03c00;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 28px;
+  --space-8: 32px;
+  --radius-sm: 9px;
+  --radius-xs: 8px;
+  --radius-control: 13px;
+  --radius-card: 16px;
+  --radius-panel: 18px;
+  --radius-nav: 15px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-xl: 14px;
+  --radius-pill: 999px;
+  --control-size: 44px;
+  --control-size-compact: 42px;
+  --text-body-size: 14px;
+  --text-meta-size: 12px;
+  --text-label-size: 11px;
+  --text-micro-size: 10px;
+  --text-nav-size: 9px;
+  --text-title-size: 15px;
+  --text-summary-size: 24px;
+  --text-hero-size: clamp(30px, 4vw, 48px);
+  --status-icon-size: 30px;
+  --line-body: 1.65;
+  --line-copy: 1.5;
+  --line-relaxed: 1.7;
+  --line-relaxed-strong: 1.6;
+  --line-copy-strong: 1.55;
+  --line-label: 1.4;
+  --shadow: 0 16px 44px rgb(79 57 8 / 12%);
+  --nav-rail-width: 92px;
+  --nav-item-width: 68px;
+  --nav-item-height: 50px;
+  --focus-ring: 3px;
+  --focus-offset: 3px;
+  --font-display: "Bricolage Grotesque", system-ui, sans-serif;
+  --font-body: "Plus Jakarta Sans", system-ui, sans-serif;
 }
 
 .mise-stage {
@@ -24,4 +104,25 @@
   border-radius: 20px;
   background: var(--canvas);
   box-shadow: 0 24px 64px rgb(110 71 0 / 20%);
+}
+
+.mise-task-link {
+  min-height: 44px;
+  color: var(--brand-700);
+  font-weight: 800;
+  text-underline-offset: 3px;
+}
+
+.mise-status-label {
+  display: inline-flex;
+  min-height: 28px;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.75rem;
+  font-weight: 800;
 }

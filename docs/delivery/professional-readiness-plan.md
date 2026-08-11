@@ -304,8 +304,8 @@ without Administration as a workaround.
 
 ### PR-03 — Guided owner setup and workforce readiness
 
-**Status (2026-08-09): verified from published PR-02 commit
-`e729438a11100d347c2bf8c77a0ad85ecbb84540`. PR-04 and PR-05 are not started.**
+**Status (2026-08-11): PR-03 remains verified from its published baseline;
+PR-04 is the active publication slice and PR-05 is not started.**
 
 **Goal:** allow a protected owner to turn a provisioned tenant into a service-
 ready restaurant entirely through Administration.
@@ -348,6 +348,9 @@ ready restaurant entirely through Administration.
   required to configure and publish the restaurant.
 
 ### PR-04 — Join the operational workspaces into one service
+
+**Status (2026-08-11): implementation verified in the isolated publication
+worktree; publication is limited to PR-04 and PR-05 is not started.**
 
 **Goal:** remove navigation and identifier friction from the golden journey.
 

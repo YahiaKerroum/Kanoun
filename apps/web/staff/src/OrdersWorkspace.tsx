@@ -1,5 +1,11 @@
 import { CircleAlert, Clock3, Plus, RefreshCw, X } from "lucide-react";
-import { useEffect, useRef, useState, type SyntheticEvent } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type SyntheticEvent,
+} from "react";
 import { z } from "zod";
 import { motion } from "framer-motion";
 import { OrderOperations } from "./OrderOperations.js";
@@ -315,9 +321,21 @@ function localDateTimeToIso(value: string): string | undefined {
 }
 
 function lifecycleLabel(order: Order): string {
-  if (order.closure !== "active") return order.closure;
-  if (order.approval !== "accepted") return order.approval;
-  return order.fulfilment.replace("_", " ");
+  if (order.closure === "completed") return "Completed";
+  if (order.closure === "cancelled") return "Cancelled";
+  if (order.approval === "submitted") return "Received";
+  if (order.approval === "rejected") return "Cancelled";
+  if (order.fulfilment === "not_started") return "Waiting for kitchen";
+  if (order.fulfilment === "preparing") return "Preparing";
+  if (order.fulfilment === "ready") return "Ready for service";
+  return "Served";
+}
+
+function financialLabel(financial: Order["financial"]): string {
+  if (financial === "partially_refunded") return "Partially refunded";
+  if (financial === "refunded") return "Refunded";
+  if (financial === "paid") return "Paid";
+  return "Unpaid";
 }
 
 export function OrdersWorkspace(props: {
@@ -333,10 +351,25 @@ export function OrdersWorkspace(props: {
   readonly canComplete: boolean;
   readonly canCompleteUnpaid: boolean;
   readonly canAssignTables: boolean;
+  readonly canViewPayments: boolean;
+  readonly canViewKitchen: boolean;
+  readonly canServe: boolean;
 }) {
-  const [filters, setFilters] = useState<OrderFilters>(initialFilters);
+  const routeOrderId = useMemo(() => {
+    const value = new URLSearchParams(window.location.search).get("order");
+    return value !== null && z.uuid().safeParse(value).success ? value : null;
+  }, []);
+  const routeClosure = useMemo(() => {
+    const value = new URLSearchParams(window.location.search).get("closure");
+    return value === "completed" || value === "cancelled" ? value : "active";
+  }, []);
+  const routeFilters = useMemo(
+    () => ({ ...initialFilters, closure: routeClosure }),
+    [routeClosure],
+  );
+  const [filters, setFilters] = useState<OrderFilters>(routeFilters);
   const [appliedFilters, setAppliedFilters] =
-    useState<OrderFilters>(initialFilters);
+    useState<OrderFilters>(routeFilters);
   const [filterError, setFilterError] = useState<string | null>(null);
   const [reloadSequence, setReloadSequence] = useState(0);
   const [entryOpen, setEntryOpen] = useState(false);
@@ -479,17 +512,9 @@ export function OrdersWorkspace(props: {
                   ))}
                 </select>
               ) : (
-                <input
-                  value={filters.tableId}
-                  placeholder="Table UUID"
-                  onChange={(event) => {
-                    const value = event.currentTarget.value.trim();
-                    setFilters((current) => ({
-                      ...current,
-                      tableId: value,
-                    }));
-                  }}
-                />
+                <span className="filter-unavailable">
+                  Table choices are unavailable. Reload to filter by table.
+                </span>
               )}
             </label>
             <label>
@@ -505,20 +530,6 @@ export function OrdersWorkspace(props: {
                 <option value="completed">Completed</option>
                 <option value="cancelled">Cancelled</option>
               </select>
-            </label>
-            <label>
-              <span>Creating employee</span>
-              <input
-                value={filters.createdByEmployeeId}
-                placeholder="Employee UUID"
-                onChange={(event) => {
-                  const value = event.currentTarget.value.trim();
-                  setFilters((current) => ({
-                    ...current,
-                    createdByEmployeeId: value,
-                  }));
-                }}
-              />
             </label>
             <label>
               <span>Submitted from</span>
@@ -584,11 +595,15 @@ export function OrdersWorkspace(props: {
             reloadSequence={reloadSequence}
             onReload={() => setReloadSequence((value) => value + 1)}
             tables={tableItems}
+            targetOrderId={routeOrderId}
             canModify={props.canModify}
             canCancel={props.canCancel}
             canComplete={props.canComplete}
             canCompleteUnpaid={props.canCompleteUnpaid}
             canAssignTables={props.canAssignTables}
+            canViewPayments={props.canViewPayments}
+            canViewKitchen={props.canViewKitchen}
+            canServe={props.canServe}
           />
         </>
       ) : (
@@ -637,11 +652,15 @@ function OrdersList(props: {
   readonly reloadSequence: number;
   readonly onReload: () => void;
   readonly tables: readonly Table[];
+  readonly targetOrderId: string | null;
   readonly canModify: boolean;
   readonly canCancel: boolean;
   readonly canComplete: boolean;
   readonly canCompleteUnpaid: boolean;
   readonly canAssignTables: boolean;
+  readonly canViewPayments: boolean;
+  readonly canViewKitchen: boolean;
+  readonly canServe: boolean;
 }) {
   const [state, setState] = useState<LoadState<readonly Order[]>>({
     kind: "loading",
@@ -671,14 +690,30 @@ function OrdersList(props: {
     if (from) query.set("submittedFrom", from);
     if (to) query.set("submittedTo", to);
 
-    void getJson(
-      `/api/v1/staff/orders?${query.toString()}`,
-      ordersPageSchema,
-      abortController.signal,
+    const closures = props.targetOrderId
+      ? (["active", "completed", "cancelled"] as const)
+      : ([props.filters.closure] as const);
+    void Promise.all(
+      closures.map((closure) => {
+        const scopedQuery = new URLSearchParams(query);
+        scopedQuery.set("closure", closure);
+        return getJson(
+          `/api/v1/staff/orders?${scopedQuery.toString()}`,
+          ordersPageSchema,
+          abortController.signal,
+        );
+      }),
     )
-      .then((page) => {
+      .then((pages) => {
         if (!abortController.signal.aborted) {
-          setState({ kind: "ready", data: page.items });
+          const data = [
+            ...new Map(
+              pages
+                .flatMap((page) => page.items)
+                .map((order) => [order.id, order]),
+            ).values(),
+          ];
+          setState({ kind: "ready", data });
         }
       })
       .catch((error: unknown) => {
@@ -694,7 +729,12 @@ function OrdersList(props: {
         );
       });
     return () => abortController.abort();
-  }, [props.branchId, props.filters, props.reloadSequence]);
+  }, [
+    props.branchId,
+    props.filters,
+    props.reloadSequence,
+    props.targetOrderId,
+  ]);
 
   if (state.kind === "loading") {
     return (
@@ -723,7 +763,9 @@ function OrdersList(props: {
       <header>
         <div>
           <p className="eyebrow">CURRENT RESULTS</p>
-          <h3 id="active-orders-title">Active orders</h3>
+          <h3 id="active-orders-title">
+            {props.targetOrderId ? "Order evidence" : "Active orders"}
+          </h3>
         </div>
         <button type="button" onClick={props.onReload}>
           <RefreshCw aria-hidden="true" size={17} />
@@ -735,6 +777,19 @@ function OrdersList(props: {
           <CircleAlert aria-hidden="true" size={17} />
           Reload failed. These are the last verified results and may be stale.
         </p>
+      ) : null}
+      {props.targetOrderId ? (
+        state.data.some((order) => order.id === props.targetOrderId) ? (
+          <p className="order-route-status" role="status">
+            Selected order evidence is shown first. Continue from its visible
+            reference and authorized actions.
+          </p>
+        ) : (
+          <p className="order-route-status" role="status">
+            The selected order is not available in this branch scope. Reload or
+            return to the visible order list.
+          </p>
+        )
       ) : null}
       {state.data.length === 0 ? (
         <div className="orders-empty">
@@ -749,70 +804,86 @@ function OrdersList(props: {
           animate="enter"
           variants={staggerContainerVariants}
         >
-          {state.data.map((order) => (
-            <motion.li key={order.id} variants={fadeUpItemVariants}>
-              <div className="order-reference-cell">
-                <strong>{order.reference}</strong>
-                <span>{formatSubmittedAt(order.submittedAt)}</span>
-              </div>
-              <div>
-                <span className="order-cell-label">Table</span>
-                <strong>{order.tableCode}</strong>
-              </div>
-              <div>
-                <span className="order-cell-label">Items</span>
-                <strong>
-                  {order.items.reduce((sum, item) => sum + item.quantity, 0)}
-                </strong>
-              </div>
-              <div>
-                <span className="order-cell-label">Created by</span>
-                <strong>
-                  {order.creatorType === "guest"
-                    ? (order.customerName ?? "Guest")
-                    : order.createdByEmployeeId
-                      ? `Staff …${order.createdByEmployeeId.slice(-6)}`
-                      : "Staff"}
-                </strong>
-              </div>
-              <div>
-                <span className="order-cell-label">Elapsed</span>
-                <strong>{elapsedTime(order.submittedAt, now)}</strong>
-              </div>
-              <div className="order-state-cell">
-                <span className="order-state">{lifecycleLabel(order)}</span>
-                <span className="order-request-state">
-                  {order.financial.replace("_", " ")}
-                </span>
-                {order.billRequest ? (
-                  <span className="order-request-state">Bill requested</span>
-                ) : null}
-                {order.corrections.length > 0 ? (
+          {[...state.data]
+            .sort((left, right) => {
+              if (left.id === props.targetOrderId) return -1;
+              if (right.id === props.targetOrderId) return 1;
+              return 0;
+            })
+            .map((order) => (
+              <motion.li
+                key={order.id}
+                className={
+                  order.id === props.targetOrderId
+                    ? "order-list-item--selected"
+                    : undefined
+                }
+                variants={fadeUpItemVariants}
+              >
+                <div className="order-reference-cell">
+                  <strong>{order.reference}</strong>
+                  <span>{formatSubmittedAt(order.submittedAt)}</span>
+                </div>
+                <div>
+                  <span className="order-cell-label">Table</span>
+                  <strong>{order.tableCode}</strong>
+                </div>
+                <div>
+                  <span className="order-cell-label">Items</span>
+                  <strong>
+                    {order.items.reduce((sum, item) => sum + item.quantity, 0)}
+                  </strong>
+                </div>
+                <div>
+                  <span className="order-cell-label">Created by</span>
+                  <strong>
+                    {order.creatorType === "guest"
+                      ? (order.customerName ?? "Guest")
+                      : "Staff team member"}
+                  </strong>
+                </div>
+                <div>
+                  <span className="order-cell-label">Elapsed</span>
+                  <strong>{elapsedTime(order.submittedAt, now)}</strong>
+                </div>
+                <div className="order-state-cell">
+                  <span className="order-state">{lifecycleLabel(order)}</span>
                   <span className="order-request-state">
-                    Corrected · revision {order.currentItemRevision}
+                    {financialLabel(order.financial)}
                   </span>
-                ) : null}
-                {order.cancellationRequested ? (
-                  <span className="order-request-state">
-                    Cancellation requested
-                  </span>
-                ) : null}
-              </div>
-              <strong className="order-total">
-                {formatMoney(order.total.amount, order.total.currency)}
-              </strong>
-              <OrderOperations
-                order={order}
-                tables={props.tables}
-                canModify={props.canModify}
-                canCancel={props.canCancel}
-                canComplete={props.canComplete}
-                canCompleteUnpaid={props.canCompleteUnpaid}
-                canAssignTables={props.canAssignTables}
-                onChanged={props.onReload}
-              />
-            </motion.li>
-          ))}
+                  {order.billRequest ? (
+                    <span className="order-request-state">Bill requested</span>
+                  ) : null}
+                  {order.corrections.length > 0 ? (
+                    <span className="order-request-state">
+                      Corrected · revision {order.currentItemRevision}
+                    </span>
+                  ) : null}
+                  {order.cancellationRequested ? (
+                    <span className="order-request-state">
+                      Cancellation requested
+                    </span>
+                  ) : null}
+                </div>
+                <strong className="order-total">
+                  {formatMoney(order.total.amount, order.total.currency)}
+                </strong>
+                <OrderOperations
+                  order={order}
+                  tables={props.tables}
+                  canModify={props.canModify}
+                  canCancel={props.canCancel}
+                  canComplete={props.canComplete}
+                  canCompleteUnpaid={props.canCompleteUnpaid}
+                  canAssignTables={props.canAssignTables}
+                  canViewPayments={props.canViewPayments}
+                  canViewKitchen={props.canViewKitchen}
+                  canServe={props.canServe}
+                  initialOpen={order.id === props.targetOrderId}
+                  onChanged={props.onReload}
+                />
+              </motion.li>
+            ))}
         </motion.ul>
       )}
     </section>

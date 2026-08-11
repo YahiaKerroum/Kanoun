@@ -1,5 +1,12 @@
 import { CircleAlert, CreditCard, RefreshCw, RotateCcw } from "lucide-react";
-import { useEffect, useRef, useState, type SyntheticEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type SyntheticEvent,
+} from "react";
 import { z } from "zod";
 import { motion } from "framer-motion";
 import {
@@ -60,8 +67,24 @@ const billRequestsSchema = z.object({
   ),
 });
 
+const paymentOrderSummarySchema = z.object({
+  id: z.uuid(),
+  reference: z.string(),
+  tableCode: z.string(),
+  total: moneySchema,
+  financial: z.enum(["unpaid", "paid", "partially_refunded", "refunded"]),
+  fulfilment: z.enum(["not_started", "preparing", "ready", "served"]),
+  closure: z.enum(["active", "completed", "cancelled"]),
+  submittedAt: z.iso.datetime(),
+  customerName: z.string().nullable(),
+});
+const paymentOrdersPageSchema = z.object({
+  items: z.array(paymentOrderSummarySchema),
+});
+
 type Ledger = z.infer<typeof ledgerSchema>;
 type BillRequest = z.infer<typeof billRequestsSchema>["items"][number];
+type PaymentOrderSummary = z.infer<typeof paymentOrderSummarySchema>;
 
 type QueueState =
   | { readonly kind: "loading" }
@@ -69,6 +92,16 @@ type QueueState =
   | {
       readonly kind: "stale";
       readonly items: readonly BillRequest[];
+      readonly message: string;
+    }
+  | { readonly kind: "error"; readonly message: string };
+
+type RecentState =
+  | { readonly kind: "loading" }
+  | { readonly kind: "ready"; readonly items: readonly PaymentOrderSummary[] }
+  | {
+      readonly kind: "stale";
+      readonly items: readonly PaymentOrderSummary[];
       readonly message: string;
     }
   | { readonly kind: "error"; readonly message: string };
@@ -152,21 +185,53 @@ function formatMoney(money: { amount: string; currency: string }): string {
   }).format(Number(money.amount));
 }
 
+function financialLabel(
+  financial: "unpaid" | "paid" | "partially_refunded" | "refunded",
+): string {
+  if (financial === "partially_refunded") return "Partially refunded";
+  if (financial === "refunded") return "Refunded";
+  if (financial === "paid") return "Paid";
+  return "Unpaid";
+}
+
 export function PaymentsWorkspace(props: {
   readonly branchId: string;
   readonly canView: boolean;
   readonly canRecord: boolean;
   readonly canRefund: boolean;
+  readonly canViewOrders: boolean;
 }) {
   const [queue, setQueue] = useState<QueueState>({ kind: "loading" });
+  const [recentState, setRecentState] = useState<RecentState>({
+    kind: "loading",
+  });
   const [reloadSequence, setReloadSequence] = useState(0);
-  const [lookupOrderId, setLookupOrderId] = useState("");
+  const [financialFeedback, setFinancialFeedback] = useState<string | null>(
+    null,
+  );
   const [lookup, setLookup] = useState<
     | { readonly kind: "idle" }
     | { readonly kind: "loading" }
     | { readonly kind: "ready"; readonly ledger: Ledger }
     | { readonly kind: "error"; readonly message: string }
   >({ kind: "idle" });
+  const requestedOrderId = useMemo(() => {
+    const value = new URLSearchParams(window.location.search).get("order");
+    return value !== null && z.uuid().safeParse(value).success ? value : null;
+  }, []);
+
+  const openLedger = useCallback(async (orderId: string) => {
+    setLookup({ kind: "loading" });
+    try {
+      const ledger = await getJson(
+        `/api/v1/staff/orders/${encodeURIComponent(orderId)}/payment-ledger`,
+        ledgerSchema,
+      );
+      setLookup({ kind: "ready", ledger });
+    } catch (error: unknown) {
+      setLookup({ kind: "error", message: message(error) });
+    }
+  }, []);
 
   useEffect(() => {
     if (!props.canView) return;
@@ -210,27 +275,53 @@ export function PaymentsWorkspace(props: {
     };
   }, [props.branchId, props.canView, reloadSequence]);
 
-  async function lookupLedger(
-    event: SyntheticEvent<HTMLFormElement, SubmitEvent>,
-  ) {
-    event.preventDefault();
-    const parsed = z.uuid().safeParse(lookupOrderId.trim());
-    if (!parsed.success) {
-      setLookup({ kind: "error", message: "Enter a valid order identifier." });
+  useEffect(() => {
+    if (!requestedOrderId || !props.canView) return;
+    void openLedger(requestedOrderId);
+  }, [openLedger, props.canView, requestedOrderId]);
+
+  useEffect(() => {
+    if (!props.canView || !props.canViewOrders) {
+      setRecentState({ kind: "ready", items: [] });
       return;
     }
-    setLookup({ kind: "loading" });
-    try {
-      const ledger = await getJson(
-        `/api/v1/staff/orders/${encodeURIComponent(parsed.data)}/payment-ledger`,
-        ledgerSchema,
-      );
-      setLookup({ kind: "ready", ledger });
-      setLookupOrderId("");
-    } catch (error: unknown) {
-      setLookup({ kind: "error", message: message(error) });
-    }
-  }
+    let disposed = false;
+    const controller = new AbortController();
+    void Promise.all([
+      getJson(
+        `/api/v1/staff/orders?branchId=${encodeURIComponent(props.branchId)}&closure=active&pageSize=50`,
+        paymentOrdersPageSchema,
+        controller.signal,
+      ),
+      getJson(
+        `/api/v1/staff/orders?branchId=${encodeURIComponent(props.branchId)}&closure=completed&pageSize=20`,
+        paymentOrdersPageSchema,
+        controller.signal,
+      ),
+    ])
+      .then(([active, completed]) => {
+        if (disposed) return;
+        const unique = new Map<string, PaymentOrderSummary>();
+        for (const order of [...active.items, ...completed.items]) {
+          if (order.closure === "active" || order.financial !== "unpaid") {
+            unique.set(order.id, order);
+          }
+        }
+        setRecentState({ kind: "ready", items: [...unique.values()] });
+      })
+      .catch((error: unknown) => {
+        if (disposed || controller.signal.aborted) return;
+        setRecentState((current) =>
+          current.kind === "ready" || current.kind === "stale"
+            ? { kind: "stale", items: current.items, message: message(error) }
+            : { kind: "error", message: message(error) },
+        );
+      });
+    return () => {
+      disposed = true;
+      controller.abort();
+    };
+  }, [props.branchId, props.canView, props.canViewOrders, reloadSequence]);
 
   if (!props.canView) {
     return (
@@ -272,6 +363,12 @@ export function PaymentsWorkspace(props: {
         </motion.button>
       </header>
 
+      {financialFeedback ? (
+        <p className="payments-success" role="status" aria-live="polite">
+          {financialFeedback}
+        </p>
+      ) : null}
+
       <p className="payments-live-status" role="status" aria-live="polite">
         {items.length === 0
           ? "No open bill requests."
@@ -312,10 +409,23 @@ export function PaymentsWorkspace(props: {
               {items.map((item) => (
                 <motion.li key={item.id} variants={fadeUpItemVariants}>
                   <LedgerSummary ledger={item} />
+                  <button
+                    type="button"
+                    className="payment-ledger-link"
+                    onClick={() => setLookup({ kind: "ready", ledger: item })}
+                  >
+                    Open bill ledger
+                  </button>
                   {props.canRecord && !item.payment ? (
                     <RecordPaymentForm
                       ledger={item}
-                      onRecorded={() => setReloadSequence((value) => value + 1)}
+                      onRecorded={() => {
+                        setFinancialFeedback(
+                          `Payment recorded for ${item.orderReference}. The ledger was reloaded from the server.`,
+                        );
+                        void openLedger(item.orderId);
+                        setReloadSequence((value) => value + 1);
+                      }}
                     />
                   ) : null}
                 </motion.li>
@@ -325,33 +435,88 @@ export function PaymentsWorkspace(props: {
         </>
       )}
 
+      {props.canViewOrders ? (
+        <section
+          className="payment-history-lookup"
+          aria-labelledby="recent-orders-title"
+        >
+          <p className="eyebrow">VISIBLE ORDER HISTORY</p>
+          <h3 id="recent-orders-title">Unpaid and recent orders</h3>
+          <p>
+            Select an order by reference, table, time, and financial state to
+            open its authoritative ledger.
+          </p>
+          {recentState.kind === "loading" ? (
+            <p role="status">Loading recent order evidence…</p>
+          ) : recentState.kind === "error" ? (
+            <p role="alert">{recentState.message}</p>
+          ) : (
+            <>
+              {recentState.kind === "stale" ? (
+                <p className="payments-stale" role="status">
+                  <CircleAlert aria-hidden="true" size={17} />
+                  {recentState.message} Showing the last verified order list.
+                </p>
+              ) : null}
+              {recentState.items.length === 0 ? (
+                <p>No unpaid or recently paid orders are available.</p>
+              ) : (
+                <ul className="payment-order-list">
+                  {recentState.items.map((order) => (
+                    <li key={order.id}>
+                      <div>
+                        <strong>{order.reference}</strong>
+                        <span>Table {order.tableCode}</span>
+                        <span>
+                          {new Intl.DateTimeFormat("en", {
+                            dateStyle: "medium",
+                            timeStyle: "short",
+                          }).format(new Date(order.submittedAt))}
+                        </span>
+                      </div>
+                      <span className="order-request-state">
+                        {financialLabel(order.financial)}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => void openLedger(order.id)}
+                      >
+                        Open ledger
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </>
+          )}
+        </section>
+      ) : null}
+
       <section className="payment-history-lookup">
         <p className="eyebrow">APPEND-ONLY HISTORY</p>
-        <h3>Find an order ledger</h3>
-        <form onSubmit={(event) => void lookupLedger(event)}>
-          <label htmlFor="payment-order-id">Order identifier</label>
-          <div>
-            <input
-              id="payment-order-id"
-              value={lookupOrderId}
-              placeholder="UUID"
-              onChange={(event) => setLookupOrderId(event.currentTarget.value)}
-            />
-            <motion.button
-              type="submit"
-              disabled={lookup.kind === "loading"}
-              whileHover="hover"
-              whileTap="tap"
-              variants={actionButtonVariants}
-            >
-              {lookup.kind === "loading" ? "Finding…" : "Find ledger"}
-            </motion.button>
-          </div>
-        </form>
+        <h3>Selected order ledger</h3>
+        <p>
+          Open a visible bill request or order above. Internal order references
+          stay inside trusted application links.
+        </p>
+        {lookup.kind === "loading" ? (
+          <p role="status">Loading the authoritative ledger…</p>
+        ) : null}
         {lookup.kind === "error" ? <p role="alert">{lookup.message}</p> : null}
         {lookup.kind === "ready" ? (
           <div className="payment-ledger-result">
             <LedgerSummary ledger={lookup.ledger} />
+            {props.canRecord && !lookup.ledger.payment ? (
+              <RecordPaymentForm
+                ledger={lookup.ledger}
+                onRecorded={() => {
+                  setFinancialFeedback(
+                    `Payment recorded for ${lookup.ledger.orderReference}. The ledger was reloaded from the server.`,
+                  );
+                  void openLedger(lookup.ledger.orderId);
+                }}
+              />
+            ) : null}
             {props.canRefund &&
             lookup.ledger.payment &&
             lookup.ledger.financial !== "refunded" ? (
@@ -385,7 +550,7 @@ function LedgerSummary(props: { readonly ledger: Ledger }) {
       </div>
       <div>
         <span>Financial</span>
-        <strong>{ledger.financial.replace("_", " ")}</strong>
+        <strong>{financialLabel(ledger.financial)}</strong>
       </div>
       {ledger.payment ? (
         <div>
@@ -489,6 +654,11 @@ function RecordPaymentForm(props: {
           Payment was not recorded. Reload the bill and verify the balance.
         </p>
       ) : null}
+      {state === "success" ? (
+        <p role="status">
+          Payment recorded. The ledger was reloaded from the server.
+        </p>
+      ) : null}
       <motion.button
         type="submit"
         disabled={!confirmed || state === "pending"}
@@ -510,7 +680,9 @@ function RefundForm(props: {
   const [amount, setAmount] = useState("");
   const [reason, setReason] = useState("");
   const [confirmed, setConfirmed] = useState(false);
-  const [state, setState] = useState<"idle" | "pending" | "failed">("idle");
+  const [state, setState] = useState<"idle" | "pending" | "failed" | "success">(
+    "idle",
+  );
   const key = useRef<string | undefined>(undefined);
   if (!payment) return null;
   const originalPayment = payment;
@@ -564,7 +736,7 @@ function RefundForm(props: {
         ledgerSchema,
       );
       props.onRefunded(next);
-      setState("idle");
+      setState("success");
     } catch {
       setState("failed");
     }
@@ -610,6 +782,11 @@ function RefundForm(props: {
         <p role="alert">
           Refund was not recorded. Sign in again if recent authentication is
           required, then reload the ledger.
+        </p>
+      ) : null}
+      {state === "success" ? (
+        <p role="status">
+          Refund recorded. The append-only ledger is up to date.
         </p>
       ) : null}
       <motion.button

@@ -141,6 +141,46 @@ below 720px.
   focus-visible treatment, actionable errors, and 44px primary actions. The
   Staff handoff link is rendered only after the core server state is ready.
 
+### Operational route navigation
+
+- **Structure:** Staff uses native URL-backed links for `/`, `/notifications`,
+  `/orders`, `/tables`, `/kitchen`, `/payments`, `/menu`, `/reports`, and
+  `/audit`. Staff and Setup are permission-aware Administration links; they are
+  not local placeholder screens.
+- **States:** current route, hover, focus, pressed, invalid route, unauthorized
+  route, signed-out return, and feature-disabled absence. A route change keeps
+  the branch scope server-derived and preserves browser back/forward behavior.
+- **Accessibility:** use native anchors with `aria-current="page"`; retain
+  modifier-click and new-tab behavior; every target is at least 44px and has a
+  visible focus ring.
+
+### Task link and lifecycle status
+
+- **Structure:** a visible order reference and table lead each task row. Links
+  carry trusted route state to order evidence, Kitchen, the payment ledger, or
+  read-only report/audit context. Internal identifiers are never editable or
+  displayed as workflow labels.
+- **Status vocabulary:** Received, Waiting for kitchen, Preparing, Ready for
+  service, Served, Bill requested, Paid, Completed, Cancelled, Partially
+  refunded, and Refunded. Labels and supporting copy always accompany status
+  color or icon; elapsed time is descriptive and never a delay classification.
+- **Handoff states:** loading, empty, unavailable, stale, pending, succeeded,
+  failed, conflicted, and session ended each expose a recovery action or the
+  responsible next role. Acknowledging a notification never completes its task.
+
+### Ledger selection
+
+- **Structure:** payment staff select an order from visible bill requests,
+  unpaid orders, or recent paid/refunded orders by reference, table, time, and
+  financial state. An existing ledger opens through a trusted application link;
+  there is no editable order UUID field.
+- **Financial controls:** payment is exact-balance, append-only, and server
+  authoritative. Refund forms require amount, reason, confirmation, permission,
+  and recent authentication; history remains visible after reload.
+- **Accessibility:** selection controls are labelled, keyboard reachable, and
+  announce pending, success, stale, and failed outcomes without relying on
+  color alone.
+
 ## 6. Motion & Interaction
 
 Use only `transform` and `opacity`. Controls use 160–200ms ease-out feedback.

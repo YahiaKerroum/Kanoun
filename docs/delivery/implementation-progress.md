@@ -15,7 +15,9 @@ last_reviewed: 2026-08-09
 `PR-01 — one-command professional demo environment` is complete and published.
 `PR-02 — access and account lifecycle` is complete and published at
 `e729438a11100d347c2bf8c77a0ad85ecbb84540`. `PR-03 — guided owner setup and
-workforce readiness` is verified. Slice 008 is already integrated into
+workforce readiness` is verified. `PR-04 — join the operational workspaces
+into one service` is implemented and under final publication verification.
+Slice 008 is already integrated into
 `main`; the observed integration merge is
 `b38375bb2bd80b0c8ba98011b0591880d44dc072`, and the PR-03 baseline `main`
 head is `e729438a11100d347c2bf8c77a0ad85ecbb84540`.
@@ -49,8 +51,10 @@ head is `e729438a11100d347c2bf8c77a0ad85ecbb84540`.
   tree, verified on 2026-08-09, and being published in the requested commit.
 - `PR-02 — access-and-account-lifecycle`: complete in the current working
   tree, verified on 2026-08-09, and being published in the requested commit.
-- `PR-03 — guided-owner-setup-and-workforce-readiness`: verified; PR-04 and
-  PR-05 are not started.
+- `PR-03 — guided-owner-setup-and-workforce-readiness`: verified.
+- `PR-04 — join-the-operational-workspaces-into-one-service`: implementation
+  verified in the isolated publication worktree; PR-05 real-stack CI
+  conversion remains explicitly out of scope.
 
 ## Completed
 

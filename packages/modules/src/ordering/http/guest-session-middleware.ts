@@ -42,7 +42,7 @@ export interface GuestSessionMiddlewareDependencies {
   readonly authenticateGuestSession: (
     rawSessionToken: string,
   ) => Promise<GuestRequestContext | undefined>;
-  readonly hashCsrfToken: (rawToken: string) => string;
+  readonly hashGuestCsrfToken: (rawToken: string) => string;
   readonly guestWebOrigin: string;
 }
 
@@ -66,7 +66,10 @@ export function createGuestCsrfProtection(
     if (
       origin !== dependencies.guestWebOrigin ||
       !rawToken ||
-      !secretsMatch(dependencies.hashCsrfToken(rawToken), context.csrfTokenHash)
+      !secretsMatch(
+        dependencies.hashGuestCsrfToken(rawToken),
+        context.csrfTokenHash,
+      )
     ) {
       next(
         new ApplicationError(

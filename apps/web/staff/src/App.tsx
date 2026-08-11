@@ -53,20 +53,14 @@ import {
   replaceLocation,
   safeInternalPath,
 } from "./auth-navigation.js";
+import {
+  chooseStaffLanding,
+  staffPathForSection,
+  staffSectionForPath,
+  type StaffSection,
+} from "./staff-navigation.js";
 
-type Section =
-  | "Home"
-  | "Orders"
-  | "Tables"
-  | "Kitchen"
-  | "Payments"
-  | "Menu"
-  | "Stock"
-  | "Staff"
-  | "Reports"
-  | "Setup"
-  | "Audit"
-  | "Notifications";
+type Section = StaffSection | "Stock" | "Staff" | "Setup";
 
 interface NavigationItem {
   readonly label: Section;
@@ -75,6 +69,7 @@ interface NavigationItem {
   readonly requiredFeature?: string;
   readonly permissionPrefixes?: readonly string[];
   readonly permissions?: readonly string[];
+  readonly administrationPath?: "/employees" | "/setup";
 }
 
 const navigationItems: readonly NavigationItem[] = [
@@ -133,6 +128,7 @@ const navigationItems: readonly NavigationItem[] = [
     group: "maintain",
     requiredFeature: "identity_access",
     permissionPrefixes: ["employees."],
+    administrationPath: "/employees",
   },
   {
     label: "Reports",
@@ -147,6 +143,7 @@ const navigationItems: readonly NavigationItem[] = [
     group: "review",
     requiredFeature: "restaurant_configuration",
     permissions: ["restaurant.edit", "branches.manage", "features.manage"],
+    administrationPath: "/setup",
   },
   {
     label: "Audit",
@@ -374,24 +371,45 @@ function isNavigationItemAvailable(
   );
 }
 
+function isStaffSection(section: Section): section is StaffSection {
+  return section !== "Stock" && section !== "Staff" && section !== "Setup";
+}
+
 export function App() {
-  const [activeSection, setActiveSection] = useState<Section>("Home");
   const [portal, setPortal] = useState<PortalState>({ kind: "loading" });
   const [readiness, setReadiness] = useState<Readiness>({ kind: "checking" });
   const [refreshSequence, setRefreshSequence] = useState(0);
-  const [locationPath, setLocationPath] = useState(
-    () => window.location.pathname,
+  const [locationUrl, setLocationUrl] = useState(
+    () =>
+      `${window.location.pathname}${window.location.search}${window.location.hash}`,
   );
   const [logoutState, setLogoutState] = useState<"idle" | "pending">("idle");
   const [logoutMessage, setLogoutMessage] = useState("");
   const statusId = useId();
+  const location = new URL(locationUrl, window.location.origin);
+  const locationPath = location.pathname;
   const authRoute = authRouteForPath(locationPath);
 
   useEffect(() => {
-    const synchronizeLocation = () => setLocationPath(window.location.pathname);
+    const synchronizeLocation = () =>
+      setLocationUrl(
+        `${window.location.pathname}${window.location.search}${window.location.hash}`,
+      );
     window.addEventListener("popstate", synchronizeLocation);
     return () => window.removeEventListener("popstate", synchronizeLocation);
   }, []);
+
+  useEffect(() => {
+    if (portal.kind !== "ready" || locationPath !== "/") return;
+    const landing = chooseStaffLanding(
+      portal.capabilities.permissions,
+      portal.capabilities.enabledFeatures,
+    );
+    if (landing !== "Home") {
+      window.history.replaceState({}, "", staffPathForSection(landing));
+      setLocationUrl(staffPathForSection(landing));
+    }
+  }, [locationPath, portal]);
 
   useEffect(() => {
     if (authRoute) return;
@@ -433,7 +451,9 @@ export function App() {
       setPortal({ kind: "signed-out" });
       replaceLocation(
         `${authPath("sign-in")}?notice=session-ended&returnTo=${encodeURIComponent(
-          safeInternalPath(window.location.pathname),
+          safeInternalPath(
+            `${window.location.pathname}${window.location.search}`,
+          ),
         )}`,
       );
     };
@@ -442,8 +462,16 @@ export function App() {
       window.removeEventListener("mise:session-ended", handleSessionEnded);
   }, []);
 
-  const selectSection = useCallback((section: Section) => {
-    startTransition(() => setActiveSection(section));
+  const selectSection = useCallback((section: StaffSection) => {
+    startTransition(() => {
+      window.history.pushState({}, "", staffPathForSection(section));
+      setLocationUrl(staffPathForSection(section));
+    });
+  }, []);
+
+  const navigateTo = useCallback((href: string) => {
+    window.history.pushState({}, "", href);
+    setLocationUrl(href);
   }, []);
 
   const refresh = useCallback(() => {
@@ -493,11 +521,24 @@ export function App() {
   const availableNavigation = navigationItems.filter((item) =>
     isNavigationItemAvailable(item, portal.capabilities),
   );
-  const visibleSection = availableNavigation.some(
-    (item) => item.label === activeSection,
-  )
-    ? activeSection
-    : "Home";
+  const requestedSection = staffSectionForPath(locationPath);
+  const requestedItem = navigationItems.find(
+    (item) => item.label === requestedSection,
+  );
+  const landingSection = chooseStaffLanding(
+    portal.capabilities.permissions,
+    portal.capabilities.enabledFeatures,
+  );
+  const visibleSection =
+    locationPath === "/" ? landingSection : requestedSection;
+  const routeState =
+    locationPath !== "/" && requestedSection === null
+      ? "not-found"
+      : requestedSection !== null &&
+          requestedItem !== undefined &&
+          !isNavigationItemAvailable(requestedItem, portal.capabilities)
+        ? "unauthorized"
+        : "ready";
   const activeRestaurantId = portal.capabilities.restaurantId;
   const notificationsAvailable = availableNavigation.some(
     (item) => item.label === "Notifications",
@@ -517,6 +558,72 @@ export function App() {
   const responsibilities = effectiveResponsibilities(portal.session);
   const administrationOrigin =
     import.meta.env.VITE_ADMIN_WEB_ORIGIN ?? "http://127.0.0.1:5175";
+  const isMobilePrimary = (label: Section): boolean =>
+    label === "Home" ||
+    label === "Orders" ||
+    label === "Kitchen" ||
+    label === "Payments";
+  const renderNavigationItem = (
+    item: NavigationItem,
+    index: number,
+    mobileSecondary = false,
+  ) => {
+    const Icon = item.icon;
+    const previousGroup = availableNavigation[index - 1]?.group;
+    const startsGroup = index > 0 && previousGroup !== item.group;
+    const isLocal = isStaffSection(item.label);
+    const isActive = isLocal && visibleSection === item.label;
+    const href = item.administrationPath
+      ? `${administrationOrigin}${item.administrationPath}?returnTo=${encodeURIComponent(
+          safeInternalPath(`${location.pathname}${location.search}`),
+        )}`
+      : isLocal
+        ? staffPathForSection(item.label)
+        : "/";
+
+    return (
+      <motion.a
+        className={`navigation-item${
+          isActive ? " navigation-item--active" : ""
+        }${startsGroup ? " navigation-item--group-start" : ""}${
+          isMobilePrimary(item.label)
+            ? ""
+            : " navigation-item--mobile-secondary"
+        }${mobileSecondary ? " navigation-item--mobile-more-link" : ""}`}
+        href={href}
+        key={item.label}
+        aria-current={isActive ? "page" : undefined}
+        onClick={(event) => {
+          if (
+            item.administrationPath ||
+            event.button !== 0 ||
+            event.metaKey ||
+            event.ctrlKey ||
+            event.shiftKey ||
+            event.altKey
+          ) {
+            return;
+          }
+          event.preventDefault();
+          if (isLocal) navigateTo(href);
+        }}
+        whileHover="hover"
+        whileTap="tap"
+        animate={isActive ? "active" : "rest"}
+        variants={navItemVariants}
+      >
+        {isActive ? (
+          <motion.span
+            layoutId="active-nav-pill"
+            className="navigation-item__pill"
+            aria-hidden="true"
+          />
+        ) : null}
+        <Icon aria-hidden="true" size={21} />
+        <span>{item.label}</span>
+      </motion.a>
+    );
+  };
 
   return (
     <MotionConfig reducedMotion="user">
@@ -540,38 +647,23 @@ export function App() {
               className="navigation-rail__items"
               aria-label="Staff navigation"
             >
-              {availableNavigation.map((item, index) => {
-                const Icon = item.icon;
-                const previousGroup = availableNavigation[index - 1]?.group;
-                const startsGroup = index > 0 && previousGroup !== item.group;
-                const isActive = visibleSection === item.label;
-
-                return (
-                  <motion.button
-                    className={`navigation-item${
-                      isActive ? " navigation-item--active" : ""
-                    }${startsGroup ? " navigation-item--group-start" : ""}`}
-                    type="button"
-                    key={item.label}
-                    aria-current={isActive ? "page" : undefined}
-                    onClick={() => selectSection(item.label)}
-                    whileHover="hover"
-                    whileTap="tap"
-                    animate={isActive ? "active" : "rest"}
-                    variants={navItemVariants}
-                  >
-                    {isActive ? (
-                      <motion.span
-                        layoutId="active-nav-pill"
-                        className="navigation-item__pill"
-                        aria-hidden="true"
-                      />
-                    ) : null}
-                    <Icon aria-hidden="true" size={21} />
-                    <span>{item.label}</span>
-                  </motion.button>
-                );
-              })}
+              {availableNavigation.map((item, index) =>
+                renderNavigationItem(item, index),
+              )}
+              <details className="navigation-more">
+                <summary>
+                  <Wrench aria-hidden="true" size={21} />
+                  <span>More</span>
+                </summary>
+                <div className="navigation-more__links">
+                  {availableNavigation
+                    .filter((item) => !isMobilePrimary(item.label))
+                    .map((item) => {
+                      const index = availableNavigation.indexOf(item);
+                      return renderNavigationItem(item, index, true);
+                    })}
+                </div>
+              </details>
             </nav>
 
             <div className="rail-profile">
@@ -588,13 +680,11 @@ export function App() {
             <header className="context-bar">
               <div className="context-bar__title">
                 <p>Staff workspace</p>
-                <h1>{visibleSection}</h1>
+                <h1>{visibleSection ?? "Unavailable"}</h1>
               </div>
               <div className="context-item">
                 <span className="context-item__label">Branch</span>
-                <strong title={`Branch ID: ${portal.capabilities.branchId}`}>
-                  {portal.capabilities.branchName}
-                </strong>
+                <strong>{portal.capabilities.branchName}</strong>
               </div>
               <div className="context-item">
                 <span className="context-item__label">Access</span>
@@ -660,7 +750,13 @@ export function App() {
                     )}
                   </ul>
                   {canOpenAdministration(portal.session) ? (
-                    <a href={`${administrationOrigin}/context`}>
+                    <a
+                      href={`${administrationOrigin}/context?returnTo=${encodeURIComponent(
+                        safeInternalPath(
+                          `${location.pathname}${location.search}`,
+                        ),
+                      )}`}
+                    >
                       Open administration
                     </a>
                   ) : null}
@@ -692,7 +788,13 @@ export function App() {
                   animate="enter"
                   exit="exit"
                 >
-                  {visibleSection === "Home" ? (
+                  {routeState !== "ready" ? (
+                    <RouteBoundary
+                      kind={routeState}
+                      landingSection={landingSection}
+                      onNavigate={navigateTo}
+                    />
+                  ) : visibleSection === "Home" ? (
                     <HomeWorkspace
                       capabilities={portal.capabilities}
                       destinationCount={availableNavigation.length}
@@ -739,6 +841,15 @@ export function App() {
                       canAssignTables={portal.capabilities.permissions.includes(
                         "tables.assign",
                       )}
+                      canViewPayments={portal.capabilities.permissions.includes(
+                        "payments.view",
+                      )}
+                      canViewKitchen={portal.capabilities.permissions.includes(
+                        "kitchen.view",
+                      )}
+                      canServe={portal.capabilities.permissions.includes(
+                        "orders.serve",
+                      )}
                     />
                   ) : visibleSection === "Kitchen" ? (
                     <KitchenWorkspace
@@ -764,6 +875,9 @@ export function App() {
                       )}
                       canRefund={portal.capabilities.permissions.includes(
                         "payments.refund",
+                      )}
+                      canViewOrders={portal.capabilities.permissions.includes(
+                        "orders.view",
                       )}
                     />
                   ) : visibleSection === "Menu" ? (
@@ -796,9 +910,7 @@ export function App() {
                         "audit.view",
                       )}
                     />
-                  ) : (
-                    <DeferredWorkspace section={visibleSection} />
-                  )}
+                  ) : null}
                 </motion.div>
               </AnimatePresence>
             </main>
@@ -1028,23 +1140,37 @@ function HomeWorkspace({
   );
 }
 
-function DeferredWorkspace({ section }: { readonly section: Section }) {
+function RouteBoundary({
+  kind,
+  landingSection,
+  onNavigate,
+}: {
+  readonly kind: "not-found" | "unauthorized";
+  readonly landingSection: StaffSection;
+  readonly onNavigate: (href: string) => void;
+}) {
+  const title =
+    kind === "not-found"
+      ? "That staff destination is not available"
+      : "That staff destination is outside your access";
+  const detail =
+    kind === "not-found"
+      ? "The address may be old or incomplete. Choose an authorized workspace to continue."
+      : "This route was rejected without requesting data outside your current branch permissions.";
   return (
-    <section className="deferred-state" aria-labelledby="deferred-title">
+    <section className="deferred-state" aria-labelledby="route-boundary-title">
       <span className="deferred-state__icon" aria-hidden="true">
         <ClipboardList size={28} />
       </span>
-      <p className="eyebrow">
-        AUTHORIZED DESTINATION · DELIVERY ORDER PROTECTED
-      </p>
-      <h2 id="deferred-title">
-        {section} is available but not implemented here yet
-      </h2>
-      <p>
-        Your effective branch access permits this destination. Its real data,
-        states, automatic actions, and task workflows arrive only in the slice
-        that owns the module.
-      </p>
+      <p className="eyebrow">STAFF ROUTE BOUNDARY</p>
+      <h2 id="route-boundary-title">{title}</h2>
+      <p>{detail}</p>
+      <button
+        type="button"
+        onClick={() => onNavigate(staffPathForSection(landingSection))}
+      >
+        Open {landingSection.toLowerCase()}
+      </button>
     </section>
   );
 }

@@ -104,7 +104,11 @@ automatic MVP acceptance.
 The staff shell renders only destinations allowed by both the employee's
 effective grants and the branch's enabled feature set. Hiding a destination is
 progressive disclosure; the API still performs authorization for every
-protected operation.
+protected operation. Staff destinations are stable URLs: `/`, `/notifications`,
+`/orders`, `/tables`, `/kitchen`, `/payments`, `/menu`, `/reports`, and `/audit`.
+Browser refresh, back/forward, direct entry, and modifier-click/new-tab behavior
+preserve the selected workspace. Staff and Setup are permission-aware links to
+Administration `/employees` and `/setup`, respectively.
 
 Every staff screenshot in this README uses the same synthetic navigation
 profile: all current MVP modules are enabled and the employee has the minimum
@@ -143,6 +147,13 @@ under the version stored when they were created. `inventory` (`CFG-016`) is why
 The authoritative catalogs are
 [feature configuration](docs/config/features.yaml) and
 [permissions](docs/security/permissions.yaml).
+
+Orders expose the next authorized task from visible reference and table context:
+Kitchen preparation and serving, bill requests, payment ledgers, corrections,
+cancellation, table-session movement, completion, refund history, and linked
+report/audit evidence. Payment staff open ledgers from visible bill requests,
+unpaid orders, or recent paid/refunded orders; ordinary work never requires
+typing an internal order UUID.
 
 ### Service operations
 

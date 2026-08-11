@@ -164,7 +164,7 @@ export function composeApi(config: ApiConfig): ApiComposition {
   const guestSessionDependencies = {
     authenticateGuestSession: (token: string) =>
       menuTablesService.authenticateGuestSession(token),
-    hashCsrfToken: (token: string) =>
+    hashGuestCsrfToken: (token: string) =>
       hashOpaqueToken(token, config.guestAccessSecret),
     guestWebOrigin: config.customerWebOrigin,
   };

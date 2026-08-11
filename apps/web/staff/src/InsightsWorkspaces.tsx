@@ -74,6 +74,23 @@ const notificationListSchema = z.object({
 });
 type NotificationItem = z.infer<typeof notificationSchema>;
 
+function notificationTask(item: NotificationItem): {
+  readonly href: string;
+  readonly label: string;
+} {
+  const type = item.type.toLowerCase();
+  if (type.includes("ready"))
+    return { href: "/kitchen", label: "Open kitchen" };
+  if (type.includes("bill") || type.includes("payment")) {
+    return { href: "/payments", label: "Open payment desk" };
+  }
+  if (type.includes("table")) return { href: "/tables", label: "Open tables" };
+  if (type.includes("order") || type.includes("cancel")) {
+    return { href: "/orders", label: "Open orders" };
+  }
+  return { href: "/notifications", label: "Stay in inbox" };
+}
+
 export function NotificationInboxWorkspace({
   branchId,
 }: {
@@ -240,6 +257,9 @@ export function NotificationInboxWorkspace({
                 </time>
               </div>
               <div className="notification-card__actions">
+                <a href={notificationTask(item).href}>
+                  {notificationTask(item).label}
+                </a>
                 {!item.readAt ? (
                   <motion.button
                     type="button"
@@ -674,9 +694,12 @@ export function SalesReportWorkspace({
             {report?.rows.map((row) => (
               <tr key={row.orderId}>
                 <td>
-                  <span title={`Order ID ${row.orderId}`}>
+                  <a
+                    href={`/orders?order=${encodeURIComponent(row.orderId)}`}
+                    aria-label={`Open order ${row.orderReference}`}
+                  >
                     {row.orderReference}
-                  </span>
+                  </a>
                 </td>
                 <td>
                   {row.restaurantName} · {row.branchName}
@@ -860,7 +883,16 @@ export function AuditWorkspace({
                 <strong>{item.action}</strong>
               </div>
               <p>
-                {item.targetType} · {item.targetId}
+                {item.targetType} ·{" "}
+                {item.targetType.toLowerCase().includes("order") ? (
+                  <a
+                    href={`/orders?order=${encodeURIComponent(item.targetId)}`}
+                  >
+                    Open order evidence
+                  </a>
+                ) : (
+                  "Read-only target context"
+                )}
               </p>
               <time dateTime={item.occurredAt}>
                 {new Date(item.occurredAt).toISOString()}

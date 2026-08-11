@@ -66,9 +66,13 @@ export function OrderOperations(props: {
   readonly canComplete: boolean;
   readonly canCompleteUnpaid: boolean;
   readonly canAssignTables: boolean;
+  readonly canViewPayments: boolean;
+  readonly canViewKitchen: boolean;
+  readonly canServe: boolean;
+  readonly initialOpen?: boolean;
   readonly onChanged: () => void;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(props.initialOpen ?? false);
   const hasAction =
     (props.canModify &&
       props.order.closure === "active" &&
@@ -86,21 +90,47 @@ export function OrderOperations(props: {
       props.order.fulfilment === "served" &&
       props.order.financial !== "paid") ||
     (props.canAssignTables && props.order.closure === "active");
+  const hasHandoff =
+    props.canViewPayments ||
+    props.canViewKitchen ||
+    (props.canServe && props.order.fulfilment === "ready");
 
-  if (!hasAction) return null;
+  if (!hasAction && !hasHandoff) return null;
 
   return (
     <div className="order-operations">
-      <motion.button
-        type="button"
-        onClick={() => setOpen((value) => !value)}
-        whileHover="hover"
-        whileTap="tap"
-        variants={actionButtonVariants}
+      <div
+        className="order-handoff-links"
+        aria-label={`Next actions for ${props.order.reference}`}
       >
-        <Settings2 aria-hidden="true" size={17} />
-        {open ? "Close actions" : "Manage"}
-      </motion.button>
+        <a href={`/orders?order=${encodeURIComponent(props.order.id)}`}>
+          View order detail
+        </a>
+        {props.canViewKitchen ? (
+          <a href={`/kitchen?order=${encodeURIComponent(props.order.id)}`}>
+            {props.order.fulfilment === "ready"
+              ? "Open serving handoff"
+              : "Open kitchen handoff"}
+          </a>
+        ) : null}
+        {props.canViewPayments ? (
+          <a href={`/payments?order=${encodeURIComponent(props.order.id)}`}>
+            Open payment ledger
+          </a>
+        ) : null}
+      </div>
+      {hasAction ? (
+        <motion.button
+          type="button"
+          onClick={() => setOpen((value) => !value)}
+          whileHover="hover"
+          whileTap="tap"
+          variants={actionButtonVariants}
+        >
+          <Settings2 aria-hidden="true" size={17} />
+          {open ? "Close actions" : "Manage"}
+        </motion.button>
+      ) : null}
       {open ? (
         <div className="order-operation-panel">
           {props.canModify &&

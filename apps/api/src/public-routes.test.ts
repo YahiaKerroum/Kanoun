@@ -78,7 +78,7 @@ function createTestApplication(overrides?: {
     checkReadiness: () => Promise.resolve(),
     guestSessionMiddleware: createGuestSessionMiddleware({
       authenticateGuestSession,
-      hashCsrfToken: (token) => token,
+      hashGuestCsrfToken: (token) => token,
       guestWebOrigin: "https://customer.example.test",
     }),
     apiRouters: [

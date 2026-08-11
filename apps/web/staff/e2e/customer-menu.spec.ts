@@ -379,9 +379,11 @@ test("builds, reviews, submits, tracks, and requests cancellation for an order",
     page.getByRole("heading", { name: "Order reference" }),
   ).toBeVisible();
   await expect(page.getByText("ORD-000012")).toBeVisible();
-  await expect(page.getByText("Received")).toBeVisible();
+  await expect(page.locator(".order-status strong")).toHaveText("Received");
   await page.getByRole("button", { name: "Refresh status" }).click();
-  await expect(page.getByText("Ready", { exact: true })).toBeVisible();
+  await expect(page.locator(".order-status strong")).toHaveText(
+    "Ready for service",
+  );
   await page.screenshot({
     path: "test-results/readme-customer-order-status-mobile.png",
     fullPage: true,

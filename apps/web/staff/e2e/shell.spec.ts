@@ -116,10 +116,11 @@ async function expectCanonicalReadmeNavigation(page: Page): Promise<void> {
     name: "Staff navigation",
   });
   await expect(navigation).toBeVisible();
+  await openMobileMore(page);
   const navigationBox = await navigation.boundingBox();
   expect(navigationBox).not.toBeNull();
   for (const label of readmeNavigationLabels) {
-    const destination = navigation.getByRole("button", {
+    const destination = navigation.getByRole("link", {
       name: label,
       exact: true,
     });
@@ -134,8 +135,20 @@ async function expectCanonicalReadmeNavigation(page: Page): Promise<void> {
     }
   }
   await expect(
-    navigation.getByRole("button", { name: "Stock", exact: true }),
+    navigation.getByRole("link", { name: "Stock", exact: true }),
   ).toHaveCount(0);
+}
+
+async function openMobileMore(page: Page): Promise<void> {
+  const navigation = page.getByRole("navigation", {
+    name: "Staff navigation",
+  });
+  const summary = navigation.locator("details.navigation-more > summary");
+  if (await summary.isVisible()) {
+    await navigation.locator("details.navigation-more").evaluate((element) => {
+      element.setAttribute("open", "");
+    });
+  }
 }
 
 async function resetReadmeCaptureScroll(page: Page): Promise<void> {
@@ -305,37 +318,91 @@ test("keeps staff navigation behind an authenticated capability boundary", async
   ).toHaveCount(0);
 });
 
+test("keeps Staff destinations URL-addressable with safe recovery", async ({
+  page,
+}) => {
+  await mockReadyPortal(page, {
+    permissions: ["orders.view"],
+    enabledFeatures: ["ordering"],
+    grants: [{ permissionKey: "orders.view", restaurantId, branchId }],
+  });
+  await page.route("**/api/v1/staff/orders?*", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ items: [activeOrder], nextCursor: null }),
+    }),
+  );
+
+  await page.goto("/");
+  await expect(page).toHaveURL(/\/orders$/);
+  await expect(page.getByRole("heading", { name: "Order flow" })).toBeVisible();
+
+  await page.goto("/orders");
+  await expect(page).toHaveURL(/\/orders$/);
+  await page.goto(`/orders?order=${orderId}`);
+  await expect(page.locator(".order-list-item--selected")).toBeVisible();
+  await expect(
+    page.getByText("Selected order evidence is shown first.", { exact: false }),
+  ).toBeVisible();
+  await page.goto("/not-a-workspace");
+  await expect(
+    page.getByRole("heading", {
+      name: "That staff destination is not available",
+    }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Open orders" }).click();
+  await expect(page).toHaveURL(/\/orders$/);
+});
+
 test("shows only destinations allowed by both permissions and enabled features", async ({
   page,
 }) => {
   await mockReadyPortal(page, {
-    permissions: ["orders.view", "kitchen.update"],
+    permissions: [
+      "orders.view",
+      "orders.create",
+      "kitchen.view",
+      "kitchen.update",
+    ],
     enabledFeatures: ["notifications", "ordering", "kitchen"],
     grants: [
       { permissionKey: "orders.view", restaurantId, branchId },
+      { permissionKey: "orders.create", restaurantId, branchId },
+      { permissionKey: "kitchen.view", restaurantId, branchId },
       { permissionKey: "kitchen.update", restaurantId, branchId },
     ],
   });
   await page.goto("/");
 
   await expect(
-    page.getByRole("heading", {
-      name: "Your branch is ready for service.",
-    }),
+    page.getByRole("heading", { name: "Your branch is ready for service." }),
   ).toBeVisible();
-  await expect(page.getByRole("button", { name: "Home" })).toBeVisible();
   await expect(
-    page.getByRole("button", { name: "Notifications", exact: true }),
+    page.getByRole("link", { name: "Home", exact: true }),
   ).toBeVisible();
-  await expect(page.getByRole("button", { name: "Orders" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Kitchen" })).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Notifications", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Orders", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Kitchen", exact: true }),
+  ).toBeVisible();
 
-  await expect(page.getByRole("button", { name: "Tables" })).toHaveCount(0);
   await expect(
-    page.getByRole("button", { name: "Staff", exact: true }),
+    page.getByRole("link", { name: "Tables", exact: true }),
   ).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "Reports" })).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "Setup" })).toHaveCount(0);
+  await expect(
+    page.getByRole("link", { name: "Staff", exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("link", { name: "Reports", exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("link", { name: "Setup", exact: true }),
+  ).toHaveCount(0);
 
   const accessIcons = page.locator(".access-icon");
   await expect(accessIcons).toHaveCount(3);
@@ -400,7 +467,7 @@ test("keeps order list and entry dependencies behind their exact permission gate
   });
 
   await page.goto("/");
-  await page.getByRole("button", { name: "Orders" }).click();
+  await page.getByRole("link", { name: "Orders", exact: true }).click();
   await expect(
     page.getByRole("heading", { name: "Order view permission required" }),
   ).toBeVisible();
@@ -448,7 +515,7 @@ test("filters active orders, displays elapsed time, and preserves stale results"
   });
 
   await page.goto("/");
-  await page.getByRole("button", { name: "Orders" }).click();
+  await page.getByRole("link", { name: "Orders", exact: true }).click();
   await expect(
     page.getByRole("heading", {
       name: "No active orders match these filters",
@@ -614,7 +681,7 @@ test("creates a menu- and table-backed staff order with CSRF and idempotency", a
   });
 
   await page.goto("/");
-  await page.getByRole("button", { name: "Orders" }).click();
+  await page.getByRole("link", { name: "Orders", exact: true }).click();
   const trigger = page.getByRole("button", { name: "Create order" });
   await trigger.click();
   await expect(
@@ -772,7 +839,7 @@ test("processes the grouped kitchen queue and ready-order collection accessibly"
   });
 
   await page.goto("/");
-  await page.getByRole("button", { name: "Kitchen" }).click();
+  await page.getByRole("link", { name: "Kitchen", exact: true }).click();
   await expect(
     page.getByRole("heading", { name: "Kitchen and serving" }),
   ).toBeVisible();
@@ -860,7 +927,7 @@ test("preserves the last verified kitchen queue and recovers authoritative state
   });
 
   await page.goto("/");
-  await page.getByRole("button", { name: "Kitchen" }).click();
+  await page.getByRole("link", { name: "Kitchen", exact: true }).click();
   await expect(page.getByText("1× Soup")).toBeVisible();
   fail = true;
   await page.getByRole("button", { name: "Refresh queue" }).click();
@@ -940,18 +1007,28 @@ test("keeps every current MVP destination available in the README navigation pro
     name: "Staff navigation",
   });
   await expect(navigation).toBeVisible();
-  await expect(page.getByRole("button", { name: "Home" })).toBeVisible();
+  const mobileMore = navigation.locator("details.navigation-more");
+  if (await mobileMore.isVisible()) {
+    await mobileMore.locator("summary").click();
+  }
   await expect(
-    navigation.getByRole("button", { name: "Notifications", exact: true }),
+    page.getByRole("link", { name: "Home", exact: true }),
   ).toBeVisible();
   await expect(
-    navigation.getByRole("button", { name: "Payments", exact: true }),
+    navigation.getByRole("link", { name: "Notifications", exact: true }),
   ).toBeVisible();
   await expect(
-    navigation.getByRole("button", { name: "Staff", exact: true }),
+    navigation.getByRole("link", { name: "Payments", exact: true }),
   ).toBeVisible();
-  await expect(page.getByRole("button", { name: "Audit" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Stock" })).toHaveCount(0);
+  await expect(
+    navigation.getByRole("link", { name: "Staff", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Audit", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Stock", exact: true }),
+  ).toHaveCount(0);
   await captureReadmeScreenshot(
     page,
     "test-results/readme-staff-workspace.png",
@@ -1077,7 +1154,8 @@ test("loads real read-only menu and derived table states for the active scope", 
   );
 
   await page.goto("/");
-  await page.getByRole("button", { name: "Menu" }).click();
+  await openMobileMore(page);
+  await page.getByRole("link", { name: "Menu", exact: true }).click();
 
   await expect(
     page.getByRole("heading", { name: "What guests can order" }),
@@ -1091,7 +1169,7 @@ test("loads real read-only menu and derived table states for the active scope", 
   ).toBeVisible();
   await captureReadmeScreenshot(page, "test-results/readme-staff-menu.png");
 
-  await page.getByRole("button", { name: "Tables" }).click();
+  await page.getByRole("link", { name: "Tables", exact: true }).click();
 
   await expect(
     page.getByRole("heading", { name: "Table availability" }),
@@ -1141,11 +1219,11 @@ test("does not fetch or render lists without the exact view permissions", async 
   });
 
   await page.goto("/");
-  await page.getByRole("button", { name: "Menu" }).click();
+  await page.getByRole("link", { name: "Menu", exact: true }).click();
   await expect(
     page.getByRole("heading", { name: "Menu view permission required" }),
   ).toBeVisible();
-  await page.getByRole("button", { name: "Tables" }).click();
+  await page.getByRole("link", { name: "Tables", exact: true }).click();
   await expect(
     page.getByRole("heading", { name: "Table view permission required" }),
   ).toBeVisible();
@@ -1219,7 +1297,7 @@ test("keeps the last verified menu visible when a reload fails", async ({
   );
 
   await page.goto("/");
-  await page.getByRole("button", { name: "Menu" }).click();
+  await page.getByRole("link", { name: "Menu", exact: true }).click();
   await expect(page.getByText("Verified soup")).toBeVisible();
   failDishReload = true;
   await page.getByRole("button", { name: "Reload data" }).click();
@@ -1237,12 +1315,18 @@ test("records payment and refund with confirmation in the responsive payment des
   let refunded = false;
   await mockReadyPortal(page, {
     includeReadmeNavigation: true,
-    permissions: ["payments.view", "payments.record", "payments.refund"],
-    enabledFeatures: ["payments"],
+    permissions: [
+      "payments.view",
+      "payments.record",
+      "payments.refund",
+      "orders.view",
+    ],
+    enabledFeatures: ["payments", "ordering"],
     grants: [
       { permissionKey: "payments.view", restaurantId, branchId },
       { permissionKey: "payments.record", restaurantId, branchId },
       { permissionKey: "payments.refund", restaurantId, branchId },
+      { permissionKey: "orders.view", restaurantId, branchId },
     ],
   });
   const ledger = () => ({
@@ -1307,6 +1391,27 @@ test("records payment and refund with confirmation in the responsive payment des
       }),
     }),
   );
+  await page.route("**/api/v1/staff/orders?*", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        items: [
+          {
+            id: orderId,
+            reference: "ORD-000021",
+            tableCode: "T-12",
+            total: { amount: "4200.00", currency: "DZD" },
+            financial: paid ? "paid" : "unpaid",
+            fulfilment: "served",
+            closure: "active",
+            submittedAt: "2026-07-29T09:58:00.000Z",
+            customerName: "Nadia Cheriet",
+          },
+        ],
+      }),
+    }),
+  );
   await page.route("**/api/v1/staff/orders/*/payments", async (route) => {
     const request = route.request();
     expect(request.headers()["idempotency-key"]?.length).toBeGreaterThanOrEqual(
@@ -1356,7 +1461,7 @@ test("records payment and refund with confirmation in the responsive payment des
   });
 
   await page.goto("/");
-  await page.getByRole("button", { name: "Payments" }).click();
+  await page.getByRole("link", { name: "Payments", exact: true }).click();
   await expect(
     page.getByRole("heading", { name: "Bill requests" }),
   ).toBeVisible();
@@ -1368,10 +1473,8 @@ test("records payment and refund with confirmation in the responsive payment des
   await page.getByRole("button", { name: "Record payment" }).click();
   await expect(page.getByText("No open bill requests.")).toBeVisible();
 
-  await page.getByLabel("Order identifier").fill(orderId);
-  await page.getByRole("button", { name: "Find ledger" }).click();
+  await page.getByRole("button", { name: "Open ledger", exact: true }).click();
   await expect(page.getByText("Original payment")).toBeVisible();
-  await expect(page.getByLabel("Order identifier")).toHaveValue("");
   await page.getByLabel("Amount (DZD)").fill("500.00");
   await page.getByLabel("Reason").fill("Courtesy adjustment for Nadia Cheriet");
   await page.getByLabel("Confirm this append-only refund.").check();
@@ -1481,7 +1584,7 @@ test("keeps the same correction key across a failed response and exposes keyboar
   });
 
   await page.goto("/");
-  await page.getByRole("button", { name: "Orders" }).click();
+  await page.getByRole("link", { name: "Orders", exact: true }).click();
   await page.getByRole("button", { name: "Manage" }).click();
   await page.getByLabel("Couscous royale").fill("2");
   await page.getByLabel("Correction reason").fill("Correct quantity");
@@ -1518,7 +1621,7 @@ test("does not fetch payment data without payments.view", async ({ page }) => {
     return route.fulfill({ status: 500 });
   });
   await page.goto("/");
-  await page.getByRole("button", { name: "Payments" }).click();
+  await page.getByRole("link", { name: "Payments", exact: true }).click();
   await expect(
     page.getByRole("heading", { name: "Payment view permission required" }),
   ).toBeVisible();
@@ -1563,7 +1666,7 @@ test("requires explicit confirmation for the critical unpaid completion UI", asy
     });
   });
   await page.goto("/");
-  await page.getByRole("button", { name: "Orders" }).click();
+  await page.getByRole("link", { name: "Orders", exact: true }).click();
   await page.getByRole("button", { name: "Manage" }).click();
   const submit = page.getByRole("button", { name: "Complete order" });
   await expect(submit).toBeDisabled();
@@ -1726,9 +1829,8 @@ test("keeps the staff insights workspaces usable across desktop, tablet, and mob
     { scrollTarget: "#dashboard-title" },
   );
 
-  await page
-    .getByRole("button", { name: "Notifications", exact: true })
-    .click();
+  await openMobileMore(page);
+  await page.getByRole("link", { name: "Notifications", exact: true }).click();
   await expect(
     page.getByRole("heading", {
       name: "Notifications that survive reconnects",
@@ -1740,7 +1842,8 @@ test("keeps the staff insights workspaces usable across desktop, tablet, and mob
   );
 
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.getByRole("button", { name: "Reports" }).click();
+  await openMobileMore(page);
+  await page.getByRole("link", { name: "Reports", exact: true }).click();
   await expect(
     page.getByRole("heading", { name: "Sales report" }),
   ).toBeVisible();
@@ -1774,7 +1877,7 @@ test("keeps the staff insights workspaces usable across desktop, tablet, and mob
       .evaluate((body) => body.scrollWidth <= body.clientWidth),
   ).toBe(true);
 
-  await page.getByRole("button", { name: "Audit" }).click();
+  await page.getByRole("link", { name: "Audit", exact: true }).click();
   await expect(
     page.getByRole("heading", { name: "Audit history" }),
   ).toBeVisible();

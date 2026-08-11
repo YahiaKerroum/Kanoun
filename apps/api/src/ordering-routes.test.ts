@@ -137,6 +137,7 @@ function application(overrides?: Partial<OrderingHttpUseCases>) {
     authenticateGuestSession: (token: string) =>
       Promise.resolve(token === "guest-token" ? guestContext : undefined),
     hashCsrfToken: (token: string) => token,
+    hashGuestCsrfToken: (token: string) => token,
     webOrigin: staffOrigin,
     guestWebOrigin: guestOrigin,
   };

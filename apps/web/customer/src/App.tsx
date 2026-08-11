@@ -1004,7 +1004,7 @@ function OrderView(props: {
           </div>
         </header>
         <section className="order-receipt">
-          <p className="eyebrow">{copy.orderAccepted}</p>
+          <p className="eyebrow">{status}</p>
           <h1>{copy.orderReference}</h1>
           <strong className="order-reference">{order.reference}</strong>
           <div className="order-status" aria-live="polite">

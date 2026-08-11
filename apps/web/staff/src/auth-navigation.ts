@@ -1,7 +1,7 @@
+import { safeStaffReturnPath } from "./staff-navigation.js";
+
 export type StaffAuthRoute =
   "sign-in" | "recover" | "recover-complete" | "invite-accept";
-
-const staffReturnPaths = new Set(["/", "/workspace"]);
 
 export function authRouteForPath(pathname: string): StaffAuthRoute | null {
   if (pathname === "/auth/sign-in") return "sign-in";
@@ -15,23 +15,7 @@ export function safeInternalPath(
   value: string | null | undefined,
   fallback = "/",
 ): string {
-  if (!value) return fallback;
-  const candidate = value.trim();
-  if (!candidate.startsWith("/") || candidate.startsWith("//")) {
-    return fallback;
-  }
-  try {
-    const url = new URL(candidate, window.location.origin);
-    if (
-      url.origin !== window.location.origin ||
-      !staffReturnPaths.has(url.pathname)
-    ) {
-      return fallback;
-    }
-    return `${url.pathname}${url.search}${url.hash}`;
-  } catch {
-    return fallback;
-  }
+  return safeStaffReturnPath(value, fallback);
 }
 
 export function authPath(

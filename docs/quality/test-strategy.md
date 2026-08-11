@@ -65,6 +65,14 @@ contract.
 - `TEST-PR03-REAL-STACK-001`: pinned `corepack pnpm dev:demo` with real PostgreSQL, API, worker, and the focused `test:browser:pr03:real-stack` journey. The owner creates a restaurant and branch through Administration, opens service with an operational reason, and reaches the server-derived setup gate; the manual continuation covers Staff handoff, Staff workspace, and customer table QR menu.
 - `TEST-PR03-VISUAL-001`: fresh 1280x900 and 375x844 captures covering ready, closed, and restored-open setup states, reviewed by two independent read-only visual oracles.
 
+## PR-04 evidence matrix
+
+- `TEST-PR04-UNIT-001`: focused Staff navigation tests cover stable route mapping, deterministic permission-aware landing, and safe return-target handling in `apps/web/staff/src/staff-navigation.test.ts`.
+- `TEST-PR04-BROWSER-001`: focused Staff browser coverage exercises native route links, direct URL recovery, invalid-route fallback, permission-filtered destinations, bill-ledger selection without UUID entry, and the existing order/kitchen/payment browser boundaries in `apps/web/staff/e2e/shell.spec.ts`.
+- `TEST-PR04-A11Y-001`: the focused browser set retains axe, keyboard/focus, responsive, reduced-motion, and state-label assertions; the full browser verification is run as part of PR-04 publication.
+- `TEST-PR04-REAL-STACK-001`: the manual `corepack pnpm dev:demo` gate covers the separate owner, staff, customer, kitchen, cashier, and manager contexts through submission, preparation, serving, billing, payment, completion, table release, notification, report, audit, and permitted refund/correction handoffs.
+- `TEST-PR04-VISUAL-001`: fresh 375px Customer, 768px Staff, and 1280px Staff/Administration captures cover navigation, task links, payment ledger, refund, loading/empty/error/stale/session-ended states, focus, reduced motion, zoom, and kitchen readability, with independent visual review.
+
 ## Mandatory negative coverage
 
 For every protected resource:
