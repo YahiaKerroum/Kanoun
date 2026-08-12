@@ -133,29 +133,38 @@ export function NotificationInboxWorkspace({
     const controller = new AbortController();
     void load(controller.signal);
     if (typeof EventSource === "undefined") return () => controller.abort();
-    const stream = new EventSource(
-      `/api/v1/staff/notification-events?branchId=${encodeURIComponent(branchId)}`,
-      { withCredentials: true },
-    );
-    stream.addEventListener("open", () => setStreamState("live"));
-    stream.addEventListener("notification", () => void load());
-    stream.addEventListener("replay-gap", () => void load());
-    stream.addEventListener("session-ended", () => {
-      setStreamState("reconnecting");
-      setMessage("Your staff session ended. Reload after signing in again.");
-      stream.close();
-    });
-    stream.addEventListener("error", () => setStreamState("reconnecting"));
+    let stream: EventSource | undefined;
+    const connect = () => {
+      stream?.close();
+      const nextStream = new EventSource(
+        `/api/v1/staff/notification-events?branchId=${encodeURIComponent(branchId)}`,
+        { withCredentials: true },
+      );
+      stream = nextStream;
+      nextStream.addEventListener("open", () => setStreamState("live"));
+      nextStream.addEventListener("notification", () => void load());
+      nextStream.addEventListener("replay-gap", () => void load());
+      nextStream.addEventListener("session-ended", () => {
+        setStreamState("reconnecting");
+        setMessage("Your staff session ended. Reload after signing in again.");
+        nextStream.close();
+      });
+      nextStream.addEventListener("error", () =>
+        setStreamState("reconnecting"),
+      );
+    };
+    connect();
     const handleOffline = () => setStreamState("reconnecting");
     const handleOnline = () => {
       setStreamState("connecting");
-      void load().then(() => setStreamState("live"));
+      connect();
+      void load();
     };
     window.addEventListener("offline", handleOffline);
     window.addEventListener("online", handleOnline);
     return () => {
       controller.abort();
-      stream.close();
+      stream?.close();
       window.removeEventListener("offline", handleOffline);
       window.removeEventListener("online", handleOnline);
     };

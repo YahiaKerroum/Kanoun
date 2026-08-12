@@ -281,7 +281,8 @@ head is `e729438a11100d347c2bf8c77a0ad85ecbb84540`.
 - The same run observed setup, QR/menu, malformed/revoked links, idempotency,
   service close, correction/cancellation/refund, dependency-safe feature
   disablement with active-work completion, tenant isolation, worker backlog
-  drain, SSE recovery, generic recovery delivery, and session revocation. Failed runs
+  drain, genuine EventSource SSE recovery, delivered-token recovery completion, and
+  session revocation. Failed runs
   retain Playwright artifacts under `output/playwright/real`; successful runs
   remove them, and CI uploads the failure directory.
 

@@ -92,7 +92,8 @@ The browser commands have an explicit confidence classification:
   kitchen/service/cashier/refund close; correction/cancellation/refund
   invariants and stale-version conflict; dependency-safe feature disablement
   with active work completion; cross-tenant isolation; worker stop/backlog
-  drain; SSE recovery; generic recovery delivery; and session revocation.
+  drain; genuine EventSource SSE reconnect recovery; delivered-token recovery
+  completion through the loopback inbox; and session revocation.
   `packages/test-support/src/real-e2e-readers.ts` performs read-only
   persisted-invariant checks.
 

@@ -61,7 +61,8 @@ revoked QR handling, same-key idempotent retry, kitchen/service/cashier
 handoffs, payment/refund ledger, append-only correction and cancellation,
 dependency-safe feature disablement with preserved reads and blocked new work,
 cross-tenant 404 isolation, worker backlog after stop and drain after restart,
-offline-to-online notification recovery, generic recovery request delivery, and
+offline-to-online notification recovery with a fresh EventSource connection,
+loopback recovery delivery opened and completed through the staff UI, and
 revoked-session rejection followed by sign-in UI.
 
 The runner retains Playwright screenshot, video, trace, and error-context

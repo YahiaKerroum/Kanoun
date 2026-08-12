@@ -362,6 +362,7 @@ export async function startRealE2eHarness(
       REAL_E2E_STAFF_ORIGIN: config.staffOrigin,
       REAL_E2E_CUSTOMER_ORIGIN: config.customerOrigin,
       REAL_E2E_ADMIN_ORIGIN: config.adminOrigin,
+      REAL_E2E_RECOVERY_ORIGIN: config.recoveryOrigin,
       REAL_E2E_CONTROL_ORIGIN: config.controlOrigin,
       REAL_E2E_CONTROL_SECRET: config.controlSecret,
       REAL_E2E_DATABASE_URL: config.databaseUrl,

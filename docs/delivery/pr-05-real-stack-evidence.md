@@ -35,8 +35,9 @@ active, and revoked QR entry; idempotent customer ordering; UI-driven kitchen,
 service, payment, completion, and refund operations; append-only correction and
 cancellation with a stale-version conflict; active work across dependency-safe
 feature disablement; tenant and session isolation; stopped-worker backlog and
-restart drain; offline/online notification recovery; generic recovery delivery;
-and session revocation.
+restart drain; a real EventSource reconnect after offline/online recovery; a
+loopback-delivered recovery token opened through the recovery inbox and
+completed through the staff UI; and session revocation.
 
 ## Supporting verification
 

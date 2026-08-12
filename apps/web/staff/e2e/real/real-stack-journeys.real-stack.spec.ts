@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import {
   expect,
   test,
+  type APIResponse,
   type Browser,
   type BrowserContext,
   type Page,
@@ -103,6 +104,7 @@ const apiOrigin = process.env.REAL_E2E_API_ORIGIN ?? "";
 const adminOrigin = process.env.REAL_E2E_ADMIN_ORIGIN ?? "";
 const staffOrigin = process.env.REAL_E2E_STAFF_ORIGIN ?? "";
 const customerOrigin = process.env.REAL_E2E_CUSTOMER_ORIGIN ?? "";
+const recoveryOrigin = process.env.REAL_E2E_RECOVERY_ORIGIN ?? "";
 const databaseUrl = process.env.REAL_E2E_DATABASE_URL ?? "";
 const primary: Tenant = {
   businessCode: process.env.REAL_E2E_PRIMARY_BUSINESS_CODE ?? "",
@@ -153,6 +155,7 @@ function assertHarness(): void {
     adminOrigin,
     staffOrigin,
     customerOrigin,
+    recoveryOrigin,
     databaseUrl,
     primary.branchId,
   ]) {
@@ -216,10 +219,10 @@ async function apiJson<T = JsonRecord>(
     ...(body === undefined ? {} : { data: body }),
   });
   if (expectedStatus !== undefined && response.status() === expectedStatus) {
-    return (await response.json().catch(() => undefined)) as T;
+    return (await readResponseJson(response)) as T;
   }
   if (!response.ok()) {
-    const problem: unknown = await response.json().catch(() => undefined);
+    const problem: unknown = await readResponseJson(response);
     const detail =
       typeof problem === "object" &&
       problem !== null &&
@@ -231,7 +234,20 @@ async function apiJson<T = JsonRecord>(
       `${method} ${path} returned ${response.status()}.${detail}`,
     );
   }
-  return (await response.json().catch(() => undefined)) as T;
+  return (await readResponseJson(response)) as T;
+}
+
+async function readResponseJson(response: APIResponse): Promise<unknown> {
+  const body = await response.text();
+  if (!body.trim()) return undefined;
+  try {
+    return JSON.parse(body) as unknown;
+  } catch (error) {
+    throw new Error(
+      `Expected JSON from ${response.url()}, received an invalid response body.`,
+      { cause: error },
+    );
+  }
 }
 
 async function provisionRole(
@@ -958,7 +974,13 @@ test.describe.serial("PR-05 real-stack evidence", () => {
   });
 
   test("TEST-E2E-PR05-R-SSE-001: notification workspace survives offline-to-online recovery", async () => {
+    const initialStream = generalPage.waitForRequest(
+      (request) =>
+        new URL(request.url()).pathname ===
+          "/api/v1/staff/notification-events" && request.method() === "GET",
+    );
     await generalPage.goto(`${staffOrigin}/notifications`);
+    await initialStream;
     await expect(
       generalPage.getByRole("heading", { name: /notification|inbox/i }).first(),
     ).toBeVisible();
@@ -974,9 +996,14 @@ test.describe.serial("PR-05 real-stack evidence", () => {
     await expect(
       generalPage.getByRole("status").filter({ hasText: "Reconnecting" }),
     ).toBeVisible({ timeout: 15_000 });
+    const reconnectStream = generalPage.waitForRequest(
+      (request) =>
+        new URL(request.url()).pathname ===
+          "/api/v1/staff/notification-events" && request.method() === "GET",
+    );
     await generalContext.setOffline(false);
     await generalPage.evaluate(() => window.dispatchEvent(new Event("online")));
-    await generalPage.getByRole("button", { name: "Reload inbox" }).click();
+    await reconnectStream;
     await expect(
       generalPage.getByRole("heading", { name: /notification|inbox/i }).first(),
     ).toBeVisible();
@@ -984,22 +1011,6 @@ test.describe.serial("PR-05 real-stack evidence", () => {
       generalPage
         .getByRole("status")
         .filter({ hasText: "Live hints connected" }),
-    ).toBeVisible();
-  });
-
-  test("TEST-E2E-PR05-R-RECOVERY-001: recovery request keeps account eligibility generic", async () => {
-    await generalPage.goto(`${staffOrigin}/auth/recover`);
-    await expect(
-      generalPage.getByRole("heading", { name: "Recover staff access" }),
-    ).toBeVisible();
-    await generalPage.getByLabel("Business code").fill(primary.businessCode);
-    await generalPage.getByLabel("Work email").fill(generalRole.email);
-    await generalPage.getByRole("button", { name: "Request recovery" }).click();
-    await expect(
-      generalPage.getByText(
-        "This response does not confirm whether an account exists.",
-        { exact: false },
-      ),
     ).toBeVisible();
   });
 
@@ -1016,6 +1027,66 @@ test.describe.serial("PR-05 real-stack evidence", () => {
     await expect(
       generalPage.getByRole("heading", { name: "Sign in to your workspace" }),
     ).toBeVisible();
+  });
+
+  test("TEST-E2E-PR05-R-RECOVERY-001: delivered recovery token completes password update", async ({
+    browser,
+  }) => {
+    const recoveryContext = await browser.newContext();
+    const recoveryPage = await recoveryContext.newPage();
+    try {
+      await recoveryPage.goto(`${staffOrigin}/auth/recover`);
+      await expect(
+        recoveryPage.getByRole("heading", { name: "Recover staff access" }),
+      ).toBeVisible();
+      await recoveryPage.getByLabel("Business code").fill(primary.businessCode);
+      await recoveryPage.getByLabel("Work email").fill(generalRole.email);
+      await recoveryPage
+        .getByRole("button", { name: "Request recovery" })
+        .click();
+      await expect(
+        recoveryPage.getByText(
+          "This response does not confirm whether an account exists.",
+          { exact: false },
+        ),
+      ).toBeVisible();
+
+      await recoveryPage.goto(`${recoveryOrigin}/`);
+      await expect(
+        recoveryPage.getByRole("heading", { name: "Recovery inbox" }),
+      ).toBeVisible();
+      await expect(recoveryPage.getByText(generalRole.email)).toBeVisible();
+      const recoveryLink = recoveryPage.getByRole("link", {
+        name: "Open recovery form",
+      });
+      await expect(recoveryLink).toHaveAttribute(
+        "href",
+        /\/auth\/recover\/complete\?token=.{32,}/,
+      );
+      await recoveryLink.click();
+      await expect(recoveryPage).toHaveURL(
+        `${staffOrigin}/auth/recover/complete`,
+      );
+      await recoveryPage
+        .getByLabel("New password", { exact: true })
+        .fill("PR05-RecoveredAa1");
+      await recoveryPage
+        .getByLabel("Confirm new password", { exact: true })
+        .fill("PR05-RecoveredAa1");
+      await recoveryPage
+        .getByRole("button", { name: "Update password" })
+        .click();
+      await expect(recoveryPage).toHaveURL(
+        `${staffOrigin}/auth/sign-in?notice=recovery-complete`,
+      );
+      await expect(
+        recoveryPage.getByRole("heading", {
+          name: "Sign in to your workspace",
+        }),
+      ).toBeVisible();
+    } finally {
+      await recoveryContext.close();
+    }
   });
 });
 
