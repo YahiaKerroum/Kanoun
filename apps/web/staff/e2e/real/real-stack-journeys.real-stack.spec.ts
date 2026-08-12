@@ -1059,14 +1059,32 @@ test.describe.serial("PR-05 real-stack evidence", () => {
       const recoveryLink = recoveryPage.getByRole("link", {
         name: "Open recovery form",
       });
-      await expect(recoveryLink).toHaveAttribute(
-        "href",
-        /\/auth\/recover\/complete\?token=.{32,}/,
-      );
+      await expect(
+        recoveryLink.evaluate((link) => {
+          if (!(link instanceof HTMLAnchorElement)) {
+            return false;
+          }
+          const url = new URL(link.href);
+          const token = url.searchParams.get("token");
+          return (
+            url.pathname === "/auth/recover/complete" &&
+            token !== null &&
+            token.length >= 32
+          );
+        }),
+      ).resolves.toBe(true);
       await recoveryLink.click();
-      await expect(recoveryPage).toHaveURL(
-        `${staffOrigin}/auth/recover/complete`,
-      );
+      await expect
+        .poll(() =>
+          recoveryPage.evaluate(() => {
+            const url = new URL(window.location.href);
+            return (
+              url.pathname === "/auth/recover/complete" &&
+              url.searchParams.has("token") === false
+            );
+          }),
+        )
+        .toBe(true);
       await recoveryPage
         .getByLabel("New password", { exact: true })
         .fill("PR05-RecoveredAa1");
