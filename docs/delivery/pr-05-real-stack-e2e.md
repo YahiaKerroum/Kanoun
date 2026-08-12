@@ -24,7 +24,7 @@ last_reviewed: 2026-08-11
   loopback-only PostgreSQL database; migration and tenant provisioning
   harnesses; production-like API, worker, Customer, Staff, and Administration
   previews; read-only database evidence helpers; the real-stack browser suite;
-  mocked-suite naming; CI jobs and failure-artifact upload; and verification
+  mocked-suite naming; CI jobs and local-only failure-output handling; and verification
   documentation.
 - `tests`: the eleven `TEST-E2E-PR05-*` cases in
   `apps/web/staff/e2e/real/real-stack-journeys.real-stack.spec.ts`, plus the
@@ -65,8 +65,8 @@ offline-to-online notification recovery with a fresh EventSource connection,
 loopback recovery delivery opened and completed through the staff UI, and
 revoked-session rejection followed by sign-in UI.
 
-The runner retains no Playwright browser artifacts and removes successful-run
-output. Trace archives, screenshots, and video stay off because recovery links
-contain a single-use bearer token. CI uploads the redacted failure directory
-when the real-stack job fails. PR-06 visual/performance and
+The runner removes successful-run output. Trace archives, screenshots, and
+video stay off because recovery links contain a single-use bearer token. Failed
+run output, including automatic error-context snapshots, remains local for
+immediate inspection and CI never uploads it. PR-06 visual/performance and
 cross-browser release coverage remain out of scope.

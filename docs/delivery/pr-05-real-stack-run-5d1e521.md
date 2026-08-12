@@ -30,4 +30,4 @@ reconnect after offline/online recovery; loopback-delivered password recovery
 through the staff UI; and revoked-session handling.
 
 The repository's `browser-real` CI job reruns this same command on every push to
-`main` and uploads the redacted failure directory only when the job fails.
+`main` and never uploads raw Playwright output.

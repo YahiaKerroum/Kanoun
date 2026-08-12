@@ -102,7 +102,8 @@ to PostgreSQL to advance a journey. It uses one Playwright worker for ordered
 stateful evidence and a fresh database per run; the harness tears down owned
 processes and only databases carrying its safety marker. CI retains
 no Playwright browser artifacts for real runs. Trace archives, screenshots, and
-video are disabled so recovery bearer tokens cannot enter uploaded artifacts.
+video are disabled, and CI does not upload raw Playwright output, so recovery
+bearer tokens cannot enter retained artifacts.
 
 ## Mandatory negative coverage
 

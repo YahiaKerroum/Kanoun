@@ -283,8 +283,8 @@ head is `e729438a11100d347c2bf8c77a0ad85ecbb84540`.
   disablement with active-work completion, tenant isolation, worker backlog
   drain, genuine EventSource SSE recovery, delivered-token recovery completion, and
   session revocation. Failed runs
-  retain Playwright artifacts under `output/playwright/real`; successful runs
-  remove them, and CI uploads the failure directory.
+  retain local failure output under `output/playwright/real`; successful runs
+  remove it, and CI never uploads the raw directory.
 
 ## Historical Slice 008 checkpoint
 

@@ -35,4 +35,5 @@ corepack pnpm test:browser:mocked
 
 The mocked suite and the real-stack suite are intentionally separate. Real-run
 failure artifacts remain under `output/playwright/real` until inspected; a
-successful run removes that directory. Do not commit generated artifacts.
+successful run removes that directory. CI never uploads this raw directory.
+Do not commit generated artifacts.

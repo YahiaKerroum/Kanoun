@@ -151,14 +151,6 @@ jobs:
       - name: Run real-stack product gate
         run: pnpm test:browser:real
 
-      - name: Upload real-stack failure artifacts
-        if: failure()
-        uses: actions/upload-artifact@v6
-        with:
-          name: playwright-real-stack-artifacts
-          path: output/playwright/real
-          if-no-files-found: ignore
-
   dependency-audit:
     runs-on: ubuntu-latest
     timeout-minutes: 10
