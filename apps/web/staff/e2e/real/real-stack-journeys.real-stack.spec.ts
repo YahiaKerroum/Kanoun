@@ -1080,7 +1080,7 @@ test.describe.serial("PR-05 real-stack evidence", () => {
             const url = new URL(window.location.href);
             return (
               url.pathname === "/auth/recover/complete" &&
-              url.searchParams.has("token") === false
+              !url.searchParams.has("token")
             );
           }),
         )
