@@ -21,7 +21,7 @@ summary, and teardown result. It contains no database URL, credential, session,
 or recovery-token value. Successful Playwright output is intentionally removed;
 the committed run record and the CI job log are the durable success evidence.
 The current record is
-[`pr-05-real-stack-run-c3e2bc0.md`](pr-05-real-stack-run-c3e2bc0.md).
+[`pr-05-real-stack-run-73d32b0.md`](pr-05-real-stack-run-73d32b0.md).
 
 The 11 cases cover owner setup and invitation-created staff access; malformed,
 active, and revoked QR entry; idempotent customer ordering; UI-driven kitchen,
