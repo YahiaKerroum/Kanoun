@@ -13,8 +13,8 @@ last_reviewed: 2026-08-11
 - `implements`: the PR-05 real-stack journeys for setup, menu/table/QR, order
   idempotency, service close, correction/cancellation/refund, feature
   disablement, tenant isolation, worker recovery, SSE recovery, and session
-  revocation; `NFR-01`, `NFR-03`, `NFR-04`, `NFR-06`, `NFR-07`, `NFR-08`,
-  `NFR-12`, `NFR-16`, `NFR-17`, `NFR-18`; and the applicable business rules
+  revocation; `NFR-01`, `NFR-06`, `NFR-07`, `NFR-08`, `NFR-12`, `NFR-16`,
+  `NFR-18`; and the applicable business rules
   exercised by those journeys.
 - `obeys`: `ADR-0001` through `ADR-0006`, `PD-025`, module write ownership,
   transactional audit/outbox behavior, canonical workflow guards, feature
@@ -65,7 +65,8 @@ offline-to-online notification recovery with a fresh EventSource connection,
 loopback recovery delivery opened and completed through the staff UI, and
 revoked-session rejection followed by sign-in UI.
 
-The runner retains Playwright screenshot, video, trace, and error-context
-artifacts only for failed runs and removes successful-run output. CI uploads the
-failure directory when the real-stack job fails. PR-06 visual/performance and
+The runner retains Playwright screenshot, video, and error-context artifacts
+only for failed runs and removes successful-run output. Trace archives stay off
+because recovery links contain a single-use bearer token. CI uploads the failure
+directory when the real-stack job fails. PR-06 visual/performance and
 cross-browser release coverage remain out of scope.

@@ -12,23 +12,14 @@ This record contains redacted, repeatable evidence for the PR-05 publication.
 It intentionally excludes database URLs, credentials, session values, recovery
 tokens, tenant identifiers, and Playwright artifacts.
 
-## Independent built runs
+## Target-bound run records
 
-Both runs used the default build path:
-
-```text
-REAL_E2E_BASE_DATABASE_URL=<redacted loopback PostgreSQL URL> corepack pnpm test:browser:real
-```
-
-| Run | Database | Processes | Result | Teardown |
-| --- | --- | --- | --- | --- |
-| 1 | Fresh marked `rms_e2e_*` database | API, worker, Customer, Staff, Administration, in-memory recovery delivery | 11 passed | Owned processes stopped and marked database removed |
-| 2 | Fresh distinct marked `rms_e2e_*` database | API, worker, Customer, Staff, Administration, in-memory recovery delivery | 11 passed | Owned processes stopped and marked database removed |
-
-Each run used dynamic loopback ports, applied migrations, provisioned two
-synthetic tenants, and ran one ordered Chromium worker. The real-suite source
-guard passed before the browser run. Successful Playwright output was removed;
-failure output remains configured for diagnosis and CI upload.
+Each publication records its final built run in a committed, redacted
+`docs/delivery/pr-05-real-stack-run-<source-sha>.md` file. A record identifies
+the exact executable source revision, Node and pnpm versions, command, suite
+summary, and teardown result. It contains no database URL, credential, session,
+or recovery-token value. Successful Playwright output is intentionally removed;
+the committed run record and the CI job log are the durable success evidence.
 
 The 11 cases cover owner setup and invitation-created staff access; malformed,
 active, and revoked QR entry; idempotent customer ordering; UI-driven kitchen,
@@ -42,10 +33,9 @@ completed through the staff UI; and session revocation.
 ## Supporting verification
 
 - `corepack pnpm exec tsx scripts/real-e2e-guard.ts`: passed.
-- `corepack pnpm test:browser:mocked`: passed in the prior PR-05 verification
-  pass; this remains separate UI/contract component coverage.
+- `corepack pnpm test:browser:mocked`: separate UI/contract component coverage.
 - `corepack pnpm typecheck`, formatting, lint, build, contract, architecture,
-  and audit checks were run on the isolated worktree.
+  and audit checks are required before publication.
 - Recovery delivery is loopback-only, synthetic, in-memory, run-scoped, and
   closed during both success and failure cleanup. No external email is used.
 - Chromium is the primary full-stack browser. Firefox/WebKit release coverage

@@ -15,7 +15,7 @@ export default defineConfig({
   use: {
     ...devices["Desktop Chrome"],
     baseURL: process.env.REAL_E2E_STAFF_ORIGIN,
-    trace: "retain-on-failure",
+    trace: "off",
     video: "retain-on-failure",
     screenshot: "only-on-failure",
   },
