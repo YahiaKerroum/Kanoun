@@ -103,6 +103,7 @@ stateful evidence and a fresh database per run; the harness tears down owned
 processes and only databases carrying its safety marker. CI retains
 Playwright video/screenshot/error-context artifacts for failed real runs. Trace
 archives are disabled so recovery bearer tokens cannot enter uploaded artifacts.
+The token-bearing recovery case also disables all Playwright artifacts.
 
 ## Mandatory negative coverage
 

@@ -68,5 +68,6 @@ revoked-session rejection followed by sign-in UI.
 The runner retains Playwright screenshot, video, and error-context artifacts
 only for failed runs and removes successful-run output. Trace archives stay off
 because recovery links contain a single-use bearer token. CI uploads the failure
-directory when the real-stack job fails. PR-06 visual/performance and
+directory when the real-stack job fails; the token-bearing recovery case disables
+all Playwright artifacts. PR-06 visual/performance and
 cross-browser release coverage remain out of scope.
