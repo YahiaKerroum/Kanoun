@@ -1029,88 +1029,82 @@ test.describe.serial("PR-05 real-stack evidence", () => {
     ).toBeVisible();
   });
 
-  test.describe("recovery delivery", () => {
-    test.use({ screenshot: "off", trace: "off", video: "off" });
+  test("TEST-E2E-PR05-R-RECOVERY-001: delivered recovery token completes password update", async ({
+    browser,
+  }) => {
+    const recoveryContext = await browser.newContext();
+    const recoveryPage = await recoveryContext.newPage();
+    try {
+      await recoveryPage.goto(`${staffOrigin}/auth/recover`);
+      await expect(
+        recoveryPage.getByRole("heading", { name: "Recover staff access" }),
+      ).toBeVisible();
+      await recoveryPage.getByLabel("Business code").fill(primary.businessCode);
+      await recoveryPage.getByLabel("Work email").fill(generalRole.email);
+      await recoveryPage
+        .getByRole("button", { name: "Request recovery" })
+        .click();
+      await expect(
+        recoveryPage.getByText(
+          "This response does not confirm whether an account exists.",
+          { exact: false },
+        ),
+      ).toBeVisible();
 
-    test("TEST-E2E-PR05-R-RECOVERY-001: delivered recovery token completes password update", async ({
-      browser,
-    }) => {
-      const recoveryContext = await browser.newContext();
-      const recoveryPage = await recoveryContext.newPage();
-      try {
-        await recoveryPage.goto(`${staffOrigin}/auth/recover`);
-        await expect(
-          recoveryPage.getByRole("heading", { name: "Recover staff access" }),
-        ).toBeVisible();
-        await recoveryPage
-          .getByLabel("Business code")
-          .fill(primary.businessCode);
-        await recoveryPage.getByLabel("Work email").fill(generalRole.email);
-        await recoveryPage
-          .getByRole("button", { name: "Request recovery" })
-          .click();
-        await expect(
-          recoveryPage.getByText(
-            "This response does not confirm whether an account exists.",
-            { exact: false },
-          ),
-        ).toBeVisible();
-
-        await recoveryPage.goto(`${recoveryOrigin}/`);
-        await expect(
-          recoveryPage.getByRole("heading", { name: "Recovery inbox" }),
-        ).toBeVisible();
-        await expect(recoveryPage.getByText(generalRole.email)).toBeVisible();
-        const recoveryLink = recoveryPage.getByRole("link", {
-          name: "Open recovery form",
-        });
-        await expect(
-          recoveryLink.evaluate((link) => {
-            if (!(link instanceof HTMLAnchorElement)) {
-              return false;
-            }
-            const url = new URL(link.href);
-            const token = url.searchParams.get("token");
+      await recoveryPage.goto(`${recoveryOrigin}/`);
+      await expect(
+        recoveryPage.getByRole("heading", { name: "Recovery inbox" }),
+      ).toBeVisible();
+      await expect(recoveryPage.getByText(generalRole.email)).toBeVisible();
+      const recoveryLink = recoveryPage.getByRole("link", {
+        name: "Open recovery form",
+      });
+      await expect(
+        recoveryLink.evaluate((link) => {
+          if (!(link instanceof HTMLAnchorElement)) {
+            return false;
+          }
+          const url = new URL(link.href);
+          const token = url.searchParams.get("token");
+          return (
+            url.pathname === "/auth/recover/complete" &&
+            token !== null &&
+            token.length >= 32
+          );
+        }),
+      ).resolves.toBe(true);
+      await recoveryLink.click();
+      await expect
+        .poll(() =>
+          recoveryPage.evaluate(() => {
+            const url = new URL(window.location.href);
             return (
               url.pathname === "/auth/recover/complete" &&
-              token !== null &&
-              token.length >= 32
+              url.searchParams.has("token") === false
             );
           }),
-        ).resolves.toBe(true);
-        await recoveryLink.click();
-        await expect
-          .poll(() =>
-            recoveryPage.evaluate(() => {
-              const url = new URL(window.location.href);
-              return (
-                url.pathname === "/auth/recover/complete" &&
-                url.searchParams.has("token") === false
-              );
-            }),
-          )
-          .toBe(true);
-        await recoveryPage
-          .getByLabel("New password", { exact: true })
-          .fill("PR05-RecoveredAa1");
-        await recoveryPage
-          .getByLabel("Confirm new password", { exact: true })
-          .fill("PR05-RecoveredAa1");
-        await recoveryPage
-          .getByRole("button", { name: "Update password" })
-          .click();
-        await expect(recoveryPage).toHaveURL(
-          `${staffOrigin}/auth/sign-in?notice=recovery-complete`,
-        );
-        await expect(
-          recoveryPage.getByRole("heading", {
-            name: "Sign in to your workspace",
-          }),
-        ).toBeVisible();
-      } finally {
-        await recoveryContext.close();
-      }
-    });
+        )
+        .toBe(true);
+      await recoveryPage
+        .getByLabel("New password", { exact: true })
+        .fill("PR05-RecoveredAa1");
+      await recoveryPage
+        .getByLabel("Confirm new password", { exact: true })
+        .fill("PR05-RecoveredAa1");
+      await recoveryPage
+        .getByRole("button", { name: "Update password" })
+        .click();
+      await expect(recoveryPage).toHaveURL(
+        `${staffOrigin}/auth/sign-in?notice=recovery-complete`,
+      );
+      await expect(
+        recoveryPage.getByRole("heading", {
+          name: "Sign in to your workspace",
+        }),
+      ).toBeVisible();
+    } finally {
+      await recoveryContext.close();
+    }
   });
 });
 

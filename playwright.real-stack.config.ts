@@ -16,8 +16,8 @@ export default defineConfig({
     ...devices["Desktop Chrome"],
     baseURL: process.env.REAL_E2E_STAFF_ORIGIN,
     trace: "off",
-    video: "retain-on-failure",
-    screenshot: "only-on-failure",
+    video: "off",
+    screenshot: "off",
   },
   projects: [
     { name: "chromium-real-stack", use: { ...devices["Desktop Chrome"] } },
