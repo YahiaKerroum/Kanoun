@@ -398,8 +398,8 @@ publication worktree.**
 **Goal:** make “the product works” a reproducible automated release gate.
 
 - `implements`: the seven end-to-end journeys in
-  `docs/quality/test-strategy.md`; `NFR-01`, `NFR-03`, `NFR-04`, `NFR-06`,
-  `NFR-07`, `NFR-08`, `NFR-12`, `NFR-16`, `NFR-17`, `NFR-18`.
+  `docs/quality/test-strategy.md`; `NFR-01`, `NFR-06`, `NFR-07`, `NFR-08`,
+  `NFR-12`, `NFR-16`, `NFR-18`.
 - `obeys`: `ADR-0001` through `ADR-0006`, `PD-025`, module ownership,
   transaction/outbox rules, and all workflow guards exercised by each journey.
 - `changes`:
