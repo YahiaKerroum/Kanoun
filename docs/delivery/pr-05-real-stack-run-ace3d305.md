@@ -20,7 +20,7 @@ token.
 | Runner | Built API, worker, Customer, Staff, Administration, and loopback recovery delivery |
 | Browser | Chromium, one ordered real-stack worker |
 | Result | `11 passed (44.0s)`; process exit `0` |
-| Teardown | Runner removed the successful-run `output/playwright/real` directory; no owned process or run database remained |
+| Teardown | Runner exit `0`; post-run inspection found no `output/playwright/real` directory and no `rms_e2e_*` database |
 
 The passing set includes owner setup; menu/table/QR; idempotent order retry;
 kitchen/service/cashier/refund close; append-only correction/cancellation;
