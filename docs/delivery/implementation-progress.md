@@ -16,12 +16,24 @@ last_reviewed: 2026-08-25
 `PR-02 — access and account lifecycle` is complete and published at
 `e729438a11100d347c2bf8c77a0ad85ecbb84540`. `PR-03 — guided owner setup and
 workforce readiness` is verified. `PR-04 — join the operational workspaces
-into one service` and `PR-05 — real-stack E2E proof` are verified in isolated
-publication worktrees. `PR-07 — pilot operations and production decision
-gates` is declared and locally verified in the isolated `pr-07-start`
-worktree per its own execution-protocol exception (product owner instruction,
-2026-08-18); `PR-06`'s human-usability gate remains independently open and is
-not waived by that exception.
+into one service`, `PR-05 — real-stack E2E proof`, and `PR-07 — pilot
+operations and production decision gates` (per the product-owner sequencing
+exception of 2026-08-18) are verified and published:
+`main` was fast-forwarded from the PR-03 head
+`e729438a11100d347c2bf8c77a0ad85ecbb84540` to `14d1ce881` (via the
+intermediate `e4ad5d0`) without history rewriting. GitHub Actions run
+`32854657271` passed all four jobs (`verify`, `browser-mocked`,
+`browser-real`, `dependency-audit`) at that exact `main` SHA — the first
+time the `browser-real` job has ever run against a genuinely fresh
+checkout, since it was newly introduced by this same publication. That
+first run (`32853909842`, at `e4ad5d0`) failed: `scripts/test-browser-real.ts`
+statically imported a module whose import graph reached
+`@rms/building-blocks` before the script's own build step ran, which only
+ever worked on a developer machine with a pre-existing build. Fixed by
+deferring that import until after the build step; verified by clearing
+every package/app `dist/` directory and re-running the suite from empty
+before pushing the fix. `PR-06`'s human-usability gate remains
+independently open and is not waived by any of this.
 Slice 008 is already integrated into
 `main`; the observed integration merge is
 `b38375bb2bd80b0c8ba98011b0591880d44dc072`, and the PR-03 baseline `main`
@@ -57,20 +69,22 @@ head is `e729438a11100d347c2bf8c77a0ad85ecbb84540`.
 - `PR-02 — access-and-account-lifecycle`: complete in the current working
   tree, verified on 2026-08-09, and being published in the requested commit.
 - `PR-03 — guided-owner-setup-and-workforce-readiness`: verified.
-- `PR-04 — join-the-operational-workspaces-into-one-service`: implementation
-  verified in the isolated publication worktree.
+- `PR-04 — join-the-operational-workspaces-into-one-service`: verified and
+  published to `main` at `14d1ce881` (CI green).
 - `PR-05 — replace-simulated-e2e-confidence-with-real-stack-proof`: verified
-  in the isolated publication worktree; PR-06 remains explicitly out of scope.
-- `PR-07 — pilot-operations-and-production-decision-gates`: declared and
-  locally verified in the isolated `pr-07-start` worktree. `ADR-0007` is now
-  accepted as a follow-up, but only for a synthetic-data scale/restore
-  validation environment (Fly.io compute in Paris; Neon PostgreSQL in
-  Frankfurt) — never real customer data. The real production hosting model
-  is deliberately deferred: the business intends to self-host locally once a
-  real client is confirmed, and that decision (and its own Algeria
-  data-protection review) is a separate, future superseding ADR. Real pilot
-  sessions remain explicitly out of scope. The PR-06 human-usability gate
-  remains independently open.
+  and published to `main` at `14d1ce881` (CI green, including the
+  `browser-real` job's first-ever passing run against a fresh checkout, after
+  the `scripts/test-browser-real.ts` deferred-import fix above). PR-06
+  remains explicitly out of scope.
+- `PR-07 — pilot-operations-and-production-decision-gates`: verified and
+  published to `main` at `14d1ce881`. `ADR-0007` is accepted, but only for a
+  synthetic-data scale/restore validation environment (Fly.io compute in
+  Paris; Neon PostgreSQL in Frankfurt) — never real customer data. The real
+  production hosting model is deliberately deferred: the business intends to
+  self-host locally once a real client is confirmed, and that decision (and
+  its own Algeria data-protection review) is a separate, future superseding
+  ADR. Real pilot sessions remain explicitly out of scope. The PR-06
+  human-usability gate remains independently open and is not waived.
 
 ## Completed
 
@@ -596,10 +610,9 @@ head is `e729438a11100d347c2bf8c77a0ad85ecbb84540`.
 
 ## Next slice
 
-PR-03 is verified from the exact published PR-02 baseline. PR-04 and PR-05 are
-verified in isolated publication worktrees. PR-07 is declared and locally
-verified in the isolated `pr-07-start` worktree, executed ahead of PR-06 under
-an explicit, recorded product-owner sequencing exception; PR-06's human-
-usability gate remains the next independently open slice, not waived by that
-exception. The earlier Slice 008 continuation prompts remain historical
-records only.
+PR-03 is verified from the exact published PR-02 baseline. PR-04, PR-05, and
+PR-07 are verified and published to `main` at `14d1ce881` (CI green),
+PR-07 executed ahead of PR-06 under an explicit, recorded product-owner
+sequencing exception. PR-06's human-usability gate is the next independently
+open slice, not waived by that exception. The earlier Slice 008 continuation
+prompts remain historical records only.
