@@ -3,7 +3,6 @@ import { existsSync } from "node:fs";
 import { rm } from "node:fs/promises";
 import { join } from "node:path";
 import process from "node:process";
-import { startRealE2eHarness } from "./real-e2e-harness.js";
 
 const repositoryRoot = process.cwd();
 const corepack = process.platform === "win32" ? "corepack.cmd" : "corepack";
@@ -45,6 +44,10 @@ async function main(): Promise<void> {
       throw new Error(`Real E2E build failed with status ${buildStatus}.`);
     }
   }
+  // Deferred until after the build step: this module's import graph reaches
+  // @rms/building-blocks, whose dist/ output does not exist yet on a fresh
+  // checkout with no prior build.
+  const { startRealE2eHarness } = await import("./real-e2e-harness.js");
   const harness = await startRealE2eHarness(process.env);
   const existingNodeOptions = process.env.NODE_OPTIONS?.trim();
   const runnerNodeOptions = existingNodeOptions?.includes(
