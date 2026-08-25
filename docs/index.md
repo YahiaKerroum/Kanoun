@@ -67,9 +67,15 @@ source_of_truth_for:
 | Frontend quality | `docs/quality/frontend-quality.md` | Approved |
 | Product interface design system | `DESIGN.md` | Active implementation guide |
 | Deployment and recovery | `docs/operations/deployment-and-recovery.md` | Proposed until hosting ADR |
-| Observability and operations | `docs/operations/observability-and-runbook.md` | Approved baseline |
+| Observability and operations | `docs/operations/observability-and-runbook.md` | Approved baseline; PR-07 appendix maps implemented metrics/alerts |
+| Operational dashboard definitions | `docs/operations/dashboards/README.md` | Approved panel specification; no production dashboard platform deployed |
 | Local professional demo operation | `docs/operations/local-demo.md` | Approved |
 | Real-stack browser verification | `docs/operations/real-e2e.md` | Approved |
+| Supported browser policy | `docs/operations/browser-policy.md` | Approved; restates `AC-NFR-17-02` |
+| Retention and privacy policy | `docs/operations/retention-and-privacy.md` | Proposed draft; blocks `AC-NFR-09-05`/`AC-NFR-10-04` closure |
+| Pilot operations guides | `docs/operations/pilot/` | Proposed guidance |
+| PR-07 implementation declaration | `docs/delivery/pr-07-pilot-operations-and-production-gates.md` | Declared; locally verified, production-scale pending platform |
+| PR-07 readiness and boundary record | `docs/delivery/pr-07-readiness.md` | Confirmed boundary; PR-06 gate remains independently open |
 | Agent operating rules | `AGENTS.md` | Approved |
 | Repository onboarding | `README.md` | Approved |
 

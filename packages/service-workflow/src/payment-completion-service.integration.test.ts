@@ -106,7 +106,10 @@ describeWithDatabase(
       idempotencySecret: serviceSecret,
     });
 
-    function paymentService(auditWriter: AuditWriter = audit) {
+    function paymentService(
+      auditWriter: AuditWriter = audit,
+      onIdempotentReplay?: () => void,
+    ) {
       return new PaymentCompletionService({
         databasePool,
         workflow,
@@ -118,6 +121,7 @@ describeWithDatabase(
         payments,
         audit: auditWriter,
         idempotencySecret: serviceSecret,
+        ...(onIdempotentReplay ? { onIdempotentReplay } : {}),
       });
     }
 
@@ -659,7 +663,10 @@ describeWithDatabase(
       const setup = await fixture("refund");
       const guest = await guestAtTable(setup, "R-1");
       const order = await submitOrder(setup, guest);
-      const service = paymentService();
+      let idempotentReplayCount = 0;
+      const service = paymentService(audit, () => {
+        idempotentReplayCount += 1;
+      });
       const paymentKey = randomUUID();
       const paid = await service.recordPayment(
         setup.context,
@@ -676,6 +683,7 @@ describeWithDatabase(
         metadata(),
       );
       expect(replayedPayment.payment.id).toBe(paid.payment.id);
+      expect(idempotentReplayCount).toBe(1);
       await expect(
         service.recordPayment(
           setup.context,

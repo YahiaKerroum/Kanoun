@@ -71,6 +71,7 @@ export interface OrderSubmissionServiceDependencies {
   readonly kitchen: KitchenStore;
   readonly audit: AuditWriter;
   readonly idempotencySecret: string;
+  readonly onIdempotentReplay?: () => void;
 }
 
 interface SubmissionActorScope {
@@ -827,9 +828,11 @@ export class OrderSubmissionService {
         "Wait briefly and retry with the same idempotency key.",
       );
     }
-    return result.kind === "replay"
-      ? { kind: "replay", responseBody: result.responseBody }
-      : result;
+    if (result.kind === "replay") {
+      this.dependencies.onIdempotentReplay?.();
+      return { kind: "replay", responseBody: result.responseBody };
+    }
+    return result;
   }
 
   private async appendOrderEvent(

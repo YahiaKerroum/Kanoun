@@ -1,7 +1,14 @@
 import { Router } from "express";
+import type { ActiveAlert, MetricsSnapshot } from "@rms/building-blocks";
+
+export interface HealthMetricsReading {
+  readonly snapshot: MetricsSnapshot;
+  readonly alerts: readonly ActiveAlert[];
+}
 
 export interface HealthRouterDependencies {
   readonly checkReadiness: () => Promise<void>;
+  readonly readMetrics?: () => HealthMetricsReading;
 }
 
 export function createHealthRouter(
@@ -33,6 +40,16 @@ export function createHealthRouter(
         },
       });
     }
+  });
+
+  router.get("/metrics", (_request, response) => {
+    if (!dependencies.readMetrics) {
+      response.status(404).send({
+        status: "not_configured",
+      });
+      return;
+    }
+    response.status(200).send(dependencies.readMetrics());
   });
 
   return router;

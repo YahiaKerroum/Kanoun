@@ -5,6 +5,10 @@ import { fileURLToPath } from "node:url";
 import { z } from "zod";
 import { composeWorker } from "./composition-root.js";
 import { loadWorkerConfig } from "./config.js";
+import {
+  startWorkerMetricsListener,
+  type WorkerMetricsListener,
+} from "./metrics-listener.js";
 
 async function run(): Promise<void> {
   const environmentFile = fileURLToPath(
@@ -16,6 +20,8 @@ async function run(): Promise<void> {
 
   const config = loadWorkerConfig(process.env);
   const worker = composeWorker(config);
+  let metricsListener: WorkerMetricsListener | undefined;
+  let observabilitySampler: ReturnType<typeof setInterval> | undefined;
   try {
     await worker.checkReadiness();
     const replayArgument = process.argv.indexOf("--replay-quarantined");
@@ -43,6 +49,27 @@ async function run(): Promise<void> {
     }
 
     worker.logger.info("Worker process is ready; outbox dispatch is active");
+    if (config.metricsHost) {
+      metricsListener = await startWorkerMetricsListener({
+        host: config.metricsHost,
+        port: config.metricsPort,
+        read: () =>
+          JSON.stringify({
+            service: "rms-worker",
+            metrics: worker.serviceMetrics.snapshot(),
+            alerts: worker.alertEvaluator.active,
+          }),
+      });
+      worker.logger.info(
+        { host: config.metricsHost, port: config.metricsPort },
+        "Worker metrics listener started",
+      );
+    }
+    await worker.sampleObservability();
+    observabilitySampler = setInterval(() => {
+      void worker.sampleObservability();
+    }, 15_000);
+    observabilitySampler.unref();
     const stopped = Promise.race([
       once(process, "SIGINT"),
       once(process, "SIGTERM"),
@@ -73,6 +100,12 @@ async function run(): Promise<void> {
     }
     worker.logger.info("Worker process is shutting down");
   } finally {
+    if (observabilitySampler) {
+      clearInterval(observabilitySampler);
+    }
+    if (metricsListener) {
+      await metricsListener.close().catch(() => undefined);
+    }
     await worker.databasePool.end();
   }
 }

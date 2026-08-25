@@ -464,6 +464,12 @@ use throughout service.
 
 ### PR-07 — Pilot operations and production decision gates
 
+**Status (2026-08-25): locally verified in the isolated `pr-07-start`
+worktree per the sequencing exception recorded in
+`docs/delivery/pr-07-readiness.md`. Production-scale, hosting, and real-pilot
+items remain blocked as declared; PR-06's human-usability gate remains
+independently open and is not waived by this status.**
+
 **Goal:** make a limited real-restaurant pilot supportable and recoverable.
 
 - `implements`: `NFR-04` through `NFR-11`, `NFR-13`, `NFR-14`, `NFR-17`,

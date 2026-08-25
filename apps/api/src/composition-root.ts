@@ -1,8 +1,14 @@
 import {
+  createAlertEvaluator,
   createDatabasePool,
+  createLoggingAlertSink,
+  createServiceMetrics,
   hashOpaqueToken,
   pingDatabase,
+  readPoolSaturation,
+  type AlertEvaluator,
   type DatabasePool,
+  type ServiceMetrics,
 } from "@rms/building-blocks";
 import {
   createGuestSessionMiddleware,
@@ -53,13 +59,22 @@ import { createSupportAccessRouter } from "./platform-routes/support-access-rout
 export interface ApiComposition {
   readonly app: ReturnType<typeof createApp>;
   readonly databasePool: DatabasePool;
+  readonly serviceMetrics: ServiceMetrics;
+  readonly alertEvaluator: AlertEvaluator;
 }
 
 export function composeApi(config: ApiConfig): ApiComposition {
   const logger = createLogger(config.logLevel);
+  const serviceMetrics = createServiceMetrics();
+  const alertEvaluator = createAlertEvaluator(createLoggingAlertSink(logger));
   const databasePool = createDatabasePool({
     connectionString: config.databaseUrl,
     applicationName: "rms-api",
+    observation: {
+      onQueryComplete: (durationMs) =>
+        serviceMetrics.observePoolQuery(durationMs),
+      onPoolError: () => serviceMetrics.countPoolError(),
+    },
   });
   const identitySecurity = new IdentitySecurity(config.sessionSecret);
   const restaurantConfiguration = new PostgresRestaurantConfigurationStore();
@@ -114,6 +129,8 @@ export function composeApi(config: ApiConfig): ApiComposition {
     kitchen,
     audit,
     idempotencySecret: config.guestAccessSecret,
+    onIdempotentReplay: () =>
+      serviceMetrics.countIdempotentDuplicate("order_submission"),
   });
   const kitchenServingService = new KitchenServingService({
     databasePool,
@@ -123,6 +140,8 @@ export function composeApi(config: ApiConfig): ApiComposition {
     ordering,
     audit,
     idempotencySecret: config.guestAccessSecret,
+    onIdempotentReplay: () =>
+      serviceMetrics.countIdempotentDuplicate("kitchen_serving"),
   });
   const paymentCompletionService = new PaymentCompletionService({
     databasePool,
@@ -135,6 +154,8 @@ export function composeApi(config: ApiConfig): ApiComposition {
     payments,
     audit,
     idempotencySecret: config.guestAccessSecret,
+    onIdempotentReplay: () =>
+      serviceMetrics.countIdempotentDuplicate("payment_recording"),
   });
   const notificationService = new NotificationService({
     databasePool,
@@ -210,6 +231,15 @@ export function composeApi(config: ApiConfig): ApiComposition {
   const notificationsRouter = createNotificationsRouter({
     ...sessionDependencies,
     useCases: notificationService,
+    streamMetrics: {
+      connectionOpened: () => serviceMetrics.sseConnectionOpened(),
+      connectionClosed: () => serviceMetrics.sseConnectionClosed(),
+      reconnected: () => serviceMetrics.sseReconnected(),
+      replayGap: () => serviceMetrics.sseReplayGap(),
+      sessionEnded: () => serviceMetrics.sseSessionEnded(),
+      pollFailure: () => serviceMetrics.ssePollFailure(),
+      delivered: (itemAgeMs) => serviceMetrics.sseDelivered(itemAgeMs),
+    },
   });
   const reportingRouter = createReportingRouter({
     ...sessionDependencies,
@@ -229,10 +259,40 @@ export function composeApi(config: ApiConfig): ApiComposition {
     useCases: tenantOwnerService,
   });
 
+  const observabilitySampler = setInterval(() => {
+    void (async () => {
+      serviceMetrics.setPoolSaturation(readPoolSaturation(databasePool));
+      try {
+        await pingDatabase(databasePool);
+        serviceMetrics.setDatabaseReady(true);
+      } catch {
+        serviceMetrics.setDatabaseReady(false);
+      }
+      alertEvaluator.evaluate(serviceMetrics.snapshot());
+    })();
+  }, 15_000);
+  observabilitySampler.unref();
+
   const app = createApp({
     logger,
     trustProxy: config.trustProxy,
-    checkReadiness: () => pingDatabase(databasePool),
+    checkReadiness: async () => {
+      try {
+        await pingDatabase(databasePool);
+        serviceMetrics.setDatabaseReady(true);
+      } catch (error) {
+        serviceMetrics.setDatabaseReady(false);
+        throw error;
+      }
+    },
+    serviceMetrics,
+    readHealthMetrics: () => {
+      const snapshot = serviceMetrics.snapshot();
+      return {
+        snapshot,
+        alerts: alertEvaluator.evaluate(snapshot),
+      };
+    },
     staffSessionMiddleware: createStaffSessionMiddleware(sessionDependencies),
     guestSessionMiddleware: createGuestSessionMiddleware(
       guestSessionDependencies,
@@ -258,5 +318,7 @@ export function composeApi(config: ApiConfig): ApiComposition {
   return {
     app,
     databasePool,
+    serviceMetrics,
+    alertEvaluator,
   };
 }

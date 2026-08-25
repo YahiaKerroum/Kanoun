@@ -220,4 +220,95 @@ describeWithDatabase("PostgreSQL outbox processor", () => {
     ).resolves.toEqual(["processed", "processed"]);
     expect(new Set(handled).size).toBe(2);
   });
+
+  it("reports outcome and handler-duration observations for processed, retried, and quarantined events", async () => {
+    const tenantId = randomUUID();
+    let now = new Date("2026-08-19T10:00:00.000Z");
+    let fail = true;
+    const outcomes: { outcome: string; eventAgeMs: number }[] = [];
+    const handlerDurations: { handlerName: string; durationMs: number }[] = [];
+    const handlerName = `test.observe.${randomUUID()}`;
+    const handler: OutboxEventHandler = {
+      name: handlerName,
+      supports: () => true,
+      handle: () => {
+        if (fail) throw new Error("poison");
+        return Promise.resolve();
+      },
+    };
+    await insertEvent({
+      businessAccountId: tenantId,
+      aggregateId: randomUUID(),
+      aggregateVersion: 1,
+      occurredAtUtc: now,
+    });
+    const processor = new PostgresOutboxProcessor(pool, {
+      workerId: `worker-${randomUUID()}`,
+      businessAccountId: tenantId,
+      handlers: [handler],
+      maximumAttempts: 5,
+      now: () => now,
+      observeOutcome: (outcome, eventAgeMs) => {
+        outcomes.push({ outcome, eventAgeMs });
+      },
+      observeHandler: (name, durationMs) => {
+        handlerDurations.push({ handlerName: name, durationMs });
+      },
+    });
+
+    await expect(processor.processNext()).resolves.toBe("retry_scheduled");
+    expect(outcomes).toHaveLength(1);
+    expect(outcomes[0]?.outcome).toBe("retry_scheduled");
+    expect(outcomes[0]?.eventAgeMs).toBeGreaterThanOrEqual(0);
+    expect(handlerDurations).toHaveLength(0);
+
+    fail = false;
+    now = new Date(now.getTime() + 60_000);
+    await expect(processor.processNext()).resolves.toBe("processed");
+    expect(outcomes).toHaveLength(2);
+    expect(outcomes[1]?.outcome).toBe("processed");
+    expect(outcomes[1]?.eventAgeMs).toBeGreaterThanOrEqual(60_000);
+    expect(handlerDurations).toHaveLength(1);
+    expect(handlerDurations[0]?.handlerName).toBe(handlerName);
+    expect(handlerDurations[0]?.durationMs).toBeGreaterThanOrEqual(0);
+  });
+
+  it("reads pending, quarantined, oldest-age, and checkpoint-age backlog state", async () => {
+    const tenantId = randomUUID();
+    const handlerName = `test.backlog.${randomUUID()}`;
+    const handler: OutboxEventHandler = {
+      name: handlerName,
+      supports: () => true,
+      handle: () => Promise.resolve(),
+    };
+    const processedAggregateId = randomUUID();
+    const pendingOccurredAt = new Date(Date.now() - 45_000);
+    await insertEvent({
+      businessAccountId: tenantId,
+      aggregateId: processedAggregateId,
+      aggregateVersion: 1,
+      occurredAtUtc: new Date(Date.now() - 120_000),
+    });
+    await insertEvent({
+      businessAccountId: tenantId,
+      aggregateId: randomUUID(),
+      aggregateVersion: 1,
+      occurredAtUtc: pendingOccurredAt,
+    });
+    const processor = new PostgresOutboxProcessor(pool, {
+      workerId: `worker-${randomUUID()}`,
+      businessAccountId: tenantId,
+      handlers: [handler],
+    });
+
+    await expect(processor.processNext()).resolves.toBe("processed");
+    const backlog = await processor.readBacklog();
+
+    expect(backlog.pendingEvents).toBeGreaterThanOrEqual(1);
+    expect(backlog.quarantinedEvents).toBeGreaterThanOrEqual(0);
+    expect(backlog.oldestPendingAgeSeconds).toBeGreaterThanOrEqual(40);
+    expect(
+      backlog.checkpointAgeSecondsByHandler[handlerName],
+    ).toBeGreaterThanOrEqual(0);
+  });
 });

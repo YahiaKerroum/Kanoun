@@ -42,6 +42,7 @@ export interface KitchenServingServiceDependencies {
   readonly ordering: OrderingStore;
   readonly audit: AuditWriter;
   readonly idempotencySecret: string;
+  readonly onIdempotentReplay?: () => void;
 }
 
 function nowFrom(metadata: KitchenRequestMetadata): Date {
@@ -679,9 +680,11 @@ export class KitchenServingService {
         "Retry the original action or use a new idempotency key.",
       );
     }
-    return result.kind === "replay"
-      ? { kind: "replay", responseBody: result.responseBody }
-      : result;
+    if (result.kind === "replay") {
+      this.dependencies.onIdempotentReplay?.();
+      return { kind: "replay", responseBody: result.responseBody };
+    }
+    return result;
   }
 
   private async appendWorkEvent(

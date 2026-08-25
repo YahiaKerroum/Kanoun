@@ -83,6 +83,7 @@ describeWithDatabase("order submission service against PostgreSQL", () => {
     guestAccessSecret: guestSecret,
     customerWebOrigin: "http://127.0.0.1:5174",
   });
+  let orderIdempotentReplayCount = 0;
   const orderService = new OrderSubmissionService({
     databasePool,
     workflow,
@@ -93,7 +94,11 @@ describeWithDatabase("order submission service against PostgreSQL", () => {
     kitchen,
     audit,
     idempotencySecret: guestSecret,
+    onIdempotentReplay: () => {
+      orderIdempotentReplayCount += 1;
+    },
   });
+  let kitchenIdempotentReplayCount = 0;
   const kitchenService = new KitchenServingService({
     databasePool,
     workflow,
@@ -102,6 +107,9 @@ describeWithDatabase("order submission service against PostgreSQL", () => {
     ordering,
     audit,
     idempotencySecret: guestSecret,
+    onIdempotentReplay: () => {
+      kitchenIdempotentReplayCount += 1;
+    },
   });
 
   interface Fixture {
@@ -342,6 +350,7 @@ describeWithDatabase("order submission service against PostgreSQL", () => {
     const setup = await fixture("order-idempotent");
     const guest = await guestAtTable(setup, "T-2");
     const key = `submit-${randomUUID()}`;
+    const replaysBefore = orderIdempotentReplayCount;
     const first = await orderService.submitGuestOrder(
       guest.context,
       submission(setup),
@@ -356,6 +365,7 @@ describeWithDatabase("order submission service against PostgreSQL", () => {
     );
     expect(replay.id).toBe(first.id);
     expect(await count("ordering.orders", setup.businessAccountId)).toBe(1);
+    expect(orderIdempotentReplayCount).toBe(replaysBefore + 1);
 
     await expect(
       orderService.submitGuestOrder(
@@ -676,6 +686,7 @@ describeWithDatabase("order submission service against PostgreSQL", () => {
       metadata(),
     );
     const startKey = `start-${randomUUID()}`;
+    const kitchenReplaysBefore = kitchenIdempotentReplayCount;
     const started = await kitchenService.startKitchenWorkItem(
       setup.context,
       item.id,
@@ -699,6 +710,7 @@ describeWithDatabase("order submission service against PostgreSQL", () => {
       metadata(),
     );
     expect(replay.id).toBe(started.id);
+    expect(kitchenIdempotentReplayCount).toBe(kitchenReplaysBefore + 1);
     expect(
       await ordering.getOrder(databasePool, setup.businessAccountId, order.id),
     ).toMatchObject({ fulfilment: "preparing", version: 3 });

@@ -3,7 +3,7 @@ id: IMPLEMENTATION-PROGRESS
 status: active
 version: 1.0
 owner: engineering
-last_reviewed: 2026-08-09
+last_reviewed: 2026-08-25
 ---
 
 # Implementation Progress
@@ -17,7 +17,11 @@ last_reviewed: 2026-08-09
 `e729438a11100d347c2bf8c77a0ad85ecbb84540`. `PR-03 — guided owner setup and
 workforce readiness` is verified. `PR-04 — join the operational workspaces
 into one service` and `PR-05 — real-stack E2E proof` are verified in isolated
-publication worktrees.
+publication worktrees. `PR-07 — pilot operations and production decision
+gates` is declared and locally verified in the isolated `pr-07-start`
+worktree per its own execution-protocol exception (product owner instruction,
+2026-08-18); `PR-06`'s human-usability gate remains independently open and is
+not waived by that exception.
 Slice 008 is already integrated into
 `main`; the observed integration merge is
 `b38375bb2bd80b0c8ba98011b0591880d44dc072`, and the PR-03 baseline `main`
@@ -57,6 +61,10 @@ head is `e729438a11100d347c2bf8c77a0ad85ecbb84540`.
   verified in the isolated publication worktree.
 - `PR-05 — replace-simulated-e2e-confidence-with-real-stack-proof`: verified
   in the isolated publication worktree; PR-06 remains explicitly out of scope.
+- `PR-07 — pilot-operations-and-production-decision-gates`: declared and
+  locally verified in the isolated `pr-07-start` worktree; `ADR-0007`,
+  hosting, and real pilot sessions remain explicitly out of scope, and the
+  PR-06 human-usability gate remains independently open.
 
 ## Completed
 
@@ -286,6 +294,79 @@ head is `e729438a11100d347c2bf8c77a0ad85ecbb84540`.
   retain local failure output under `output/playwright/real`; successful runs
   remove it, and CI never uploads the raw directory.
 
+## PR-07 current evidence
+
+- The PR-07 declaration is recorded in
+  `docs/delivery/pr-07-pilot-operations-and-production-gates.md`; the
+  boundary confirmation and sequencing exception are recorded in
+  `docs/delivery/pr-07-readiness.md`.
+- Added an in-process metrics registry, alert evaluator, and a
+  `ServiceMetrics` facade over the runbook's indicator families
+  (`packages/building-blocks/src/observability`); wired request/pool/outbox/
+  SSE/idempotency observation into the API, worker, and notifications SSE
+  route; exposed a loopback `/health/metrics` platform route on the API and
+  an optional loopback metrics listener on the worker
+  (`WORKER_METRICS_HOST`/`WORKER_METRICS_PORT`).
+- Four alert-backing counters/gauges
+  (`identity.session_invalidation_failures_total`,
+  `platform.tenant_isolation_signals_total`,
+  `payments.reconciliation_failures_total`,
+  `platform.backup_last_success_age_seconds`) and one
+  (`reporting.export_failures_total`) are defined and alert-evaluated but not
+  wired to a live application call site in this package; this is recorded
+  honestly in the observability-and-runbook appendix and the dashboards
+  rather than implied as complete.
+- Added `scripts/load-profile.ts` and `scripts/drill-restore.ts` (with their
+  `*-config.ts` safety modules and unit tests): each provisions an isolated,
+  marked, loopback-only PostgreSQL target (falling back to an owned,
+  isolated local cluster when the configured role cannot create databases),
+  refuses a non-loopback or unmarked target, and tears down what it created.
+- A real `tsx scripts/load-profile.ts` run against the production-like local
+  API/worker builds seeded 500 dishes, 100 tables, and 50 QR sessions,
+  authenticated 5 staff and 50 guest sessions, and measured a 90-second
+  PD-025-paced run: customer-menu-usable p95 22ms, staff-authenticated-read
+  p95 20ms, order-submission-command p95 52ms, and connected-client (SSE)
+  delivery p95 1401ms — all within the `docs/operations/observability-and-runbook.md`
+  objectives, with zero errors. Distinct staff logins and guest QR exchanges
+  are bounded by the existing per-IP anti-abuse rate limiters (10 logins,
+  60 QR exchanges per 15 minutes), so the run reuses a smaller session pool
+  across the target read concurrency rather than one distinct session per
+  PD-025 count; each virtual user paces requests with randomized think-time
+  rather than looping as fast as possible.
+- A real `tsx scripts/drill-restore.ts` run seeded two tenants (order,
+  payment, refund, and audit history each), backed up the source database,
+  restored it into a second fresh database, and confirmed exact per-tenant
+  row-count parity across restaurants, users, orders, payments, refunds, and
+  audit events, an exact outbox-message count match, and no cross-tenant rows
+  in the restored database. Backup+restore elapsed 1078ms against the
+  4-hour RTO target.
+- Published `docs/operations/dashboards/` (index plus one file per required
+  area: API, order/payment, SSE, outbox/quarantine, projections, PostgreSQL,
+  authentication abuse, backups) with a metric-to-indicator map;
+  `docs/operations/browser-policy.md`; a proposed
+  `docs/operations/retention-and-privacy.md` draft explicitly blocking
+  `AC-NFR-09-05`/`AC-NFR-10-04` closure; `docs/operations/pilot/` guides
+  (owner onboarding, staff quick-start, kitchen/cashier, QR printing, support
+  escalation, maintenance communication, feedback capture); and an appendix
+  in `docs/operations/observability-and-runbook.md` mapping every implemented
+  metric and alert rule to its runbook indicator, including the honest
+  "not yet wired" status above.
+- Under Node `24.18.0` and pnpm `11.17.0`: frozen install, `format:check`,
+  `lint`, and `typecheck` pass; the PostgreSQL-backed suite passes 316 tests
+  across 44 files (including new registry, alert-rule, request-metrics,
+  outbox-observation, and pool-observation tests); architecture checks pass
+  across 188 modules and 370 dependencies; OpenAPI and 43 event contracts
+  validate unchanged; all production builds succeed; the mocked browser/WCAG
+  suite passes 32 tests; all 11 PR-05 real-stack journeys pass unchanged
+  (including worker outage/restart backlog drain, SSE offline/online
+  recovery, session revocation, and delivered-token recovery completion);
+  and `pnpm audit --prod --audit-level high` reports no known
+  vulnerabilities.
+- Explicitly out of scope, per the declaration: `ADR-0007` acceptance,
+  staging/production infrastructure, managed PostgreSQL PITR, production
+  alert channels, production-scale load/restore results, and real pilot
+  sessions. The PR-06 human-usability gate remains independently open.
+
 ## Historical Slice 008 checkpoint
 
 - The following entries preserve the earlier Slice 008 checkpoint narrative.
@@ -497,6 +578,9 @@ head is `e729438a11100d347c2bf8c77a0ad85ecbb84540`.
 ## Next slice
 
 PR-03 is verified from the exact published PR-02 baseline. PR-04 and PR-05 are
-verified in isolated publication worktrees; PR-06 is the next out-of-scope
-slice. The earlier Slice 008 continuation prompts remain historical records
-only.
+verified in isolated publication worktrees. PR-07 is declared and locally
+verified in the isolated `pr-07-start` worktree, executed ahead of PR-06 under
+an explicit, recorded product-owner sequencing exception; PR-06's human-
+usability gate remains the next independently open slice, not waived by that
+exception. The earlier Slice 008 continuation prompts remain historical
+records only.

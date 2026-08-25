@@ -1,9 +1,9 @@
 ---
 id: OBSERVABILITY-RUNBOOK
 status: approved
-version: 1.0
+version: 1.1
 owner: operations
-last_reviewed: 2026-07-27
+last_reviewed: 2026-08-25
 source_of_truth_for:
   - observability-baseline
   - operational-response
@@ -84,3 +84,43 @@ Under the PD-025 workload:
 5. Observe the structured event/tenant/aggregate identity, confirm the event
    and its successors process in order, and record the outcome. Never bulk
    replay or delete quarantined rows.
+
+## Appendix: implemented metrics and alert rules (PR-07)
+
+Added by the pilot-operations package
+(`docs/delivery/pr-07-pilot-operations-and-production-gates.md`). The
+registry, service-metrics facade, and alert evaluator live in
+`packages/building-blocks/src/observability`; portable dashboard panel
+definitions are in `docs/operations/dashboards/`.
+
+### Metric-to-indicator map
+
+See `docs/operations/dashboards/README.md` for the complete table. Every
+metric is bounded-label and free of tenant identifiers, secrets, session
+tokens, and event payloads.
+
+### Alert rules (`alert-rules.ts`)
+
+| Alert id | Priority | Condition | Status |
+|---|---|---|---|
+| `database-unavailable` | Critical | `api.database_ready` gauge is 0 | Live |
+| `sustained-order-submission-failure` | Critical | ≥5 order errors and 0 successes since the previous evaluation | Live |
+| `backup-restore-point-at-risk` | Critical | `platform.backup_last_success_age_seconds` > 900s | Drill-only; no production backup scheduler exists yet |
+| `tenant-isolation-signal` | Critical | `platform.tenant_isolation_signals_total` increased | Drill-only; not wired to a live per-request signal |
+| `payment-ledger-integrity` | Critical | `payments.reconciliation_failures_total` increased | Drill-only; not wired to a live reconciliation job |
+| `outbox-lag` | High | `outbox.oldest_pending_age_seconds` > 300s | Live |
+| `quarantine-growth` | High | New quarantined outbox events since the previous evaluation | Live |
+| `sse-outage` | High | Zero open SSE connections with poll failures while the database is ready | Live |
+| `permission-invalidation-failure` | High | `identity.session_invalidation_failures_total` increased | Defined; not wired to a live call site |
+| `projection-lag` | Medium | Any `projections.checkpoint_age_seconds` > 120s | Live |
+| `export-failure` | Medium | `reporting.export_failures_total` increased | Defined; not wired to a live call site |
+| `elevated-rate-limiting` | Medium | ≥20 rate-limited authentication attempts since the previous evaluation | Live |
+
+"Drill-only" and "not wired to a live call site" alerts have working alert
+logic and unit coverage but no production data source yet; they are honestly
+scoped gaps for a later package, not claimed capabilities of this one. Every
+alert transition is delivered to a structured-log sink by default
+(`createLoggingAlertSink`) and to an in-process active-alert list read
+through `/health/metrics` (API) or the worker's optional loopback metrics
+listener. External channel routing (paging, chat) requires the production
+platform decision (`ADR-0007`).

@@ -47,8 +47,19 @@ export interface NotificationsHttpUseCases {
   ): Promise<readonly NotificationGapWarning[]>;
 }
 
+export interface NotificationsStreamMetrics {
+  readonly connectionOpened: () => void;
+  readonly connectionClosed: () => void;
+  readonly reconnected: () => void;
+  readonly replayGap: () => void;
+  readonly sessionEnded: () => void;
+  readonly pollFailure: () => void;
+  readonly delivered: (itemAgeMs: number) => void;
+}
+
 export interface NotificationsRouterDependencies extends SessionMiddlewareDependencies {
   readonly useCases: NotificationsHttpUseCases;
+  readonly streamMetrics?: NotificationsStreamMetrics;
 }
 
 function parse<Input>(schema: z.ZodType<Input>, value: unknown): Input {
@@ -189,8 +200,17 @@ export function createNotificationsRouter(
         "content-type": "text/event-stream",
       });
       response.flushHeaders();
+      const streamMetrics = dependencies.streamMetrics;
+      streamMetrics?.connectionOpened();
+      response.on("close", () => {
+        streamMetrics?.connectionClosed();
+      });
+      if (lastEventId) {
+        streamMetrics?.reconnected();
+      }
       response.write("retry: 2000\n\n");
       if (lastEventId && !recoveredCursor) {
+        streamMetrics?.replayGap();
         response.write("event: replay-gap\n");
         response.write('data: {"reload":true}\n\n');
       }
@@ -212,6 +232,7 @@ export function createNotificationsRouter(
           currentContext.userId !== originalContext.userId ||
           branchAuthorizationEnded
         ) {
+          streamMetrics?.sessionEnded();
           response.write("event: session-ended\n");
           response.write('data: {"reload":true}\n\n');
           response.end();
@@ -227,6 +248,7 @@ export function createNotificationsRouter(
           response.write(`id: ${item.id}\n`);
           response.write("event: notification\n");
           response.write(`data: ${JSON.stringify(present(item))}\n\n`);
+          streamMetrics?.delivered(Date.now() - item.occurredAtUtc.getTime());
           cursor = item.createdAtUtc;
           cursorId = item.id;
         }
@@ -243,7 +265,10 @@ export function createNotificationsRouter(
         timer = setTimeout(() => {
           void poll()
             .then(schedulePoll)
-            .catch(() => response.end());
+            .catch(() => {
+              streamMetrics?.pollFailure();
+              response.end();
+            });
         }, 2_000);
       };
       schedulePoll();

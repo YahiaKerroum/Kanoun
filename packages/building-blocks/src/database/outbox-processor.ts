@@ -47,6 +47,11 @@ export interface OutboxProcessorOptions {
     readonly attemptCount: number;
     readonly failureCode: string;
   }) => void;
+  readonly observeOutcome?: (
+    outcome: "processed" | "retry_scheduled" | "quarantined",
+    eventAgeMs: number,
+  ) => void;
+  readonly observeHandler?: (handlerName: string, durationMs: number) => void;
 }
 
 interface OutboxRow {
@@ -157,7 +162,12 @@ export class PostgresOutboxProcessor {
           [event.eventId, handler.name],
         );
         if (checkpoint.rowCount) continue;
+        const handlerStartedAt = performance.now();
         await handler.handle({ sql: client }, event, now);
+        this.options.observeHandler?.(
+          handler.name,
+          performance.now() - handlerStartedAt,
+        );
         await client.query(
           `
             insert into platform.inbox_checkpoints (
@@ -182,6 +192,10 @@ export class PostgresOutboxProcessor {
         [event.eventId, now],
       );
       await client.query("commit");
+      this.options.observeOutcome?.(
+        "processed",
+        now.getTime() - event.occurredAtUtc.getTime(),
+      );
       return "processed";
     } catch (error: unknown) {
       await client.query("rollback");
@@ -226,7 +240,12 @@ export class PostgresOutboxProcessor {
           failureCode: errorCode,
         });
       }
-      return quarantined ? "quarantined" : "retry_scheduled";
+      const outcome = quarantined ? "quarantined" : "retry_scheduled";
+      this.options.observeOutcome?.(
+        outcome,
+        now.getTime() - event.occurredAtUtc.getTime(),
+      );
+      return outcome;
     } finally {
       client.release();
     }
@@ -352,6 +371,52 @@ export class PostgresOutboxProcessor {
     } finally {
       client.release();
     }
+  }
+
+  public async readBacklog(): Promise<{
+    readonly oldestPendingAgeSeconds: number;
+    readonly pendingEvents: number;
+    readonly quarantinedEvents: number;
+    readonly checkpointAgeSecondsByHandler: Readonly<Record<string, number>>;
+  }> {
+    const state = await this.databasePool.query<{
+      readonly pending: string;
+      readonly quarantined: string;
+      readonly oldest_age_seconds: string | null;
+    }>(`
+      select
+        (select count(*) from platform.outbox_messages
+          where processed_at_utc is null and quarantined_at_utc is null)
+          as pending,
+        (select count(*) from platform.outbox_messages
+          where quarantined_at_utc is not null) as quarantined,
+        (select extract(epoch from (now() - min(occurred_at_utc)))
+          from platform.outbox_messages
+          where processed_at_utc is null and quarantined_at_utc is null)
+          as oldest_age_seconds
+    `);
+    const checkpoints = await this.databasePool.query<{
+      readonly handler_name: string;
+      readonly checkpoint_age_seconds: string | null;
+    }>(`
+      select handler_name,
+        extract(epoch from (now() - max(processed_at_utc)))
+          as checkpoint_age_seconds
+      from platform.inbox_checkpoints
+      group by handler_name
+    `);
+    const checkpointAgeSecondsByHandler: Record<string, number> = {};
+    for (const row of checkpoints.rows) {
+      checkpointAgeSecondsByHandler[row.handler_name] = Number(
+        row.checkpoint_age_seconds ?? 0,
+      );
+    }
+    return {
+      oldestPendingAgeSeconds: Number(state.rows[0]?.oldest_age_seconds ?? 0),
+      pendingEvents: Number(state.rows[0]?.pending ?? 0),
+      quarantinedEvents: Number(state.rows[0]?.quarantined ?? 0),
+      checkpointAgeSecondsByHandler,
+    };
   }
 
   public async pruneProcessed(beforeUtc: Date): Promise<number> {

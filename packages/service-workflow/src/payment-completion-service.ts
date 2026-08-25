@@ -65,6 +65,7 @@ export interface PaymentCompletionServiceDependencies {
   readonly payments: PaymentsStore;
   readonly audit: AuditWriter;
   readonly idempotencySecret: string;
+  readonly onIdempotentReplay?: () => void;
 }
 
 function nowFrom(metadata: PaymentCompletionMetadata): Date {
@@ -1761,9 +1762,11 @@ export class PaymentCompletionService {
         "Retry the original action or use a new idempotency key.",
       );
     }
-    return result.kind === "replay"
-      ? { kind: "replay", responseBody: result.responseBody }
-      : result;
+    if (result.kind === "replay") {
+      this.dependencies.onIdempotentReplay?.();
+      return { kind: "replay", responseBody: result.responseBody };
+    }
+    return result;
   }
 
   private async appendPaymentEvent(
