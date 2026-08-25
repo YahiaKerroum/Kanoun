@@ -222,3 +222,13 @@ but driven only by the restore drill above, not a live production call site;
 production-scale, hosting, and real-pilot items remain blocked on `ADR-0007`
 and product decisions as declared above. The PR-06 human-usability gate
 remains independently open and is not waived by this status.
+
+**Addendum (2026-08-25, same day):** `ADR-0007` is now accepted — see
+`docs/architecture/adr/ADR-0007-deployment-platform.md` — but scoped to a
+synthetic-data scale/restore validation environment only (Fly.io compute in
+Paris, Neon PostgreSQL in Frankfurt). It carries no real customer data. The
+business's stated production intent is to self-host locally once a real
+client is confirmed; that remains a deferred, separate decision (a future
+superseding ADR) and is not resolved by this addendum. This addendum
+provisions no staging/production infrastructure and changes no other item
+recorded above.

@@ -227,8 +227,13 @@ MISE does **not** claim online payment processing, split or partial payments,
 table-level combined billing, ingredient stock control, printed kitchen
 tickets, customer accounts, external notification providers, report export,
 currency conversion, offline command replay, dynamic workflow design, or
-production deployment readiness. Deployment remains blocked until
-[ADR-0007](docs/architecture/adr/ADR-0007-deployment-platform.md) is accepted.
+production deployment readiness.
+[ADR-0007](docs/architecture/adr/ADR-0007-deployment-platform.md) accepts a
+low-cost cloud environment (Fly.io in Paris, Neon PostgreSQL in Frankfurt)
+for validating scale and restore behavior with synthetic data only. The
+actual production hosting model — intended to be self-hosted locally once a
+real client is confirmed — remains a deliberately deferred, separate
+decision; production deployment readiness is still not claimed.
 
 The approved release boundary is authoritative in
 [the MVP scope](docs/product/mvp-scope.yaml) and

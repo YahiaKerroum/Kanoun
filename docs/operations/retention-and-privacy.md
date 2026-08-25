@@ -16,8 +16,17 @@ empty gate.
 
 ## What this draft is blocked on
 
-- The deployment market and its applicable data-protection law (the product
-  has no confirmed jurisdiction yet; `ADR-0007` is still proposed).
+- The real production hosting model. `ADR-0007` accepts Fly.io/Neon
+  (France/Germany) only as a synthetic-data scale/restore validation
+  environment, never a home for real customer data. The intended production
+  model is local self-hosting once a real client is confirmed, which is a
+  deferred, separate decision (see the ADR's "phase 2" section) — this
+  document cannot fix a retention/privacy policy against a hosting location
+  that is not yet chosen.
+- Confirmation of any Algeria Law 18-07 (personal data protection)
+  obligations once that hosting location is known, including any
+  cross-border transfer question if the eventual choice is not purely local.
+  This requires local counsel, not an engineering judgment call.
 - A named data controller/processor relationship for the pilot restaurant(s).
 - Product approval of the specific retention windows below.
 

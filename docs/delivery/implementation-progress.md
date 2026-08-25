@@ -62,9 +62,15 @@ head is `e729438a11100d347c2bf8c77a0ad85ecbb84540`.
 - `PR-05 — replace-simulated-e2e-confidence-with-real-stack-proof`: verified
   in the isolated publication worktree; PR-06 remains explicitly out of scope.
 - `PR-07 — pilot-operations-and-production-decision-gates`: declared and
-  locally verified in the isolated `pr-07-start` worktree; `ADR-0007`,
-  hosting, and real pilot sessions remain explicitly out of scope, and the
-  PR-06 human-usability gate remains independently open.
+  locally verified in the isolated `pr-07-start` worktree. `ADR-0007` is now
+  accepted as a follow-up, but only for a synthetic-data scale/restore
+  validation environment (Fly.io compute in Paris; Neon PostgreSQL in
+  Frankfurt) — never real customer data. The real production hosting model
+  is deliberately deferred: the business intends to self-host locally once a
+  real client is confirmed, and that decision (and its own Algeria
+  data-protection review) is a separate, future superseding ADR. Real pilot
+  sessions remain explicitly out of scope. The PR-06 human-usability gate
+  remains independently open.
 
 ## Completed
 
@@ -366,6 +372,14 @@ head is `e729438a11100d347c2bf8c77a0ad85ecbb84540`.
   staging/production infrastructure, managed PostgreSQL PITR, production
   alert channels, production-scale load/restore results, and real pilot
   sessions. The PR-06 human-usability gate remains independently open.
+- Follow-up (2026-08-25): `ADR-0007` is now accepted, but scoped to a
+  synthetic-data scale/restore validation environment only (Fly.io compute
+  in Paris; Neon PostgreSQL in Frankfurt), per the product owner's stated
+  intent to self-host locally once a real client is confirmed — see
+  `docs/architecture/adr/ADR-0007-deployment-platform.md`. Real production
+  hosting, staging/production infrastructure, managed PostgreSQL PITR for
+  real data, production alert channels, and Algeria's data-protection review
+  are all deferred to that future, separate decision.
 
 ## Historical Slice 008 checkpoint
 
@@ -572,7 +586,12 @@ head is `e729438a11100d347c2bf8c77a0ad85ecbb84540`.
   subscription; expiry and revocation invalidate its direct grant token.
 - Local verification requires Node.js 24.18.0; other Node releases are outside
   the supported toolchain even if some commands happen to run.
-- Production deployment is blocked by proposed `ADR-0007`.
+- `ADR-0007` accepts a synthetic-data scale/restore validation environment
+  only (Fly.io compute in Paris; Neon PostgreSQL in Frankfurt). Real
+  production hosting is deliberately deferred — the intent is to self-host
+  locally once a real client is confirmed — so production deployment
+  readiness is still not claimed, and no staging/production environment
+  exists.
 - `MISE` remains a working product name until product approves a final name.
 
 ## Next slice

@@ -82,8 +82,14 @@ Luna Max must not silently resolve these approved-source gaps.
    customer-name policy. Current traceability explicitly marks both incomplete,
    while `PD-006` fixes the MVP customer name as optional. Do not invent a new
    setting without an approved product decision and catalogue entry.
-3. `ADR-0007` is proposed. Hosting vendor, region, budget, and data-residency
-   choices block production infrastructure and production-ready claims.
+3. `ADR-0007` is accepted (2026-08-25) but only for a synthetic-data
+   scale/restore validation environment (Fly.io compute in Paris, Neon
+   PostgreSQL in Frankfurt), never real customer data. Real production
+   hosting is deliberately deferred: the stated business intent is to
+   self-host locally once a real client is confirmed, tracked as a future
+   superseding ADR with its own Algeria Law 18-07 review. Production-ready
+   claims remain blocked on that future decision, not on this validation
+   environment.
 4. The initial owner must remain protected by `US-R01` and the private
    bootstrap contract. A public self-service signup is a new product decision,
    not an implied part of the setup UI.
@@ -466,24 +472,38 @@ use throughout service.
 
 **Status (2026-08-25): locally verified in the isolated `pr-07-start`
 worktree per the sequencing exception recorded in
-`docs/delivery/pr-07-readiness.md`. Production-scale, hosting, and real-pilot
-items remain blocked as declared; PR-06's human-usability gate remains
-independently open and is not waived by this status.**
+`docs/delivery/pr-07-readiness.md`. As a same-day follow-up, `ADR-0007` is
+now accepted, but scoped to a synthetic-data scale/restore validation
+environment only (Fly.io compute in Paris; Neon PostgreSQL in Frankfurt) —
+see `docs/architecture/adr/ADR-0007-deployment-platform.md`. Real production
+hosting is deliberately deferred: the business intends to self-host locally
+once a real client is confirmed, which is tracked as a future superseding
+ADR with its own Algeria data-protection review. No staging or production
+infrastructure exists, and real-pilot items remain blocked as declared.
+PR-06's human-usability gate remains independently open and is not waived by
+this status.**
 
 **Goal:** make a limited real-restaurant pilot supportable and recoverable.
 
 - `implements`: `NFR-04` through `NFR-11`, `NFR-13`, `NFR-14`, `NFR-17`,
   `NFR-18`.
 - `obeys`: threat model, observability runbook, deployment/recovery proposal,
-  `PD-025`, `PD-028`, `ADR-0003` through `ADR-0007` once accepted.
+  `PD-025`, `PD-028`, `ADR-0003` through `ADR-0007` (accepted 2026-08-25 as a
+  follow-up to this package).
 - `changes`:
   - Product/operations approve hosting vendor, region, data residency, budget,
     pilot support hours, invitation/recovery delivery, retention/privacy policy,
-    final product name, and supported-browser policy.
-  - Accept or supersede `ADR-0007`; establish isolated staging/production,
-    managed PostgreSQL PITR, secret management, TLS, API/worker supervision,
-    SSE-compatible routing, migrations, rollback/forward-fix, and environment
-    access controls.
+    final product name, and supported-browser policy. A hosting vendor,
+    region, and budget are now approved for a synthetic-data scale/restore
+    validation environment only (`ADR-0007`); real production hosting, data
+    residency, and every other item in this list remain open, deferred to the
+    business's stated intent to self-host locally once a real client is
+    confirmed.
+  - `ADR-0007` establishes the validation environment only; establishing
+    isolated staging/production, managed PostgreSQL PITR, secret management,
+    TLS, API/worker supervision, SSE-compatible routing, migrations,
+    rollback/forward-fix, and environment access controls for the real
+    production hosting model awaits that future, separate decision.
   - Instrument the approved service indicators and routed alerts; create
     dashboards for API, order/payment, SSE, outbox/quarantine, projections,
     PostgreSQL, authentication abuse, and backups.

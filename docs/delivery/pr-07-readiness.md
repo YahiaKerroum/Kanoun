@@ -69,6 +69,16 @@ This worktree does not implement Slice 008 again, copy uncommitted PR-06
 changes, alter PR-06, or open a pull request. No production claims are made
 while `ADR-0007` is proposed.
 
+**Addendum (2026-08-25, same day):** `ADR-0007` is now accepted, but scoped
+to a synthetic-data scale/restore validation environment only (Fly.io
+compute in Paris, Neon PostgreSQL in Frankfurt) — see
+`docs/architecture/adr/ADR-0007-deployment-platform.md`. It carries no real
+customer data. The "acceptance blocked on hosting vendor/region/budget/data-
+residency" language above describes this document's original state and
+remains accurate history for the real production decision, which the
+business intends to make as self-hosted local infrastructure once a real
+client is confirmed — a deferred, separate future ADR, not resolved here.
+
 ## References
 
 - AGENTS.md

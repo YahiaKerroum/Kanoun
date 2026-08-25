@@ -21,8 +21,12 @@ backup process exists yet.
 This package proves the reporting mechanism against isolated, run-scoped
 local PostgreSQL databases that this script creates and drops; it does not
 schedule or run a production backup job, and the `platform_last_success_age`
-gauge is set only when a drill runs. Production backup scheduling, managed
-PostgreSQL PITR, and the resulting continuous freshness signal remain blocked
-on the hosting decision (`ADR-0007`).
+gauge is set only when a drill runs. `ADR-0007` names Neon (Frankfurt) as a
+synthetic-data scale-validation database only, with Amazon RDS in
+`eu-west-3` as its documented fallback if Neon's PITR window does not meet
+the 15-minute RPO target during that validation. Neither is the real
+production backup target — the actual production hosting model is deferred
+to a self-hosted local decision once a client is confirmed, and this panel's
+data will need re-pointing once that decision lands.
 
 Alert bindings: `backup-restore-point-at-risk` (critical, drill-only today).

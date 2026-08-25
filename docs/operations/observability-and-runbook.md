@@ -122,5 +122,8 @@ scoped gaps for a later package, not claimed capabilities of this one. Every
 alert transition is delivered to a structured-log sink by default
 (`createLoggingAlertSink`) and to an in-process active-alert list read
 through `/health/metrics` (API) or the worker's optional loopback metrics
-listener. External channel routing (paging, chat) requires the production
-platform decision (`ADR-0007`).
+listener. External channel routing (paging, chat) requires a real
+production deployment; `ADR-0007`'s Fly.io/Neon environment is a
+synthetic-data scale-validation environment only, and the real production
+hosting model (self-hosted locally once a client is confirmed) remains a
+deferred, separate decision.

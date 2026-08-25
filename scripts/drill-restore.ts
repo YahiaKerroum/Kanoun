@@ -498,7 +498,7 @@ async function main(): Promise<void> {
         tenantIsolationHeld: crossTenantLeaks.length === 0,
         metricsSnapshot: serviceMetrics.snapshot(),
         notes: [
-          "This drill runs against isolated loopback PostgreSQL databases created and dropped by this script; it does not touch a production backup or managed PITR path, which remains blocked on ADR-0007.",
+          "This drill runs against isolated loopback PostgreSQL databases created and dropped by this script; it does not touch a production backup or managed PITR path. ADR-0007's Neon database is a synthetic-data scale/restore validation environment only — the real production hosting model is a deferred, separate decision.",
           "RTO is measured for the backup-plus-restore path exercised here; production RTO/RPO depend on the eventual managed PostgreSQL platform.",
         ],
       };

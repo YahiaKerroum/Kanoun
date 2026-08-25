@@ -1037,7 +1037,7 @@ Ordering, Tables, Kitchen, and core Payments should remain together until there 
 
 ## 23. Architecture Decision Record Status
 
-Accepted and proposed decisions are indexed in `docs/architecture/adr/README.md`. `ADR-0001` accepts Express and strict TypeScript. `ADR-0007` remains proposed and blocks production infrastructure until hosting, region, budget, and residency requirements are approved.
+Accepted and proposed decisions are indexed in `docs/architecture/adr/README.md`. `ADR-0001` accepts Express and strict TypeScript. `ADR-0007` accepts a low-cost cloud environment (Fly.io compute in Paris; Neon PostgreSQL in Frankfurt) for validating scale/restore behavior with synthetic data only; the real production hosting model, intended to be self-hosted locally once a client is confirmed, is deliberately deferred to a future superseding ADR.
 
 ---
 

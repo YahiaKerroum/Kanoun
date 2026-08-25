@@ -833,7 +833,7 @@ async function main(): Promise<void> {
         notes: [
           "Distinct staff logins and guest QR exchanges are bounded by the existing per-IP anti-abuse rate limiters (10 logins and 60 QR exchanges per 15 minutes) when driven from one loopback source IP; this run reused a smaller pool of real sessions across the target read concurrency rather than one distinct session per PD-025 count.",
           "Order submissions are paced at the PD-025 rate and stay within the existing per-IP order-command rate limiter (60 per 15 minutes); a longer sustained run from one source IP would be capped by that same anti-abuse control, which is expected, correct behavior.",
-          "This run is production-like but local; production-scale verification is pending the platform decision (ADR-0007).",
+          "This run is production-like but local, run against a synthetic-data-only scale/restore validation environment (ADR-0007: Fly.io/Neon), never real customer data; the real production hosting model is a deferred, separate decision.",
           "Each virtual guest and staff reader paces its own requests with randomized think-time (1-3s guest, 2-5s staff) rather than looping as fast as possible, matching a person browsing rather than a request generator; concurrency is held at the PD-025 session counts throughout the run.",
         ],
       };

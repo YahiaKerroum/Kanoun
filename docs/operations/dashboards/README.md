@@ -19,8 +19,12 @@ snapshot (exposed locally at `GET /health/metrics` and, when enabled, the
 worker's loopback `WORKER_METRICS_HOST`/`WORKER_METRICS_PORT` listener).
 
 No production dashboard platform is deployed by this package; these
-definitions are the panel specification to import once a platform is chosen
-under the pending hosting decision (`ADR-0007`).
+definitions are the panel specification to import once a metrics/dashboard
+sink is chosen. `ADR-0007`'s Fly.io/Neon environment is a synthetic-data
+scale-validation environment, not the real production target — the actual
+production hosting model (self-hosted locally once a client is confirmed)
+is a deferred, separate decision, and these panels will need re-pointing
+once it lands.
 
 ## Areas
 
