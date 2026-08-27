@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { createLoadProfileConfig } from "./load-profile-config.js";
+import {
+  createLoadProfileConfig,
+  resolveLoadProfile,
+} from "./load-profile-config.js";
 
 const validEnvironment = {
   NODE_ENV: "development",
@@ -70,5 +73,39 @@ describe("load-profile configuration safety", () => {
       DATABASE_URL: "postgresql://rms:rms_local_only@127.0.0.1:5432/rms",
     });
     expect(viaDatabaseUrl.databaseHost).toBe("127.0.0.1");
+  });
+});
+
+describe("load profile selection", () => {
+  it("defaults to the short, reused-session validation profile", () => {
+    const profile = resolveLoadProfile({});
+
+    expect(profile.distinctClientIps).toBe(false);
+    expect(profile.guestSessionCount).toBe(50);
+    expect(profile.runDurationSeconds).toBe(90);
+  });
+
+  it("selects the sustained, distinct-client profile when requested", () => {
+    const profile = resolveLoadProfile({
+      LOAD_PROFILE_DISTINCT_CLIENTS: "true",
+    });
+
+    expect(profile.distinctClientIps).toBe(true);
+    expect(profile.guestSessionCount).toBe(200);
+    expect(profile.runDurationSeconds).toBe(960);
+    expect(profile.orderSubmissionsPerMinute).toBe(
+      resolveLoadProfile({}).orderSubmissionsPerMinute,
+    );
+  });
+
+  it("treats any value other than the literal string true as the default profile", () => {
+    expect(
+      resolveLoadProfile({ LOAD_PROFILE_DISTINCT_CLIENTS: "1" })
+        .distinctClientIps,
+    ).toBe(false);
+    expect(
+      resolveLoadProfile({ LOAD_PROFILE_DISTINCT_CLIENTS: "false" })
+        .distinctClientIps,
+    ).toBe(false);
   });
 });

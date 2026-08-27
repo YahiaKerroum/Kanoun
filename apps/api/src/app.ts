@@ -19,7 +19,7 @@ import {
 
 export interface AppDependencies {
   readonly logger: Logger;
-  readonly trustProxy: boolean;
+  readonly trustProxy: false | number;
   readonly checkReadiness: () => Promise<void>;
   readonly staffSessionMiddleware?: RequestHandler;
   readonly guestSessionMiddleware?: RequestHandler;

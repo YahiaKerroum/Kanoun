@@ -460,7 +460,6 @@ function DishRow(props: {
                 onChange={(event) => setNote(event.currentTarget.value)}
               />
             </label>
-            <p className="note-disclaimer">{copy.noteDisclaimer}</p>
             <motion.button
               type="button"
               className="add-action"
@@ -641,6 +640,9 @@ function MenuView(props: {
                   </button>
                 ))}
               </nav>
+            ) : null}
+            {orderingEnabled ? (
+              <p className="note-disclaimer">{copy.noteDisclaimer}</p>
             ) : null}
           </section>
 
@@ -1252,83 +1254,93 @@ export function App() {
 
   return (
     <MotionConfig reducedMotion="user">
-      <main className="journey-shell">
-        <a className="journey-brand" href="/" aria-label={copy.brandHomeLabel}>
-          {copy.brand}
-        </a>
-        <div className="journey-frame">
-          <AnimatePresence mode="wait" initial={false}>
-            {journey.kind === "exchanging" ? (
-              <LoadingView
-                key="exchanging"
-                eyebrow={copy.loadingQrEyebrow}
-                title={copy.loadingQrTitle}
-                body={copy.loadingQrBody}
-                onHeadingMount={focusHeading}
-              />
-            ) : journey.kind === "invalid" ? (
-              <ErrorView key="invalid" invalid onHeadingMount={focusHeading} />
-            ) : journey.kind === "exchange-error" ? (
-              <ErrorView
-                key="exchange-error"
-                onRetry={() => setAttempt((value) => value + 1)}
-                onHeadingMount={focusHeading}
-              />
-            ) : journey.kind === "confirm" ? (
-              <ConfirmationView
-                key="confirm"
-                session={journey.session}
-                name={name}
-                onNameChange={setName}
-                onContinue={() => void loadMenu(journey.session)}
-                onHeadingMount={focusHeading}
-              />
-            ) : journey.kind === "loading-menu" ? (
-              <LoadingView
-                key="loading-menu"
-                eyebrow={copy.loadingMenuEyebrow}
-                title={copy.loadingMenuTitle}
-                body={copy.loadingMenuBody}
-                onHeadingMount={focusHeading}
-              />
-            ) : (
-              <motion.section
-                key="menu-error"
-                className="journey-panel error-panel"
-                role="alert"
-                variants={panelVariants}
-                initial="initial"
-                animate="enter"
-                exit="exit"
-              >
-                <div className="error-symbol" aria-hidden="true">
-                  !
-                </div>
-                <p className="eyebrow">{copy.menuUpdateEyebrow}</p>
-                <h1 ref={focusHeading} tabIndex={-1}>
-                  {copy.menuLoadErrorTitle}
-                </h1>
-                <p className="lead">{copy.menuLoadErrorBody}</p>
-                <motion.button
-                  className="primary-action"
-                  type="button"
-                  onClick={() => void loadMenu(journey.session)}
-                  variants={actionBtn}
-                  initial="rest"
-                  whileHover="hover"
-                  whileTap="tap"
+      <div className="journey-stage mise-stage">
+        <main className="journey-shell mise-shell">
+          <a
+            className="journey-brand"
+            href="/"
+            aria-label={copy.brandHomeLabel}
+          >
+            {copy.brand}
+          </a>
+          <div className="journey-frame">
+            <AnimatePresence mode="wait" initial={false}>
+              {journey.kind === "exchanging" ? (
+                <LoadingView
+                  key="exchanging"
+                  eyebrow={copy.loadingQrEyebrow}
+                  title={copy.loadingQrTitle}
+                  body={copy.loadingQrBody}
+                  onHeadingMount={focusHeading}
+                />
+              ) : journey.kind === "invalid" ? (
+                <ErrorView
+                  key="invalid"
+                  invalid
+                  onHeadingMount={focusHeading}
+                />
+              ) : journey.kind === "exchange-error" ? (
+                <ErrorView
+                  key="exchange-error"
+                  onRetry={() => setAttempt((value) => value + 1)}
+                  onHeadingMount={focusHeading}
+                />
+              ) : journey.kind === "confirm" ? (
+                <ConfirmationView
+                  key="confirm"
+                  session={journey.session}
+                  name={name}
+                  onNameChange={setName}
+                  onContinue={() => void loadMenu(journey.session)}
+                  onHeadingMount={focusHeading}
+                />
+              ) : journey.kind === "loading-menu" ? (
+                <LoadingView
+                  key="loading-menu"
+                  eyebrow={copy.loadingMenuEyebrow}
+                  title={copy.loadingMenuTitle}
+                  body={copy.loadingMenuBody}
+                  onHeadingMount={focusHeading}
+                />
+              ) : (
+                <motion.section
+                  key="menu-error"
+                  className="journey-panel error-panel"
+                  role="alert"
+                  variants={panelVariants}
+                  initial="initial"
+                  animate="enter"
+                  exit="exit"
                 >
-                  {copy.reloadMenu}
-                </motion.button>
-              </motion.section>
-            )}
-          </AnimatePresence>
-        </div>
-        <p className="journey-footnote">{copy.browseOnlyNotice}</p>
-        <div className="sr-only" aria-live="polite">
-          {journey.kind === "confirm" ? copy.tableVerifiedAnnouncement : ""}
-        </div>
-      </main>
+                  <div className="error-symbol" aria-hidden="true">
+                    !
+                  </div>
+                  <p className="eyebrow">{copy.menuUpdateEyebrow}</p>
+                  <h1 ref={focusHeading} tabIndex={-1}>
+                    {copy.menuLoadErrorTitle}
+                  </h1>
+                  <p className="lead">{copy.menuLoadErrorBody}</p>
+                  <motion.button
+                    className="primary-action"
+                    type="button"
+                    onClick={() => void loadMenu(journey.session)}
+                    variants={actionBtn}
+                    initial="rest"
+                    whileHover="hover"
+                    whileTap="tap"
+                  >
+                    {copy.reloadMenu}
+                  </motion.button>
+                </motion.section>
+              )}
+            </AnimatePresence>
+          </div>
+          <p className="journey-footnote">{copy.browseOnlyNotice}</p>
+          <div className="sr-only" aria-live="polite">
+            {journey.kind === "confirm" ? copy.tableVerifiedAnnouncement : ""}
+          </div>
+        </main>
+      </div>
     </MotionConfig>
   );
 }

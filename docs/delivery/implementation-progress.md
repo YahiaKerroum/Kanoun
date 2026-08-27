@@ -74,10 +74,14 @@ head is `e729438a11100d347c2bf8c77a0ad85ecbb84540`.
 - `PR-05 — replace-simulated-e2e-confidence-with-real-stack-proof`: verified
   and published to `main` at `14d1ce881` (CI green, including the
   `browser-real` job's first-ever passing run against a fresh checkout, after
-  the `scripts/test-browser-real.ts` deferred-import fix above). PR-06
-  remains explicitly out of scope.
+  the `scripts/test-browser-real.ts` deferred-import fix above).
+- `PR-06 — professional-ux-performance-and-accessibility-gate`: active but
+  blocked. Mocked cross-browser and safe repository checks are recorded in
+  `docs/delivery/pr-06-professional-ux-quality.md`; isolated PostgreSQL,
+  PD-025 measurements, and five observed usability sessions remain mandatory.
 - `PR-07 — pilot-operations-and-production-decision-gates`: verified and
-  published to `main` at `14d1ce881`. `ADR-0007` is accepted, but only for a
+  published to `main` at `14d1ce881`, ahead of PR-06 under the recorded
+  product-owner sequencing exception. `ADR-0007` is accepted, but only for a
   synthetic-data scale/restore validation environment (Fly.io compute in
   Paris; Neon PostgreSQL in Frankfurt) — never real customer data. The real
   production hosting model is deliberately deferred: the business intends to

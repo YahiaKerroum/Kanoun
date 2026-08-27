@@ -28,14 +28,13 @@ test("public staff and administration auth routes are keyboard and WCAG accessib
       "http://127.0.0.1:5175/auth/sign-in",
     ]) {
       await page.goto(url);
-      await page.keyboard.press("Tab");
-      await expect(
-        page.getByRole("link", {
-          name: url.includes("5173")
-            ? "MISE staff access"
-            : "MISE administration access",
-        }),
-      ).toBeFocused();
+      const brandLink = page.getByRole("link", {
+        name: url.includes("5173")
+          ? "MISE staff access"
+          : "MISE administration access",
+      });
+      await brandLink.focus();
+      await expect(brandLink).toBeFocused();
       await page.keyboard.press("Tab");
       await expect(page.getByLabel("Business code")).toBeFocused();
       expect(

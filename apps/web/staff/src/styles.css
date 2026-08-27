@@ -624,6 +624,8 @@ button:disabled {
   width: 36px;
   height: 36px;
   place-items: center;
+  align-items: center;
+  justify-items: center;
   border: 1px solid var(--brand-200);
   border-radius: var(--radius-md);
   color: var(--brand-700);

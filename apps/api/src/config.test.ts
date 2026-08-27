@@ -40,6 +40,30 @@ describe("loadApiConfig", () => {
     );
   });
 
+  it("accepts a positive integer trusted-hop count", () => {
+    expect(
+      loadApiConfig({ ...validEnvironment, TRUST_PROXY: "1" }),
+    ).toMatchObject({ trustProxy: 1 });
+    expect(
+      loadApiConfig({ ...validEnvironment, TRUST_PROXY: "2" }),
+    ).toMatchObject({ trustProxy: 2 });
+  });
+
+  it("refuses a blanket true trust-proxy value", () => {
+    expect(() =>
+      loadApiConfig({ ...validEnvironment, TRUST_PROXY: "true" }),
+    ).toThrow("Invalid API configuration fields: TRUST_PROXY");
+  });
+
+  it("refuses a non-positive or non-integer trusted-hop count", () => {
+    expect(() =>
+      loadApiConfig({ ...validEnvironment, TRUST_PROXY: "0" }),
+    ).toThrow("Invalid API configuration fields: TRUST_PROXY");
+    expect(() =>
+      loadApiConfig({ ...validEnvironment, TRUST_PROXY: "1.5" }),
+    ).toThrow("Invalid API configuration fields: TRUST_PROXY");
+  });
+
   it("fails closed when production recovery delivery is not HTTPS", () => {
     expect(() =>
       loadApiConfig({

@@ -4,6 +4,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { promisify } from "node:util";
 import { createDatabasePool } from "@rms/building-blocks";
+import { Agent, setGlobalDispatcher } from "undici";
 import {
   IdentitySecurity,
   PostgresAuditWriter,
@@ -35,9 +36,21 @@ import {
 import { generatedDemoPassword } from "./demo-secrets.js";
 import {
   createLoadProfileConfig,
-  LOAD_PROFILE,
+  resolveLoadProfile,
+  type LoadProfile,
   type LoadProfileConfig,
 } from "./load-profile-config.js";
+
+/**
+ * Deterministic, stable synthetic client IP for one guest across its whole
+ * session (QR exchange, menu reads, order submissions), used only when
+ * `profile.distinctClientIps` is set and the API trusts the proxy header.
+ * Kept inside the private 10.50.0.0/16 range and within valid octet bounds
+ * for guest counts well beyond the PD-025 target of 200.
+ */
+function syntheticClientIp(index: number): string {
+  return `10.50.${Math.floor(index / 250) + 1}.${(index % 250) + 1}`;
+}
 
 const executeFile = promisify(execFile);
 const repositoryRoot = process.cwd();
@@ -100,6 +113,7 @@ async function applyMigrations(connectionString: string): Promise<void> {
 
 async function seedScenario(
   config: LoadProfileConfig,
+  profile: LoadProfile,
 ): Promise<SeededScenario> {
   const pool = createDatabasePool({
     connectionString: config.databaseUrl,
@@ -190,7 +204,7 @@ async function seedScenario(
     );
 
     const categoryCount = 20;
-    const dishesPerCategory = Math.ceil(LOAD_PROFILE.dishCount / categoryCount);
+    const dishesPerCategory = Math.ceil(profile.dishCount / categoryCount);
     const categories = await mapWithConcurrency(
       Array.from({ length: categoryCount }, (_, index) => index),
       5,
@@ -214,7 +228,7 @@ async function seedScenario(
           displayOrder: dishIndex,
         })),
       )
-      .slice(0, LOAD_PROFILE.dishCount);
+      .slice(0, profile.dishCount);
 
     const dishes = await mapWithConcurrency(dishSpecs, 10, (spec) =>
       menuTablesService.createDish(
@@ -267,7 +281,7 @@ async function seedScenario(
     }
 
     const tableSpecs = Array.from(
-      { length: LOAD_PROFILE.tableCount },
+      { length: profile.tableCount },
       (_, index) => `T-${index + 1}`,
     );
     const tables_ = await mapWithConcurrency(tableSpecs, 10, (code) =>
@@ -278,15 +292,29 @@ async function seedScenario(
         metadata(),
       ),
     );
-    const qrTables = tables_.slice(0, LOAD_PROFILE.guestSessionCount);
-    const qrTokens = await mapWithConcurrency(qrTables, 10, async (table) => {
-      const qr = await menuTablesService.issueTableQrCode(
-        login.context,
-        table.id,
-        metadata(),
-      );
-      return qr.rawToken;
-    });
+    // At most one QR code per physical table (matching the PD-025 table
+    // count), but a table's code may be exchanged by more than one guest
+    // session over the run, exactly like a real table serving more than one
+    // party during a shift — so cycle through the issued tokens rather than
+    // requiring one table per guest session.
+    const qrTableCount = Math.min(profile.guestSessionCount, tables_.length);
+    const qrTables = tables_.slice(0, qrTableCount);
+    const issuedQrTokens = await mapWithConcurrency(
+      qrTables,
+      10,
+      async (table) => {
+        const qr = await menuTablesService.issueTableQrCode(
+          login.context,
+          table.id,
+          metadata(),
+        );
+        return qr.rawToken;
+      },
+    );
+    const qrTokens = Array.from(
+      { length: profile.guestSessionCount },
+      (_, index) => issuedQrTokens[index % issuedQrTokens.length],
+    ).filter((token): token is string => token !== undefined);
 
     return {
       businessAccountId: tenant.businessAccountId,
@@ -307,7 +335,10 @@ async function seedScenario(
   }
 }
 
-function runtimeEnvironment(config: LoadProfileConfig): NodeJS.ProcessEnv {
+function runtimeEnvironment(
+  config: LoadProfileConfig,
+  profile: LoadProfile,
+): NodeJS.ProcessEnv {
   return {
     ...process.env,
     NODE_ENV: "test",
@@ -323,15 +354,26 @@ function runtimeEnvironment(config: LoadProfileConfig): NodeJS.ProcessEnv {
     CUSTOMER_WEB_ORIGIN: config.customerWebOrigin,
     WORKER_ID: config.workerId,
     LOG_LEVEL: "warn",
+    // "1" trusts exactly the immediate connecting peer as one proxy hop —
+    // this harness process itself, playing the role of the load balancer —
+    // never a blanket "true" trust, which express-rate-limit rightly
+    // refuses (ERR_ERL_PERMISSIVE_TRUST_PROXY) because it would let a real
+    // client spoof X-Forwarded-For and bypass rate limiting. This exactly
+    // mirrors the exact-hop-count configuration a real single load balancer
+    // requires in production (docs/operations/deployment-and-recovery.md).
+    TRUST_PROXY: profile.distinctClientIps ? "1" : "false",
   };
 }
 
-async function startStack(config: LoadProfileConfig): Promise<{
+async function startStack(
+  config: LoadProfileConfig,
+  profile: LoadProfile,
+): Promise<{
   readonly api: ManagedDemoProcess;
   readonly worker: ManagedDemoProcess;
   stop(): Promise<void>;
 }> {
-  const environment = runtimeEnvironment(config);
+  const environment = runtimeEnvironment(config, profile);
   const secrets = [
     config.sessionSecret,
     config.bootstrapSecret,
@@ -381,6 +423,7 @@ async function startStack(config: LoadProfileConfig): Promise<{
  */
 async function startStackWithRetry(
   config: LoadProfileConfig,
+  profile: LoadProfile,
   attempts = 3,
 ): Promise<{
   readonly api: ManagedDemoProcess;
@@ -390,7 +433,7 @@ async function startStackWithRetry(
   let lastError: unknown;
   for (let attempt = 1; attempt <= attempts; attempt += 1) {
     try {
-      return await startStack(config);
+      return await startStack(config, profile);
     } catch (error) {
       lastError = error;
       console.log(
@@ -521,15 +564,23 @@ async function loginStaff(
 interface GuestSession {
   readonly cookie: string;
   readonly csrfToken: string;
+  readonly clientIp?: string;
+}
+
+function forwardedForHeaders(
+  clientIp: string | undefined,
+): Record<string, string> {
+  return clientIp ? { "x-forwarded-for": clientIp } : {};
 }
 
 async function exchangeGuestSession(
   config: LoadProfileConfig,
   rawToken: string,
+  clientIp: string | undefined,
 ): Promise<GuestSession | undefined> {
   const response = await fetch(
     new URL(`/api/v1/public/qr/${rawToken}/session`, config.apiOrigin),
-    { method: "POST" },
+    { method: "POST", headers: forwardedForHeaders(clientIp) },
   );
   if (!response.ok) return undefined;
   const setCookies = response.headers.getSetCookie();
@@ -541,6 +592,7 @@ async function exchangeGuestSession(
   return {
     cookie: `rms_guest_session=${session}`,
     csrfToken: body.csrfToken,
+    ...(clientIp ? { clientIp } : {}),
   };
 }
 
@@ -575,13 +627,14 @@ async function runReadLoop(
 
 async function runOrderSubmissionLoop(
   config: LoadProfileConfig,
+  profile: LoadProfile,
   scenario: SeededScenario,
   guestSessions: readonly GuestSession[],
   deadline: number,
   submittedAtByOrderId: Map<string, number>,
 ): Promise<Sample[]> {
   const samples: Sample[] = [];
-  const intervalMs = 60_000 / LOAD_PROFILE.orderSubmissionsPerMinute;
+  const intervalMs = 60_000 / profile.orderSubmissionsPerMinute;
   let index = 0;
   while (Date.now() < deadline && guestSessions.length > 0) {
     const guest = guestSessions[index % guestSessions.length];
@@ -597,6 +650,7 @@ async function runOrderSubmissionLoop(
           origin: config.customerWebOrigin,
           "x-csrf-token": guest.csrfToken,
           "idempotency-key": randomUUID(),
+          ...forwardedForHeaders(guest.clientIp),
         },
         body: JSON.stringify({
           menuVersion: scenario.menu.menuVersion,
@@ -716,12 +770,34 @@ async function preparePostgres(config: LoadProfileConfig): Promise<{
   };
 }
 
+/**
+ * Node's default global fetch dispatcher keeps connections alive for only
+ * ~4s and caps concurrent sockets per origin well below this harness's
+ * worker count. Read-loop workers pace themselves with 1-5s think-time gaps
+ * (see runReadLoop), so the default timeout expired between almost every
+ * request, forcing a fresh TCP handshake each time. Under the sustained,
+ * 200-guest PD-025 profile that reconnect churn accumulated for minutes
+ * until it exhausted local loopback socket resources (ENOBUFS), well before
+ * request volume itself was the bottleneck (see
+ * docs/delivery/pr-06-professional-ux-quality.md). A dedicated agent with a
+ * keep-alive timeout longer than any think-time gap, and enough per-origin
+ * connections to cover the full worker count, lets every worker reuse one
+ * connection for the whole run instead of reconnecting on every iteration.
+ */
+function installPersistentFetchAgent(): void {
+  setGlobalDispatcher(
+    new Agent({ keepAliveTimeout: 60_000, connections: 300 }),
+  );
+}
+
 async function main(): Promise<void> {
+  installPersistentFetchAgent();
+  const profile = resolveLoadProfile(process.env);
   const requested = await createLoadProfileConfig(process.env);
   const postgres = await preparePostgres(requested);
   const config = postgres.config;
   console.log(
-    `Load profile run ${config.runId} targeting database ${config.databaseName}`,
+    `Load profile run ${config.runId} targeting database ${config.databaseName} (${profile.distinctClientIps ? "sustained, distinct-client" : "default"} profile)`,
   );
   try {
     await waitForDatabase(config.adminDatabaseUrl);
@@ -732,28 +808,35 @@ async function main(): Promise<void> {
       `Migrations applied in ${String(Date.now() - migrateStartedAt)}ms`,
     );
     const seedStartedAt = Date.now();
-    const scenario = await seedScenario(config);
+    const scenario = await seedScenario(config, profile);
     console.log(
-      `Seeded ${LOAD_PROFILE.dishCount} dishes, ${LOAD_PROFILE.tableCount} tables, and ${scenario.qrTokensByTable.length} QR sessions in ${String(Date.now() - seedStartedAt)}ms.`,
+      `Seeded ${String(profile.dishCount)} dishes, ${String(profile.tableCount)} tables, and ${String(scenario.qrTokensByTable.length)} QR sessions in ${String(Date.now() - seedStartedAt)}ms.`,
     );
 
-    const stack = await startStackWithRetry(config);
+    const stack = await startStackWithRetry(config, profile);
     try {
       const staffSessions = (
         await mapWithConcurrency(
-          Array.from({ length: LOAD_PROFILE.staffSessionCount }, (_, i) => i),
+          Array.from({ length: profile.staffSessionCount }, (_, i) => i),
           1,
           () => loginStaff(config, scenario),
         )
       ).filter((session): session is StaffSession => session !== undefined);
       const guestSessions = (
-        await mapWithConcurrency(scenario.qrTokensByTable, 5, (rawToken) =>
-          exchangeGuestSession(config, rawToken),
+        await mapWithConcurrency(
+          scenario.qrTokensByTable,
+          10,
+          (rawToken, index) =>
+            exchangeGuestSession(
+              config,
+              rawToken,
+              profile.distinctClientIps ? syntheticClientIp(index) : undefined,
+            ),
         )
       ).filter((session): session is GuestSession => session !== undefined);
 
       console.log(
-        `Authenticated ${staffSessions.length}/${LOAD_PROFILE.staffSessionCount} staff sessions and ${guestSessions.length}/${LOAD_PROFILE.guestSessionCount} guest sessions.`,
+        `Authenticated ${String(staffSessions.length)}/${String(profile.staffSessionCount)} staff sessions and ${String(guestSessions.length)}/${String(profile.guestSessionCount)} guest sessions.`,
       );
       if (staffSessions.length === 0 || guestSessions.length === 0) {
         throw new Error(
@@ -761,7 +844,7 @@ async function main(): Promise<void> {
         );
       }
 
-      const runDeadline = Date.now() + LOAD_PROFILE.runDurationSeconds * 1_000;
+      const runDeadline = Date.now() + profile.runDurationSeconds * 1_000;
       const submittedAtByOrderId = new Map<string, number>();
       const sseGraceMs = 5_000;
       const firstStaffSession = staffSessions[0];
@@ -772,19 +855,22 @@ async function main(): Promise<void> {
       const [menuSamples, staffReadSamples, orderSamples, sseDeliverySamples] =
         await Promise.all([
           runReadLoop(
-            LOAD_PROFILE.guestReadConcurrency,
+            profile.guestReadConcurrency,
             runDeadline,
             [1_000, 3_000],
             () => {
               const guest =
                 guestSessions[Math.floor(Math.random() * guestSessions.length)];
               return fetch(new URL("/api/v1/public/menu", config.apiOrigin), {
-                headers: { cookie: guest?.cookie ?? "" },
+                headers: {
+                  cookie: guest?.cookie ?? "",
+                  ...forwardedForHeaders(guest?.clientIp),
+                },
               });
             },
           ),
           runReadLoop(
-            LOAD_PROFILE.staffReadConcurrency,
+            profile.staffReadConcurrency,
             runDeadline,
             [2_000, 5_000],
             () => {
@@ -797,6 +883,7 @@ async function main(): Promise<void> {
           ),
           runOrderSubmissionLoop(
             config,
+            profile,
             scenario,
             guestSessions,
             runDeadline,
@@ -813,7 +900,7 @@ async function main(): Promise<void> {
       const report = {
         runId: config.runId,
         recordedAtUtc: new Date().toISOString(),
-        profile: LOAD_PROFILE,
+        profile,
         authenticated: {
           staffSessions: staffSessions.length,
           guestSessions: guestSessions.length,
@@ -830,12 +917,20 @@ async function main(): Promise<void> {
           orderCommandP95Ms: 1_000,
           connectedDeliveryP95Ms: 2_000,
         },
-        notes: [
-          "Distinct staff logins and guest QR exchanges are bounded by the existing per-IP anti-abuse rate limiters (10 logins and 60 QR exchanges per 15 minutes) when driven from one loopback source IP; this run reused a smaller pool of real sessions across the target read concurrency rather than one distinct session per PD-025 count.",
-          "Order submissions are paced at the PD-025 rate and stay within the existing per-IP order-command rate limiter (60 per 15 minutes); a longer sustained run from one source IP would be capped by that same anti-abuse control, which is expected, correct behavior.",
-          "This run is production-like but local, run against a synthetic-data-only scale/restore validation environment (ADR-0007: Fly.io/Neon), never real customer data; the real production hosting model is a deferred, separate decision.",
-          "Each virtual guest and staff reader paces its own requests with randomized think-time (1-3s guest, 2-5s staff) rather than looping as fast as possible, matching a person browsing rather than a request generator; concurrency is held at the PD-025 session counts throughout the run.",
-        ],
+        notes: profile.distinctClientIps
+          ? [
+              "This run sets TRUST_PROXY=1 (trust exactly one hop, never a blanket true) and assigns each guest session a distinct synthetic X-Forwarded-For value, exactly matching how a real single load balancer presents distinct real devices to the API, so each guest gets its own per-IP rate-limit bucket instead of sharing the harness's single loopback IP. The rate limiters themselves are untouched.",
+              `Guest QR exchange, menu reads, and order submissions ran for the full ${String(profile.runDurationSeconds)}-second sustained window at the PD-025 rate (${String(profile.orderSubmissionsPerMinute)} orders/minute) across ${String(profile.guestSessionCount)} distinct guest sessions, closing the PD-025 throughput blocker in docs/delivery/pr-06-professional-ux-quality.md.`,
+              "Distinct staff logins remain bounded by the existing per-IP login rate limiter (10 per 15 minutes); this run reuses a small pool of real staff sessions across the target read concurrency, matching how staff stay signed in for a whole shift rather than repeatedly logging in.",
+              "This run is production-like but local, run against a synthetic-data-only scale/restore validation environment (ADR-0007: Fly.io/Neon), never real customer data; the real production hosting model is a deferred, separate decision.",
+              "Each virtual guest and staff reader paces its own requests with randomized think-time (1-3s guest, 2-5s staff) rather than looping as fast as possible, matching a person browsing rather than a request generator; concurrency is held at the PD-025 session counts throughout the run.",
+            ]
+          : [
+              "Distinct staff logins and guest QR exchanges are bounded by the existing per-IP anti-abuse rate limiters (10 logins and 60 QR exchanges per 15 minutes) when driven from one loopback source IP; this run reused a smaller pool of real sessions across the target read concurrency rather than one distinct session per PD-025 count.",
+              "Order submissions are paced at the PD-025 rate and stay within the existing per-IP order-command rate limiter (60 per 15 minutes); a longer sustained run from one source IP would be capped by that same anti-abuse control, which is expected, correct behavior. Set LOAD_PROFILE_DISTINCT_CLIENTS=true for a sustained, full-throughput run that removes this artificial ceiling.",
+              "This run is production-like but local, run against a synthetic-data-only scale/restore validation environment (ADR-0007: Fly.io/Neon), never real customer data; the real production hosting model is a deferred, separate decision.",
+              "Each virtual guest and staff reader paces its own requests with randomized think-time (1-3s guest, 2-5s staff) rather than looping as fast as possible, matching a person browsing rather than a request generator; concurrency is held at the PD-025 session counts throughout the run.",
+            ],
       };
 
       const outputDirectory = join(

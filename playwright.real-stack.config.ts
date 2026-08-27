@@ -3,6 +3,26 @@ import { assertRealE2eSourceClean } from "./scripts/real-e2e-guard.js";
 
 await assertRealE2eSourceClean();
 
+const requestedBrowser = process.env.REAL_E2E_BROWSER;
+if (
+  requestedBrowser !== undefined &&
+  requestedBrowser !== "chromium" &&
+  requestedBrowser !== "firefox" &&
+  requestedBrowser !== "webkit"
+) {
+  throw new Error(
+    "REAL_E2E_BROWSER must be chromium, firefox, or webkit when set.",
+  );
+}
+
+const browser = requestedBrowser ?? "chromium";
+const device =
+  browser === "firefox"
+    ? devices["Desktop Firefox"]
+    : browser === "webkit"
+      ? devices["Desktop Safari"]
+      : devices["Desktop Chrome"];
+
 export default defineConfig({
   testDir: "./apps/web/staff/e2e/real",
   testMatch: /.*\.real-stack\.spec\.ts/u,
@@ -13,13 +33,11 @@ export default defineConfig({
   reporter: process.env.CI ? "github" : "list",
   outputDir: "output/playwright/real",
   use: {
-    ...devices["Desktop Chrome"],
+    ...device,
     baseURL: process.env.REAL_E2E_STAFF_ORIGIN,
     trace: "off",
     video: "off",
     screenshot: "off",
   },
-  projects: [
-    { name: "chromium-real-stack", use: { ...devices["Desktop Chrome"] } },
-  ],
+  projects: [{ name: `${browser}-real-stack`, use: { ...device } }],
 });
