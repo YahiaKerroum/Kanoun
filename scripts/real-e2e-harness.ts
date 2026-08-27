@@ -38,6 +38,10 @@ const bootstrapResultSchema = z.object({
   userId: z.uuid(),
 });
 
+const branchVersionSchema = z.object({
+  version: z.number().int().positive(),
+});
+
 export interface RealE2eCredentials {
   readonly businessCode: string;
   readonly email: string;
@@ -246,7 +250,7 @@ async function provisionTenant(
       "Real E2E tenant provisioning returned an invalid contract.",
     );
   }
-  return {
+  const tenant = {
     businessCode,
     businessName,
     restaurantName,
@@ -255,6 +259,85 @@ async function provisionTenant(
     branchId: result.data.branch.id,
     owner: { businessCode, email, password },
   };
+  await openFixtureBranch(config, tenant);
+  return tenant;
+}
+
+function cookieHeader(cookies: readonly string[]): string {
+  return cookies
+    .map((cookie) => cookie.split(";", 1)[0])
+    .filter(
+      (cookie): cookie is string => cookie !== undefined && cookie.length > 0,
+    )
+    .join("; ");
+}
+
+function csrfHeader(cookies: readonly string[]): string {
+  const csrf = cookies
+    .map((cookie) => cookie.split(";", 1)[0])
+    .filter((cookie): cookie is string => cookie !== undefined)
+    .find((cookie) => cookie.startsWith("rms_csrf="))
+    ?.slice("rms_csrf=".length);
+  if (!csrf) {
+    throw new Error("Fixture staff sign-in did not establish CSRF protection.");
+  }
+  return decodeURIComponent(csrf);
+}
+
+async function openFixtureBranch(
+  config: RealE2eConfig,
+  tenant: RealE2eTenant,
+): Promise<void> {
+  const signIn = await fetch(new URL("/api/v1/auth/login", config.apiOrigin), {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(tenant.owner),
+  });
+  const cookies = signIn.headers.getSetCookie();
+  if (!signIn.ok || cookies.length === 0) {
+    throw new Error(
+      `Fixture staff sign-in failed with status ${signIn.status}.`,
+    );
+  }
+  const authentication = {
+    cookie: cookieHeader(cookies),
+    csrf: csrfHeader(cookies),
+  };
+  const branch = await fetch(
+    new URL(`/api/v1/staff/branches/${tenant.branchId}`, config.apiOrigin),
+    { headers: { accept: "application/json", cookie: authentication.cookie } },
+  );
+  const branchResult = branchVersionSchema.safeParse(
+    await branch.json().catch(() => undefined),
+  );
+  if (!branch.ok || !branchResult.success) {
+    throw new Error(
+      `Fixture branch inspection failed with status ${branch.status}.`,
+    );
+  }
+  const update = await fetch(
+    new URL(`/api/v1/staff/branches/${tenant.branchId}`, config.apiOrigin),
+    {
+      method: "PATCH",
+      headers: {
+        accept: "application/json",
+        "content-type": "application/json",
+        cookie: authentication.cookie,
+        origin: config.adminOrigin,
+        "x-csrf-token": authentication.csrf,
+        "if-match": `"${branchResult.data.version}"`,
+      },
+      body: JSON.stringify({
+        serviceStatus: "open",
+        reason: "Open the isolated real-stack fixture branch.",
+      }),
+    },
+  );
+  if (!update.ok) {
+    throw new Error(
+      `Fixture branch opening failed with status ${update.status}.`,
+    );
+  }
 }
 
 function controlServer(

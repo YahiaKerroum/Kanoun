@@ -11,12 +11,37 @@ const postgresIdentifierMaximumLength = 63;
  * dishes, 100 tables, and 20 order submissions per minute per active
  * branch. Distinct staff logins and distinct guest QR exchanges are each
  * bounded by the existing per-IP anti-abuse rate limiters (10 logins and 60
- * QR exchanges per 15 minutes) when driven from one loopback source IP, so
- * this profile reuses a smaller pool of real sessions across the target
- * read concurrency rather than creating one distinct session per PD-025
- * "session" count. See docs/delivery/pr-07-pilot-operations-and-production-gates.md.
+ * QR exchanges per 15 minutes) when driven from one loopback source IP.
+ *
+ * The default profile reuses a smaller pool of real sessions across the
+ * target read concurrency rather than creating one distinct session per
+ * PD-025 "session" count — enough to validate the architecture at scale
+ * with synthetic data (see
+ * docs/delivery/pr-07-pilot-operations-and-production-gates.md).
+ *
+ * The `distinctClientIps` profile instead runs with `TRUST_PROXY=1` and a
+ * distinct synthetic `X-Forwarded-For` value per guest — exactly how a real
+ * load balancer presents distinct real devices to the API — so each guest
+ * gets its own rate-limit bucket. That removes the artificial single-IP
+ * bottleneck and reaches the full PD-025 guest-session count and a genuinely
+ * sustained order rate across the full 15-minute rate-limit window, closing
+ * the PD-025 throughput blocker recorded in
+ * docs/delivery/pr-06-professional-ux-quality.md without weakening the
+ * limiter itself.
  */
-export const LOAD_PROFILE = {
+export interface LoadProfile {
+  readonly dishCount: number;
+  readonly tableCount: number;
+  readonly staffSessionCount: number;
+  readonly staffReadConcurrency: number;
+  readonly guestSessionCount: number;
+  readonly guestReadConcurrency: number;
+  readonly orderSubmissionsPerMinute: number;
+  readonly runDurationSeconds: number;
+  readonly distinctClientIps: boolean;
+}
+
+export const LOAD_PROFILE_DEFAULT: LoadProfile = {
   dishCount: 500,
   tableCount: 100,
   staffSessionCount: 5,
@@ -25,7 +50,23 @@ export const LOAD_PROFILE = {
   guestReadConcurrency: 200,
   orderSubmissionsPerMinute: 20,
   runDurationSeconds: 90,
-} as const;
+  distinctClientIps: false,
+};
+
+export const LOAD_PROFILE_SUSTAINED: LoadProfile = {
+  ...LOAD_PROFILE_DEFAULT,
+  guestSessionCount: 200,
+  runDurationSeconds: 960,
+  distinctClientIps: true,
+};
+
+export function resolveLoadProfile(
+  environment: NodeJS.ProcessEnv,
+): LoadProfile {
+  return environment.LOAD_PROFILE_DISTINCT_CLIENTS === "true"
+    ? LOAD_PROFILE_SUSTAINED
+    : LOAD_PROFILE_DEFAULT;
+}
 
 export interface LoadProfileConfig extends DemoConfig {
   readonly runId: string;

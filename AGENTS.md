@@ -57,6 +57,8 @@ Exact workspace commands:
 - architecture tests: `corepack pnpm test:architecture`
 - OpenAPI and event-contract validation: `corepack pnpm contracts:lint`
 - production builds: `corepack pnpm build`
+- React static health audit: `corepack pnpm react:doctor`
+- production diagnostic-exclusion test: `corepack pnpm test:frontend:diagnostics`
 - mocked UI/contract browser tests: `corepack pnpm test:browser:mocked`
 - real-stack browser gate: `corepack pnpm test:browser:real`
 - browser and accessibility tests (mocked classification plus real-stack gate): `corepack pnpm test:browser`

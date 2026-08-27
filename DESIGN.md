@@ -63,6 +63,21 @@ below 720px.
   brand-dark focus, disabled opacity.
 - **Accessibility:** keyboard operable with an accessible label.
 
+### Kitchen high-contrast action
+
+- **Structure:** native `button` inside the Kitchen workspace's per-item and
+  empty-state footers; solid near-black fill with paper-white text, distinct
+  from the saffron primary action used everywhere else.
+- **Rationale:** Kitchen items are read at a one-metre viewing distance under
+  variable service-line lighting; a black/white pair maximizes contrast for
+  the single most time-critical action (start/ready) beyond what saffron-on-
+  ivory offers. This is a deliberate, scoped exception, not a default to
+  reuse elsewhere.
+- **States:** default black, disabled opacity with a wait cursor while an
+  action is pending.
+- **Accessibility:** keyboard operable with an accessible label; contrast
+  exceeds the saffron primary action at the same text weight.
+
 ### Access indicator
 
 - **Structure:** a 36px warm-tinted tile containing one centered 19px line
@@ -181,6 +196,18 @@ below 720px.
   announce pending, success, stale, and failed outcomes without relying on
   color alone.
 
+### Development diagnostics
+
+- **Scope:** React Scan, React Doctor, and React Grab are development-only
+  quality tools. They never form part of the customer, staff, or administration
+  production experience.
+- **States:** diagnostics are enabled for local development by default and can
+  be disabled with `VITE_DISABLE_REACT_DIAGNOSTICS=true`. Production builds
+  remove the React Scan import path, while Doctor and Grab remain explicit
+  developer commands.
+- **Accessibility:** the React Scan overlay is an opt-in local engineering aid;
+  it is not used when recording customer or staff accessibility evidence.
+
 ## 6. Motion & Interaction
 
 Use only `transform` and `opacity`. Controls use 160–200ms ease-out feedback.
@@ -196,4 +223,6 @@ Cards are more restrained than dialogs and never use a generic gray shadow.
 
 Target WCAG 2.2 AA: 4.5:1 body-text contrast, 3:1 control contrast, visible
 keyboard focus, native controls, alt text for dish photography, and full
-keyboard ordering flows. No accepted visual-accessibility debt is recorded.
+keyboard ordering flows. Motion-sensitive users receive a system-level
+reduced-motion override for non-essential transitions. No accepted
+visual-accessibility debt is recorded.

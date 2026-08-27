@@ -92,6 +92,11 @@
   --font-body: "Plus Jakarta Sans", system-ui, sans-serif;
 }
 
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--brand-fill);
+}
+
 .mise-stage {
   min-height: 100svh;
   padding: clamp(12px, 3vw, 28px);
@@ -125,4 +130,24 @@
   color: var(--text);
   font-size: 0.75rem;
   font-weight: 800;
+}
+
+:where(button, a, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: var(--focus-ring) solid var(--brand-700);
+  outline-offset: var(--focus-offset);
+}
+
+:where(button, a, input, select, textarea, summary, [tabindex]) {
+  scroll-margin-block: calc(var(--space-8) + var(--control-size));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

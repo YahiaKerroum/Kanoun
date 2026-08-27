@@ -20,6 +20,18 @@ const server = app.listen(config.port, config.host, () => {
   );
 });
 
+/**
+ * Node's 5s default is shorter than the idle gaps real keep-alive clients
+ * (browsers, load balancers, our own load-profile harness) leave between
+ * requests on the same connection, so the server closes the socket first.
+ * Under sustained concurrent traffic that forces most requests onto a fresh
+ * TCP handshake instead of a reused connection, which exhausted local
+ * loopback socket resources (ENOBUFS) during PD-025 load testing. 30s
+ * comfortably exceeds every client's idle gap and matches common reverse
+ * proxy/load balancer keep-alive conventions.
+ */
+server.keepAliveTimeout = 30_000;
+
 let shuttingDown = false;
 
 async function shutdown(signal: NodeJS.Signals): Promise<void> {

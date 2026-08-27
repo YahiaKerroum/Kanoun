@@ -385,12 +385,24 @@ a:focus-visible {
 .employee-list button.is-selected {
   background: #fff4d6;
 }
-.employee-list button span:first-child {
+.employee-list__identity {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 12px;
+}
+.employee-list__identity .account-context__avatar {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  font-size: 0.8rem;
+}
+.employee-list__identity > span {
   display: grid;
   min-width: 0;
   gap: 4px;
 }
-.employee-list button span:first-child,
+.employee-list__identity > span,
 .employee-meta,
 .feature-list li > div {
   overflow-wrap: anywhere;
@@ -404,6 +416,38 @@ a:focus-visible {
   color: var(--muted);
   font-size: 12px;
   text-align: right;
+}
+.context-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+.context-stat {
+  display: grid;
+  gap: 6px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 18px 20px;
+  background: var(--ivory);
+}
+.context-stat strong {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.context-stat span {
+  overflow-wrap: anywhere;
+  font: 700 22px "Bricolage Grotesque";
+}
+@media (max-width: 560px) {
+  .context-summary-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 .empty-state {
   margin: 0;
@@ -826,7 +870,7 @@ textarea:disabled {
   margin-bottom: 4px;
 }
 
-.suggestion-pill {
+.category-suggestions .suggestion-pill {
   display: inline-flex;
   align-items: center;
   min-height: 30px;
@@ -845,7 +889,7 @@ textarea:disabled {
     border-color 120ms ease;
 }
 
-.suggestion-pill:hover {
+.category-suggestions .suggestion-pill:hover {
   border-color: var(--gold);
   color: #261b00;
   background: var(--gold-light, #fff7e0);
@@ -1908,7 +1952,7 @@ textarea:disabled {
   }
 
   .admin-stage > header .account-context {
-    margin-left: auto;
+    margin-left: 0;
   }
 }
 

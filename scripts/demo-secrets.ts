@@ -5,5 +5,5 @@ export function generatedDemoSecret(): string {
 }
 
 export function generatedDemoPassword(): string {
-  return randomBytes(18).toString("base64url");
+  return `aA0${randomBytes(18).toString("base64url")}`;
 }

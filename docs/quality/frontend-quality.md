@@ -65,3 +65,56 @@ through the existing acceptance authority.
 - RTL support is not a release claim until separately tested.
 
 Client types may be generated from the OpenAPI contract, but generated transport types must not become domain models or bypass runtime response validation at trust boundaries.
+
+## Development diagnostics and browser policy
+
+- React Scan and React Grab load only in Vite development when
+  `VITE_DISABLE_REACT_DIAGNOSTICS` is not `true`; automated browser evidence
+  disables those overlays.
+- Run `corepack pnpm react:doctor` for static React health, run
+  `corepack pnpm react:scan:staff` to start the Staff development surface with
+  its built-in React Scan instrumentation, and run
+  `corepack pnpm react:grab` for source-context capture.
+- `corepack pnpm test:frontend:diagnostics` inspects production assets and fails
+  when React Scan, React Doctor, or React Grab is present. It runs in
+  `corepack pnpm check`.
+- Playwright Firefox and WebKit are installed for PR-06 compatibility work, but
+  this branch makes no NFR-17 release claim until critical routes pass in both
+  engines and a pilot validates current stable Edge and Safari devices.
+
+### PR-06 React Doctor classification (2026-08-12)
+
+`corepack pnpm react:doctor` scanned 65 files and reported **0 errors** and 87
+warnings. A zero-context comparison with `e264e53b881d269072fc5de56f7085d15794278b`
+shows no warning location is in the PR-06 EventSource cleanup hunk. These are
+recorded as **non-applicable to this PR's cleanup behavior**, not as a clean
+Doctor result or as waived product defects. They remain backlog candidates for
+the modules that own them.
+
+| Rule group | Count | Classification |
+| --- | ---: | --- |
+| `use-lazy-motion` | 10 | Non-applicable: pre-existing animation architecture. |
+| `only-export-components` | 2 | Non-applicable: pre-existing colocated exports. |
+| `no-giant-component` | 11 | Non-applicable: pre-existing module-boundary debt. |
+| `no-many-boolean-props` | 5 | Non-applicable: pre-existing component API debt. |
+| `no-derived-useState` | 4 | Non-applicable: pre-existing state-model debt. |
+| `js-hoist-intl` | 6 | Non-applicable: pre-existing formatter allocation advice. |
+| `no-fetch-in-effect` | 9 | Non-applicable: pre-existing client data-loading architecture. |
+| `js-tosorted-immutable` | 7 | Non-applicable: pre-existing immutable-sort style advice. |
+| `prefer-module-scope-static-value` | 1 | Non-applicable: pre-existing static-value placement. |
+| `prefer-useReducer` | 2 | Non-applicable: pre-existing related-state organization. |
+| `prefer-use-sync-external-store` | 1 | Non-applicable: pre-existing subscription architecture. |
+| `server-sequential-independent-await` | 1 | Non-applicable: pre-existing async ordering advisory. |
+| `no-set-state-after-await-in-effect` | 2 | Non-applicable: pre-existing async-effect guard pattern. |
+| `prefer-module-scope-pure-function` | 2 | Non-applicable: pre-existing function placement. |
+| `js-combine-iterations` | 10 | Non-applicable: pre-existing iteration optimization advice. |
+| `rerender-lazy-ref-init` | 1 | Non-applicable: pre-existing ref initialization advice. |
+| `js-set-map-lookups` | 10 | Non-applicable: pre-existing lookup optimization advice. |
+| `motion-animate-presence-must-outlive-child` | 1 | Non-applicable: pre-existing route-transition structure. |
+| `rerender-lazy-state-init` | 1 | Non-applicable: pre-existing state initialization advice. |
+| `no-unguarded-numeric-input-parse` | 1 | Non-applicable: pre-existing numeric-input validation advice. |
+
+The counts total 87. The only confirmed diagnostic tool limitation in this
+slice is separate: React Scan's development overlay is itself detected by axe;
+mocked accessibility suites use `VITE_DISABLE_REACT_DIAGNOSTICS=true` and the
+production-asset exclusion test protects shipped clients.

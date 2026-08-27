@@ -63,10 +63,11 @@ h1[tabindex="-1"]:focus {
 
 .journey-shell {
   position: relative;
-  display: grid;
-  min-height: 100svh;
-  grid-template-rows: auto 1fr auto;
-  overflow: hidden;
+  display: flex;
+  width: min(760px, 100%);
+  min-height: calc(100svh - clamp(24px, 6vw, 56px));
+  margin: 0 auto;
+  flex-direction: column;
   padding: 24px clamp(20px, 6vw, 72px);
 }
 
@@ -106,10 +107,12 @@ h1[tabindex="-1"]:focus {
 }
 
 .journey-frame {
-  display: grid;
+  display: flex;
   width: min(100%, 680px);
-  align-items: center;
-  justify-self: center;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  margin: 0 auto;
   padding: 32px 0;
 }
 
@@ -608,7 +611,6 @@ h1[tabindex="-1"]:focus {
   width: 18px;
   height: 18px;
   margin: 0;
-  accent-color: var(--brand-fill);
 }
 
 .dish-order-controls {
@@ -640,6 +642,15 @@ h1[tabindex="-1"]:focus {
 .dish-order-controls input {
   min-height: 44px;
   padding: 9px 12px;
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.dish-order-controls input::-webkit-inner-spin-button,
+.dish-order-controls input::-webkit-outer-spin-button {
+  margin: 0;
+  appearance: none;
+  -webkit-appearance: none;
 }
 
 .dish-order-controls textarea,
@@ -721,11 +732,11 @@ button:disabled {
   z-index: 30;
   top: 0;
   right: 0;
-  display: grid;
+  display: flex;
   width: min(520px, 100vw);
   max-width: none;
-  height: 100svh;
-  max-height: none;
+  height: auto;
+  max-height: 100svh;
   margin: 0 0 0 auto;
   overflow: auto;
   padding: clamp(22px, 5vw, 42px);
@@ -734,7 +745,7 @@ button:disabled {
   background: #fffdf8;
   box-shadow: -24px 0 70px rgb(33 30 25 / 20%);
   animation: review-in 180ms ease-out;
-  grid-template-rows: auto 1fr auto auto auto auto;
+  flex-direction: column;
 }
 
 .cart-review:not([open]) {

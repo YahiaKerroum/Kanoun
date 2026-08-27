@@ -14,7 +14,13 @@ export class PostgresServiceWorkflow {
       await client.query("commit");
       return result;
     } catch (error: unknown) {
-      await client.query("rollback");
+      try {
+        await client.query("rollback");
+      } catch {
+        // If the connection itself died (e.g. a network-level error), the
+        // rollback attempt fails too. Swallow that so the original error
+        // (thrown below) isn't replaced by this secondary one.
+      }
       throw error;
     } finally {
       client.release();

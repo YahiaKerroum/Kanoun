@@ -363,8 +363,9 @@ test("builds, reviews, submits, tracks, and requests cancellation for an order",
     path: "test-results/readme-customer-order-review-mobile.png",
   });
   if (reviewViewport !== null) {
+    const devicePixelRatio = await page.evaluate(() => window.devicePixelRatio);
     expect(reviewScreenshot.readUInt32BE(20)).toBeLessThanOrEqual(
-      reviewViewport.height,
+      reviewViewport.height * devicePixelRatio,
     );
   }
   await expectNoWcagViolations(page);

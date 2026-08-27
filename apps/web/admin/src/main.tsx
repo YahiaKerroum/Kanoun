@@ -1,3 +1,10 @@
+if (
+  import.meta.env.DEV &&
+  import.meta.env.VITE_DISABLE_REACT_DIAGNOSTICS !== "true"
+) {
+  void import("react-grab");
+}
+
 import {
   StrictMode,
   useEffect,
@@ -22,6 +29,7 @@ import {
 } from "./AdminNavigation.js";
 import { AdminAuthRoutes } from "./AuthRoutes.js";
 import { authRouteForPath, replaceLocation } from "./auth-navigation.js";
+import { startReactDiagnostics } from "./react-diagnostics.js";
 import {
   actionButtonVariants,
   sectionContainerVariants,
@@ -29,6 +37,8 @@ import {
   fadeUpItemVariants,
 } from "./motion.js";
 import "./styles.css";
+
+await startReactDiagnostics();
 
 const permissionGrantSchema = z.object({
   permissionKey: z.string(),
@@ -1313,7 +1323,7 @@ function App() {
                       <span>{profile.employee.displayName}</span>
                     </div>
                     <motion.ul
-                      className="feature-list"
+                      className="context-summary-grid"
                       variants={staggerContainerVariants}
                       initial="initial"
                       animate="enter"
@@ -1337,6 +1347,7 @@ function App() {
                         },
                       ].map((item) => (
                         <motion.li
+                          className="context-stat"
                           key={item.label}
                           variants={fadeUpItemVariants}
                         >
@@ -1414,9 +1425,17 @@ function App() {
                             whileHover="hover"
                             whileTap="tap"
                           >
-                            <span>
-                              <strong>{employee.displayName}</strong>
-                              <small>{employee.email}</small>
+                            <span className="employee-list__identity">
+                              <span
+                                className="account-context__avatar"
+                                aria-hidden="true"
+                              >
+                                {employee.displayName.slice(0, 1).toUpperCase()}
+                              </span>
+                              <span>
+                                <strong>{employee.displayName}</strong>
+                                <small>{employee.email}</small>
+                              </span>
                             </span>
                             <span className="employee-meta">
                               {employee.status} · {employee.branchIds.length}{" "}

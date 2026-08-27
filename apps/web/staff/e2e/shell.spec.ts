@@ -408,21 +408,21 @@ test("shows only destinations allowed by both permissions and enabled features",
   await expect(accessIcons).toHaveCount(3);
   for (const accessIcon of await accessIcons.all()) {
     await expect(accessIcon).toHaveCSS("display", "grid");
-    const iconTile = await accessIcon.boundingBox();
-    const iconGlyph = await accessIcon.locator("svg").boundingBox();
-    expect(iconTile).not.toBeNull();
-    expect(iconGlyph).not.toBeNull();
-    if (iconTile === null || iconGlyph === null) {
-      continue;
-    }
-    expect(iconGlyph.x + iconGlyph.width / 2).toBeCloseTo(
-      iconTile.x + iconTile.width / 2,
-      1,
-    );
-    expect(iconGlyph.y + iconGlyph.height / 2).toBeCloseTo(
-      iconTile.y + iconTile.height / 2,
-      1,
-    );
+    await expect
+      .poll(async () => {
+        const iconTile = await accessIcon.boundingBox();
+        const iconGlyph = await accessIcon.locator("svg").boundingBox();
+        if (iconTile === null || iconGlyph === null) return false;
+        return (
+          Math.abs(
+            iconGlyph.x - iconTile.x + (iconGlyph.width - iconTile.width) / 2,
+          ) < 0.05 &&
+          Math.abs(
+            iconGlyph.y - iconTile.y + (iconGlyph.height - iconTile.height) / 2,
+          ) < 0.05
+        );
+      })
+      .toBe(true);
   }
 
   await page.setViewportSize({ width: 375, height: 812 });
@@ -1892,4 +1892,121 @@ test("keeps the staff insights workspaces usable across desktop, tablet, and mob
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
     .analyze();
   expect(auditAccessibility.violations).toEqual([]);
+});
+
+test("closes notification EventSource listeners on navigation without accumulating connections", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    let created = 0;
+    let closed = 0;
+    let active = 0;
+    let maxActive = 0;
+    let listenersAdded = 0;
+    let listenersRemoved = 0;
+    const publishMetrics = () => {
+      document.documentElement.setAttribute(
+        "data-notification-event-source-metrics",
+        [
+          created,
+          closed,
+          active,
+          maxActive,
+          listenersAdded,
+          listenersRemoved,
+        ].join(":"),
+      );
+    };
+
+    class TrackedEventSource extends EventTarget {
+      private closed = false;
+
+      constructor(url: string, options?: EventSourceInit) {
+        super();
+        void url;
+        void options;
+        created += 1;
+        active += 1;
+        maxActive = Math.max(maxActive, active);
+        publishMetrics();
+        queueMicrotask(() => this.dispatchEvent(new Event("open")));
+      }
+
+      addEventListener(
+        type: string,
+        listener: EventListenerOrEventListenerObject | null,
+        options?: boolean | AddEventListenerOptions,
+      ): void {
+        listenersAdded += 1;
+        publishMetrics();
+        super.addEventListener(type, listener, options);
+      }
+
+      removeEventListener(
+        type: string,
+        listener: EventListenerOrEventListenerObject | null,
+        options?: boolean | EventListenerOptions,
+      ): void {
+        listenersRemoved += 1;
+        publishMetrics();
+        super.removeEventListener(type, listener, options);
+      }
+
+      close(): void {
+        if (this.closed) return;
+        this.closed = true;
+        closed += 1;
+        active -= 1;
+        publishMetrics();
+      }
+    }
+
+    Object.defineProperty(window, "EventSource", {
+      configurable: true,
+      value: TrackedEventSource,
+    });
+  });
+  await mockReadyPortal(page, {
+    permissions: ["orders.view"],
+    enabledFeatures: ["ordering", "notifications"],
+    grants: [{ permissionKey: "orders.view", restaurantId, branchId }],
+  });
+  await page.route("**/api/v1/staff/notifications?*", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ items: [] }),
+    }),
+  );
+  await page.route("**/api/v1/staff/orders?*", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ items: [], nextCursor: null }),
+    }),
+  );
+
+  await page.goto("/notifications");
+  await expect(
+    page.getByRole("heading", {
+      name: "Notifications that survive reconnects",
+    }),
+  ).toBeVisible();
+  await expect
+    .poll(() =>
+      page
+        .locator("html")
+        .getAttribute("data-notification-event-source-metrics"),
+    )
+    .toMatch(/^\d+:\d+:1:1:\d+:\d+$/u);
+
+  await page.getByRole("link", { name: "Orders", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Order flow" })).toBeVisible();
+  await expect
+    .poll(() =>
+      page
+        .locator("html")
+        .getAttribute("data-notification-event-source-metrics"),
+    )
+    .toMatch(/^(\d+):\1:0:1:(\d+):\2$/u);
 });

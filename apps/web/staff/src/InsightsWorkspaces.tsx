@@ -91,6 +91,58 @@ function notificationTask(item: NotificationItem): {
   return { href: "/notifications", label: "Stay in inbox" };
 }
 
+interface NotificationEventHandlers {
+  readonly onOpen: () => void;
+  readonly onNotification: () => void;
+  readonly onReplayGap: () => void;
+  readonly onSessionEnded: () => void;
+  readonly onError: () => void;
+}
+
+interface NotificationEventConnection {
+  readonly reconnect: () => void;
+  readonly disconnect: () => void;
+}
+
+function connectNotificationEvents(
+  branchId: string,
+  handlers: NotificationEventHandlers,
+): NotificationEventConnection {
+  let stream: EventSource | undefined;
+  const handleSessionEnded = () => {
+    handlers.onSessionEnded();
+    disconnect();
+  };
+  const disconnect = () => {
+    const activeStream = stream;
+    if (!activeStream) return;
+    activeStream.removeEventListener("open", handlers.onOpen);
+    activeStream.removeEventListener("notification", handlers.onNotification);
+    activeStream.removeEventListener("replay-gap", handlers.onReplayGap);
+    activeStream.removeEventListener("session-ended", handleSessionEnded);
+    activeStream.removeEventListener("error", handlers.onError);
+    activeStream.close();
+    stream = undefined;
+  };
+  const reconnect = () => {
+    disconnect();
+    if (typeof EventSource === "undefined") return;
+    const nextStream = new EventSource(
+      `/api/v1/staff/notification-events?branchId=${encodeURIComponent(branchId)}`,
+      { withCredentials: true },
+    );
+    stream = nextStream;
+    nextStream.addEventListener("open", handlers.onOpen);
+    nextStream.addEventListener("notification", handlers.onNotification);
+    nextStream.addEventListener("replay-gap", handlers.onReplayGap);
+    nextStream.addEventListener("session-ended", handleSessionEnded);
+    nextStream.addEventListener("error", handlers.onError);
+  };
+
+  reconnect();
+  return { reconnect, disconnect };
+}
+
 export function NotificationInboxWorkspace({
   branchId,
 }: {
@@ -132,42 +184,36 @@ export function NotificationInboxWorkspace({
   useEffect(() => {
     const controller = new AbortController();
     void load(controller.signal);
-    if (typeof EventSource === "undefined") return () => controller.abort();
-    let stream: EventSource | undefined;
-    const connect = () => {
-      stream?.close();
-      const nextStream = new EventSource(
-        `/api/v1/staff/notification-events?branchId=${encodeURIComponent(branchId)}`,
-        { withCredentials: true },
-      );
-      stream = nextStream;
-      nextStream.addEventListener("open", () => setStreamState("live"));
-      nextStream.addEventListener("notification", () => void load());
-      nextStream.addEventListener("replay-gap", () => void load());
-      nextStream.addEventListener("session-ended", () => {
-        setStreamState("reconnecting");
-        setMessage("Your staff session ended. Reload after signing in again.");
-        nextStream.close();
-      });
-      nextStream.addEventListener("error", () =>
-        setStreamState("reconnecting"),
-      );
+    const handleOpen = () => setStreamState("live");
+    const handleNotification = () => void load();
+    const handleReplayGap = () => void load();
+    const handleSessionEnded = () => {
+      setStreamState("reconnecting");
+      setMessage("Your staff session ended. Reload after signing in again.");
     };
-    connect();
+    const handleError = () => setStreamState("reconnecting");
+    const eventConnection = connectNotificationEvents(branchId, {
+      onOpen: handleOpen,
+      onNotification: handleNotification,
+      onReplayGap: handleReplayGap,
+      onSessionEnded: handleSessionEnded,
+      onError: handleError,
+    });
     const handleOffline = () => setStreamState("reconnecting");
     const handleOnline = () => {
       setStreamState("connecting");
-      connect();
+      eventConnection.reconnect();
       void load();
     };
     window.addEventListener("offline", handleOffline);
     window.addEventListener("online", handleOnline);
-    return () => {
+    const cleanup = () => {
       controller.abort();
-      stream?.close();
+      eventConnection.disconnect();
       window.removeEventListener("offline", handleOffline);
       window.removeEventListener("online", handleOnline);
     };
+    return cleanup;
   }, [branchId, load]);
 
   const update = async (

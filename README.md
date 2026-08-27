@@ -423,20 +423,23 @@ environment shown below.
 
 Run the exact repository checks with the pinned toolchain:
 
-| Goal                                    | Command                                         |
-| --------------------------------------- | ----------------------------------------------- |
-| Format                                  | `corepack pnpm format:check`                    |
-| Lint                                    | `corepack pnpm lint`                            |
-| Strict types                            | `corepack pnpm typecheck`                       |
-| Unit and PostgreSQL integration tests   | `corepack pnpm test`                            |
-| Module-boundary checks                  | `corepack pnpm test:architecture`               |
-| OpenAPI and event validation            | `corepack pnpm contracts:lint`                  |
-| Production builds                       | `corepack pnpm build`                           |
-| Mocked UI/contract browser tests        | `corepack pnpm test:browser:mocked`             |
-| Real-stack product browser gate         | `corepack pnpm test:browser:real`               |
-| Browser suites (mocked plus real-stack) | `corepack pnpm test:browser`                    |
-| Full non-browser gate                   | `corepack pnpm check`                           |
-| Production dependency audit             | `corepack pnpm audit --prod --audit-level high` |
+| Goal                                    | Command                                                         |
+| --------------------------------------- | --------------------------------------------------------------- |
+| Format                                  | `corepack pnpm format:check`                                    |
+| Lint                                    | `corepack pnpm lint`                                            |
+| Strict types                            | `corepack pnpm typecheck`                                       |
+| Unit and PostgreSQL integration tests   | `corepack pnpm test`                                            |
+| Module-boundary checks                  | `corepack pnpm test:architecture`                               |
+| OpenAPI and event validation            | `corepack pnpm contracts:lint`                                  |
+| Production builds                       | `corepack pnpm build`                                           |
+| Mocked UI/contract browser tests        | `corepack pnpm test:browser:mocked`                             |
+| Real-stack product browser gate         | `corepack pnpm test:browser:real`                               |
+| Browser suites (mocked plus real-stack) | `corepack pnpm test:browser`                                    |
+| Full non-browser gate                   | `corepack pnpm check`                                           |
+| Production dependency audit             | `corepack pnpm audit --prod --audit-level high`                 |
+| React static health audit               | `corepack pnpm react:doctor`                                    |
+| React render inspection (Staff dev)     | `corepack pnpm react:scan:staff` (then inspect the Staff route) |
+| Production diagnostic-exclusion check   | `corepack pnpm test:frontend:diagnostics`                       |
 
 Enable the PostgreSQL integration path locally before `test` or `check`:
 
