@@ -179,11 +179,13 @@ typing an internal order UUID.
 
 ### Back-office configuration
 
-| People, permissions, and features                                                                              | Menu, tables, and QR lifecycle                                                                                    |
-| -------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| ![Administration workforce, permission, and branch configuration](docs/assets/screenshots/admin-workforce.png) | ![Administration menu, physical tables, and issued QR controls](docs/assets/screenshots/admin-menu-tables-qr.png) |
+| People, permissions, and features                                                                              | Restaurant menu, categories, and dishes                                                            |
+| -------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| ![Administration workforce, permission, and branch configuration](docs/assets/screenshots/admin-workforce.png) | ![Administration menu with categories, dishes, and branch overrides](docs/assets/screenshots/admin-menu.png) |
 
-![Administration reports, notifications, and audit evidence](docs/assets/screenshots/admin-insights.png)
+| Table records and QR lifecycle                                                                                                        | Reports, audit, and notification evidence                                                             |
+| ---------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| ![A selected table's editor with issue, rotate, and revoke QR controls](docs/assets/screenshots/admin-menu-tables-qr.png) | ![Administration reports, notifications, and audit evidence](docs/assets/screenshots/admin-insights.png) |
 
 ## A service from setup to close
 
@@ -494,3 +496,26 @@ README screenshots are generated from Playwright scenarios at deterministic
 viewports. Refresh them only from passing flows, preserve synthetic data, and
 review each image for clipping, stale focus, personal data, and responsive
 overflow before replacing the checked-in asset.
+
+**Refreshed 2026-08-28** against `corepack pnpm dev:demo` (Dar Nedjma / Hydra
+synthetic model), driven end to end through the real UI, not fixtures: guest
+QR order submission, kitchen preparation, service handoff, bill request, and
+cashier payment all completed live during capture. Several previously checked-in
+images predated the current Administration app entirely (it was a single
+long-scrolling page when they were captured; it is now a multi-route app with
+its own `/setup`, `/context`, `/employees`, `/permissions`, `/menu`,
+`/tables`, `/insights`, and `/features` destinations) and predated the current
+sign-in and Orders-filter screens. `admin-workforce.png`, `admin-menu.png`,
+`admin-menu-tables-qr.png`, `admin-insights.png`, `admin-protected-sign-in.png`,
+`customer-menu.png`, `customer-order-review-mobile.png`,
+`customer-order-status-mobile.png`, `staff-workspace.png`, `staff-orders.png`,
+`staff-kitchen.png`, `staff-menu.png`, `staff-tables.png`, `staff-notifications.png`,
+and `staff-payments-mobile.png` were replaced.
+
+`staff-dashboard.png`, `staff-tablet-navigation.png`, `staff-order-entry-tablet.png`,
+`staff-reports-mobile.png`, and `staff-audit-mobile.png` were **not** refreshed
+this round — they need a synthetic employee granted the full destination set
+(the demo's four launcher roles are deliberately realistic, permission-limited
+accounts, so Reports and Audit correctly render this repository's permission
+boundary screen for them rather than the workspace) or a manual order-entry
+pass, and still reflect an older build in the meantime.
