@@ -2,10 +2,12 @@ packages:
   - apps/api
   - apps/worker
   - apps/web/*
+  - apps/desktop
   - packages/*
 
 allowBuilds:
   argon2: true
+  electron-winstaller: true
   esbuild: true
 
 minimumReleaseAgeExclude:

@@ -52,3 +52,8 @@ Desktop.ini
 .playwright-mcp/
 .image-slots.state.json
 .local/
+
+# MISE Desktop packaging
+apps/desktop/release/
+apps/desktop/vendor/postgresql/*
+!apps/desktop/vendor/postgresql/README.md
