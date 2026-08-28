@@ -13,6 +13,10 @@ const executeFile = promisify(execFile);
 const localPostgresVersion = "18" as const;
 const loopbackHost = "127.0.0.1" as const;
 
+export function isExistingPostgresCluster(clusterDirectory: string): boolean {
+  return existsSync(join(clusterDirectory, "PG_VERSION"));
+}
+
 export interface DemoPostgresCapabilities {
   readonly canCreateDatabase: boolean;
 }
@@ -122,6 +126,14 @@ function postgresBinaryName(binary: string): string {
   return process.platform === "win32" ? `${binary}.exe` : binary;
 }
 
+export function bundledBinaryCandidate(binary: string): string | undefined {
+  const resourcesPath = (process as { resourcesPath?: string }).resourcesPath;
+  if (typeof resourcesPath !== "string" || resourcesPath.length === 0) {
+    return undefined;
+  }
+  return join(resourcesPath, "postgresql", "bin", postgresBinaryName(binary));
+}
+
 function existingWindowsBinaryCandidates(binary: string): readonly string[] {
   const roots = [process.env.ProgramW6432, process.env.ProgramFiles].filter(
     (root): root is string => typeof root === "string" && root.length > 0,
@@ -142,10 +154,13 @@ function existingWindowsBinaryCandidates(binary: string): readonly string[] {
 }
 
 async function findPostgresBinary(binary: string): Promise<string | undefined> {
-  const candidates =
-    process.platform === "win32"
+  const bundled = bundledBinaryCandidate(binary);
+  const candidates = [
+    ...(bundled ? [bundled] : []),
+    ...(process.platform === "win32"
       ? existingWindowsBinaryCandidates(binary)
-      : [postgresBinaryName(binary)];
+      : [postgresBinaryName(binary)]),
+  ];
   const candidate = candidates.find((path) => existsSync(path));
   if (candidate) {
     return candidate;
@@ -320,4 +335,96 @@ export async function startIsolatedDemoPostgres(
   } finally {
     await rm(passwordFile, { force: true });
   }
+}
+
+export interface PersistentDemoPostgresRuntime {
+  readonly config: DemoConfig;
+  readonly mode: "persistent";
+  close(): Promise<void>;
+}
+
+export async function startPersistentDemoPostgres(
+  config: DemoConfig,
+  clusterDirectory: string,
+): Promise<PersistentDemoPostgresRuntime> {
+  const initdb = await findPostgresBinary("initdb");
+  const pgCtl = await findPostgresBinary("pg_ctl");
+  if (!initdb || !pgCtl) {
+    throw new DemoPostgresError("locating PostgreSQL 18.1 binaries");
+  }
+  const targetUrl = new URL(config.databaseUrl);
+  const username = decodedUrlComponent(
+    targetUrl.username || "rms",
+    "reading the PostgreSQL username",
+  );
+  const password = decodedUrlComponent(
+    targetUrl.password,
+    "reading the PostgreSQL password",
+  );
+  const runtimeConfig = isolatedConfig(
+    config,
+    config.databasePort,
+    username,
+    password,
+  );
+
+  if (!isExistingPostgresCluster(clusterDirectory)) {
+    const passwordFile = join(
+      clusterDirectory,
+      "..",
+      ".mise-desktop-initdb-password",
+    );
+    await writeFile(passwordFile, `${password}\n`, {
+      encoding: "utf8",
+      mode: 0o600,
+    });
+    try {
+      await runPostgresControlCommand(
+        initdb,
+        [
+          "-D",
+          clusterDirectory,
+          `--username=${username}`,
+          `--pwfile=${passwordFile}`,
+          "--auth=scram-sha-256",
+          "--no-locale",
+          "--encoding=UTF8",
+        ],
+        "initializing the persistent PostgreSQL cluster",
+      );
+    } finally {
+      await rm(passwordFile, { force: true });
+    }
+  }
+
+  await runPostgresControlCommand(
+    pgCtl,
+    [
+      "-D",
+      clusterDirectory,
+      "-o",
+      `-h ${loopbackHost} -p ${String(config.databasePort)}`,
+      "-w",
+      "start",
+    ],
+    "starting the persistent PostgreSQL cluster",
+  );
+  await waitForDatabase(runtimeConfig.adminDatabaseUrl);
+
+  let closed = false;
+  return {
+    config: runtimeConfig,
+    mode: "persistent",
+    async close(): Promise<void> {
+      if (closed) {
+        return;
+      }
+      closed = true;
+      await runPostgresControlCommand(
+        pgCtl,
+        ["-D", clusterDirectory, "-m", "fast", "-w", "stop"],
+        "stopping the persistent PostgreSQL cluster",
+      );
+    },
+  };
 }
