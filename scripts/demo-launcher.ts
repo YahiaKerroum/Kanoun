@@ -32,6 +32,7 @@ export interface DemoLauncherOptions {
   readonly recoveryOrigin: string;
   readonly host: string;
   readonly port: number;
+  readonly roleLinkMode?: "auto-login" | "direct-sign-in";
 }
 
 export interface DemoLauncherManifest {
@@ -93,6 +94,19 @@ function targetOrigin(
     : options.staffOrigin;
 }
 
+export function roleCardHref(
+  role: DemoRoleCredential,
+  options: DemoLauncherOptions,
+): { readonly href: string; readonly target?: string } {
+  if (options.roleLinkMode === "direct-sign-in") {
+    return {
+      href: `${targetOrigin(role, options)}/auth/sign-in`,
+      target: "_blank",
+    };
+  }
+  return { href: `/launch/${encodeURIComponent(role.key)}` };
+}
+
 async function loginRole(
   role: DemoRoleCredential,
   options: DemoLauncherOptions,
@@ -135,11 +149,15 @@ function launcherManifest(result: DemoSeedResult): DemoLauncherManifest {
   };
 }
 
-function page(options: DemoLauncherOptions): string {
+export function page(options: DemoLauncherOptions): string {
   const { result } = options;
   const roleCards = result.roles
-    .map(
-      (role) => `
+    .map((role) => {
+      const link = roleCardHref(role, options);
+      const targetAttribute = link.target
+        ? ` target="${link.target}" rel="noreferrer"`
+        : "";
+      return `
         <li class="role-card">
           <div class="role-mark" aria-hidden="true">${escapeHtml(role.label.slice(0, 1))}</div>
           <div class="role-copy">
@@ -147,9 +165,9 @@ function page(options: DemoLauncherOptions): string {
             <strong>${escapeHtml(role.displayName)}</strong>
             <code>${escapeHtml(role.email)}</code>
           </div>
-          <a class="button button-small" href="/launch/${encodeURIComponent(role.key)}">Open ${escapeHtml(role.target)}</a>
-        </li>`,
-    )
+          <a class="button button-small" href="${escapeHtml(link.href)}"${targetAttribute}>Open ${escapeHtml(role.target)}</a>
+        </li>`;
+    })
     .join("");
   const customerLinks = result.customerUrls
     .map(
@@ -160,6 +178,18 @@ function page(options: DemoLauncherOptions): string {
   const scenarioItems = result.scenario
     .map((item) => `<li>${escapeHtml(item)}</li>`)
     .join("");
+  const safetySection =
+    options.roleLinkMode === "direct-sign-in"
+      ? `<section style="background: var(--canvas);" aria-labelledby="safety-title">
+          <div class="warning"><strong id="safety-title">Local-only safety boundary</strong>Each role opens in its own window using the real sign-in screen. No account is logged in automatically. Use the app's <strong>Reset demo data</strong> menu action to start over.</div>
+        </section>`
+      : `<section style="background: var(--canvas);" aria-labelledby="safety-title">
+          <div class="warning"><strong id="safety-title">Local-only safety boundary</strong>Use separate browser contexts for each role. Reset by stopping this run and starting <code>corepack pnpm dev:demo</code> again; the isolated demo database is preserved when you stop.</div>
+          <div class="section-heading" style="margin-bottom: 0;">
+            <div><p>Automation helper</p><h3>Open isolated contexts</h3></div>
+            <code>corepack pnpm demo:contexts</code>
+          </div>
+        </section>`;
 
   return `<!doctype html>
 <html lang="en">
@@ -268,13 +298,7 @@ function page(options: DemoLauncherOptions): string {
             <p><a class="button button-small" href="${escapeHtml(options.recoveryOrigin)}" target="_blank" rel="noreferrer">Open recovery inbox <span aria-hidden="true">↗</span></a></p>
           </section>
         </div>
-        <section style="background: var(--canvas);" aria-labelledby="safety-title">
-          <div class="warning"><strong id="safety-title">Local-only safety boundary</strong>Use separate browser contexts for each role. Reset by stopping this run and starting <code>corepack pnpm dev:demo</code> again; the isolated demo database is preserved when you stop.</div>
-          <div class="section-heading" style="margin-bottom: 0;">
-            <div><p>Automation helper</p><h3>Open isolated contexts</h3></div>
-            <code>corepack pnpm demo:contexts</code>
-          </div>
-        </section>
+        ${safetySection}
         <footer class="footer"><span>Loopback only · synthetic data · no public signup</span><span>Launcher origin <code>127.0.0.1:${options.port}</code></span></footer>
       </div>
     </main>
@@ -358,7 +382,7 @@ async function handleRequest(
     return;
   }
   const launchMatch = /^\/launch\/([a-z-]+)$/.exec(requestUrl.pathname);
-  if (launchMatch) {
+  if (launchMatch && options.roleLinkMode !== "direct-sign-in") {
     const role = roleFor(options.result, launchMatch[1] as DemoRoleKey);
     if (!role) {
       send(response, 404, "text/plain; charset=utf-8", "Unknown demo role");
