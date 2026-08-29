@@ -7,7 +7,10 @@ import {
 
 describe("buildDesktopDemoConfig", () => {
   it("builds a loopback database URL on the desktop postgres port with the desktop username", () => {
-    const config = buildDesktopDemoConfig("plain-password", "a-seed-password-1");
+    const config = buildDesktopDemoConfig(
+      "plain-password",
+      "a-seed-password-1",
+    );
 
     expect(config.databaseHost).toBe("127.0.0.1");
     expect(config.databasePort).toBe(DESKTOP_POSTGRES_PORT);
@@ -19,7 +22,10 @@ describe("buildDesktopDemoConfig", () => {
   });
 
   it("points the admin URL at the postgres maintenance database", () => {
-    const config = buildDesktopDemoConfig("plain-password", "a-seed-password-1");
+    const config = buildDesktopDemoConfig(
+      "plain-password",
+      "a-seed-password-1",
+    );
 
     expect(new URL(config.adminDatabaseUrl).pathname).toBe("/postgres");
   });
@@ -33,13 +39,19 @@ describe("buildDesktopDemoConfig", () => {
   });
 
   it("carries the seed password through for seedDemo to use", () => {
-    const config = buildDesktopDemoConfig("plain-password", "a-seed-password-1");
+    const config = buildDesktopDemoConfig(
+      "plain-password",
+      "a-seed-password-1",
+    );
 
     expect(config.seedPassword).toBe("a-seed-password-1");
   });
 
   it("binds the launcher to loopback on the fixed launcher port", () => {
-    const config = buildDesktopDemoConfig("plain-password", "a-seed-password-1");
+    const config = buildDesktopDemoConfig(
+      "plain-password",
+      "a-seed-password-1",
+    );
 
     expect(config.launcherHost).toBe("127.0.0.1");
     expect(config.launcherPort).toBe(4170);

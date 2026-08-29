@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { page, roleCardHref, type DemoLauncherOptions } from "./demo-launcher.js";
+import {
+  page,
+  roleCardHref,
+  type DemoLauncherOptions,
+} from "./demo-launcher.js";
 import type { DemoRoleCredential, DemoSeedResult } from "./demo-types.js";
 
 function testResult(): DemoSeedResult {
@@ -72,7 +76,7 @@ describe("roleCardHref", () => {
     const link = roleCardHref(role(options, 1), options);
 
     expect(link.href).toBe("http://127.0.0.1:5173/auth/sign-in");
-    expect(link.target).toBe("_blank");
+    expect(link.target).toBe("Kitchen staff");
   });
 
   it("links to the real administration sign-in screen for the owner role in direct-sign-in mode", () => {
@@ -81,7 +85,7 @@ describe("roleCardHref", () => {
     const link = roleCardHref(role(options, 0), options);
 
     expect(link.href).toBe("http://127.0.0.1:5175/auth/sign-in");
-    expect(link.target).toBe("_blank");
+    expect(link.target).toBe("Owner / administrator");
   });
 });
 
@@ -93,11 +97,11 @@ describe("page", () => {
     expect(html).toContain("corepack pnpm demo:contexts");
   });
 
-  it("renders direct sign-in links with target=_blank and drops the automation helper", () => {
+  it("renders direct sign-in links named per role and drops the automation helper", () => {
     const html = page(testOptions({ roleLinkMode: "direct-sign-in" }));
 
     expect(html).toContain(
-      'href="http://127.0.0.1:5175/auth/sign-in" target="_blank"',
+      'href="http://127.0.0.1:5175/auth/sign-in" target="Owner / administrator"',
     );
     expect(html).not.toContain("corepack pnpm demo:contexts");
   });

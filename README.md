@@ -179,12 +179,12 @@ typing an internal order UUID.
 
 ### Back-office configuration
 
-| People, permissions, and features                                                                              | Restaurant menu, categories, and dishes                                                            |
-| -------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| People, permissions, and features                                                                              | Restaurant menu, categories, and dishes                                                                      |
+| -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
 | ![Administration workforce, permission, and branch configuration](docs/assets/screenshots/admin-workforce.png) | ![Administration menu with categories, dishes, and branch overrides](docs/assets/screenshots/admin-menu.png) |
 
-| Table records and QR lifecycle                                                                                                        | Reports, audit, and notification evidence                                                             |
-| ---------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| Table records and QR lifecycle                                                                                            | Reports, audit, and notification evidence                                                                |
+| ------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
 | ![A selected table's editor with issue, rotate, and revoke QR controls](docs/assets/screenshots/admin-menu-tables-qr.png) | ![Administration reports, notifications, and audit evidence](docs/assets/screenshots/admin-insights.png) |
 
 ## A service from setup to close

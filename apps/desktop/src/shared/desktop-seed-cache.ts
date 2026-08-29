@@ -57,6 +57,10 @@ export async function loadOrCreateSeedResult(
     return demoSeedResultSchema.parse(JSON.parse(raw));
   }
   const result = await createSeedResult();
-  await writeFile(seedResultFile, `${JSON.stringify(result, null, 2)}\n`, "utf8");
+  await writeFile(
+    seedResultFile,
+    `${JSON.stringify(result, null, 2)}\n`,
+    "utf8",
+  );
   return result;
 }

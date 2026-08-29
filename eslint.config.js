@@ -11,6 +11,8 @@ export default tseslint.config(
       "**/*.d.ts",
       "Restaurant POS design system/**",
       "design-exploration/**",
+      "apps/desktop/release/**",
+      "apps/desktop/vendor/**",
     ],
   },
   eslint.configs.recommended,
@@ -37,7 +39,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ["*.js", "*.cjs"],
+    files: ["**/*.js", "**/*.cjs"],
     ...tseslint.configs.disableTypeChecked,
   },
   {

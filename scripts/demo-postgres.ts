@@ -32,9 +32,11 @@ export interface IsolatedDemoPostgresRuntime {
 export class DemoPostgresError extends Error {
   public readonly name = "DemoPostgresError";
 
-  public constructor(operation: string) {
+  public constructor(operation: string, detail?: string) {
     super(
-      `Could not complete the local PostgreSQL demo operation: ${operation}.`,
+      detail
+        ? `Could not complete the local PostgreSQL demo operation: ${operation}. ${detail}`
+        : `Could not complete the local PostgreSQL demo operation: ${operation}.`,
     );
   }
 }
@@ -188,20 +190,28 @@ async function runPostgresControlCommand(
   args: readonly string[],
   operation: string,
 ): Promise<void> {
+  let stderrOutput = "";
   await new Promise<void>((resolve, reject) => {
     const child = spawn(executable, [...args], {
-      stdio: "ignore",
+      stdio: ["ignore", "ignore", "pipe"],
       windowsHide: true,
     });
+    child.stderr.on("data", (chunk: Buffer) => {
+      stderrOutput = (stderrOutput + chunk.toString("utf8")).slice(-2_000);
+    });
     child.once("error", () => {
-      reject(new DemoPostgresError(operation));
+      reject(
+        new DemoPostgresError(operation, stderrOutput.trim() || undefined),
+      );
     });
     child.once("exit", (code: number | null) => {
       if (code === 0) {
         resolve();
         return;
       }
-      reject(new DemoPostgresError(operation));
+      reject(
+        new DemoPostgresError(operation, stderrOutput.trim() || undefined),
+      );
     });
   });
 }

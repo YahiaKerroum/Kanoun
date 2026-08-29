@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import { buildTrayMenuTemplate, type TrayMenuActions } from "./tray-menu.js";
 import type { RoleWindowHandle } from "./window-registry.js";
 
-function noopActions(overrides: Partial<TrayMenuActions> = {}): TrayMenuActions {
+function noopActions(
+  overrides: Partial<TrayMenuActions> = {},
+): TrayMenuActions {
   return {
     openHome: () => undefined,
     resetDemoData: () => undefined,
@@ -11,7 +13,9 @@ function noopActions(overrides: Partial<TrayMenuActions> = {}): TrayMenuActions 
   };
 }
 
-function testHandle(overrides: Partial<RoleWindowHandle> = {}): RoleWindowHandle {
+function testHandle(
+  overrides: Partial<RoleWindowHandle> = {},
+): RoleWindowHandle {
   return {
     id: 1,
     roleKey: "kitchen",

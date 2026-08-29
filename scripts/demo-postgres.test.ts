@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { join } from "node:path";
-import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import {
   bundledBinaryCandidate,
@@ -74,8 +74,8 @@ describe("isExistingPostgresCluster", () => {
   });
 
   it("is false for a directory that does not exist at all", () => {
-    expect(isExistingPostgresCluster(join(tmpdir(), "does-not-exist-xyz"))).toBe(
-      false,
-    );
+    expect(
+      isExistingPostgresCluster(join(tmpdir(), "does-not-exist-xyz")),
+    ).toBe(false);
   });
 });

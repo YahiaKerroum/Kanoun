@@ -1,7 +1,7 @@
 import { spawn, type ChildProcess } from "node:child_process";
 import { createWriteStream } from "node:fs";
 import { join } from "node:path";
-import { app, BrowserWindow, Menu, Tray, nativeImage } from "electron";
+import { app, BrowserWindow, dialog, Menu, Tray, nativeImage } from "electron";
 import { DESKTOP_CONTROL_PORT } from "./shared/desktop-config.js";
 import {
   ensureDesktopDirectories,
@@ -21,7 +21,11 @@ const trayIconDataUrl =
 const repositoryRoot = app.isPackaged
   ? join(process.resourcesPath, "app-bundle")
   : join(app.getAppPath(), "..", "..");
-const orchestratorEntry = join(repositoryRoot, "scripts", "desktop-orchestrator.ts");
+const orchestratorEntry = join(
+  repositoryRoot,
+  "scripts",
+  "desktop-orchestrator.ts",
+);
 
 let homeWindow: BrowserWindow | undefined;
 let tray: Tray | undefined;
@@ -30,6 +34,7 @@ let launcherOrigin: string | undefined;
 let controlSecret = "";
 const windowRegistry = new WindowRegistry();
 let nextWindowId = 1;
+let quitting = false;
 
 function refreshTrayMenu(): void {
   if (!tray) {
@@ -61,10 +66,14 @@ function openHomeWindow(): void {
     homeWindow.focus();
     return;
   }
-  const window = new BrowserWindow({ width: 1180, height: 820, title: "MISE Desktop" });
+  const window = new BrowserWindow({
+    width: 1180,
+    height: 820,
+    title: "MISE Desktop",
+  });
   window.setMenuBarVisibility(false);
-  window.webContents.setWindowOpenHandler(({ url }) => {
-    openRoleWindow(url);
+  window.webContents.setWindowOpenHandler(({ url, frameName }) => {
+    openRoleWindow(url, frameName);
     return { action: "deny" };
   });
   window.on("closed", () => {
@@ -76,20 +85,21 @@ function openHomeWindow(): void {
   window.loadURL(launcherOrigin).catch(() => undefined);
 }
 
-function openRoleWindow(url: string): void {
+function openRoleWindow(url: string, frameName?: string): void {
   const id = nextWindowId;
   nextWindowId += 1;
+  const label = frameName && frameName !== "_blank" ? frameName : url;
   const roleWindow = new BrowserWindow({
     width: 1180,
     height: 820,
-    title: url,
+    title: label,
     webPreferences: { partition: `role-${String(id)}` },
   });
   roleWindow.setMenuBarVisibility(false);
   const handle: RoleWindowHandle = {
     id,
-    roleKey: url,
-    label: url,
+    roleKey: label,
+    label,
     close: () => roleWindow.close(),
     focus: () => roleWindow.focus(),
   };
@@ -114,7 +124,9 @@ async function handleResetDemoData(): Promise<void> {
         },
       );
       if (!response.ok) {
-        throw new Error(`Reset demo data failed with status ${String(response.status)}.`);
+        throw new Error(
+          `Reset demo data failed with status ${String(response.status)}.`,
+        );
       }
     },
     reopenHomeWindow: () => {
@@ -132,56 +144,91 @@ async function startOrchestrator(): Promise<void> {
   const secrets = await loadOrCreateDesktopSecrets(paths.secretsFile);
   controlSecret = secrets.controlSecret;
   const log = createWriteStream(paths.logFile, { flags: "a" });
-  const child = spawn(process.execPath, ["--import", "tsx", orchestratorEntry], {
-    cwd: repositoryRoot,
-    env: {
-      ...process.env,
-      // Electron's own binary is process.execPath; this flag makes it run
-      // as plain Node instead of launching another GUI process. Descendant
-      // processes (api/worker/vite preview) inherit it because
-      // scripts/desktop-orchestrator.ts's runtimeEnvironment() spreads
-      // ...process.env into their env too.
-      ELECTRON_RUN_AS_NODE: "1",
-      MISE_DESKTOP_APP_DATA_DIR: app.getPath("appData"),
-      MISE_DESKTOP_REPOSITORY_ROOT: repositoryRoot,
+  const child = spawn(
+    process.execPath,
+    ["--import", "tsx", orchestratorEntry],
+    {
+      cwd: repositoryRoot,
+      env: {
+        ...process.env,
+        // Electron's own binary is process.execPath; this flag makes it run
+        // as plain Node instead of launching another GUI process. Descendant
+        // processes (api/worker/vite preview) inherit it because
+        // scripts/desktop-orchestrator.ts's runtimeEnvironment() spreads
+        // ...process.env into their env too.
+        ELECTRON_RUN_AS_NODE: "1",
+        MISE_DESKTOP_APP_DATA_DIR: app.getPath("appData"),
+        MISE_DESKTOP_REPOSITORY_ROOT: repositoryRoot,
+      },
+      windowsHide: true,
     },
-    windowsHide: true,
-  });
+  );
   orchestratorChild = child;
   let partial = "";
-  child.stdout?.on("data", (chunk: Buffer) => {
+  let readyOnce = false;
+  let recentOutput = "";
+  const trackOutput = (chunk: Buffer): void => {
+    recentOutput = (recentOutput + chunk.toString("utf8")).slice(-4_000);
+  };
+  child.stdout.on("data", (chunk: Buffer) => {
     log.write(chunk);
+    trackOutput(chunk);
     partial += chunk.toString("utf8");
     const lines = partial.split(/\r?\n/);
     partial = lines.pop() ?? "";
     for (const line of lines) {
       const ready = parseReadyLine(line);
       if (ready) {
+        readyOnce = true;
         launcherOrigin = ready.launcherOrigin;
         openHomeWindow();
       }
     }
   });
-  child.stderr?.on("data", (chunk: Buffer) => log.write(chunk));
-}
-
-app.whenReady().then(() => {
-  tray = new Tray(nativeImage.createFromDataURL(trayIconDataUrl));
-  tray.setToolTip("MISE Desktop");
-  refreshTrayMenu();
-  startOrchestrator().catch((error: unknown) => {
-    process.stderr.write(
-      `Failed to start the desktop orchestrator: ${error instanceof Error ? error.message : "unknown error"}\n`,
+  child.stderr.on("data", (chunk: Buffer) => {
+    log.write(chunk);
+    trackOutput(chunk);
+  });
+  child.once("error", (error) => {
+    if (quitting) {
+      return;
+    }
+    dialog.showErrorBox(
+      "MISE Desktop could not start the demo",
+      `The demo environment process failed to launch: ${error.message}\n\nFull log: ${paths.logFile}`,
     );
   });
-}).catch(() => undefined);
+  child.once("exit", (code, signal) => {
+    if (quitting) {
+      return;
+    }
+    if (!readyOnce || (code !== 0 && signal === null)) {
+      dialog.showErrorBox(
+        "MISE Desktop could not start the demo",
+        `The demo environment stopped unexpectedly (${signal ? `signal ${signal}` : `exit code ${String(code)}`}).\n\n${recentOutput.trim()}\n\nFull log: ${paths.logFile}`,
+      );
+    }
+  });
+}
+
+app
+  .whenReady()
+  .then(() => {
+    tray = new Tray(nativeImage.createFromDataURL(trayIconDataUrl));
+    tray.setToolTip("MISE Desktop");
+    refreshTrayMenu();
+    startOrchestrator().catch((error: unknown) => {
+      process.stderr.write(
+        `Failed to start the desktop orchestrator: ${error instanceof Error ? error.message : "unknown error"}\n`,
+      );
+    });
+  })
+  .catch(() => undefined);
 
 app.on("window-all-closed", () => {
   // Intentionally do not quit: the orchestrator (and the demo it runs) keep
   // running via the tray, so a tester can reopen the home window later.
 });
-
-let quitting = false;
 
 app.on("before-quit", (event) => {
   if (quitting) {
@@ -216,6 +263,15 @@ async function shutdownOrchestrator(): Promise<void> {
     new Promise<void>((resolve) => setTimeout(resolve, 8_000)),
   ]);
   if (child.exitCode === null && child.signalCode === null) {
-    child.kill();
+    if (process.platform === "win32" && child.pid) {
+      const { execFile } = await import("node:child_process");
+      await new Promise<void>((resolve) => {
+        execFile("taskkill.exe", ["/PID", String(child.pid), "/T", "/F"], () =>
+          resolve(),
+        );
+      });
+    } else {
+      child.kill();
+    }
   }
 }

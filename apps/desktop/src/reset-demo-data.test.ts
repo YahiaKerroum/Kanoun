@@ -7,8 +7,9 @@ describe("performDemoDataReset", () => {
 
     await performDemoDataReset({
       closeRoleWindows: () => calls.push("close"),
-      requestReset: async () => {
+      requestReset: () => {
         calls.push("request");
+        return Promise.resolve();
       },
       reopenHomeWindow: () => calls.push("reopen"),
     });
@@ -22,9 +23,9 @@ describe("performDemoDataReset", () => {
     await expect(
       performDemoDataReset({
         closeRoleWindows: () => calls.push("close"),
-        requestReset: async () => {
+        requestReset: () => {
           calls.push("request");
-          throw new Error("reset failed");
+          return Promise.reject(new Error("reset failed"));
         },
         reopenHomeWindow: () => calls.push("reopen"),
       }),

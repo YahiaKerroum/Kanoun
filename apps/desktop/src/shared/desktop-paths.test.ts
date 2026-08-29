@@ -3,7 +3,10 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { ensureDesktopDirectories, resolveDesktopPaths } from "./desktop-paths.js";
+import {
+  ensureDesktopDirectories,
+  resolveDesktopPaths,
+} from "./desktop-paths.js";
 
 describe("resolveDesktopPaths", () => {
   it("nests every path under a 'MISE Desktop' folder inside the given app data directory", () => {

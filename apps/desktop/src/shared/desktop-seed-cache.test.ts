@@ -44,9 +44,9 @@ describe("loadOrCreateSeedResult", () => {
     const file = join(directory, "seed-result.json");
     const created = testSeedResult();
     let calls = 0;
-    const createSeedResult = async (): Promise<DemoSeedResult> => {
+    const createSeedResult = (): Promise<DemoSeedResult> => {
       calls += 1;
-      return created;
+      return Promise.resolve(created);
     };
 
     const result = await loadOrCreateSeedResult(file, createSeedResult);
@@ -59,12 +59,12 @@ describe("loadOrCreateSeedResult", () => {
   it("reads the cached result on a later call without calling createSeedResult again", async () => {
     const file = join(directory, "seed-result.json");
     const created = testSeedResult();
-    await loadOrCreateSeedResult(file, async () => created);
+    await loadOrCreateSeedResult(file, () => Promise.resolve(created));
     let calls = 0;
 
-    const result = await loadOrCreateSeedResult(file, async () => {
+    const result = await loadOrCreateSeedResult(file, () => {
       calls += 1;
-      return created;
+      return Promise.resolve(created);
     });
 
     expect(calls).toBe(0);

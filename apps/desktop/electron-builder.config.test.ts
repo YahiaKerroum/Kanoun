@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-// @ts-expect-error — .cjs config has no type declarations; its shape is verified by the assertions below.
 import config from "./electron-builder.config.cjs";
 
 describe("electron-builder.config.cjs", () => {
@@ -23,7 +22,7 @@ describe("electron-builder.config.cjs", () => {
       (resource: { to: string }) => resource.to === "postgresql",
     );
     expect(postgresResource).toBeDefined();
-    expect(postgresResource.from).toBe("vendor/postgresql");
+    expect(postgresResource?.from).toBe("vendor/postgresql");
   });
 
   it("bundles the built api, worker, web apps, scripts, and node_modules under app-bundle", () => {

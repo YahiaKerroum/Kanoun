@@ -101,7 +101,7 @@ export function roleCardHref(
   if (options.roleLinkMode === "direct-sign-in") {
     return {
       href: `${targetOrigin(role, options)}/auth/sign-in`,
-      target: "_blank",
+      target: role.label,
     };
   }
   return { href: `/launch/${encodeURIComponent(role.key)}` };

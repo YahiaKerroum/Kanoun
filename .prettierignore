@@ -4,6 +4,8 @@ design-exploration/
 .superpowers/
 .tmp/
 docs/
+apps/desktop/release/
+apps/desktop/vendor/
 AGENTS.md
 restaurant-management-system-architecture.md
 restaurant-management-system-requirements.md

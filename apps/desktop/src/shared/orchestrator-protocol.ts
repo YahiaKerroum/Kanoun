@@ -22,9 +22,9 @@ export function parseReadyLine(line: string): DesktopOrchestratorReady | null {
     typeof payload !== "object" ||
     payload === null ||
     !("launcherOrigin" in payload) ||
-    typeof (payload as { launcherOrigin: unknown }).launcherOrigin !== "string"
+    typeof payload.launcherOrigin !== "string"
   ) {
     return null;
   }
-  return { launcherOrigin: (payload as { launcherOrigin: string }).launcherOrigin };
+  return { launcherOrigin: payload.launcherOrigin };
 }

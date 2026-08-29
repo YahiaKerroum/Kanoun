@@ -31,7 +31,8 @@ module.exports = {
   ],
   options: {
     doNotFollow: { path: "node_modules" },
-    exclude: "(^|/)dist/|\\.test\\.(ts|tsx)$|\\.spec\\.(ts|tsx)$",
+    exclude:
+      "(^|/)dist/|\\.test\\.(ts|tsx)$|\\.spec\\.(ts|tsx)$|(^|/)apps/desktop/(release|vendor)/",
     tsConfig: { fileName: "tsconfig.check.json" },
     enhancedResolveOptions: {
       exportsFields: ["exports"],

@@ -18,13 +18,19 @@ module.exports = {
       filter: ["*/dist/**/*", "*/package.json"],
     },
     { from: "../../apps/api/dist", to: "app-bundle/apps/api/dist" },
-    { from: "../../apps/api/package.json", to: "app-bundle/apps/api/package.json" },
+    {
+      from: "../../apps/api/package.json",
+      to: "app-bundle/apps/api/package.json",
+    },
     { from: "../../apps/worker/dist", to: "app-bundle/apps/worker/dist" },
     {
       from: "../../apps/worker/package.json",
       to: "app-bundle/apps/worker/package.json",
     },
-    { from: "../../apps/web/customer/dist", to: "app-bundle/apps/web/customer/dist" },
+    {
+      from: "../../apps/web/customer/dist",
+      to: "app-bundle/apps/web/customer/dist",
+    },
     {
       from: "../../apps/web/customer/node_modules/vite",
       to: "app-bundle/apps/web/customer/node_modules/vite",
