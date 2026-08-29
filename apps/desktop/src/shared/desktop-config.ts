@@ -1,4 +1,18 @@
-import type { DemoConfig } from "../../../../scripts/demo-config.js";
+// Mirrors scripts/demo-config.ts's exported DemoConfig shape. Duplicated,
+// not imported, because apps/desktop's own tsc build sets rootDir: "src",
+// and that check applies even to type-only-imported files outside it.
+// Must stay in sync with that file.
+export interface DemoConfig {
+  readonly databaseUrl: string;
+  readonly databaseName: string;
+  readonly databaseHost: string;
+  readonly databasePort: number;
+  readonly adminDatabaseUrl: string;
+  readonly databaseMarker: string;
+  readonly launcherHost: string;
+  readonly launcherPort: number;
+  readonly seedPassword?: string;
+}
 
 export const DESKTOP_POSTGRES_PORT = 5433;
 export const DESKTOP_POSTGRES_USERNAME = "mise_desktop";

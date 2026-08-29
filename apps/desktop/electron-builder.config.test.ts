@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+// @ts-expect-error — .cjs config has no type declarations; its shape is verified by the assertions below.
 import config from "./electron-builder.config.cjs";
 
 describe("electron-builder.config.cjs", () => {
