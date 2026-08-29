@@ -7,6 +7,10 @@ design.
 
 ## Building the installer
 
+> **This produces an installer, not a verified-working app.** See "Known
+> limitations" below — the packaged build is not currently known to launch
+> correctly. Use "Running in development" below for a verified path.
+
 1. One-time: follow `vendor/postgresql/README.md` to place PostgreSQL 18.1
    Windows binaries in `vendor/postgresql/`.
 2. From the repository root, with the pinned toolchain active:
@@ -53,8 +57,40 @@ for the packaging layer itself.)
   seed) is still present — this is the "data persists across restarts"
   requirement.
 
-## Known simplifications (first pass)
+## Known limitations
 
+- **The packaged installer is not currently known to work.**
+  `electron-builder.config.cjs`'s `extraResources` does not bundle
+  `drizzle.config.ts`, the `migrations/` SQL files, or the building-blocks
+  schema source, so database migrations cannot run in a packaged build; it
+  also does not bundle any web app's `vite.config.ts` (which carries the
+  `/api` proxy every SPA's `fetch()` call depends on), so `vite preview` in
+  a packaged app would 404 every API call, breaking sign-in entirely.
+  Nothing in this app's implementation or verification has ever actually
+  launched the `electron-builder`-produced `win-unpacked`/installer output —
+  all verification to date has run the unpackaged dev-mode Electron shell
+  directly (`corepack pnpm --filter @rms/desktop start`), which **is**
+  thoroughly and repeatedly verified end to end. Making the installer
+  actually functional needs its own deliberate follow-up (bundling a
+  migration toolchain, and either bundling Vite's dev config/plugins into
+  the packaged resources or replacing `vite preview` with a static-file
+  server plus an explicit reverse proxy) — do not treat "the installer
+  builds" as evidence the packaged app runs.
+- **Quitting during the ~30s startup window can leave a stray `postgres.exe`
+  running.** A normal quit (after startup has finished) is clean and
+  verified — the orchestrator's `/shutdown` route runs a full graceful
+  shutdown, including stopping PostgreSQL, in a few seconds. But if the app
+  is quit _during_ startup, the 8-second force-kill fallback in
+  `src/main.ts`'s `shutdownOrchestrator()` can fire before that graceful
+  path completes, and Windows' `taskkill /T` cannot reach `postgres.exe` at
+  that point because `pg_ctl start` has already detached it from the
+  orchestrator's own process tree. The data itself is never at risk (the
+  Postgres data directory persists correctly either way); the symptom is a
+  leftover process holding port 5433 until manually killed. Properly
+  closing this needs an abortable startup sequence in
+  `scripts/desktop-orchestrator.ts` (racing shutdown against each startup
+  stage, not just making `/shutdown` reachable earlier), which is real
+  scope beyond a mechanical fix.
 - `node_modules` is bundled into the packaged app wholesale rather than
   pruned to production dependencies — functionally correct but larger than
   necessary. A follow-up could use `pnpm deploy` or similar.
