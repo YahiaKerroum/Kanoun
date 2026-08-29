@@ -13,6 +13,15 @@ import { performDemoDataReset } from "./reset-demo-data.js";
 import { buildTrayMenuTemplate } from "./tray-menu.js";
 import { WindowRegistry, type RoleWindowHandle } from "./window-registry.js";
 
+// A second launch while an instance is already running must never proceed:
+// it would spawn its own orchestrator against the same control port/secret,
+// and either instance's quit could tear down the other's backend. Exit
+// immediately, before any orchestrator/window setup below runs.
+if (!app.requestSingleInstanceLock()) {
+  app.quit();
+  process.exit(0);
+}
+
 // A minimal 1x1 PNG, used as a functional placeholder tray icon so packaging
 // does not depend on a binary asset file. Swap for a real icon later.
 const trayIconDataUrl =
@@ -228,6 +237,17 @@ app
 app.on("window-all-closed", () => {
   // Intentionally do not quit: the orchestrator (and the demo it runs) keep
   // running via the tray, so a tester can reopen the home window later.
+});
+
+app.on("second-instance", () => {
+  if (homeWindow && !homeWindow.isDestroyed()) {
+    if (homeWindow.isMinimized()) {
+      homeWindow.restore();
+    }
+    homeWindow.focus();
+  } else {
+    openHomeWindow();
+  }
 });
 
 app.on("before-quit", (event) => {

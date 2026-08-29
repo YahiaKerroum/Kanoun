@@ -155,7 +155,7 @@ export function page(options: DemoLauncherOptions): string {
     .map((role) => {
       const link = roleCardHref(role, options);
       const targetAttribute = link.target
-        ? ` target="${link.target}" rel="noreferrer"`
+        ? ` target="${escapeHtml(link.target)}" rel="noreferrer"`
         : "";
       return `
         <li class="role-card">

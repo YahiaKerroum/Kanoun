@@ -244,6 +244,11 @@ async function main(): Promise<void> {
         return;
       }
       if (request.url === "/reset") {
+        if (!postgres) {
+          response.statusCode = 503;
+          response.end("The demo environment is still starting up.");
+          return;
+        }
         if (resetInFlight) {
           response.statusCode = 409;
           response.end("A reset is already in progress.");
