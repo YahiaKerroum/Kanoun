@@ -79,7 +79,12 @@ function openHomeWindow(): void {
 function openRoleWindow(url: string): void {
   const id = nextWindowId;
   nextWindowId += 1;
-  const roleWindow = new BrowserWindow({ width: 1180, height: 820, title: url });
+  const roleWindow = new BrowserWindow({
+    width: 1180,
+    height: 820,
+    title: url,
+    webPreferences: { partition: `role-${String(id)}` },
+  });
   roleWindow.setMenuBarVisibility(false);
   const handle: RoleWindowHandle = {
     id,
@@ -176,6 +181,41 @@ app.on("window-all-closed", () => {
   // running via the tray, so a tester can reopen the home window later.
 });
 
-app.on("before-quit", () => {
-  orchestratorChild?.kill();
+let quitting = false;
+
+app.on("before-quit", (event) => {
+  if (quitting) {
+    return;
+  }
+  quitting = true;
+  event.preventDefault();
+  shutdownOrchestrator()
+    .catch(() => undefined)
+    .finally(() => app.quit());
 });
+
+async function shutdownOrchestrator(): Promise<void> {
+  const child = orchestratorChild;
+  if (!child) {
+    return;
+  }
+  const exited = new Promise<void>((resolve) => {
+    child.once("exit", () => resolve());
+  });
+  try {
+    await fetch(`http://127.0.0.1:${String(DESKTOP_CONTROL_PORT)}/shutdown`, {
+      method: "POST",
+      headers: { authorization: `Bearer ${controlSecret}` },
+    });
+  } catch {
+    // The orchestrator may already be unreachable; fall through to the
+    // timeout below and force-terminate it if it never exits on its own.
+  }
+  await Promise.race([
+    exited,
+    new Promise<void>((resolve) => setTimeout(resolve, 8_000)),
+  ]);
+  if (child.exitCode === null && child.signalCode === null) {
+    child.kill();
+  }
+}

@@ -172,6 +172,7 @@ async function main(): Promise<void> {
   let launcher: DemoLauncher | undefined;
   let controlServer: Server | undefined;
   let seedResult: DemoSeedResult | undefined;
+  let resolveShutdown: (() => void) | undefined;
 
   const runSeed = (): Promise<DemoSeedResult> =>
     seedDemo({
@@ -258,22 +259,33 @@ async function main(): Promise<void> {
           response.end();
           return;
         }
-        if (request.url !== "/reset" || request.method !== "POST") {
+        if (request.method !== "POST") {
           response.statusCode = 404;
           response.end();
           return;
         }
-        void performReset()
-          .then(() => {
-            response.statusCode = 204;
-            response.end();
-          })
-          .catch((error: unknown) => {
-            response.statusCode = 500;
-            response.end(
-              error instanceof Error ? error.message : "Reset failed.",
-            );
-          });
+        if (request.url === "/reset") {
+          void performReset()
+            .then(() => {
+              response.statusCode = 204;
+              response.end();
+            })
+            .catch((error: unknown) => {
+              response.statusCode = 500;
+              response.end(
+                error instanceof Error ? error.message : "Reset failed.",
+              );
+            });
+          return;
+        }
+        if (request.url === "/shutdown") {
+          response.statusCode = 204;
+          response.end();
+          resolveShutdown?.();
+          return;
+        }
+        response.statusCode = 404;
+        response.end();
       });
       server.once("error", reject);
       server.listen(DESKTOP_CONTROL_PORT, "127.0.0.1", () => resolve(server));
@@ -282,9 +294,9 @@ async function main(): Promise<void> {
       `${encodeReadyLine({ launcherOrigin: launcher.origin })}\n`,
     );
     await new Promise<void>((resolve) => {
-      const stop = (): void => resolve();
-      process.once("SIGINT", stop);
-      process.once("SIGTERM", stop);
+      resolveShutdown = resolve;
+      process.once("SIGINT", resolve);
+      process.once("SIGTERM", resolve);
     });
   } finally {
     await new Promise<void>((resolve) => {
