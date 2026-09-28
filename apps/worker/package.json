@@ -14,6 +14,6 @@
     "@rms/building-blocks": "workspace:*",
     "@rms/modules": "workspace:*",
     "pino": "10.3.1",
-    "zod": "4.4.3"
+    "zod": "4.6.5"
   }
 }
