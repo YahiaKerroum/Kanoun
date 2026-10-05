@@ -39,7 +39,7 @@ No artifact may silently override another artifact that is authoritative for a d
 
 ## Current repository state
 
-Slice 001 is complete. The executable pnpm workspace uses Node.js `24.18.0`, pnpm `11.17.0`, Express `5.2.1`, strict TypeScript `6.0.3`, Zod `4.4.3`, PostgreSQL `18.1`, React `19.2.8`, and Vite `8.1.5`. The API and worker are separate processes; customer, staff, and administration clients are separate React applications. The current staff visual authority is `Restaurant POS design system/Mise Staff Shell v2.dc.html`; older artifacts are historical only.
+Slice 001 is complete. The executable pnpm workspace uses Node.js `24.18.0`, pnpm `11.17.0`, Express `5.2.1`, strict TypeScript `6.0.3`, Zod `4.4.3`, PostgreSQL `18.1`, React `19.2.8`, and Vite `8.1.5`. The API and worker are separate processes; customer, staff, and administration clients are separate React applications. `apps/desktop` is the Windows desktop distribution: a Tauri 2 shell plus a Node runtime host that runs PostgreSQL locally or connects to a PostgreSQL server (ADR-0008). The visual and writing authority is `DESIGN.md` with tokens in `apps/web/design-system.css`; the `Restaurant POS design system/` and `design-exploration/` folders are historical only.
 
 Exact workspace commands:
 
@@ -48,7 +48,8 @@ Exact workspace commands:
 - apply migrations: `corepack pnpm db:migrate`
 - develop API, worker, and staff web: `corepack pnpm dev`
 - develop the isolated professional demo environment: `corepack pnpm dev:demo`
-- open isolated Playwright demo contexts: `corepack pnpm demo:contexts`
+- develop the desktop app (Rust toolchain required): `corepack pnpm dev:desktop`
+- build the Windows installer: `corepack pnpm build:desktop`
 - develop one process: `corepack pnpm dev:api`, `corepack pnpm dev:worker`, or `corepack pnpm dev:staff`
 - format: `corepack pnpm format` or verify with `corepack pnpm format:check`
 - lint: `corepack pnpm lint`
@@ -57,9 +58,6 @@ Exact workspace commands:
 - architecture tests: `corepack pnpm test:architecture`
 - OpenAPI and event-contract validation: `corepack pnpm contracts:lint`
 - production builds: `corepack pnpm build`
-- mocked UI/contract browser tests: `corepack pnpm test:browser:mocked`
-- real-stack browser gate: `corepack pnpm test:browser:real`
-- browser and accessibility tests (mocked classification plus real-stack gate): `corepack pnpm test:browser`
 - full non-browser verification: `corepack pnpm check`
 - production-dependency audit: `corepack pnpm audit --prod --audit-level high`
 

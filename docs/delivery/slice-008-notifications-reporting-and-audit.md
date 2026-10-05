@@ -2,7 +2,7 @@
 id: SLICE-008-IMPLEMENTATION
 status: verified
 owner: engineering
-last_reviewed: 2026-07-29
+last_reviewed: 2026-08-08
 branch: slice-008-notifications-reporting-and-audit
 base: 1a5c265a455a9fa758c5495b3a963570849b9181
 ---
@@ -105,8 +105,9 @@ base: 1a5c265a455a9fa758c5495b3a963570849b9181
   engines, external notification providers, report exports, menu-performance
   reporting, inventory reporting, currency conversion, urgency/delay
   classification, hard deletion, and a general privacy-deletion workflow.
-- Slice 008 pull-request creation, integration into `main`, post-MVP work, and
-  any later slice.
+- Slice 008 pull-request creation, post-MVP work, and any later slice. The
+  feature branch was subsequently integrated into `main`; that publication
+  fact is recorded in the verification evidence below.
 
 ## Verification evidence
 
@@ -129,5 +130,10 @@ dashboard requests in an existing browser fixture.
 
 Implementation commit:
 `ec2264e492e191ecd0acc38f56d6f783dd52791e`. The matching remote branch was
-independently verified at that SHA. Slice 008 has not been integrated into
-`main` and no pull request was opened.
+independently verified at that SHA. The publication branch was integrated into
+`main` by merge commit
+`b38375bb2bd80b0c8ba98011b0591880d44dc072`, whose second parent is the
+publication head `e3f210892a072adc0eaab00e6c34fa3f82f459dd`. No pull request
+was opened. Later commits on `main` continue the Administration and customer
+UI work; the current observed `main` head is
+`67ea0c28653390054f999f494d3269f05dcbb0f1`.
