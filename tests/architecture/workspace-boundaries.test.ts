@@ -47,7 +47,7 @@ describe("workspace architecture", () => {
       "utf8",
     );
     const serverSource = await readFile(
-      path.join(root, "apps/api/src/server.ts"),
+      path.join(root, "apps/api/src/http-server.ts"),
       "utf8",
     );
 

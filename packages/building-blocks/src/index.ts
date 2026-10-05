@@ -6,6 +6,7 @@ export {
   type PoolObservationHooks,
   type PoolSaturation,
 } from "./database/pool.js";
+export { applyDatabaseMigrations } from "./database/migrations.js";
 export {
   createMetricsRegistry,
   createServiceMetrics,
