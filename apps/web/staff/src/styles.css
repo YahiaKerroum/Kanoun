@@ -89,7 +89,6 @@ button:disabled {
   align-items: flex-start;
   flex-direction: column;
   border: 1px solid var(--line);
-  border-top: 6px solid var(--harissa);
   border-radius: var(--radius-panel);
   padding: 36px;
   background: var(--surface);
@@ -1257,7 +1256,7 @@ button:disabled {
 }
 
 .order-entry[open] {
-  animation: order-entry-in 260ms cubic-bezier(0.2, 0.9, 0.3, 1.35) both;
+  animation: order-entry-in 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
   transform-origin: right center;
 }
 
@@ -2001,7 +2000,9 @@ button:disabled {
 }
 
 .kitchen-order .kitchen-note {
-  border-left: 3px solid var(--saffron);
+  border: 1px solid var(--state-warning-line);
+  border-radius: var(--radius-control);
+  background: var(--state-warning-surface);
   background: var(--surface-warm);
   color: var(--ink);
   padding: 8px 10px;
@@ -2226,7 +2227,8 @@ button:disabled {
   display: grid;
   gap: 4px;
   min-width: 0;
-  border-left: 3px solid var(--brand-400);
+  border-radius: var(--radius-control);
+  background: var(--surface-soft);
   padding-left: 10px;
 }
 
@@ -2696,7 +2698,8 @@ button:disabled {
 }
 
 .audit-list details {
-  border-left: 3px solid var(--brand-400);
+  border-radius: var(--radius-control);
+  background: var(--surface-soft);
   padding-left: 12px;
 }
 
