@@ -15,10 +15,6 @@
     "tests/**/*.ts",
     "drizzle.config.ts",
     "vite.config.ts",
-    "vitest.config.ts",
-    "playwright.config.ts",
-    "playwright.mocked.config.ts",
-    "playwright.real-stack.config.ts",
-    "playwright.pr03-real-stack.config.ts"
+    "vitest.config.ts"
   ]
 }

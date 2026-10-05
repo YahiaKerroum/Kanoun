@@ -1,12 +1,15 @@
 ---
 id: OPS-REAL-E2E
-status: approved
+status: retired
 version: 1.0
 owner: engineering
 last_reviewed: 2026-08-11
 ---
 
 # Real-stack browser verification
+
+> [!IMPORTANT]
+> Retired on 2026-10-06. The Playwright real-stack gate, its harness scripts, and its CI job were removed; verification now relies on `corepack pnpm check` (unit, PostgreSQL integration, architecture, and contract checks). Kept for history.
 
 Run the product gate with Node.js `24.18.0`, pnpm `11.17.0`, and a loopback
 PostgreSQL server:

@@ -136,7 +136,7 @@ export async function verifyDemoDatabaseMarker(
 export async function removeMarkedDatabase(config: DemoConfig): Promise<void> {
   const adminPool = createDatabasePool({
     connectionString: config.adminDatabaseUrl,
-    applicationName: "rms-real-e2e-database-cleanup",
+    applicationName: "rms-demo-database-cleanup",
     maximumConnections: 1,
   });
   let lockHeld = false;

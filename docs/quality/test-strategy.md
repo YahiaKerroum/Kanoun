@@ -11,6 +11,9 @@ source_of_truth_for:
 
 # Test Strategy
 
+> [!IMPORTANT]
+> Browser automation (the Playwright mocked and real-stack suites) was retired on 2026-10-06. The required gate is `corepack pnpm check`; the desktop runtime has unit tests in `apps/desktop/runtime`. References to browser suites below are historical.
+
 ## Test levels
 
 ### Domain tests

@@ -67,7 +67,6 @@ provides a Playwright helper that fetches only the launcher manifest and opens
 one context per role plus the customer URL:
 
 ```text
-corepack pnpm demo:contexts
 ```
 
 The helper keeps the browser open until `Ctrl+C`. For manual browser work,

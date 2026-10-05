@@ -1,6 +1,6 @@
 ---
 id: OPERATIONS-BROWSER-POLICY
-status: approved
+status: retired
 version: 1.0
 owner: operations
 last_reviewed: 2026-08-25
@@ -9,6 +9,9 @@ source_of_truth_for:
 ---
 
 # Supported Browser Policy
+
+> [!IMPORTANT]
+> Retired on 2026-10-06 together with the Playwright suites. Interface changes are reviewed against `DESIGN.md`. Kept for history.
 
 Published to satisfy `AC-NFR-17-01`. The support commitment itself restates
 the already-approved `AC-NFR-17-02`; this document does not add or change a
