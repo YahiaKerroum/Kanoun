@@ -26,38 +26,32 @@ import {
 
 const copy = {
   menu: {
-    eyebrow: "CURRENT RESTAURANT MENU",
-    title: "What guests can order",
-    detail:
-      "Restaurant categories, base prices, and current dish availability. Branch-specific changes are applied in the guest menu.",
-    deniedTitle: "Menu view permission required",
+    title: "Menu",
+    detail: "Categories, prices, and what guests can order right now.",
+    deniedTitle: "Menu access needed",
     deniedDetail:
-      "This destination is visible because you have menu responsibilities, but menu.view is required to load or display the menu.",
-    scopeTitle: "Restaurant scope unavailable",
+      "Your account can't view the menu yet. Ask a manager to add menu access.",
+    scopeTitle: "Your restaurant could not be identified",
     scopeDetail:
-      "The active branch could not be matched to one restaurant from your scoped session grants. Refresh access or ask an administrator to correct the assignment.",
+      "Refresh the page. If this keeps happening, ask a manager to check your branch assignment.",
     emptyTitle: "No menu items yet",
-    emptyDetail:
-      "No categories or dishes are configured for this restaurant. Menu maintenance remains in the administration workspace.",
+    emptyDetail: "Dishes are added in the back office, under Menu.",
   },
   tables: {
-    eyebrow: "LIVE BRANCH FLOOR",
-    title: "Table availability",
+    title: "Tables",
     detail:
-      "Current table records and server-derived states for this branch. Scanning a QR code alone never marks a table occupied.",
-    deniedTitle: "Table view permission required",
+      "Which tables are free, seated, or waiting. Scanning a table's QR code doesn't mark it as seated.",
+    deniedTitle: "Table access needed",
     deniedDetail:
-      "This destination is visible because you have table responsibilities, but tables.view is required to load or display the table list.",
+      "Your account can't view tables yet. Ask a manager to add table access.",
     emptyTitle: "No tables configured",
-    emptyDetail:
-      "This branch has no table records yet. Table maintenance remains in the administration workspace.",
+    emptyDetail: "Tables are added in the back office, under Tables & QR.",
   },
   shared: {
-    loading: "Loading current branch data…",
+    loading: "Loading…",
     invalidResponse:
-      "The server returned data that does not match the staff workspace contract.",
-    unavailable:
-      "Current data could not be loaded. Check the connection and try again.",
+      "This page came back in an unexpected format. Reload, and contact support if it keeps happening.",
+    unavailable: "This page couldn't load. Check the connection and try again.",
     stale:
       "The latest reload failed. The list below is the last verified snapshot and may be stale.",
     reload: "Reload data",
@@ -241,12 +235,10 @@ function formatMoney(amount: string, currency: string): string {
 }
 
 function WorkspaceHeading({
-  eyebrow,
   title,
   detail,
   summary,
 }: {
-  readonly eyebrow: string;
   readonly title: string;
   readonly detail: string;
   readonly summary: ReactNode;
@@ -254,7 +246,6 @@ function WorkspaceHeading({
   return (
     <header className="operational-heading">
       <div className="operational-heading__copy">
-        <p className="eyebrow">{eyebrow}</p>
         <h2>{title}</h2>
         <p>{detail}</p>
       </div>
@@ -277,7 +268,6 @@ function WorkspaceBoundary({
       <span className="workspace-message__icon" aria-hidden="true">
         {icon}
       </span>
-      <p className="eyebrow">ACCESS BOUNDARY</p>
       <h2 id="workspace-message">{title}</h2>
       <p>{detail}</p>
     </section>
@@ -310,8 +300,7 @@ function ResourceFeedback({
         <span className="workspace-message__icon" aria-hidden="true">
           <CircleAlert size={28} />
         </span>
-        <p className="eyebrow">DATA UNAVAILABLE</p>
-        <h2 id="load-error-title">The workspace could not be refreshed</h2>
+        <h2 id="load-error-title">Couldn't refresh</h2>
         <p>{state.message}</p>
         <motion.button
           className="workspace-action"
@@ -434,7 +423,6 @@ function MenuResource({ restaurantId }: { readonly restaurantId: string }) {
   return (
     <div className="workspace__content operational-workspace">
       <WorkspaceHeading
-        eyebrow={copy.menu.eyebrow}
         title={copy.menu.title}
         detail={copy.menu.detail}
         summary={
@@ -635,7 +623,6 @@ function TablesResource({ branchId }: { readonly branchId: string }) {
   return (
     <div className="workspace__content operational-workspace">
       <WorkspaceHeading
-        eyebrow={copy.tables.eyebrow}
         title={copy.tables.title}
         detail={copy.tables.detail}
         summary={

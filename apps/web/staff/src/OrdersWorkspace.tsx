@@ -275,7 +275,7 @@ async function createOrder(
 
 function errorMessage(error: unknown): string {
   if (error instanceof z.ZodError) {
-    return "The server returned data that does not match the Orders workspace contract.";
+    return "The order list came back in an unexpected format. Reload, and contact support if it keeps happening.";
   }
   return error instanceof Error
     ? error.message
@@ -428,11 +428,9 @@ export function OrdersWorkspace(props: {
     <div className="workspace__content orders-workspace">
       <header className="orders-heading">
         <div>
-          <p className="eyebrow">ACTIVE BRANCH ORDERS</p>
-          <h2>Order flow</h2>
+          <h2>Orders</h2>
           <p>
-            Submitted work for this branch, with server-owned lifecycle state
-            and elapsed time.
+            Every open order in this branch, with how long it has been waiting.
           </p>
         </div>
         {props.canCreate ? (
@@ -609,11 +607,10 @@ export function OrdersWorkspace(props: {
       ) : (
         <section className="orders-boundary">
           <CircleAlert aria-hidden="true" size={25} />
-          <p className="eyebrow">ACCESS BOUNDARY</p>
-          <h3>Order view permission required</h3>
+          <h3>Order access needed</h3>
           <p>
-            The order list is not requested or displayed without{" "}
-            <code>orders.view</code> for this branch.
+            Your account can't view orders in this branch. Ask a manager to add
+            order access.
           </p>
         </section>
       )}
@@ -748,7 +745,6 @@ function OrdersList(props: {
     return (
       <section className="orders-boundary">
         <CircleAlert aria-hidden="true" size={25} />
-        <p className="eyebrow">DATA UNAVAILABLE</p>
         <h3>Active orders could not be loaded</h3>
         <p>{state.message}</p>
         <button type="button" onClick={props.onReload}>
@@ -762,9 +758,8 @@ function OrdersList(props: {
     <section className="orders-results" aria-labelledby="active-orders-title">
       <header>
         <div>
-          <p className="eyebrow">CURRENT RESULTS</p>
           <h3 id="active-orders-title">
-            {props.targetOrderId ? "Order evidence" : "Active orders"}
+            {props.targetOrderId ? "Order" : "Open orders"}
           </h3>
         </div>
         <button type="button" onClick={props.onReload}>
@@ -775,19 +770,19 @@ function OrdersList(props: {
       {state.kind === "stale" ? (
         <p className="orders-stale" role="status">
           <CircleAlert aria-hidden="true" size={17} />
-          Reload failed. These are the last verified results and may be stale.
+          Couldn't refresh. Showing the last list that loaded, which may be out
+          of date.
         </p>
       ) : null}
       {props.targetOrderId ? (
         state.data.some((order) => order.id === props.targetOrderId) ? (
           <p className="order-route-status" role="status">
-            Selected order evidence is shown first. Continue from its visible
-            reference and authorized actions.
+            The order you opened is shown first.
           </p>
         ) : (
           <p className="order-route-status" role="status">
-            The selected order is not available in this branch scope. Reload or
-            return to the visible order list.
+            That order isn't in this branch, or it has been closed. Reload to
+            see the current list.
           </p>
         )
       ) : null}
@@ -1135,11 +1130,10 @@ function OrderEntry(props: {
     <div className="order-entry__content">
       <header>
         <div>
-          <p className="eyebrow">STAFF ORDER ENTRY</p>
-          <h2 id="order-entry-title">Create order</h2>
+          <h2 id="order-entry-title">New order</h2>
           <p>
-            The server rechecks table state, menu version, options, prices, and
-            totals before acceptance.
+            Pick a table and add dishes. Prices and availability are checked
+            again when you send it.
           </p>
         </div>
         <button
@@ -1154,15 +1148,14 @@ function OrderEntry(props: {
       {!props.restaurantId || !props.canUseMenu || !props.canUseTables ? (
         <section className="order-entry-boundary">
           <CircleAlert aria-hidden="true" size={22} />
-          <h3>Order-entry data is unavailable</h3>
+          <h3>You can't take orders here yet</h3>
           <p>
-            This action requires <code>orders.create</code>, plus access to the
-            established current menu and table endpoints for this branch.
+            Taking orders needs order, menu, and table access for this branch.
+            Ask a manager to add them.
           </p>
         </section>
       ) : submission === "success" ? (
         <section className="order-entry-success" role="status">
-          <p className="eyebrow">ORDER ACCEPTED</p>
           <h3>{createdReference}</h3>
           <p>The new order is now available in the active-order list.</p>
           <button type="button" onClick={props.onClose}>
@@ -1356,10 +1349,7 @@ function OrderEntry(props: {
                   {formatEstimatedMoney(estimatedTotal, currency)}
                 </strong>
               </div>
-              <p>
-                The accepted receipt uses the server-calculated total and
-                immutable item snapshot.
-              </p>
+              <p>The final total is confirmed when the order is sent.</p>
             </section>
           ) : null}
 

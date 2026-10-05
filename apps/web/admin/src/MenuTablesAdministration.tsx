@@ -12,22 +12,19 @@ type FormEvent<Element extends HTMLFormElement> = SyntheticEvent<Element>;
 
 const copy = {
   menu: {
-    eyebrow: "Restaurant menu · branch-aware",
     title: "Menu",
     detail:
-      "Maintain restaurant categories, dishes, structured options, and the active branch’s price, visibility, and availability overrides.",
+      "Categories and dishes for the whole restaurant, with prices and availability you can change per branch.",
   },
   tables: {
-    eyebrow: "Branch floor · QR access",
     title: "Tables & QR",
-    detail:
-      "Maintain physical tables and issue, rotate, print, download, or revoke customer QR access for this branch.",
+    detail: "The tables in this branch and the QR codes guests scan to order.",
   },
-  loading: "Loading menu, table, and QR configuration…",
-  retry: "Reload configuration",
-  denied: "Your current permission set does not allow this data to be loaded.",
+  loading: "Loading…",
+  retry: "Try again",
+  denied: "Your account can't view this. Ask the owner for access.",
   noFeature:
-    "This capability is disabled in the current persisted feature configuration. Existing records remain visible, but new work is blocked.",
+    "Turn it on under Features to make changes. Existing items stay visible.",
 } as const;
 
 const moneySchema = z.object({
@@ -792,7 +789,7 @@ export function MenuTablesAdministration({
     if (!issuedQr) return;
     try {
       await navigator.clipboard.writeText(issuedQr.result.qrUrl);
-      setMessage("QR URL copied.");
+      setMessage("Link copied.");
     } catch {
       setMessage(
         "Copy was blocked by the browser. Select the URL field and copy it manually.",
@@ -812,7 +809,7 @@ export function MenuTablesAdministration({
       return;
     }
     const document = printWindow.document;
-    document.title = "MISE customer QR";
+    document.title = "Table QR code — MISE";
     const main = document.createElement("main");
     main.style.cssText =
       "font-family:system-ui,sans-serif;text-align:center;padding:40px;color:#1e1b14";
@@ -852,8 +849,7 @@ export function MenuTablesAdministration({
   if (loadState.kind === "error") {
     return (
       <section className="admin-load-error" aria-labelledby="admin-load-error">
-        <p className="eyebrow">Configuration unavailable</p>
-        <h3 id="admin-load-error">Menu and tables could not be loaded</h3>
+        <h3 id="admin-load-error">This page couldn't load</h3>
         <p>{loadState.message}</p>
         <button type="button" onClick={() => void loadConfiguration()}>
           {copy.retry}
@@ -1024,8 +1020,9 @@ function MenuAdministration({
     >
       <div className="section-heading">
         <div>
-          <p className="eyebrow">{copy.menu.eyebrow}</p>
-          <h3 id="menu-admin-title">{copy.menu.title}</h3>
+          <h3 id="menu-admin-title" className="visually-hidden">
+            {copy.menu.title}
+          </h3>
           <p className="section-detail">{copy.menu.detail}</p>
         </div>
         <span>
@@ -1048,7 +1045,7 @@ function MenuAdministration({
             <div className="subsection-heading">
               <div>
                 <h4>Categories</h4>
-                <p>Restaurant-wide organization and display order.</p>
+                <p>How the menu is grouped, in the order guests see it.</p>
               </div>
             </div>
             {permissions.menuManage ? (
@@ -1162,7 +1159,10 @@ function MenuAdministration({
             <div className="subsection-heading">
               <div>
                 <h4>Dishes</h4>
-                <p>Base menu values; branch differences are edited below.</p>
+                <p>
+                  Prices here apply to every branch. Change a price for one
+                  branch further down.
+                </p>
               </div>
             </div>
             {permissions.menuManage && sortedCategories.length > 0 ? (
@@ -1287,7 +1287,6 @@ function MenuAdministration({
             <div className="admin-subsection selected-record">
               <div className="subsection-heading">
                 <div>
-                  <p className="eyebrow">Selected dish</p>
                   <h4>{selectedDish.name}</h4>
                 </div>
                 <span>Version {selectedDish.version}</span>
@@ -1419,10 +1418,10 @@ function MenuAdministration({
               <div className="nested-management">
                 <div className="subsection-heading">
                   <div>
-                    <h4>Structured options</h4>
+                    <h4>Options</h4>
                     <p>
-                      One option per line: Name | price delta | active or
-                      inactive.
+                      One option per line, as: name | extra price | active or
+                      inactive. For example: Extra cheese | 150 | active
                     </p>
                   </div>
                 </div>
@@ -1609,11 +1608,8 @@ function MenuAdministration({
               <div className="nested-management">
                 <div className="subsection-heading">
                   <div>
-                    <h4>{branch.name} override</h4>
-                    <p>
-                      Empty price and inherited availability use the restaurant
-                      menu values.
-                    </p>
+                    <h4>Changes for {branch.name}</h4>
+                    <p>Leave the price empty to use the restaurant price.</p>
                   </div>
                   <span>Version {branchOverride?.version ?? 0}</span>
                 </div>
@@ -1739,8 +1735,9 @@ function TablesAdministration({
     >
       <div className="section-heading">
         <div>
-          <p className="eyebrow">{copy.tables.eyebrow}</p>
-          <h3 id="tables-admin-title">{copy.tables.title}</h3>
+          <h3 id="tables-admin-title" className="visually-hidden">
+            {copy.tables.title}
+          </h3>
           <p className="section-detail">{copy.tables.detail}</p>
         </div>
         <span>
@@ -1760,10 +1757,10 @@ function TablesAdministration({
           <div className="admin-subsection">
             <div className="subsection-heading">
               <div>
-                <h4>Table records</h4>
+                <h4>Tables</h4>
                 <p>
-                  Availability is derived by the server; it is never edited
-                  directly.
+                  Whether a table is free or seated updates automatically from
+                  orders.
                 </p>
               </div>
             </div>
@@ -1811,7 +1808,6 @@ function TablesAdministration({
             <div className="admin-subsection selected-record">
               <div className="subsection-heading">
                 <div>
-                  <p className="eyebrow">Selected table</p>
                   <h4>{selectedTable.code}</h4>
                 </div>
                 <span>
@@ -1894,10 +1890,10 @@ function TablesAdministration({
             <div className="admin-subsection">
               <div className="subsection-heading">
                 <div>
-                  <h4>QR lifecycle</h4>
+                  <h4>QR codes</h4>
                   <p>
-                    Branch QR codes browse only. Table QR codes identify one
-                    table for verification.
+                    A branch QR code shows the menu. A table QR code also lets
+                    guests order to that table.
                   </p>
                 </div>
                 <button
@@ -1906,7 +1902,7 @@ function TablesAdministration({
                   disabled={pending || !features.menu || !features.qrMenu}
                   onClick={() => void onIssueQr("branch")}
                 >
-                  Issue / rotate branch QR
+                  New branch QR code
                 </button>
               </div>
 
@@ -1916,18 +1912,17 @@ function TablesAdministration({
                   aria-labelledby="issued-qr-title"
                 >
                   <div>
-                    <p className="eyebrow">One-time issuance result</p>
                     <h5 id="issued-qr-title">
                       {issuedQr.result.qrCode.kind === "table"
                         ? `Table ${selectedTable?.code ?? ""}`
                         : branch.name}
                     </h5>
                     <p>
-                      Download or print now. The URL contains the raw QR token;
-                      only its cryptographic hash is stored by the server.
+                      Download or print it now. For security, this exact code
+                      can't be shown again; you can always create a new one.
                     </p>
                     <label>
-                      Customer URL
+                      Guest link
                       <input
                         value={issuedQr.result.qrUrl}
                         readOnly

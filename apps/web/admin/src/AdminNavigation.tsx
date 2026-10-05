@@ -11,12 +11,12 @@ import { navItemVariants } from "./motion.js";
 
 export const administrationPages = [
   { id: "setup", label: "Setup", path: "/setup" },
-  { id: "context", label: "Context", path: "/context" },
-  { id: "employees", label: "Employees", path: "/employees" },
+  { id: "context", label: "Overview", path: "/context" },
+  { id: "employees", label: "Staff", path: "/employees" },
   { id: "permissions", label: "Permissions", path: "/permissions" },
   { id: "menu", label: "Menu", path: "/menu" },
   { id: "tables", label: "Tables & QR", path: "/tables" },
-  { id: "insights", label: "Insights", path: "/insights" },
+  { id: "insights", label: "Reports", path: "/insights" },
   { id: "features", label: "Features", path: "/features" },
 ] as const;
 
@@ -49,11 +49,14 @@ export function useAdministrationPage(): {
 
   useEffect(() => {
     const expectedPath = pathForPage(page);
-    if (window.location.pathname !== expectedPath) {
+    const isAuthPath =
+      window.location.pathname.startsWith("/auth/") ||
+      window.location.pathname === "/invite/accept";
+    if (!isAuthPath && window.location.pathname !== expectedPath) {
       window.history.replaceState({}, "", expectedPath);
     }
     const currentPage = administrationPages.find((item) => item.id === page);
-    document.title = `${currentPage?.label ?? "Context"} | MISE administration`;
+    document.title = `${currentPage?.label ?? "Back office"} — MISE`;
   }, [page]);
 
   useEffect(() => {
@@ -98,12 +101,15 @@ export function AdministrationNavigation({
       return;
     }
 
-    navigationElement.scrollTo({
-      left:
-        linkElement.offsetLeft -
-        (navigationElement.clientWidth - linkElement.clientWidth) / 2,
-      behavior: "auto",
+    const frame = window.requestAnimationFrame(() => {
+      navigationElement.scrollTo({
+        left:
+          linkElement.offsetLeft -
+          (navigationElement.clientWidth - linkElement.clientWidth) / 2,
+        behavior: "auto",
+      });
     });
+    return () => window.cancelAnimationFrame(frame);
   }, [activePage]);
 
   const handleClick = (

@@ -83,12 +83,10 @@ function useCapturedToken(parameter: "token"): string {
 }
 
 function AuthLayout({
-  eyebrow,
   title,
   detail,
   children,
 }: {
-  readonly eyebrow: string;
   readonly title: string;
   readonly detail: string;
   readonly children: ReactNode;
@@ -97,13 +95,11 @@ function AuthLayout({
     <div className="auth-stage">
       <main className="auth-shell" aria-labelledby="auth-title">
         <section className="auth-intro">
-          <a className="auth-brand" href="/" aria-label="MISE staff access">
-            <span className="brand-mark" aria-hidden="true">
-              M
-            </span>
-            <span>MISE staff</span>
+          <a className="auth-brand" href="/">
+            <span className="mise-mark" aria-hidden="true" />
+            <span className="mise-wordmark">MISE</span>
+            <span className="auth-brand__workspace">Floor & kitchen</span>
           </a>
-          <p className="eyebrow">{eyebrow}</p>
           <h1 id="auth-title">{title}</h1>
           <p>{detail}</p>
         </section>
@@ -122,7 +118,6 @@ function AuthHeading({
 }) {
   return (
     <header className="auth-card__heading">
-      <p className="eyebrow">Protected access</p>
       <h2>{title}</h2>
       <p>{detail}</p>
     </header>
@@ -176,8 +171,8 @@ function SignInForm() {
   return (
     <>
       <AuthHeading
-        title="Sign in to your workspace"
-        detail="Use the staff account assigned to your restaurant. Branch access is resolved by the server."
+        title="Sign in"
+        detail="Use your business code, work email, and password."
       />
       {notice === "invitation-accepted" ? (
         <p className="auth-notice" role="status">
@@ -247,8 +242,8 @@ function RecoveryRequestForm() {
   return (
     <>
       <AuthHeading
-        title="Recover staff access"
-        detail="Enter the business code and work email. Account eligibility is never disclosed."
+        title="Reset your password"
+        detail="Enter your business code and work email. If the account exists, a reset link is sent to your restaurant's account contact."
       />
       <form className="auth-form" onSubmit={(event) => void submit(event)}>
         <label>
@@ -325,7 +320,7 @@ function RecoveryCompleteForm() {
     <>
       <AuthHeading
         title="Set a new password"
-        detail="The recovery link is single-use. Completing it ends existing staff sessions."
+        detail="This link works once. Saving a new password signs you out everywhere else."
       />
       <form className="auth-form" onSubmit={(event) => void submit(event)}>
         <label>
@@ -427,8 +422,8 @@ function InvitationAcceptForm() {
   return (
     <>
       <AuthHeading
-        title="Activate your staff account"
-        detail="Set a password for the existing employee profile. Your administrator’s responsibilities remain unchanged."
+        title="Set your password"
+        detail="Choose a password to finish setting up your account. At least 12 characters, with upper and lower case letters and a number."
       />
       <form className="auth-form" onSubmit={(event) => void submit(event)}>
         <label>
@@ -491,18 +486,18 @@ export function StaffAuthRoutes({ route }: { readonly route: StaffAuthRoute }) {
     );
   const title =
     route === "sign-in"
-      ? "Sign in securely"
+      ? "Today's service starts here."
       : route === "recover"
-        ? "Recover access safely"
+        ? "Locked out?"
         : route === "recover-complete"
-          ? "Complete recovery"
-          : "Accept a staff invitation";
+          ? "Choose a new password"
+          : "You've been invited";
   const detail =
     route === "sign-in"
-      ? "Your session, branch, and effective responsibilities are resolved by the restaurant server."
-      : "Use a server-issued, single-use account action. No tenant or branch is taken from the URL.";
+      ? "Orders, tables, the kitchen, and payments for your branch."
+      : "Reset links and invitations work once and expire. Ask a manager for a new one if yours has stopped working.";
   return (
-    <AuthLayout eyebrow="MISE · STAFF ACCESS" title={title} detail={detail}>
+    <AuthLayout title={title} detail={detail}>
       {content}
     </AuthLayout>
   );

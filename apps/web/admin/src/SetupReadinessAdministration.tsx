@@ -54,15 +54,14 @@ export function SetupReadinessAdministration({
   if (loadState.kind === "loading") {
     return (
       <section className="admin-section admin-loading" aria-live="polite">
-        Loading owner setup and readiness…
+        Loading setup…
       </section>
     );
   }
   if (loadState.kind === "error") {
     return (
       <section className="admin-section admin-load-error" role="alert">
-        <p className="eyebrow">Setup unavailable</p>
-        <h3>We could not verify the current setup.</h3>
+        <h3>Setup couldn't load</h3>
         <p>{loadState.message}</p>
         <button
           type="button"

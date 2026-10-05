@@ -64,7 +64,6 @@ export function SetupBranchSection({
     >
       <div className="section-heading">
         <div>
-          <p className="eyebrow">Branch-scoped operating context</p>
           <h3 id="branch-setup-title">Branches</h3>
         </div>
         <label className="setup-select-label">
@@ -94,9 +93,7 @@ export function SetupBranchSection({
           createBranch={createBranch}
         />
       ) : (
-        <p className="setup-form-note">
-          Branch creation is unavailable for this permission scope.
-        </p>
+        <p className="setup-form-note">Your account can't add branches.</p>
       )}
       {selectedBranch && canManageBranches ? (
         <SetupBranchEditorForm
@@ -111,12 +108,12 @@ export function SetupBranchSection({
         />
       ) : selectedBranch ? (
         <p className="setup-form-note">
-          Branch details are read-only for this permission scope.
+          Your account can view branch details but not change them.
         </p>
       ) : (
         <p className="empty-state">
-          Create or select a branch to edit address, contact, hours, time zone,
-          currency, and service status.
+          Choose a branch to edit its address, contact details, hours, time
+          zone, and currency.
         </p>
       )}
     </section>

@@ -15,8 +15,8 @@ export function SetupHoursEditor({
       <div className="hours-editor__heading">
         <strong>Weekly opening hours</strong>
         <span>
-          Closed days are left unchecked. A close time at or before opening is
-          overnight.
+          Leave closed days unticked. A closing time earlier than opening means
+          the branch closes after midnight.
         </span>
       </div>
       {hours.map((day, index) => (

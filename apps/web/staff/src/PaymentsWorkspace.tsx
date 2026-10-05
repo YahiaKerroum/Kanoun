@@ -327,11 +327,10 @@ export function PaymentsWorkspace(props: {
     return (
       <section className="payments-boundary">
         <CircleAlert aria-hidden="true" size={26} />
-        <p className="eyebrow">ACCESS BOUNDARY</p>
-        <h2>Payment view permission required</h2>
+        <h2>Payment access needed</h2>
         <p>
-          Bill requests and financial history are not requested without{" "}
-          <code>payments.view</code> for this branch.
+          Your account can't see bills or payments in this branch. Ask a manager
+          to add payment access.
         </p>
       </section>
     );
@@ -344,11 +343,10 @@ export function PaymentsWorkspace(props: {
     <div className="workspace__content payments-workspace">
       <header className="payments-heading">
         <div>
-          <p className="eyebrow">BRANCH PAYMENT DESK</p>
-          <h2>Bill requests</h2>
+          <h2>Payments</h2>
           <p>
-            Authoritative order balances with manually recorded cash or card
-            payments.
+            Tables asking for the bill, and what each order still owes. Record
+            cash or card payments here.
           </p>
         </div>
         <motion.button
@@ -440,14 +438,10 @@ export function PaymentsWorkspace(props: {
           className="payment-history-lookup"
           aria-labelledby="recent-orders-title"
         >
-          <p className="eyebrow">VISIBLE ORDER HISTORY</p>
           <h3 id="recent-orders-title">Unpaid and recent orders</h3>
-          <p>
-            Select an order by reference, table, time, and financial state to
-            open its authoritative ledger.
-          </p>
+          <p>Pick an order to see its payments and refunds.</p>
           {recentState.kind === "loading" ? (
-            <p role="status">Loading recent order evidence…</p>
+            <p role="status">Loading recent orders…</p>
           ) : recentState.kind === "error" ? (
             <p role="alert">{recentState.message}</p>
           ) : (
@@ -493,14 +487,10 @@ export function PaymentsWorkspace(props: {
       ) : null}
 
       <section className="payment-history-lookup">
-        <p className="eyebrow">APPEND-ONLY HISTORY</p>
-        <h3>Selected order ledger</h3>
-        <p>
-          Open a visible bill request or order above. Internal order references
-          stay inside trusted application links.
-        </p>
+        <h3>Payments for this order</h3>
+        <p>Choose a bill request or an order above.</p>
         {lookup.kind === "loading" ? (
-          <p role="status">Loading the authoritative ledger…</p>
+          <p role="status">Loading payments…</p>
         ) : null}
         {lookup.kind === "error" ? <p role="alert">{lookup.message}</p> : null}
         {lookup.kind === "ready" ? (
@@ -654,11 +644,7 @@ function RecordPaymentForm(props: {
           Payment was not recorded. Reload the bill and verify the balance.
         </p>
       ) : null}
-      {state === "success" ? (
-        <p role="status">
-          Payment recorded. The ledger was reloaded from the server.
-        </p>
-      ) : null}
+      {state === "success" ? <p role="status">Payment recorded.</p> : null}
       <motion.button
         type="submit"
         disabled={!confirmed || state === "pending"}
@@ -776,19 +762,15 @@ function RefundForm(props: {
           checked={confirmed}
           onChange={(event) => setConfirmed(event.currentTarget.checked)}
         />
-        Confirm this append-only refund.
+        I've checked the amount. Refunds can't be undone.
       </label>
       {state === "failed" ? (
         <p role="alert">
-          Refund was not recorded. Sign in again if recent authentication is
-          required, then reload the ledger.
+          The refund wasn't recorded. Sign in again if asked, then try once
+          more.
         </p>
       ) : null}
-      {state === "success" ? (
-        <p role="status">
-          Refund recorded. The append-only ledger is up to date.
-        </p>
-      ) : null}
+      {state === "success" ? <p role="status">Refund recorded.</p> : null}
       <motion.button
         type="submit"
         disabled={

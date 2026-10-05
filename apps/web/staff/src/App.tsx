@@ -1,6 +1,5 @@
 import {
   Bell,
-  BriefcaseBusiness,
   ChefHat,
   ClipboardList,
   CreditCard,
@@ -11,7 +10,6 @@ import {
   PackageOpen,
   RefreshCw,
   Settings,
-  KeyRound,
   TableProperties,
   Users,
   UserRound,
@@ -286,7 +284,7 @@ async function requestJson<Output>(
       response.status,
       response.status === 401
         ? "Your staff session is no longer active."
-        : "The staff access boundary could not be loaded.",
+        : "Your workspace couldn't load. Check the connection and try again.",
     );
   }
   return schema.parse(await response.json());
@@ -436,10 +434,10 @@ export function App() {
         kind: "unavailable",
         reason:
           error instanceof z.ZodError
-            ? "The server returned an invalid staff capability response."
+            ? "Your workspace came back in an unexpected format. Reload, and contact support if it keeps happening."
             : error instanceof Error
               ? error.message
-              : "The staff access boundary could not be loaded.",
+              : "Your workspace couldn't load. Check the connection and try again.",
       });
     });
 
@@ -556,8 +554,10 @@ export function App() {
     },
   };
   const responsibilities = effectiveResponsibilities(portal.session);
-  const administrationOrigin =
-    import.meta.env.VITE_ADMIN_WEB_ORIGIN ?? "http://127.0.0.1:5175";
+  const administrationOrigin = runtimeOrigin(
+    "admin",
+    import.meta.env.VITE_ADMIN_WEB_ORIGIN ?? "http://127.0.0.1:5175",
+  );
   const isMobilePrimary = (label: Section): boolean =>
     label === "Home" ||
     label === "Orders" ||
@@ -633,14 +633,9 @@ export function App() {
       <div className="app-stage">
         <div className="app-frame">
           <aside className="navigation-rail" aria-label="Staff navigation">
-            <div
-              className="brand-lockup"
-              aria-label="MISE working product name"
-            >
-              <span className="brand-mark" aria-hidden="true">
-                <ChefHat size={23} />
-              </span>
-              <span>MISE</span>
+            <div className="brand-lockup">
+              <span className="mise-mark" aria-hidden="true" />
+              <span className="mise-wordmark">MISE</span>
             </div>
 
             <nav
@@ -679,19 +674,11 @@ export function App() {
           <div className="application">
             <header className="context-bar">
               <div className="context-bar__title">
-                <p>Staff workspace</p>
                 <h1>{visibleSection ?? "Unavailable"}</h1>
               </div>
               <div className="context-item">
                 <span className="context-item__label">Branch</span>
                 <strong>{portal.capabilities.branchName}</strong>
-              </div>
-              <div className="context-item">
-                <span className="context-item__label">Access</span>
-                <strong>
-                  {availableNavigation.length} destination
-                  {availableNavigation.length === 1 ? "" : "s"}
-                </strong>
               </div>
               <div className="context-item context-item--connection">
                 <ReadinessMark readiness={readiness} />
@@ -702,7 +689,7 @@ export function App() {
               <motion.button
                 className="icon-button"
                 type="button"
-                aria-label="Refresh staff access and API readiness"
+                aria-label="Refresh"
                 aria-describedby={statusId}
                 disabled={readiness.kind === "checking"}
                 onClick={refresh}
@@ -740,7 +727,7 @@ export function App() {
                     {profile.activeBranch?.name ?? "No active branch"}
                   </span>
                   <span className="account-context__label">
-                    Effective responsibilities
+                    You can work on
                   </span>
                   <ul>
                     {responsibilities.length > 0 ? (
@@ -796,14 +783,19 @@ export function App() {
                     />
                   ) : visibleSection === "Home" ? (
                     <HomeWorkspace
+                      displayName={profile.employee.displayName}
                       capabilities={portal.capabilities}
-                      destinationCount={availableNavigation.length}
+                      shortcuts={availableNavigation.filter(
+                        (item) =>
+                          !item.administrationPath &&
+                          item.label in shortcutDescriptions,
+                      )}
                       readiness={readiness}
                       statusId={statusId}
-                      branchId={portal.capabilities.branchId}
                       canViewReports={portal.capabilities.permissions.includes(
                         "reports.view",
                       )}
+                      onNavigate={navigateTo}
                     />
                   ) : visibleSection === "Notifications" ? (
                     <NotificationInboxWorkspace
@@ -931,43 +923,34 @@ function AccessBoundary({
   const content =
     portal.kind === "loading"
       ? {
-          eyebrow: "AUTHENTICATING STAFF ACCESS",
-          title: "Resolving your branch workspace…",
-          detail:
-            "Navigation appears only after the server resolves your current branch, permissions, and enabled features.",
+          title: "Opening your workspace…",
+          detail: "Loading your branch and the tools you can use.",
         }
       : portal.kind === "signed-out"
         ? {
-            eyebrow: "PROTECTED STAFF PORTAL",
-            title: "Staff access required",
-            detail:
-              "Sign in with an active staff account before opening branch tools. No tenant or branch is selected from browser input.",
+            title: "Sign in to continue",
+            detail: "You need to sign in with your staff account to use MISE.",
           }
         : portal.kind === "no-branch"
           ? {
-              eyebrow: "ASSIGNMENT REQUIRED",
-              title: "No branch workspace is assigned",
+              title: "You're not assigned to a branch yet",
               detail:
-                "An administrator must assign this employee to an active branch before operational navigation can be resolved.",
+                "Ask the restaurant owner or a manager to add you to a branch in the back office.",
             }
           : {
-              eyebrow: "ACCESS COULD NOT BE VERIFIED",
-              title: "The staff workspace is unavailable",
+              title: "MISE can't load right now",
               detail: portal.reason,
             };
 
   return (
     <div className="app-stage access-stage">
       <main className="access-boundary" aria-live="polite">
-        <span className="brand-mark" aria-hidden="true">
-          <ChefHat size={23} />
-        </span>
-        <p className="eyebrow">{content.eyebrow}</p>
+        <span className="mise-mark" aria-hidden="true" />
         <h1>{content.title}</h1>
         <p>{content.detail}</p>
         {portal.kind === "unavailable" ? (
           <button type="button" onClick={onRetry}>
-            Retry access check
+            Try again
           </button>
         ) : null}
         {portal.kind === "signed-out" ? (
@@ -978,7 +961,7 @@ function AccessBoundary({
               safeInternalPath(window.location.pathname),
             )}
           >
-            Sign in to staff access
+            Sign in
           </a>
         ) : null}
       </main>
@@ -986,22 +969,55 @@ function AccessBoundary({
   );
 }
 
+const shortcutDescriptions: Partial<Record<Section, string>> = {
+  Orders: "Take an order or follow one through service",
+  Tables: "See which tables are free, seated, or waiting",
+  Kitchen: "Tickets to prepare and dishes ready to serve",
+  Payments: "Settle bills and record refunds",
+  Menu: "Mark dishes available or sold out",
+  Reports: "Sales and service for today",
+  Audit: "Who changed what, and when",
+};
+
+function greetingFor(timeZone: string): string {
+  const hour = Number(
+    new Intl.DateTimeFormat("en-GB", {
+      hour: "numeric",
+      hourCycle: "h23",
+      timeZone,
+    }).format(new Date()),
+  );
+  return hour < 12
+    ? "Good morning"
+    : hour < 18
+      ? "Good afternoon"
+      : "Good evening";
+}
+
 function HomeWorkspace({
+  displayName,
   capabilities,
-  destinationCount,
+  shortcuts,
   readiness,
   statusId,
-  branchId,
   canViewReports,
+  onNavigate,
 }: {
+  readonly displayName: string;
   readonly capabilities: PortalCapabilities;
-  readonly destinationCount: number;
+  readonly shortcuts: readonly NavigationItem[];
   readonly readiness: Readiness;
   readonly statusId: string;
-  readonly branchId: string;
   readonly canViewReports: boolean;
+  readonly onNavigate: (href: string) => void;
 }) {
-  const apiReady = readiness.kind === "ready";
+  const firstName = displayName.trim().split(" ")[0] ?? displayName;
+  const today = new Intl.DateTimeFormat("en-GB", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    timeZone: capabilities.timeZone,
+  }).format(new Date());
 
   return (
     <motion.div
@@ -1011,131 +1027,64 @@ function HomeWorkspace({
       animate="enter"
     >
       <motion.section
-        className="launch-banner"
+        className="home-today"
         variants={fadeUpItemVariants}
-        aria-labelledby="launch-title"
+        aria-labelledby="home-title"
       >
         <div>
-          <p className="eyebrow">SERVICE OVERVIEW</p>
-          <h2 id="launch-title">Your branch is ready for service.</h2>
+          <h2 id="home-title">
+            {greetingFor(capabilities.timeZone)}, {firstName}.
+          </h2>
           <p>
-            Orders, tables, menu, kitchen, payments, and reporting tools are
-            tailored to the responsibilities assigned to you.
+            {capabilities.branchName}, {today}
           </p>
         </div>
-        <div className="launch-banner__status" id={statusId} role="status">
+        <div className="visually-hidden" id={statusId} role="status">
           <ReadinessMark readiness={readiness} />
-          <span>
-            {apiReady
-              ? "Service access and API readiness were verified."
-              : readiness.kind === "checking"
-                ? "Refreshing service access and API readiness."
-                : "Service access loaded, but API readiness is not verified."}
-          </span>
         </div>
       </motion.section>
 
-      <div className="workspace-grid">
-        <motion.section
-          className="workspace-panel"
+      {shortcuts.length > 0 ? (
+        <motion.nav
+          className="home-shortcuts"
+          aria-label="Shortcuts"
           variants={fadeUpItemVariants}
-          aria-labelledby="access-title"
         >
-          <div className="panel-heading">
-            <div>
-              <p className="eyebrow">TODAY'S ACCESS</p>
-              <h2 id="access-title">Your workspace</h2>
-            </div>
-            <span className="panel-count">
-              v{capabilities.configurationVersion}
-            </span>
-          </div>
-          <ul className="check-list">
-            <li>
-              <span className="access-icon" aria-hidden="true">
-                <BriefcaseBusiness size={19} strokeWidth={2.25} />
-              </span>
-              <div>
-                <strong>{destinationCount} available workspaces</strong>
-                <span>Only tools available to this branch are shown.</span>
-              </div>
-              <span className="state-label state-label--ready">Ready</span>
-            </li>
-            <li>
-              <span className="access-icon" aria-hidden="true">
-                <KeyRound size={19} strokeWidth={2.25} />
-              </span>
-              <div>
-                <strong>
-                  {capabilities.permissions.length} active permissions
-                </strong>
-                <span>Responsibilities are confirmed for this session.</span>
-              </div>
-              <span className="state-label state-label--ready">Effective</span>
-            </li>
-            <li>
-              <span className="access-icon" aria-hidden="true">
-                <Wrench size={19} strokeWidth={2.25} />
-              </span>
-              <div>
-                <strong>
-                  {capabilities.enabledFeatures.length} active services
-                </strong>
-                <span>Branch tools are configured for service.</span>
-              </div>
-              <span className="state-label state-label--ready">Current</span>
-            </li>
-          </ul>
-        </motion.section>
+          {shortcuts.map((item) => {
+            const Icon = item.icon;
+            const href = staffPathForSection(item.label as StaffSection);
+            return (
+              <a
+                key={item.label}
+                className="home-shortcut"
+                href={href}
+                onClick={(event) => {
+                  if (
+                    event.button !== 0 ||
+                    event.metaKey ||
+                    event.ctrlKey ||
+                    event.shiftKey ||
+                    event.altKey
+                  ) {
+                    return;
+                  }
+                  event.preventDefault();
+                  onNavigate(href);
+                }}
+              >
+                <Icon aria-hidden="true" size={22} strokeWidth={2} />
+                <strong>{item.label}</strong>
+                <span>{shortcutDescriptions[item.label]}</span>
+              </a>
+            );
+          })}
+        </motion.nav>
+      ) : null}
 
-        <motion.section
-          className="workspace-panel"
-          variants={fadeUpItemVariants}
-          aria-labelledby="boundary-title"
-        >
-          <div className="panel-heading">
-            <div>
-              <p className="eyebrow">SERVICE STATUS</p>
-              <h2 id="boundary-title">Ready for operations</h2>
-            </div>
-            <span className="slice-number">Open</span>
-          </div>
-          <p className="panel-copy">
-            Work through the branch tools available to you, from orders and
-            tables to kitchen flow, payments, reports, and audit evidence.
-          </p>
-          <dl className="scope-list">
-            <div>
-              <dt>Available</dt>
-              <dd>Tools and data scoped to your branch responsibilities</dd>
-            </div>
-            <div>
-              <dt>Need access?</dt>
-              <dd>Contact a branch administrator to update your assignment.</dd>
-            </div>
-          </dl>
-        </motion.section>
-
-        <motion.section
-          className="workspace-panel workspace-panel--accent"
-          variants={fadeUpItemVariants}
-          aria-labelledby="design-title"
-        >
-          <div className="panel-heading">
-            <div>
-              <p className="eyebrow">SERVICE STANDARD</p>
-              <h2 id="design-title">Made for service</h2>
-            </div>
-            <ChefHat aria-hidden="true" size={26} />
-          </div>
-          <p className="panel-copy">
-            A clear saffron frame, calm working surface, and compact navigation
-            keep the team focused through every service period.
-          </p>
-          <span className="working-name">MISE staff workspace</span>
-        </motion.section>
-      </div>
-      <DashboardWorkspace branchId={branchId} canView={canViewReports} />
+      <DashboardWorkspace
+        branchId={capabilities.branchId}
+        canView={canViewReports}
+      />
     </motion.div>
   );
 }
@@ -1151,18 +1100,17 @@ function RouteBoundary({
 }) {
   const title =
     kind === "not-found"
-      ? "That staff destination is not available"
-      : "That staff destination is outside your access";
+      ? "Page not found"
+      : "This page isn't available to you";
   const detail =
     kind === "not-found"
-      ? "The address may be old or incomplete. Choose an authorized workspace to continue."
-      : "This route was rejected without requesting data outside your current branch permissions.";
+      ? "The link may be old or mistyped."
+      : "Ask a manager if you need access to it.";
   return (
     <section className="deferred-state" aria-labelledby="route-boundary-title">
       <span className="deferred-state__icon" aria-hidden="true">
         <ClipboardList size={28} />
       </span>
-      <p className="eyebrow">STAFF ROUTE BOUNDARY</p>
       <h2 id="route-boundary-title">{title}</h2>
       <p>{detail}</p>
       <button
@@ -1173,4 +1121,23 @@ function RouteBoundary({
       </button>
     </section>
   );
+}
+
+/**
+ * The desktop app serves each workspace on a port chosen at install time and
+ * announces the origins in a meta tag; development builds use Vite env vars.
+ */
+function runtimeOrigin(name: "staff" | "admin", fallback: string): string {
+  const meta = document.querySelector<HTMLMetaElement>(
+    'meta[name="mise-origins"]',
+  );
+  if (!meta) return fallback;
+  try {
+    const value = (JSON.parse(meta.content) as Record<string, unknown>)[name];
+    return typeof value === "string" && value.startsWith("http")
+      ? value
+      : fallback;
+  } catch {
+    return fallback;
+  }
 }

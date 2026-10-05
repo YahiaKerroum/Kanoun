@@ -30,12 +30,10 @@ export function SetupReadinessOverview({
     <>
       <section className="setup-hero" aria-labelledby="setup-readiness-title">
         <div>
-          <p className="eyebrow">Guided owner setup</p>
-          <h3 id="setup-readiness-title">Service readiness review</h3>
+          <h3 id="setup-readiness-title">Getting ready for service</h3>
           <p>
-            This checklist is recalculated from the latest restaurant, branch,
-            workforce, feature, menu, table, and QR responses. It is safe to
-            resume from any direct link.
+            Work down the list. It updates as you go, and you can leave and come
+            back at any time.
           </p>
         </div>
         <div className="setup-hero__summary" aria-label="Setup summary">
@@ -57,7 +55,7 @@ export function SetupReadinessOverview({
             onClick={onReload}
             disabled={pendingAction.length > 0}
           >
-            Refresh server state
+            Check again
           </button>
         </div>
       </section>
@@ -68,8 +66,7 @@ export function SetupReadinessOverview({
       >
         <div className="section-heading">
           <div>
-            <p className="eyebrow">No client completion flag</p>
-            <h3 id="readiness-review-title">Readiness checklist</h3>
+            <h3 id="readiness-review-title">Checklist</h3>
           </div>
           <span>{selectedBranch?.name ?? "No branch selected"}</span>
         </div>

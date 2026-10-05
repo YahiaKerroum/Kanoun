@@ -1,52 +1,103 @@
+/*
+ * MISE design tokens, shared by the staff, back-office, and guest apps and
+ * the desktop launcher. See DESIGN.md for the reasoning behind each choice.
+ *
+ * Palette: an Algerian spice market. Harissa paprika for the rail and main
+ * actions, semolina and warm plate-white surfaces, date-brown ink, saffron
+ * for attention, olive for done, and beet-wine for danger so it is never
+ * mistaken for the red of the brand.
+ *
+ * Several token names predate this palette (for example `--brand-fill`) and
+ * are kept so existing component styles keep resolving.
+ */
+/*
+ * Young Serif has old-style figures, which make order numbers and prices
+ * bounce. This face supplies Archivo digits only, so numbers set in the
+ * display font stay level and tabular. Archivo is OFL-licensed; see
+ * fonts/ARCHIVO-OFL.txt.
+ */
+@font-face {
+  font-family: "MISE Figures";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("./fonts/archivo-figures.woff2") format("woff2");
+  unicode-range: U+0030-0039;
+}
+
 :root {
   color-scheme: light;
-  --brand-fill: #ffb300;
-  --brand-600: #8a5a00;
-  --brand-500: #e09a00;
-  --brand-400: #f5c24d;
-  --brand-200: #ffe49a;
-  --brand-050: #fff8e8;
-  --brand-700: #6e4700;
-  --brand-100: #fff0cc;
-  --canvas: #faf8f4;
-  --surface: #ffffff;
-  --surface-soft: #fffaf0;
-  --surface-warm: #fff7e0;
-  --line: #efe7da;
-  --line-strong: #e9e0d2;
-  --text: #1e1b14;
-  --text-on-brand: #261b00;
-  --text-on-surface: #3e2b04;
-  --muted: #565044;
-  --subtle: #776e60;
-  --success: #1e7a47;
-  --success-soft: #e4f6ea;
-  --warning: #a03c00;
-  --warning-soft: #ffe9dc;
-  --danger: #c22c23;
-  --danger-soft: #fde8e6;
-  --state-warning-line: #d78a57;
-  --state-warning-surface: #fff0e3;
-  --state-warning-text: #6e3514;
-  --state-success-line: #1e6d55;
-  --state-success-surface: #eaf8f0;
-  --state-success-text: #174c3c;
-  --brand-border: rgb(110 71 0 / 14%);
-  --brand-shadow: 0 4px 12px rgb(110 71 0 / 22%);
-  --overlay-ink: rgb(30 27 20 / 42%);
-  --surface-glass: rgb(255 255 255 / 62%);
-  --surface-highlight: rgb(255 255 255 / 74%);
-  --shadow-overlay: -18px 0 50px rgb(30 27 20 / 16%);
-  --shadow-card: 0 10px 26px rgb(62 42 20 / 7%);
-  --shadow-soft: 0 8px 22px rgb(79 57 8 / 8%);
-  --state-ready-line: #c5e4cf;
-  --state-ready-surface: #e4f6ea;
-  --state-ready-text: #1e7a47;
-  --state-attention-surface: #fff0cc;
-  --state-blocked-line: #f0b88f;
-  --state-blocked-surface: #fffaf6;
-  --state-blocked-icon-surface: #ffe9dc;
-  --state-blocked-text: #a03c00;
+
+  /* Core palette */
+  --harissa: #a8361f;
+  --harissa-deep: #852714;
+  --harissa-ink: #3d160c;
+  --saffron: #d8961a;
+  --olive: #5a6b25;
+  --beet: #8c1d4a;
+  --semolina: #f4ecdf;
+  --plate: #fffcf7;
+  --ink: #2c1d15;
+
+  /* Action colour scale (historical names) */
+  --brand-fill: var(--harissa);
+  --brand-700: var(--harissa-deep);
+  --brand-600: #962f1a;
+  --brand-500: #b84a32;
+  --brand-400: #cf7a62;
+  --brand-200: #f0c9bb;
+  --brand-100: #f8e2d9;
+  --brand-050: #fcf1ec;
+  --text-on-brand: #ffffff;
+  --text-on-surface: var(--ink);
+
+  /* Surfaces and lines */
+  --canvas: var(--semolina);
+  --surface: var(--plate);
+  --surface-soft: #faf4ea;
+  --surface-warm: #fbefd2;
+  --line: #e6dac7;
+  --line-strong: #d4c3a8;
+
+  /* Text */
+  --text: var(--ink);
+  --muted: #6a5646;
+  --subtle: #8a7461;
+
+  /* Status */
+  --success: var(--olive);
+  --success-soft: #edf0dc;
+  --warning: #8a5a00;
+  --warning-soft: #fbedcc;
+  --danger: var(--beet);
+  --danger-soft: #f8e4ec;
+  --state-warning-line: #e6bc62;
+  --state-warning-surface: #fdf4e0;
+  --state-warning-text: #6e4600;
+  --state-success-line: #b9c58c;
+  --state-success-surface: #f1f4e3;
+  --state-success-text: #46531b;
+  --state-ready-line: #b9c58c;
+  --state-ready-surface: #edf0dc;
+  --state-ready-text: #46531b;
+  --state-attention-surface: #fbedcc;
+  --state-blocked-line: #e2a9bf;
+  --state-blocked-surface: #fcf3f6;
+  --state-blocked-icon-surface: #f8e4ec;
+  --state-blocked-text: #74173d;
+
+  /* Depth: borders do the work; shadows only lift overlays. */
+  --brand-border: var(--line);
+  --brand-shadow: none;
+  --overlay-ink: rgb(61 22 12 / 38%);
+  --surface-glass: rgb(255 255 255 / 86%);
+  --surface-highlight: rgb(255 255 255 / 92%);
+  --shadow-overlay: -12px 0 40px rgb(61 22 12 / 14%);
+  --shadow-card: none;
+  --shadow-soft: none;
+  --shadow: 0 18px 48px rgb(61 22 12 / 16%);
+
+  /* Spacing (4px base) */
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
@@ -55,74 +106,507 @@
   --space-6: 24px;
   --space-7: 28px;
   --space-8: 32px;
-  --radius-sm: 9px;
-  --radius-xs: 8px;
-  --radius-control: 13px;
-  --radius-card: 16px;
-  --radius-panel: 18px;
-  --radius-nav: 15px;
-  --radius-md: 10px;
-  --radius-lg: 12px;
-  --radius-xl: 14px;
+
+  /* Radii: tight and tile-like; larger only for panels. */
+  --radius-xs: 3px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 6px;
+  --radius-control: 6px;
+  --radius-nav: 6px;
+  --radius-xl: 8px;
+  --radius-card: 8px;
+  --radius-panel: 10px;
   --radius-pill: 999px;
+
+  /* Controls and type scale */
   --control-size: 44px;
-  --control-size-compact: 42px;
-  --text-body-size: 14px;
-  --text-meta-size: 12px;
-  --text-label-size: 11px;
-  --text-micro-size: 10px;
-  --text-nav-size: 9px;
-  --text-title-size: 15px;
-  --text-summary-size: 24px;
-  --text-hero-size: clamp(30px, 4vw, 48px);
+  --control-size-compact: 40px;
+  --text-body-size: 15px;
+  --text-meta-size: 13px;
+  --text-label-size: 13px;
+  --text-micro-size: 12px;
+  --text-nav-size: 12px;
+  --text-title-size: 16px;
+  --text-summary-size: 26px;
+  --text-hero-size: clamp(30px, 3.6vw, 44px);
   --status-icon-size: 30px;
-  --line-body: 1.65;
-  --line-copy: 1.5;
-  --line-relaxed: 1.7;
-  --line-relaxed-strong: 1.6;
-  --line-copy-strong: 1.55;
-  --line-label: 1.4;
-  --shadow: 0 16px 44px rgb(79 57 8 / 12%);
-  --nav-rail-width: 92px;
-  --nav-item-width: 68px;
-  --nav-item-height: 50px;
+  --line-body: 1.55;
+  --line-copy: 1.45;
+  --line-relaxed: 1.6;
+  --line-relaxed-strong: 1.55;
+  --line-copy-strong: 1.5;
+  --line-label: 1.35;
+
+  /* Layout */
+  --nav-rail-width: 104px;
+  --nav-item-width: 84px;
+  --nav-item-height: 60px;
   --focus-ring: 3px;
-  --focus-offset: 3px;
-  --font-display: "Bricolage Grotesque", system-ui, sans-serif;
-  --font-body: "Plus Jakarta Sans", system-ui, sans-serif;
+  --focus-offset: 2px;
+
+  /*
+   * Young Serif (a soft, cookbook-like serif) for headings, dish names, and
+   * the wordmark; Archivo for working text, labels, and tabular figures.
+   */
+  --font-display:
+    "MISE Figures", "Young Serif", Georgia, "Times New Roman", serif;
+  --font-body: "Archivo Variable", "Archivo", "Segoe UI", system-ui, sans-serif;
+  --display-stretch: normal;
+  --label-stretch: 108%;
 }
 
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--canvas);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: var(--text-body-size);
+  font-synthesis: none;
+  font-variant-numeric: tabular-nums;
+  line-height: var(--line-body);
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: -0.005em;
+  text-wrap: balance;
+}
+
+h5,
+h6 {
+  font-family: var(--font-display);
+  font-weight: 650;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+:where(a) {
+  color: var(--brand-700);
+  text-underline-offset: 3px;
+}
+
+::selection {
+  background: var(--brand-200);
+  color: var(--harissa-ink);
+}
+
+/*
+ * The MISE mark: an eight-point star, as on Maghreb tiles and tagine lids
+ * (two squares, one turned 45°)
+ * with a saffron centre. Drawn in CSS so every app can use it without
+ * sharing a component. Colour follows `currentColor`.
+ */
+.mise-mark {
+  position: relative;
+  display: inline-block;
+  flex: none;
+  width: var(--mark-size, 30px);
+  height: var(--mark-size, 30px);
+}
+
+.mise-mark::before,
+.mise-mark::after {
+  position: absolute;
+  inset: 15%;
+  background: currentColor;
+  content: "";
+}
+
+.mise-mark::after {
+  background:
+    radial-gradient(circle, var(--saffron) 0 21%, transparent 22%), currentColor;
+  transform: rotate(45deg);
+}
+
+.mise-wordmark {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: 0.04em;
+}
+
+/*
+ * Shared stage: the guest app and auth screens sit directly on semolina.
+ * (The former saffron frame around every screen has been retired.)
+ */
 .mise-stage {
   min-height: 100svh;
-  padding: clamp(12px, 3vw, 28px);
-  background: var(--brand-fill);
+  background: var(--canvas);
 }
 
 .mise-shell {
-  overflow: hidden;
-  border: 1px solid rgb(110 71 0 / 18%);
-  border-radius: 20px;
   background: var(--canvas);
-  box-shadow: 0 24px 64px rgb(110 71 0 / 20%);
 }
 
 .mise-task-link {
   min-height: 44px;
   color: var(--brand-700);
-  font-weight: 800;
+  font-weight: 650;
   text-underline-offset: 3px;
 }
 
 .mise-status-label {
   display: inline-flex;
-  min-height: 28px;
+  min-height: 26px;
   align-items: center;
   gap: 6px;
-  padding: 4px 9px;
+  padding: 2px 9px;
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: var(--radius-sm);
   background: var(--surface);
   color: var(--text);
-  font-size: 0.75rem;
-  font-weight: 800;
+  font-size: var(--text-micro-size);
+  font-weight: 650;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Shared shell: the harissa rail, account menu, and sign-in screens.  */
+/* ------------------------------------------------------------------ */
+
+.skip-link:focus {
+  transform: translateY(0);
+}
+
+:is(
+  button,
+  a,
+  input,
+  select,
+  textarea,
+  summary,
+  [tabindex="-1"]
+):focus-visible {
+  outline: var(--focus-ring) solid var(--saffron);
+  outline-offset: var(--focus-offset);
+}
+
+/* Account menu (staff context bar and back-office header). */
+.account-context {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.account-context summary {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  gap: var(--space-2);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-control);
+  padding: 0 12px 0 6px;
+  background: var(--surface);
+  cursor: pointer;
+  font-size: var(--text-meta-size);
+  font-weight: 650;
+  list-style: none;
+}
+
+.account-context summary::-webkit-details-marker {
+  display: none;
+}
+
+.account-context summary:hover {
+  border-color: var(--brand-400);
+}
+
+.account-context__avatar,
+.account-context summary > svg:first-child {
+  display: inline-grid;
+  width: 28px;
+  height: 28px;
+  flex: none;
+  place-items: center;
+  border-radius: var(--radius-sm);
+  background: var(--brand-100);
+  color: var(--harissa-deep);
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.account-context summary > svg:first-child {
+  padding: 5px;
+}
+
+.account-context__panel {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 6px);
+  right: 0;
+  display: grid;
+  width: min(300px, calc(100vw - 32px));
+  gap: var(--space-2);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-xl);
+  padding: var(--space-4);
+  color: var(--text);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.account-context__panel > strong {
+  font-stretch: var(--label-stretch);
+}
+
+.account-context__panel > span {
+  color: var(--muted);
+  font-size: var(--text-meta-size);
+}
+
+.account-context__label {
+  margin-top: 6px;
+  color: var(--text) !important;
+  font-size: var(--text-micro-size) !important;
+  font-weight: 700;
+}
+
+.account-context__panel ul {
+  display: grid;
+  gap: 2px;
+  margin: 0 0 4px;
+  padding-left: 18px;
+  color: var(--muted);
+  font-size: var(--text-meta-size);
+}
+
+.account-context__panel a {
+  color: var(--brand-700);
+  font-weight: 650;
+  text-underline-offset: 3px;
+}
+
+.account-context__panel button {
+  min-height: 40px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-control);
+  padding: 0 14px;
+  color: var(--text);
+  background: var(--surface-soft);
+  cursor: pointer;
+  font-weight: 650;
+}
+
+.account-context__panel button:hover {
+  border-color: var(--beet);
+  color: var(--beet);
+}
+
+.account-context__panel button:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+.account-context__message {
+  min-height: 0;
+  margin: 0;
+  color: var(--danger);
+  font-size: var(--text-micro-size);
+  line-height: var(--line-label);
+}
+
+/* Sign-in, password recovery, and invitation screens. */
+.auth-stage {
+  min-height: 100dvh;
+  background: var(--canvas);
+}
+
+.auth-shell {
+  display: grid;
+  min-height: 100dvh;
+  grid-template-columns: minmax(300px, 0.85fr) minmax(0, 1.15fr);
+}
+
+.auth-intro {
+  display: flex;
+  flex-direction: column;
+  padding: clamp(28px, 5vw, 64px);
+  background: var(--harissa);
+  color: #ffffff;
+}
+
+.auth-brand {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: auto;
+  color: inherit;
+  font-size: 18px;
+  text-decoration: none;
+  --mark-size: 34px;
+}
+
+.auth-brand__workspace {
+  border-left: 1px solid rgb(255 255 255 / 35%);
+  padding-left: 12px;
+  color: rgb(255 255 255 / 82%);
+  font-size: var(--text-body-size);
+  font-weight: 500;
+}
+
+.auth-intro h1 {
+  max-width: 14ch;
+  margin: 48px 0 0;
+  font-size: clamp(36px, 4.6vw, 60px);
+  line-height: 1.02;
+}
+
+.auth-intro > p:last-child {
+  max-width: 40ch;
+  margin: 18px 0 0;
+  color: rgb(255 255 255 / 84%);
+  line-height: var(--line-relaxed);
+}
+
+.auth-card {
+  display: flex;
+  width: min(460px, 100%);
+  min-width: 0;
+  flex-direction: column;
+  justify-content: center;
+  justify-self: center;
+  padding: clamp(28px, 5vw, 56px) 24px;
+}
+
+.auth-card__heading h2 {
+  margin: 0;
+  font-size: 28px;
+}
+
+.auth-card__heading > p:last-child {
+  margin: 8px 0 0;
+  color: var(--muted);
+  line-height: var(--line-copy-strong);
+}
+
+.auth-form {
+  display: grid;
+  gap: var(--space-4);
+  margin-top: 28px;
+}
+
+.auth-form label {
+  display: grid;
+  gap: 6px;
+  color: var(--text);
+  font-size: var(--text-meta-size);
+  font-weight: 650;
+}
+
+.auth-form input {
+  min-height: 46px;
+  width: 100%;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-control);
+  padding: 0 12px;
+  color: var(--text);
+  background: var(--surface);
+  font: inherit;
+}
+
+.auth-form input:hover {
+  border-color: var(--brand-400);
+}
+
+.auth-form button {
+  min-height: 46px;
+  margin-top: 4px;
+  border: 0;
+  border-radius: var(--radius-control);
+  padding: 0 16px;
+  color: var(--text-on-brand);
+  background: var(--brand-fill);
+  cursor: pointer;
+  font-weight: 650;
+}
+
+.auth-form button:hover:not(:disabled) {
+  background: var(--brand-700);
+}
+
+.auth-form button:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+.auth-feedback,
+.auth-notice {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--text-meta-size);
+  line-height: var(--line-copy-strong);
+}
+
+.auth-feedback--error {
+  color: var(--danger);
+}
+
+.auth-feedback--success,
+.auth-notice {
+  color: var(--success);
+}
+
+.auth-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  margin-top: 24px;
+  font-size: var(--text-meta-size);
+  font-weight: 650;
+}
+
+.auth-links a {
+  color: var(--brand-700);
+  text-underline-offset: 3px;
+}
+
+@media (max-width: 760px) {
+  .auth-shell {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
+
+  .auth-intro {
+    padding: 22px 20px 26px;
+  }
+
+  .auth-intro h1 {
+    max-width: none;
+    margin-top: 28px;
+    font-size: 30px;
+  }
+
+  .auth-card {
+    justify-content: flex-start;
+    padding-top: 28px;
+  }
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  overflow: hidden !important;
+  clip: rect(0 0 0 0) !important;
+  clip-path: inset(50%) !important;
+  white-space: nowrap !important;
 }

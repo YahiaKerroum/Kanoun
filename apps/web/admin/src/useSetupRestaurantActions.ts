@@ -56,9 +56,7 @@ export function createSetupRestaurantActions({
         },
       );
       await reload(null, restaurant.id);
-      setMessage(
-        "Restaurant created. Its independent configuration is ready for setup.",
-      );
+      setMessage("Restaurant created. Add its first branch next.");
     } catch (error) {
       setMessage(describeError(error));
     } finally {
@@ -88,7 +86,7 @@ export function createSetupRestaurantActions({
       status === "inactive" &&
       restaurant.status === "active" &&
       !window.confirm(
-        "Deactivate this restaurant? History is preserved, but new work will be blocked.",
+        "Deactivate this restaurant? Its history is kept, but no new orders can be taken.",
       )
     ) {
       return;
@@ -107,7 +105,7 @@ export function createSetupRestaurantActions({
       await reload(selectedBranchId || null, selectedRestaurantId || null);
       setMessage(
         status === "inactive"
-          ? "Restaurant deactivated; history remains available."
+          ? "Restaurant deactivated. Its history is still available."
           : "Restaurant saved.",
       );
     } catch (error) {

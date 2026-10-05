@@ -25,7 +25,6 @@ export interface SetupBranchEditorFormProps {
 }
 
 export function SetupBranchEditorForm({
-  selectedBranch,
   branchDraft,
   serviceReason,
   pendingAction,
@@ -129,9 +128,9 @@ export function SetupBranchEditorForm({
       <div className="record-editor__wide">
         <SetupHoursEditor hours={branchDraft.hours} onChange={updateHours} />
         <p className="setup-form-note">
-          Accepted orders may finish after close. New submissions remain blocked
-          when server-side hours, dated closures, or service status say the
-          branch is not accepting.
+          Orders already taken can finish after closing time. New orders are
+          refused outside opening hours, on closure days, or while the branch is
+          paused.
         </p>
       </div>
       <label className="checkbox-line record-editor__wide">
@@ -145,15 +144,14 @@ export function SetupBranchEditorForm({
             }))
           }
         />
-        Allow order acceptance when the branch is unavailable or outside hours
-        (advanced)
+        Keep taking orders when the branch is paused or outside opening hours
       </label>
       <button type="submit" disabled={pendingAction.length > 0}>
         Save branch and hours
       </button>
       <p className="setup-form-note">
-        Version {selectedBranch.version} · server validation rejects overlapping
-        periods and stale writes.
+        Opening periods can't overlap. If someone else saved this branch first,
+        reload before saving.
       </p>
     </form>
   );

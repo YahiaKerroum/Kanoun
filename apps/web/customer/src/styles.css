@@ -1,10 +1,9 @@
 @import url("../../design-system.css");
-@import url("https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600..800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
 
 :root {
-  color: #1e1b14;
-  background: #fff8e8;
-  font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+  color: var(--text);
+  background: var(--canvas);
+  font-family: var(--font-body), system-ui, sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
 }
@@ -41,7 +40,7 @@ a:focus-visible,
 input:focus-visible,
 textarea:focus-visible,
 summary:focus-visible {
-  outline: 3px solid var(--brand-fill);
+  outline: 3px solid var(--saffron);
   outline-offset: 3px;
 }
 
@@ -70,37 +69,18 @@ h1[tabindex="-1"]:focus {
   padding: 24px clamp(20px, 6vw, 72px);
 }
 
-.journey-shell::before,
-.journey-shell::after {
-  position: absolute;
-  z-index: -1;
-  border: 1px solid rgb(74 57 38 / 14%);
-  border-radius: 50%;
-  content: "";
-}
-
-.journey-shell::before {
-  top: -28vw;
-  right: -35vw;
-  width: 92vw;
-  height: 92vw;
-}
-
-.journey-shell::after {
-  bottom: -48vw;
-  left: -37vw;
-  width: 88vw;
-  height: 88vw;
-}
-
 .journey-brand,
 .brand-link {
+  display: inline-flex;
   width: fit-content;
-  color: #211e19;
-  font-family: "Bricolage Grotesque", system-ui, sans-serif;
+  align-items: center;
+  gap: 10px;
+  color: var(--text);
+  font-family: var(--font-display);
   font-size: 1.05rem;
-  font-weight: 700;
-  letter-spacing: 0.22em;
+  font-stretch: 125%;
+  font-weight: 800;
+  letter-spacing: 0.06em;
   line-height: 44px;
   text-decoration: none;
 }
@@ -119,28 +99,20 @@ h1[tabindex="-1"]:focus {
 
 .journey-panel h1,
 .menu-intro h1 {
-  max-width: 650px;
+  max-width: 16ch;
   margin: 12px 0 0;
-  font-family: "Bricolage Grotesque", system-ui, sans-serif;
-  font-size: clamp(2.5rem, 9vw, 5.6rem);
+  font-family: var(--font-display);
+  font-size: clamp(2.1rem, 7vw, 3.6rem);
   font-weight: 700;
-  letter-spacing: -0.055em;
-  line-height: 0.96;
-}
-
-.eyebrow {
-  margin: 0;
-  color: var(--brand-700);
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
+  font-stretch: var(--display-stretch);
+  letter-spacing: -0.01em;
+  line-height: 1;
 }
 
 .lead {
   max-width: 540px;
   margin: 24px 0 0;
-  color: #615b50;
+  color: var(--muted);
   font-size: clamp(1rem, 3vw, 1.18rem);
   line-height: 1.65;
 }
@@ -158,6 +130,7 @@ h1[tabindex="-1"]:focus {
   height: 32px;
   background: var(--brand-fill);
   animation: loading-rise 900ms ease-in-out infinite alternate;
+  color: var(--text-on-brand);
 }
 
 .loading-mark span:nth-child(2) {
@@ -177,22 +150,21 @@ h1[tabindex="-1"]:focus {
   justify-content: space-between;
   margin-top: 42px;
   padding: 18px 0;
-  border-block: 1px solid #bdb2a0;
+  border-block: 1px solid var(--line-strong);
 }
 
 .table-lockup span {
-  color: #655f55;
+  color: var(--muted);
   font-size: 0.78rem;
-  font-weight: 800;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0;
 }
 
 .table-lockup strong {
-  font-family: "Bricolage Grotesque", system-ui, sans-serif;
+  font-family: var(--font-display);
   font-size: clamp(3rem, 18vw, 7rem);
   font-weight: 400;
-  letter-spacing: -0.06em;
+  letter-spacing: -0.01em;
   line-height: 0.85;
 }
 
@@ -227,7 +199,7 @@ h1[tabindex="-1"]:focus {
 
 .confirmation-panel label {
   font-size: 0.86rem;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .confirmation-panel input {
@@ -235,20 +207,20 @@ h1[tabindex="-1"]:focus {
   min-height: 52px;
   padding: 12px 0;
   border: 0;
-  border-bottom: 1px solid #8f8575;
+  border-bottom: 1px solid var(--line-strong);
   border-radius: 0;
-  color: #211e19;
+  color: var(--text);
   background: transparent;
 }
 
 .confirmation-panel input::placeholder {
-  color: #655f55;
+  color: var(--muted);
 }
 
 .field-hint,
 .scan-note,
 .journey-footnote {
-  color: #655f55;
+  color: var(--muted);
   font-size: 0.78rem;
   line-height: 1.5;
 }
@@ -259,10 +231,10 @@ h1[tabindex="-1"]:focus {
   padding: 0 24px;
   border: 1px solid var(--brand-fill);
   border-radius: 0;
-  color: var(--text);
+  color: var(--text-on-brand);
   background: var(--brand-fill);
   cursor: pointer;
-  font-weight: 800;
+  font-weight: 700;
   transition:
     background 160ms ease,
     color 160ms ease,
@@ -270,7 +242,7 @@ h1[tabindex="-1"]:focus {
 }
 
 .primary-action:hover {
-  color: var(--surface);
+  color: var(--text-on-brand);
   background: var(--brand-700);
   transform: translateY(-2px);
 }
@@ -293,7 +265,7 @@ h1[tabindex="-1"]:focus {
   border: 1px solid var(--brand-700);
   border-radius: 50%;
   color: var(--brand-700);
-  font-family: "Bricolage Grotesque", system-ui, sans-serif;
+  font-family: var(--font-display);
   font-size: 2rem;
 }
 
@@ -313,7 +285,7 @@ h1[tabindex="-1"]:focus {
   justify-content: space-between;
   padding: 8px clamp(20px, 5vw, 72px);
   border-bottom: 1px solid var(--line);
-  background: rgb(250 248 244 / 94%);
+  background: rgb(244 236 223 / 94%);
   backdrop-filter: blur(14px);
 }
 
@@ -325,7 +297,7 @@ h1[tabindex="-1"]:focus {
 
 .menu-header p {
   margin: 0;
-  color: #756e62;
+  color: var(--subtle);
   font-size: 0.72rem;
 }
 
@@ -337,10 +309,10 @@ h1[tabindex="-1"]:focus {
   gap: 8px;
   padding: 0 14px;
   border: 1px solid var(--brand-700);
-  border-radius: 10px;
+  border-radius: var(--radius-control);
   color: var(--brand-700);
   font-size: 0.76rem;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .table-chip span {
@@ -360,14 +332,14 @@ h1[tabindex="-1"]:focus {
 
 .menu-intro h1 {
   max-width: 760px;
-  font-family: "Bricolage Grotesque", system-ui, sans-serif;
+  font-family: var(--font-display);
   font-weight: 700;
-  letter-spacing: -0.04em;
+  letter-spacing: -0.01em;
 }
 
 .menu-header .journey-brand {
-  font-family: "Bricolage Grotesque", system-ui, sans-serif;
-  letter-spacing: 0.16em;
+  font-family: var(--font-display);
+  letter-spacing: 0;
 }
 
 .category-tabs {
@@ -383,8 +355,8 @@ h1[tabindex="-1"]:focus {
   padding: 8px clamp(20px, 5vw, 72px) 12px;
   background: linear-gradient(
     to bottom,
-    rgb(250 248 244 / 96%) 80%,
-    rgb(250 248 244 / 0%)
+    rgb(244 236 223 / 96%) 80%,
+    rgb(244 236 223 / 0%)
   );
   backdrop-filter: blur(10px);
   scrollbar-width: none;
@@ -401,7 +373,7 @@ h1[tabindex="-1"]:focus {
   flex-shrink: 0;
   min-height: 40px;
   border: 1px solid var(--line);
-  border-radius: 20px;
+  border-radius: var(--radius-panel);
   padding: 0 16px;
   color: var(--text);
   background: var(--surface);
@@ -428,7 +400,7 @@ h1[tabindex="-1"]:focus {
   position: absolute;
   inset: -1px;
   z-index: 0;
-  border-radius: 20px;
+  border-radius: var(--radius-panel);
   background: var(--brand-fill);
 }
 
@@ -438,7 +410,7 @@ h1[tabindex="-1"]:focus {
 }
 
 .category-tab[aria-current="true"] .category-tab__label {
-  color: var(--brand-700);
+  color: var(--text-on-brand);
 }
 
 .category-list {
@@ -463,16 +435,16 @@ h1[tabindex="-1"]:focus {
 .category-heading span {
   color: var(--brand-700);
   font-size: 0.74rem;
-  font-weight: 800;
-  letter-spacing: 0.16em;
+  font-weight: 700;
+  letter-spacing: 0;
 }
 
 .category-heading h2 {
   margin: 12px 0 0;
-  font-family: "Bricolage Grotesque", system-ui, sans-serif;
+  font-family: var(--font-display);
   font-size: clamp(2.1rem, 5vw, 4.2rem);
   font-weight: 400;
-  letter-spacing: -0.045em;
+  letter-spacing: -0.01em;
   line-height: 1;
 }
 
@@ -485,7 +457,7 @@ h1[tabindex="-1"]:focus {
 .dish-row {
   overflow: hidden;
   border: 1px solid var(--line);
-  border-radius: 16px;
+  border-radius: var(--radius-panel);
   background: var(--surface);
   animation: dish-reveal 420ms ease both;
 }
@@ -529,21 +501,21 @@ h1[tabindex="-1"]:focus {
 }
 
 .dish-title-line h3 {
-  font-weight: 800;
-  letter-spacing: -0.015em;
+  font-weight: 700;
+  letter-spacing: -0.01em;
 }
 
 .dish-row p {
   max-width: 620px;
   margin: 10px 0 0;
-  color: #6c655a;
+  color: var(--subtle);
   font-size: 0.92rem;
   line-height: 1.6;
 }
 
 .dish-row .availability {
   color: var(--danger);
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .dish-row details {
@@ -557,7 +529,7 @@ h1[tabindex="-1"]:focus {
   color: var(--brand-700);
   cursor: pointer;
   font-size: 0.84rem;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .option-groups {
@@ -589,7 +561,7 @@ h1[tabindex="-1"]:focus {
 }
 
 .option-group legend span {
-  color: #655f55;
+  color: var(--muted);
   font-size: 0.72rem;
 }
 
@@ -599,7 +571,7 @@ h1[tabindex="-1"]:focus {
   align-items: center;
   gap: 12px;
   grid-template-columns: 20px 1fr auto;
-  color: #5f584e;
+  color: var(--muted);
   cursor: pointer;
   font-size: 0.82rem;
 }
@@ -622,19 +594,19 @@ h1[tabindex="-1"]:focus {
 .dish-order-controls label {
   display: grid;
   gap: 7px;
-  color: #554e44;
+  color: var(--muted);
   font-size: 0.78rem;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .dish-order-controls input,
 .dish-order-controls textarea,
 .cancellation-request textarea {
   width: 100%;
-  border: 1px solid #c7bcaa;
+  border: 1px solid var(--line-strong);
   border-radius: 6px;
-  color: #211e19;
-  background: #fffdf8;
+  color: var(--text);
+  background: var(--surface);
 }
 
 .dish-order-controls input {
@@ -665,10 +637,10 @@ h1[tabindex="-1"]:focus {
   padding: 0 20px;
   border: 1px solid var(--brand-fill);
   border-radius: 5px;
-  color: var(--text);
+  color: var(--text-on-brand);
   background: var(--brand-fill);
   cursor: pointer;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 button:disabled {
@@ -687,11 +659,11 @@ button:disabled {
   justify-content: space-between;
   gap: 24px;
   padding: 13px 14px 13px 20px;
-  border: 1px solid rgb(244 239 229 / 28%);
+  border: 1px solid rgb(255 255 255 / 24%);
   border-radius: 7px;
-  color: #f4efe5;
-  background: #211e19;
-  box-shadow: 0 16px 50px rgb(33 30 25 / 24%);
+  color: #ffffff;
+  background: var(--harissa);
+  box-shadow: 0 16px 50px rgb(61 22 12 / 22%);
 }
 
 .cart-bar div {
@@ -700,7 +672,7 @@ button:disabled {
 }
 
 .cart-bar span {
-  color: #d6cdbd;
+  color: rgb(255 255 255 / 80%);
   font-size: 0.78rem;
 }
 
@@ -710,7 +682,7 @@ button:disabled {
   padding: 0 18px;
   border: 0;
   border-radius: 5px;
-  color: var(--text);
+  color: var(--text-on-brand);
   background: var(--brand-fill);
   cursor: pointer;
   font-weight: 900;
@@ -730,9 +702,9 @@ button:disabled {
   overflow: auto;
   padding: clamp(22px, 5vw, 42px);
   border: 0;
-  border-left: 1px solid #c7bcaa;
-  background: #fffdf8;
-  box-shadow: -24px 0 70px rgb(33 30 25 / 20%);
+  border-left: 1px solid var(--line-strong);
+  background: var(--surface);
+  box-shadow: -24px 0 70px rgb(61 22 12 / 16%);
   animation: review-in 180ms ease-out;
   grid-template-rows: auto 1fr auto auto auto auto;
 }
@@ -742,7 +714,7 @@ button:disabled {
 }
 
 .cart-review::backdrop {
-  background: rgb(33 30 25 / 46%);
+  background: var(--overlay-ink);
 }
 
 .cart-review__header {
@@ -751,12 +723,12 @@ button:disabled {
   justify-content: space-between;
   gap: 20px;
   padding-bottom: 24px;
-  border-bottom: 1px solid #d8cdbc;
+  border-bottom: 1px solid var(--line);
 }
 
 .cart-review__header h2 {
   margin: 4px 0 0;
-  font-family: "Bricolage Grotesque", system-ui, sans-serif;
+  font-family: var(--font-display);
   font-size: clamp(2rem, 7vw, 3rem);
   font-weight: 400;
 }
@@ -769,7 +741,7 @@ button:disabled {
   color: var(--brand-700);
   background: transparent;
   cursor: pointer;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .cart-items article,
@@ -778,7 +750,7 @@ button:disabled {
   align-items: start;
   gap: 14px;
   padding: 20px 0;
-  border-bottom: 1px solid #e0d7c9;
+  border-bottom: 1px solid var(--line);
   grid-template-columns: 1fr auto;
 }
 
@@ -791,7 +763,7 @@ button:disabled {
 .cart-items p,
 .receipt-items p {
   margin-top: 5px;
-  color: #6c655a;
+  color: var(--subtle);
   font-size: 0.78rem;
   line-height: 1.5;
 }
@@ -805,7 +777,7 @@ button:disabled {
 
 .cart-item-actions button:not(.remove-action) {
   width: 44px;
-  border: 1px solid #c7bcaa;
+  border: 1px solid var(--line-strong);
 }
 
 .cart-item-actions .remove-action {
@@ -822,21 +794,21 @@ button:disabled {
 }
 
 .cart-total strong {
-  font-family: "Bricolage Grotesque", system-ui, sans-serif;
+  font-family: var(--font-display);
   font-size: 1.65rem;
 }
 
 .submit-message {
   padding: 12px;
   border-left: 3px solid var(--brand-fill);
-  color: #6b2117;
-  background: #f7e9df;
+  color: var(--state-blocked-text);
+  background: var(--danger-soft);
   line-height: 1.5;
 }
 
 .submit-order {
   width: 100%;
-  color: var(--text);
+  color: var(--text-on-brand);
   background: var(--brand-fill);
 }
 
@@ -861,14 +833,14 @@ button:disabled {
 
 .order-receipt {
   padding: clamp(26px, 6vw, 54px);
-  border: 1px solid #c7bcaa;
-  background: #fffdf8;
-  box-shadow: 0 20px 60px rgb(71 51 31 / 8%);
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  box-shadow: 0 20px 60px rgb(61 22 12 / 6%);
 }
 
 .order-receipt h1 {
   margin: 5px 0 8px;
-  font-family: "Bricolage Grotesque", system-ui, sans-serif;
+  font-family: var(--font-display);
   font-size: clamp(2rem, 7vw, 3.3rem);
   font-weight: 400;
 }
@@ -876,7 +848,7 @@ button:disabled {
 .order-reference {
   color: var(--brand-700);
   font-size: 1.1rem;
-  letter-spacing: 0.08em;
+  letter-spacing: 0;
 }
 
 .order-status {
@@ -886,7 +858,7 @@ button:disabled {
   gap: 20px;
   margin-top: 28px;
   padding: 16px 0;
-  border-block: 1px solid #d8cdbc;
+  border-block: 1px solid var(--line);
 }
 
 .order-status strong {
@@ -896,20 +868,20 @@ button:disabled {
 .status-reason,
 .order-freshness {
   margin: 14px 0 0;
-  color: #655f55;
+  color: var(--muted);
   font-size: 0.82rem;
   line-height: 1.55;
 }
 
 .status-reason {
-  color: #6b2117;
+  color: var(--state-blocked-text);
 }
 
 .order-freshness.is-stale {
   padding: 10px 12px;
   border-left: 3px solid var(--brand-fill);
-  color: #6b2117;
-  background: #f7e9df;
+  color: var(--state-blocked-text);
+  background: var(--danger-soft);
 }
 
 .receipt-items article {
@@ -928,12 +900,12 @@ button:disabled {
   display: grid;
   gap: 10px;
   padding: 24px;
-  border: 1px solid #c7bcaa;
+  border: 1px solid var(--line-strong);
 }
 
 .cancellation-request h2 {
   margin: 0;
-  font-family: "Bricolage Grotesque", system-ui, sans-serif;
+  font-family: var(--font-display);
   font-weight: 400;
 }
 
@@ -944,8 +916,8 @@ button:disabled {
 
 .cancellation-sent {
   padding: 18px;
-  border-left: 3px solid #5f7350;
-  background: #e8eee2;
+  border-left: 3px solid var(--success);
+  background: var(--success-soft);
 }
 
 @keyframes review-in {
@@ -961,13 +933,13 @@ button:disabled {
 
 .empty-menu h2 {
   margin: 0;
-  font-family: "Bricolage Grotesque", system-ui, sans-serif;
+  font-family: var(--font-display);
   font-size: 2.2rem;
   font-weight: 400;
 }
 
 .empty-menu p {
-  color: #655f55;
+  color: var(--muted);
   line-height: 1.6;
 }
 
@@ -979,7 +951,7 @@ button:disabled {
   color: var(--brand-700);
   background: transparent;
   cursor: pointer;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .menu-shell footer {
@@ -989,20 +961,20 @@ button:disabled {
   justify-content: space-between;
   gap: 20px;
   padding: 30px clamp(20px, 5vw, 72px);
-  color: #fff8e8;
-  background: #211e19;
+  color: #ffffff;
+  background: var(--harissa);
 }
 
 .menu-shell footer span {
-  font-family: "Bricolage Grotesque", system-ui, sans-serif;
+  font-family: var(--font-display);
   font-weight: 700;
-  letter-spacing: 0.2em;
+  letter-spacing: 0;
 }
 
 .menu-shell footer p {
   max-width: 420px;
   margin: 0;
-  color: #d6cdbd;
+  color: rgb(255 255 255 / 80%);
   font-size: 0.8rem;
   text-align: right;
 }
@@ -1158,4 +1130,46 @@ button:disabled {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+.journey-brand::before,
+.brand-link::before {
+  width: 22px;
+  height: 22px;
+  flex: none;
+  background:
+    conic-gradient(
+      from 45deg,
+      var(--harissa) 0 25%,
+      transparent 0 50%,
+      var(--harissa) 0 75%,
+      transparent 0
+    ),
+    var(--harissa);
+  clip-path: polygon(
+    50% 0,
+    64% 15%,
+    85% 15%,
+    85% 36%,
+    100% 50%,
+    85% 64%,
+    85% 85%,
+    64% 85%,
+    50% 100%,
+    36% 85%,
+    15% 85%,
+    15% 64%,
+    0 50%,
+    15% 36%,
+    15% 15%,
+    36% 15%
+  );
+  content: "";
+}
+
+.cart-review__table {
+  margin: 0 0 4px;
+  color: var(--muted);
+  font-size: var(--text-meta-size);
+  font-weight: 650;
 }

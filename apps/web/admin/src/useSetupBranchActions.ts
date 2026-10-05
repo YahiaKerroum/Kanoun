@@ -94,9 +94,7 @@ export function createSetupBranchActions({
     }
     const hours = hoursFromDraft(newBranchDraft.hours);
     if (hours.length === 0) {
-      setMessage(
-        "Select at least one opening day. A fully closed branch needs an explicit product decision.",
-      );
+      setMessage("Tick at least one opening day.");
       return;
     }
     const address = addressFromDraft(newBranchDraft);
@@ -108,7 +106,7 @@ export function createSetupBranchActions({
       (!contact.email && !contact.phone)
     ) {
       setMessage(
-        "Branch address, two-letter country code, and one contact method are required.",
+        "Add the branch address, a two-letter country code, and a phone number or email.",
       );
       return;
     }
@@ -148,9 +146,7 @@ export function createSetupBranchActions({
     }
     const hours = hoursFromDraft(branchDraft.hours);
     if (hours.length === 0) {
-      setMessage(
-        "Select at least one opening day. The server will continue to guard order acceptance.",
-      );
+      setMessage("Tick at least one opening day.");
       return;
     }
     if (branchDraft.serviceStatus !== selectedBranch.serviceStatus) {
@@ -159,13 +155,13 @@ export function createSetupBranchActions({
         serviceReason.trim().length < 8
       ) {
         setMessage(
-          "Explain a closed or temporarily unavailable service status in at least 8 characters.",
+          "Add a short note (at least 8 characters) on why the branch is closed or paused.",
         );
         return;
       }
       if (
         !window.confirm(
-          `Change service status to ${branchDraft.serviceStatus.replaceAll("_", " ")}? New submissions follow this server-side guard.`,
+          `Change service status to ${branchDraft.serviceStatus.replaceAll("_", " ")}? This affects whether guests can order right away.`,
         )
       ) {
         return;
@@ -175,7 +171,7 @@ export function createSetupBranchActions({
       branchDraft.status === "inactive" &&
       selectedBranch.status === "active" &&
       !window.confirm(
-        "Deactivate this branch? Existing history is preserved and new work is blocked.",
+        "Deactivate this branch? Its history is kept, but no new orders can be taken.",
       )
     ) {
       return;
@@ -204,9 +200,7 @@ export function createSetupBranchActions({
       );
       await reload(selectedBranch.id);
       setServiceReason("");
-      setMessage(
-        "Branch saved. Server-side hours and service-status rules remain authoritative.",
-      );
+      setMessage("Branch saved.");
     } catch (error) {
       setMessage(describeError(error));
     } finally {

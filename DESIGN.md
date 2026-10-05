@@ -1,106 +1,117 @@
 # MISE Design System
 
+The source of truth for how MISE looks and reads. Tokens live in
+`apps/web/design-system.css` and are shared by the staff, back-office, and
+guest apps and by the desktop launcher.
+
 ## 1. Atmosphere & Identity
 
-MISE is a warm, high-tempo restaurant operating system: saffron gold frames
-calm ivory work surfaces, while compact operational controls remain clear under
-pressure. Its signature is the saffron frame around an otherwise quiet,
-food-forward product surface; guest ordering is welcoming and photographic,
-while staff and administration are denser and task-led.
+MISE serves restaurants, so it borrows from the food: an Algerian spice
+market. Harissa paprika marks the brand and the main action, semolina and
+warm plate-white make the working surfaces, date-brown ink carries the text,
+saffron flags what needs attention, and olive confirms what is done.
+
+The one bold element is the **harissa rail**: the navigation column in the
+staff and back-office apps, the launcher, and the sign-in panel. Everything
+else stays quiet and task-led. Guest screens are photographic and welcoming;
+staff and back-office screens are denser and built for speed under pressure.
 
 ## 2. Color
 
-| Role        | Token          | Value     | Usage                                  |
-| ----------- | -------------- | --------- | -------------------------------------- |
-| Brand field | `--brand-fill` | `#ffb300` | App-stage surround and primary actions |
-| Brand dark  | `--brand-700`  | `#6e4700` | Focus, links, restrained emphasis      |
-| Brand soft  | `--brand-100`  | `#fff0cc` | Selected and supporting surfaces       |
-| Canvas      | `--canvas`     | `#faf8f4` | Main application canvas                |
-| Surface     | `--surface`    | `#ffffff` | Cards, forms, content panels           |
-| Line        | `--line`       | `#efe7da` | Low-contrast dividers and outlines     |
-| Text        | `--text`       | `#1e1b14` | Primary text                           |
-| Muted       | `--muted`      | `#565044` | Secondary copy                         |
-| Success     | `--success`    | `#1e7a47` | Confirmed states                       |
-| Danger      | `--danger`     | `#c22c23` | Destructive and unavailable states     |
+| Role               | Token                      | Value                 | Usage                                             |
+| ------------------ | -------------------------- | --------------------- | ------------------------------------------------- |
+| Harissa            | `--harissa`                | `#a8361f`             | Rail, primary actions, active selection           |
+| Harissa deep       | `--harissa-deep`           | `#852714`             | Links, hover on primary, emphasis on light ground |
+| Semolina           | `--semolina`               | `#f4ecdf`             | Application canvas                                |
+| Plate              | `--plate`                  | `#fffcf7`             | Cards, forms, panels                              |
+| Ink                | `--ink`                    | `#2c1d15`             | Primary text                                      |
+| Saffron            | `--saffron`                | `#d8961a`             | Attention, in-progress states, focus ring         |
+| Olive              | `--olive`                  | `#5a6b25`             | Success and "done" states                         |
+| Beet               | `--beet`                   | `#8c1d4a`             | Danger and destructive actions                    |
+| Line / line strong | `--line` / `--line-strong` | `#e6dac7` / `#d4c3a8` | Dividers and control borders                      |
 
-Accent color communicates action or status, never decoration. Warm neutrals are
-used throughout; customer, staff, and administration must not introduce a cool
-gray or unrelated accent family.
+Danger is beet-wine, not red, so it is never mistaken for the harissa brand.
+Text on harissa is always white. Older token names (`--brand-fill`,
+`--brand-050` to `--brand-700`) map onto the harissa scale so existing
+component styles keep resolving; prefer the named tokens in new code.
 
 ## 3. Typography
 
-| Level   | Font                | Size                         | Usage                    |
-| ------- | ------------------- | ---------------------------- | ------------------------ |
-| Display | Bricolage Grotesque | `clamp(2.1rem, 5vw, 4.2rem)` | Page and category titles |
-| H1      | Bricolage Grotesque | `2rem–2.6rem`                | Workspace titles         |
-| H2/H3   | Bricolage Grotesque | `1.1rem–1.75rem`             | Sections and cards       |
-| Body    | Plus Jakarta Sans   | `1rem`                       | Interface copy           |
-| Caption | Plus Jakarta Sans   | `0.75rem`                    | Labels and metadata      |
+| Role      | Face                            | Notes                                                              |
+| --------- | ------------------------------- | ------------------------------------------------------------------ |
+| Display   | Young Serif 400                 | Page titles, section titles, dish names, the wordmark              |
+| Interface | Archivo (variable)              | Body, labels, buttons, tables; labels may use width 108%           |
+| Figures   | Archivo digits ("MISE Figures") | Digits inside display text, so prices and order numbers stay level |
 
-Headings use tight tracking and body copy stays at or above 14px. Monetary
-values use tabular figures where the platform supports them.
+Young Serif has old-style figures; the `MISE Figures` face replaces digits
+with Archivo's lining, tabular ones wherever the display font is used. Body
+text is never smaller than 13px; labels are sentence case, never all caps or
+tracked out. Fonts are self-hosted so the desktop app renders offline.
 
 ## 4. Spacing & Layout
 
-The base unit is 4px. Use 8, 12, 16, 20, 24, 32, 48, and 64px for component
-intent. Application shells use a saffron outer frame, a white or ivory inner
-surface, 18–20px outer radii, and a single clear scroll owner. Guest menu cards
-use responsive grids: two columns when space permits and one readable column
-below 720px.
+Base unit 4px (8, 12, 16, 20, 24, 32). Radii are small and tile-like:
+6px on controls, 8–10px on panels. Borders establish hierarchy; shadows only
+lift overlays (menus, dialogs, the cart).
+
+- **Staff:** a 104px harissa rail on the left, a sticky white context bar with
+  the page title, branch, and connection, then the page on semolina. Below
+  820px the rail becomes a bottom bar.
+- **Back office:** the same structure with a 232px rail of text links. Below
+  760px the rail becomes a top bar with a scrolling link row.
+- **Guest:** single column on phones, the menu as photographic dish cards,
+  and a harissa cart bar.
+
+One visible title per page: the context-bar `h1`. Section headings inside a
+page that would repeat it stay in the document outline but are visually
+hidden. No eyebrow labels above headings and no decorative numbering.
 
 ## 5. Components
 
-### Saffron frame
+### Harissa rail
 
-- **Structure:** brand-colored stage around a neutral app surface.
-- **States:** static; never used as a clickable decoration.
-- **Accessibility:** it carries no semantic meaning by color alone.
+- **Structure:** brand mark (an eight-point star in CSS, `.mise-mark`), the
+  wordmark, then navigation. The active item is a plate-white tile with ink
+  text; other items are white at 80% opacity.
+- **States:** default, hover (white at 9% overlay), focus (saffron ring),
+  current (`aria-current="page"`).
+- **Accessibility:** native links; every target at least 40px tall.
 
 ### Primary action
 
-- **Structure:** native `button` with a minimum 44px hit area.
-- **States:** default saffron, darker/raised hover, pressed transform, visible
-  brand-dark focus, disabled opacity.
-- **Accessibility:** keyboard operable with an accessible label.
+- **Structure:** native `button`, harissa fill, white text, 40–46px tall.
+- **States:** hover darkens to harissa deep, saffron focus ring, disabled at
+  55% opacity. Secondary actions are plate-white with a line-strong border and
+  ink text; destructive actions use beet.
 
-### Access indicator
+### Desktop launcher
 
-- **Structure:** a 36px warm-tinted tile containing one centered 19px line
-  icon, followed by a text summary and a compact state label.
-- **States:** ready, waiting, and unavailable use the established semantic
-  color tokens; the tile remains a non-interactive visual aid.
-- **Layout:** the tile is a centering grid and the state label is an inline
-  flex container. Text-only selectors must not override either display mode.
-- **Accessibility:** the icon is decorative because the adjacent copy names
-  the capability and its current state.
-
-### Administration section navigation
-
-- **Structure:** URL-backed links inside the administration shell; one link is
-  current and one page owns the content scroll region.
-- **States:** default, hover, keyboard focus, and current page. The current page
-  uses the saffron selection surface and `aria-current="page"`.
-- **Responsive layout:** a fixed vertical rail on wide screens and a visible,
-  horizontally scrollable navigation reel below 760px. Navigation is never
-  removed at tablet or mobile widths.
-- **Accessibility:** native links support direct URLs, browser history, opening
-  in a new tab, and keyboard navigation. Every target remains at least 44px.
+- **Structure:** harissa rail with the mark, restaurant name, and live status
+  for the database and services; the main area shows one step at a time:
+  choose where data lives, starting (a numbered sequence), set up the
+  restaurant, then the workspaces with sample sign-ins and password-reset
+  links.
+- **States:** setup, starting (per step), welcome, ready, error with a retry,
+  and closing.
+- **Accessibility:** radio-group storage choice, visible labels on every
+  field, validation only after the user has interacted, live status region.
 
 ### Dish card
 
-- **Structure:** optional descriptive image, dish copy, price, availability,
-  configured options, and ordering controls.
-- **States:** available, unavailable, focused control, options expanded,
-  disabled order action.
-- **Layout:** responsive grid item; source images preserve aspect ratio with
+- **Structure:** optional photograph, dish name in Young Serif with the price
+  beside it, description, options, quantity, note, and an add action.
+- **States:** available, unavailable, options expanded, disabled add.
+- **Layout:** responsive grid item; images keep their aspect ratio with
   `object-fit: cover` and meaningful alternative text.
 
-### Local demo launcher
+## Writing
 
-- **Structure:** a saffron-framed, loopback-only entry page with a clear local-synthetic label, business and branch context, four role links, one run-scoped password reveal/copy control, customer table-menu links, and the golden scenario.
-- **States:** ready, unavailable, and reset-by-restart guidance. The launcher never presents production credentials or claims public access.
-- **Layout:** two-column operational overview on wide screens, one readable column below 820px, and role cards that remain keyboard reachable at narrow widths.
-- **Accessibility:** native links and buttons, visible focus, live copy feedback, semantic headings/lists, and no status communicated by color alone.
+Write for the person at the counter, not for the system. Name things by what
+people do (Orders, Kitchen, Payments, Staff, Reports), use sentence case and
+plain verbs, and say what to do next. Never surface implementation words such
+as tenant, scope, server-side, authoritative, append-only, contract, or
+permission keys like `orders.view`. A permission message says who can grant
+access ("Ask a manager to add order access").
 
 ### Auth and account lifecycle
 
@@ -183,17 +194,19 @@ below 720px.
 
 ## 6. Motion & Interaction
 
-Use only `transform` and `opacity`. Controls use 160–200ms ease-out feedback.
-Respect `prefers-reduced-motion`; no decorative autonomous motion is required.
+Use only `transform` and `opacity`; controls respond in 160–200ms. Motion
+answers an action (opening, confirming, switching pages); nothing animates on
+its own except the launcher's starting indicator. `prefers-reduced-motion`
+removes non-essential transitions.
 
 ## 7. Depth & Surface
 
-Use a mixed strategy: low-contrast ivory borders establish routine hierarchy;
-the saffron frame and a single warm shadow distinguish floating surfaces.
-Cards are more restrained than dialogs and never use a generic gray shadow.
+Borders do the work: plate-white panels on semolina with warm lines. A single
+warm shadow lifts floating surfaces only.
 
 ## 8. Accessibility Constraints & Accepted Debt
 
 Target WCAG 2.2 AA: 4.5:1 body-text contrast, 3:1 control contrast, visible
-keyboard focus, native controls, alt text for dish photography, and full
-keyboard ordering flows. No accepted visual-accessibility debt is recorded.
+keyboard focus (saffron ring), native controls, alt text for dish photography,
+and full keyboard ordering flows. No accepted visual-accessibility debt is
+recorded.

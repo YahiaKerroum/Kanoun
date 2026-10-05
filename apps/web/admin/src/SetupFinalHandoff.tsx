@@ -17,7 +17,6 @@ export function SetupFinalHandoff({
     <section className="admin-section" aria-labelledby="final-review-title">
       <div className="section-heading">
         <div>
-          <p className="eyebrow">Handoff gate</p>
           <h3 id="final-review-title">Ready for service?</h3>
         </div>
         <span>
@@ -26,8 +25,8 @@ export function SetupFinalHandoff({
       </div>
       <p className="section-detail">
         {coreReady
-          ? "The identity, branch context, hours, workforce, and approved feature prerequisites are ready for a Staff handoff. Menu, tables, and QR readiness remain visible above so the owner can finish the service path."
-          : "Staff access stays behind the core setup gate. Use the direct links above to resolve each blocked item; refresh after every server-side change."}
+          ? "The essentials are done. Your team can sign in and start service. Finish any menu, table, or QR items above when you're ready."
+          : "Finish the items marked above before your team starts service. Each one links straight to where it's fixed."}
       </p>
       <div className="setup-final-actions">
         {canViewEmployees ? (

@@ -41,7 +41,6 @@ export function SetupRestaurantSection({
     >
       <div className="section-heading">
         <div>
-          <p className="eyebrow">Independent tenant records</p>
           <h3 id="restaurant-setup-title">Restaurants</h3>
         </div>
         <span>
@@ -62,13 +61,13 @@ export function SetupRestaurantSection({
             Create restaurant
           </button>
           <p>
-            Restaurants keep independent branches, menus, settings, and
-            workforce scope. Deactivation preserves history.
+            Each restaurant has its own branches, menu, settings, and team.
+            Deactivating one keeps its history.
           </p>
         </form>
       ) : (
         <p className="setup-form-note">
-          Restaurant records are read-only for this permission scope.
+          Your account can view restaurants but not change them.
         </p>
       )}
       <div className="record-selector" aria-label="Restaurants">
@@ -120,8 +119,8 @@ export function SetupRestaurantSection({
             Save restaurant
           </button>
           <p className="setup-form-note">
-            Optimistic version checks protect concurrent edits. Changes are
-            recorded in audit history.
+            If someone else saved first, reload before saving. Every change is
+            recorded in the audit history.
           </p>
         </form>
       ) : null}

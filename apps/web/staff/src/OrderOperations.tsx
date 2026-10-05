@@ -241,8 +241,8 @@ function CorrectionForm(props: {
     <form onSubmit={(event) => void submit(event)}>
       <h4>Correct items</h4>
       <p>
-        Set a quantity to zero to remove it. The server reapplies current menu
-        rules and preserves this revision.
+        Set a quantity to zero to remove the item. Prices are recalculated from
+        the current menu.
       </p>
       {props.order.items.map((item) => (
         <label key={item.id}>
@@ -416,7 +416,7 @@ function CancelForm(props: {
           checked={confirmed}
           onChange={(event) => setConfirmed(event.currentTarget.checked)}
         />
-        Confirm cancellation and any required append-only refund.
+        Cancel this order and refund anything already paid.
       </label>
       {state === "failed" ? <p role="alert">{error}</p> : null}
       <button

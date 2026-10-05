@@ -176,7 +176,6 @@ function formatMinorUnits(value: number, currency: string): string {
 }
 
 function LoadingView(props: {
-  readonly eyebrow: string;
   readonly title: string;
   readonly body: string;
   readonly onHeadingMount: HeadingFocusCallback;
@@ -195,7 +194,6 @@ function LoadingView(props: {
         <span />
         <span />
       </div>
-      <p className="eyebrow">{props.eyebrow}</p>
       <h1 ref={props.onHeadingMount} tabIndex={-1}>
         {props.title}
       </h1>
@@ -221,7 +219,6 @@ function ErrorView(props: {
       <div className="error-symbol" aria-hidden="true">
         !
       </div>
-      <p className="eyebrow">{copy.menuAccessEyebrow}</p>
       <h1 ref={props.onHeadingMount} tabIndex={-1}>
         {props.invalid ? copy.invalidTitle : copy.unavailableTitle}
       </h1>
@@ -267,9 +264,6 @@ function ConfirmationView(props: {
       animate="enter"
       exit="exit"
     >
-      <p className="eyebrow">
-        {tableSpecific ? copy.tableEyebrow : copy.browseEyebrow}
-      </p>
       <h1 ref={props.onHeadingMount} tabIndex={-1}>
         {tableSpecific ? copy.tableTitle : copy.browseTitle}
       </h1>
@@ -596,7 +590,6 @@ function MenuView(props: {
 
         <main id="menu-content" className="menu-content">
           <section className="menu-intro">
-            <p className="eyebrow">{copy.menuEyebrow}</p>
             <h1 ref={props.onHeadingMount} tabIndex={-1}>
               {copy.menuTitle}
             </h1>
@@ -647,7 +640,7 @@ function MenuView(props: {
           {hasDishes ? (
             <div className="category-list">
               <AnimatePresence mode="popLayout" initial={false}>
-                {visibleCategories.map((category, catIdx) => (
+                {visibleCategories.map((category) => (
                   <motion.section
                     className="menu-category"
                     id={`category-${category.id}`}
@@ -661,9 +654,6 @@ function MenuView(props: {
                     }}
                   >
                     <div className="category-heading">
-                      <span aria-hidden="true">
-                        {String(catIdx + 1).padStart(2, "00")}
-                      </span>
                       <h2>{category.name}</h2>
                     </div>
                     <motion.div
@@ -753,7 +743,7 @@ function MenuView(props: {
             <>
               <div className="cart-review__header">
                 <div>
-                  <p className="eyebrow">
+                  <p className="cart-review__table">
                     {copy.tableLabel} {props.session.tableCode}
                   </p>
                   <h2 id="cart-title">{copy.cartTitle}</h2>
@@ -1004,7 +994,6 @@ function OrderView(props: {
           </div>
         </header>
         <section className="order-receipt">
-          <p className="eyebrow">{status}</p>
           <h1>{copy.orderReference}</h1>
           <strong className="order-reference">{order.reference}</strong>
           <div className="order-status" aria-live="polite">
@@ -1162,25 +1151,8 @@ export function App() {
   const headingFocusPending = useRef(false);
   const focusHeading = useCallback<HeadingFocusCallback>((heading) => {
     if (!heading || !headingFocusPending.current) return;
-    const focus = () => {
-      if (!headingFocusPending.current) return;
-      headingFocusPending.current = false;
-      heading.focus({ preventScroll: true });
-    };
-    const waitForMotion = async () => {
-      for (;;) {
-        const animations = document
-          .getAnimations()
-          .filter((animation) => animation.playState !== "finished");
-        if (animations.length === 0) return;
-        await Promise.all(
-          animations.map((animation) =>
-            animation.finished.catch(() => undefined),
-          ),
-        );
-      }
-    };
-    void waitForMotion().then(focus);
+    headingFocusPending.current = false;
+    heading.focus({ preventScroll: true });
   }, []);
 
   useEffect(() => {
@@ -1261,7 +1233,6 @@ export function App() {
             {journey.kind === "exchanging" ? (
               <LoadingView
                 key="exchanging"
-                eyebrow={copy.loadingQrEyebrow}
                 title={copy.loadingQrTitle}
                 body={copy.loadingQrBody}
                 onHeadingMount={focusHeading}
@@ -1286,7 +1257,6 @@ export function App() {
             ) : journey.kind === "loading-menu" ? (
               <LoadingView
                 key="loading-menu"
-                eyebrow={copy.loadingMenuEyebrow}
                 title={copy.loadingMenuTitle}
                 body={copy.loadingMenuBody}
                 onHeadingMount={focusHeading}
@@ -1304,7 +1274,6 @@ export function App() {
                 <div className="error-symbol" aria-hidden="true">
                   !
                 </div>
-                <p className="eyebrow">{copy.menuUpdateEyebrow}</p>
                 <h1 ref={focusHeading} tabIndex={-1}>
                   {copy.menuLoadErrorTitle}
                 </h1>

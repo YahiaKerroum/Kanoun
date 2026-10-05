@@ -13,7 +13,7 @@ async function responseError(response: Response): Promise<string> {
   return (
     problem.data?.detail ??
     problem.data?.title ??
-    "The requested evidence could not be loaded."
+    "This report couldn't load. Try again."
   );
 }
 
@@ -283,10 +283,8 @@ export function InsightsAdministration({
     <section id="insights" className="admin-section admin-insights">
       <div className="section-heading">
         <div>
-          <p className="eyebrow">Authorized operational evidence</p>
-          <h3>Reports, audit &amp; notification coverage</h3>
+          <h3 className="visually-hidden">Reports</h3>
         </div>
-        <span>Origin and currency remain visible</span>
       </div>
       <p className="status-line" role="status" aria-live="polite">
         {[reportError, auditError, gapsError].filter(Boolean).join(" ")}
@@ -390,16 +388,16 @@ export function InsightsAdministration({
               <option value="cancelled">Cancelled</option>
             </select>
           </label>
-          <button type="submit">Apply evidence filters</button>
+          <button type="submit">Apply filters</button>
         </form>
       ) : null}
 
       {canViewReports ? (
         <div className="admin-evidence-block" aria-labelledby="sales-evidence">
-          <h4 id="sales-evidence">Sales by recorded currency</h4>
+          <h4 id="sales-evidence">Sales</h4>
           {reportLoading ? (
             <p className="empty-state" role="status">
-              Loading authorized sales evidence…
+              Loading sales…
             </p>
           ) : null}
           <div className="evidence-totals">
@@ -480,9 +478,9 @@ export function InsightsAdministration({
 
       {canViewAudit ? (
         <div className="admin-evidence-block" aria-labelledby="audit-evidence">
-          <h4 id="audit-evidence">Append-only audit evidence</h4>
+          <h4 id="audit-evidence">Audit history</h4>
           <label className="audit-scope-control">
-            Audit scope
+            Show activity for
             <select
               value={auditRestaurantId}
               onChange={(event) => {
@@ -492,7 +490,7 @@ export function InsightsAdministration({
               }}
             >
               {canViewTenantAudit ? (
-                <option value="">Tenant support and security activity</option>
+                <option value="">Account security and support access</option>
               ) : null}
               {restaurants.map((restaurant) => (
                 <option key={restaurant.id} value={restaurant.id}>
@@ -522,7 +520,7 @@ export function InsightsAdministration({
           </label>
           {auditLoading ? (
             <p className="empty-state" role="status">
-              Loading append-only audit evidence…
+              Loading audit history…
             </p>
           ) : auditItems.length ? (
             <ol className="admin-audit-list">
@@ -539,7 +537,7 @@ export function InsightsAdministration({
                   {item.reason ? <p>Reason: {item.reason}</p> : null}
                   {item.before !== null || item.after !== null ? (
                     <details>
-                      <summary>Available redacted evidence</summary>
+                      <summary>Before and after</summary>
                       <pre>
                         {JSON.stringify(
                           { before: item.before, after: item.after },
@@ -579,7 +577,7 @@ export function InsightsAdministration({
 
       {canManageFeatures ? (
         <div className="admin-evidence-block" aria-labelledby="recipient-gaps">
-          <h4 id="recipient-gaps">Critical recipient warnings</h4>
+          <h4 id="recipient-gaps">Alerts nobody will receive</h4>
           {gapsLoading ? (
             <p className="empty-state" role="status">
               Checking recipient coverage…
@@ -596,7 +594,7 @@ export function InsightsAdministration({
             </ul>
           ) : (
             <p className="empty-state">
-              No critical workflow currently lacks an eligible recipient.
+              Every important alert has someone to receive it.
             </p>
           )}
         </div>

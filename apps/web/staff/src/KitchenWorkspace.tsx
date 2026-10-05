@@ -208,7 +208,7 @@ function elapsed(value: string, now: number): string {
 
 function actionError(error: unknown): string {
   if (error instanceof z.ZodError) {
-    return "The server returned kitchen data that does not match the published contract.";
+    return "The kitchen list came back in an unexpected format. Reload, and contact support if it keeps happening.";
   }
   if (error instanceof KitchenRequestError && error.status === 409) {
     return `${error.message} The queue has been reloaded.`;
@@ -335,10 +335,9 @@ export function KitchenWorkspace(props: {
     return (
       <section className="workspace__content kitchen-boundary">
         <CircleAlert aria-hidden="true" size={26} />
-        <h2>Kitchen access is not assigned</h2>
+        <h2>Kitchen access isn't set up for you</h2>
         <p>
-          This workspace requires branch-scoped kitchen viewing or order serving
-          permission.
+          Ask a manager to give you kitchen or serving access for this branch.
         </p>
       </section>
     );
@@ -348,11 +347,10 @@ export function KitchenWorkspace(props: {
     <div className="workspace__content kitchen-workspace">
       <header className="kitchen-heading">
         <div>
-          <p className="eyebrow">LIVE SERVICE · AUTHORITATIVE QUEUE</p>
-          <h2>Kitchen and serving</h2>
+          <h2>Kitchen</h2>
           <p>
-            Orders stay grouped from first preparation through whole-order
-            readiness. The view reloads after reconnect and every two seconds.
+            Tickets stay together until the whole order is ready. Updates every
+            two seconds.
           </p>
         </div>
         <motion.button
@@ -363,7 +361,7 @@ export function KitchenWorkspace(props: {
           variants={actionButtonVariants}
         >
           <RefreshCw aria-hidden="true" size={18} />
-          Refresh queue
+          Refresh
         </motion.button>
       </header>
 
@@ -372,7 +370,7 @@ export function KitchenWorkspace(props: {
           ? "Loading the branch kitchen queue…"
           : state.kind === "error"
             ? state.message
-            : `${groups.length} active order${groups.length === 1 ? "" : "s"} · last verified ${state.updatedAt.toLocaleTimeString()}`}
+            : `${groups.length} active order${groups.length === 1 ? "" : "s"}, updated ${state.updatedAt.toLocaleTimeString()}`}
         {feedback ? ` ${feedback}` : ""}
       </div>
       {targetOrderId ? (
@@ -385,7 +383,7 @@ export function KitchenWorkspace(props: {
           <p className="kitchen-route-status" role="status">
             This order is no longer in the active kitchen queue.{" "}
             <a href={`/orders?order=${encodeURIComponent(targetOrderId)}`}>
-              Open order evidence
+              Open order
             </a>
           </p>
         )
@@ -430,7 +428,6 @@ export function KitchenWorkspace(props: {
           >
             <header>
               <div>
-                <p className="eyebrow">READY FOR SERVICE</p>
                 <h3 id="ready-orders-title">
                   {readyGroups.length} order
                   {readyGroups.length === 1 ? "" : "s"} to collect
@@ -514,10 +511,12 @@ export function KitchenWorkspace(props: {
           >
             <header>
               <div>
-                <p className="eyebrow">PREPARATION BOARD</p>
                 <h3 id="kitchen-board-title">Waiting and preparing</h3>
               </div>
-              <span>{preparingGroups.length} grouped orders</span>
+              <span>
+                {preparingGroups.length}{" "}
+                {preparingGroups.length === 1 ? "order" : "orders"}
+              </span>
             </header>
             {preparingGroups.length === 0 ? (
               <div className="kitchen-empty">

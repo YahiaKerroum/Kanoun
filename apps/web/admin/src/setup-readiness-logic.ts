@@ -59,14 +59,14 @@ export function buildReadiness(
         : "attention";
   const qrDetail =
     data.tables.length === 0
-      ? "Create at least one table before issuing table-ordering QR codes."
+      ? "Add a table before creating table QR codes."
       : qrStatus === "ready"
-        ? "At least one active table-ordering QR is available."
-        : "Tables exist, but no active table-ordering QR is available.";
+        ? "Guests can order by scanning a table QR code."
+        : "Tables are set up, but none has a QR code guests can order from yet.";
   return [
     {
       id: "restaurant",
-      title: "Restaurant identity and status",
+      title: "Restaurant details",
       status:
         restaurant &&
         restaurant.name.trim().length > 0 &&
@@ -80,7 +80,7 @@ export function buildReadiness(
     },
     {
       id: "branch",
-      title: "Branch identity and service context",
+      title: "Branch details",
       status:
         branch &&
         branch.name.trim().length > 0 &&
@@ -100,7 +100,7 @@ export function buildReadiness(
           : "attention",
       detail: branch
         ? `${branch.name} · ${branch.timeZone} · ${branch.currency}`
-        : "Create a branch and add its address, contact, time zone, and currency.",
+        : "Add a branch with its address, phone or email, time zone, and currency.",
       href: "#branch-editor",
     },
     {
@@ -109,8 +109,8 @@ export function buildReadiness(
       status: branch && branch.openingHours.length > 0 ? "ready" : "attention",
       detail: branch
         ? branch.openingHours.length > 0
-          ? `Hours are evaluated in ${branch.timeZone}. Overnight periods are supported.`
-          : "No opening periods are configured."
+          ? `Times are in ${branch.timeZone}. A branch can stay open past midnight.`
+          : "No opening hours yet."
         : "Opening hours follow the selected branch time zone.",
       href: "#hours-editor",
     },
@@ -122,7 +122,7 @@ export function buildReadiness(
           ? "ready"
           : "attention",
       detail: branch
-        ? `Service is ${branch.serviceStatus.replaceAll("_", " ")}. New orders follow the server-side status and hours guards.`
+        ? `Service is ${branch.serviceStatus.replaceAll("_", " ")}. Guests can only order while the branch is open and within its hours.`
         : "Select a branch to review service status.",
       href: "#branch-editor",
     },
@@ -135,10 +135,10 @@ export function buildReadiness(
           ? "ready"
           : "attention",
       detail: !employeesVisible
-        ? "Workforce access is unavailable for this permission scope. Ask an administrator with employees.view to review branch assignments."
+        ? "Your account can't see the team. Ask the owner to check who is assigned to this branch."
         : employees.length > 0
-          ? `${employees.length} active branch-assigned profile${employees.length === 1 ? "" : "s"} found.`
-          : "Add an active branch-assigned employee profile, then invite login access in Workforce.",
+          ? `${employees.length} active staff member${employees.length === 1 ? "" : "s"} in this branch.`
+          : "Add your team under Staff, then send each person an invitation to sign in.",
       href: "/employees",
     },
     {
@@ -153,11 +153,11 @@ export function buildReadiness(
           : "blocked",
       detail:
         !data.features || !data.restaurantFeatures
-          ? "Feature configuration is unavailable for the current permission scope."
+          ? "Your account can't see which features are turned on."
           : missingFeatures.length > 0
-            ? `Missing persisted values for ${missingFeatures.join(", ")}.`
+            ? `Choose on or off for: ${missingFeatures.join(", ")}.`
             : disabledDependencies
-              ? "A configured feature depends on a disabled prerequisite."
+              ? "A feature that's on needs another feature that's off. Check Features."
               : `Restaurant v${data.restaurantFeatures.configuration.version} · branch v${data.features.configuration.version}`,
       href: "/features",
     },
@@ -186,8 +186,8 @@ export function buildReadiness(
       detail: data.qrCodes.some(
         (qr) => qr.kind === "branch" && qr.status === "active",
       )
-        ? "An active branch QR is available for browse-only guest access."
-        : "Optional: issue a branch QR for browse-only access from Tables & QR.",
+        ? "Guests can browse the menu from the branch QR code."
+        : "Optional: create a branch QR code so guests can browse the menu, under Tables & QR.",
       href: "/tables",
     },
   ];

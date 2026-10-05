@@ -208,8 +208,8 @@ export function SetupBranchCreationForm({
         Create branch
       </button>
       <p>
-        New branches start closed. Complete the branch record, hours, and
-        service review before opening service.
+        New branches start closed. Add hours and finish the checklist before
+        opening.
       </p>
     </form>
   );

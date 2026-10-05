@@ -203,11 +203,10 @@ export function NotificationInboxWorkspace({
     <div className="workspace__content insight-workspace">
       <section className="workspace-heading">
         <div>
-          <p className="eyebrow">DURABLE INBOX · 30-DAY HISTORY</p>
-          <h2>Notifications that survive reconnects</h2>
+          <h2>Notifications</h2>
           <p>
-            Live messages are hints. This inbox is the authoritative record of
-            work addressed to your active identity and branch permissions.
+            Requests and alerts for you and your branch. Nothing is lost if the
+            connection drops.
           </p>
         </div>
         <motion.button
@@ -227,10 +226,10 @@ export function NotificationInboxWorkspace({
           className={`stream-status__dot stream-status__dot--${streamState}`}
         />
         {streamState === "live"
-          ? "Live hints connected"
+          ? "Live"
           : streamState === "reconnecting"
-            ? "Reconnecting — inbox remains authoritative"
-            : "Connecting live hints"}
+            ? "Reconnecting… the list below is still up to date"
+            : "Connecting…"}
       </p>
       {message ? (
         <div className="inline-alert" role="alert">
@@ -401,11 +400,10 @@ export function DashboardWorkspace({
     <section className="dashboard-section" aria-labelledby="dashboard-title">
       <div className="section-title-row">
         <div>
-          <p className="eyebrow">BRANCH DASHBOARD</p>
-          <h2 id="dashboard-title">Current branch activity</h2>
+          <h2 id="dashboard-title">Right now</h2>
           <p>
-            Kitchen wait time is elapsed time only; no urgency threshold is
-            applied.
+            Live counts for this branch. Kitchen wait is the time since an order
+            reached the kitchen.
           </p>
         </div>
         <motion.button
@@ -588,14 +586,8 @@ export function SalesReportWorkspace({
     <div className="workspace__content insight-workspace">
       <section className="workspace-heading">
         <div>
-          <p className="eyebrow">
-            RECORDED TRANSACTIONS · NO CURRENCY CONVERSION
-          </p>
           <h2>Sales report</h2>
-          <p>
-            Cancelled value and refunded money remain separate, and each row
-            identifies the underlying order.
-          </p>
+          <p>Sales, cancellations, and refunds, order by order.</p>
         </div>
       </section>
       <form
@@ -838,18 +830,14 @@ export function AuditWorkspace({
   if (!canView) return <PermissionBoundary title="Audit permission required" />;
   if (!restaurantId)
     return (
-      <PermissionBoundary title="Restaurant scope could not be resolved" />
+      <PermissionBoundary title="Your restaurant could not be identified" />
     );
   return (
     <div className="workspace__content insight-workspace">
       <section className="workspace-heading">
         <div>
-          <p className="eyebrow">APPEND-ONLY · REDACTED EVIDENCE</p>
           <h2>Audit history</h2>
-          <p>
-            Actor, action, target, UTC time, branch, outcome, reason, and
-            available before/after evidence.
-          </p>
+          <p>Who changed what, when, and why.</p>
         </div>
       </section>
       <form
@@ -906,7 +894,7 @@ export function AuditWorkspace({
                   <a
                     href={`/orders?order=${encodeURIComponent(item.targetId)}`}
                   >
-                    Open order evidence
+                    Open order
                   </a>
                 ) : (
                   "Read-only target context"
@@ -918,7 +906,7 @@ export function AuditWorkspace({
               {item.reason ? <p>Reason: {item.reason}</p> : null}
               {item.before !== null || item.after !== null ? (
                 <details>
-                  <summary>Available before/after evidence</summary>
+                  <summary>Before and after</summary>
                   <pre>
                     {JSON.stringify(
                       { before: item.before, after: item.after },
@@ -966,7 +954,7 @@ function PermissionBoundary({ title }: { readonly title: string }) {
         <AlertTriangle aria-hidden="true" />
         <h2>{title}</h2>
         <p>
-          The server did not grant the capability required for this workspace.
+          Your account doesn't include this page. Ask a manager if you need it.
         </p>
       </div>
     </div>
