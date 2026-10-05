@@ -1,0 +1,627 @@
+@import url("../../web/design-system.css");
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  overflow: hidden;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+.launcher {
+  display: grid;
+  height: 100vh;
+  grid-template-columns: 264px minmax(0, 1fr);
+}
+
+/* ---- Rail ---------------------------------------------------------- */
+
+.launcher-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 26px 22px 18px;
+  background: var(--harissa);
+  color: #ffffff;
+}
+
+.launcher-rail__brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 22px;
+  --mark-size: 36px;
+}
+
+.launcher-rail__restaurant {
+  min-height: 1.4em;
+  margin: -6px 0 0 48px;
+  color: rgb(255 255 255 / 78%);
+  font-size: var(--text-meta-size);
+}
+
+.launcher-status {
+  display: grid;
+  gap: 2px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.status {
+  display: grid;
+  grid-template-columns: 10px 1fr;
+  column-gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid rgb(255 255 255 / 16%);
+}
+
+.status::before {
+  grid-row: span 2;
+  width: 10px;
+  height: 10px;
+  margin-top: 5px;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 40%);
+  content: "";
+}
+
+.status--ok::before {
+  background: #c9dc8f;
+}
+
+.status--busy::before {
+  background: var(--saffron);
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+.status--error::before {
+  background: var(--harissa-ink);
+  box-shadow: 0 0 0 2px #ffffff;
+}
+
+.status__name {
+  color: rgb(255 255 255 / 70%);
+  font-size: var(--text-micro-size);
+}
+
+.status__value {
+  overflow-wrap: anywhere;
+  font-weight: 600;
+}
+
+.launcher-rail__footer {
+  margin-top: auto;
+}
+
+.rail-link {
+  border: 0;
+  padding: 6px 0;
+  background: none;
+  color: rgb(255 255 255 / 82%);
+  cursor: pointer;
+  font-size: var(--text-meta-size);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.rail-link:hover {
+  color: #ffffff;
+}
+
+/* ---- Main ---------------------------------------------------------- */
+
+.launcher-main {
+  overflow-y: auto;
+  padding: clamp(28px, 5vw, 56px) clamp(24px, 5vw, 64px);
+}
+
+.launcher-main:focus {
+  outline: none;
+}
+
+.panel {
+  max-width: 720px;
+}
+
+.panel--wide {
+  max-width: 900px;
+}
+
+.panel h1 {
+  margin: 0;
+  font-size: clamp(30px, 3.6vw, 40px);
+  line-height: 1.05;
+}
+
+.lead {
+  max-width: 60ch;
+  margin: 12px 0 28px;
+  color: var(--muted);
+  font-size: 16px;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+/* ---- Buttons ------------------------------------------------------- */
+
+.btn {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+  padding: 0 16px;
+  cursor: pointer;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.btn:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.btn--primary {
+  background: var(--harissa);
+  color: #ffffff;
+}
+
+.btn--primary:hover:not(:disabled) {
+  background: var(--harissa-deep);
+}
+
+.btn--secondary {
+  border-color: var(--line-strong);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.btn--secondary:hover:not(:disabled) {
+  border-color: var(--harissa);
+  color: var(--harissa-deep);
+}
+
+.btn--quiet {
+  min-height: 34px;
+  padding: 0 10px;
+  background: none;
+  color: var(--harissa-deep);
+}
+
+.btn--quiet:hover:not(:disabled) {
+  background: var(--brand-050);
+}
+
+.btn--danger {
+  background: var(--beet);
+  color: #ffffff;
+}
+
+.actions,
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.actions {
+  margin-top: 24px;
+}
+
+/* ---- Choices ------------------------------------------------------- */
+
+.choices {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.choice {
+  position: relative;
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-panel);
+  padding: 18px 20px;
+  background: var(--surface);
+  cursor: pointer;
+}
+
+.choice--static {
+  cursor: default;
+}
+
+.choice--static .btn {
+  justify-self: start;
+  margin-top: 12px;
+}
+
+.choice input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.choice:has(input:focus-visible) {
+  outline: var(--focus-ring) solid var(--saffron);
+  outline-offset: 2px;
+}
+
+.choice--selected {
+  border-color: var(--harissa);
+  box-shadow: inset 0 0 0 1px var(--harissa);
+  background: var(--brand-050);
+}
+
+.choice__title {
+  font-size: 18px;
+  font-stretch: var(--label-stretch);
+  font-weight: 700;
+}
+
+.choice__body {
+  color: var(--muted);
+  line-height: var(--line-copy);
+}
+
+/* ---- Fields -------------------------------------------------------- */
+
+.server-form {
+  display: grid;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+}
+
+.field__label {
+  font-size: var(--text-meta-size);
+  font-weight: 650;
+}
+
+.field__hint {
+  color: var(--muted);
+  font-size: var(--text-micro-size);
+}
+
+.field input,
+.field select {
+  min-height: 42px;
+  width: 100%;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-control);
+  padding: 0 11px;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.field input:hover,
+.field select:hover {
+  border-color: var(--brand-400);
+}
+
+.field input:user-invalid {
+  border-color: var(--beet);
+}
+
+.note {
+  margin: 0;
+  font-size: var(--text-meta-size);
+}
+
+.note--ok {
+  color: var(--success);
+}
+
+.note--error {
+  color: var(--danger);
+}
+
+.alert {
+  margin: 20px 0 0;
+  border-radius: var(--radius-control);
+  padding: 12px 14px;
+  line-height: var(--line-copy);
+}
+
+.alert--error {
+  border: 1px solid var(--state-blocked-line);
+  background: var(--state-blocked-surface);
+  color: var(--state-blocked-text);
+}
+
+.alert--ok {
+  border: 1px solid var(--state-success-line);
+  background: var(--state-success-surface);
+  color: var(--state-success-text);
+}
+
+.restaurant-form {
+  display: grid;
+  gap: 18px;
+}
+
+.restaurant-form fieldset {
+  display: grid;
+  align-items: start;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 16px;
+  margin: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  padding: 18px 20px 20px;
+  background: var(--surface);
+}
+
+.restaurant-form legend {
+  padding: 0 6px;
+  font-stretch: var(--label-stretch);
+  font-weight: 700;
+}
+
+.field-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+/* ---- Starting ------------------------------------------------------ */
+
+.steps {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  counter-reset: step;
+  list-style: none;
+}
+
+.step {
+  display: flex;
+  min-height: 52px;
+  align-items: center;
+  gap: 14px;
+  border-top: 1px solid var(--line);
+  color: var(--subtle);
+  counter-increment: step;
+}
+
+.step::before {
+  display: inline-grid;
+  width: 28px;
+  height: 28px;
+  flex: none;
+  place-items: center;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  content: counter(step);
+  font-size: var(--text-meta-size);
+  font-weight: 700;
+}
+
+.step--active {
+  color: var(--text);
+  font-weight: 650;
+}
+
+.step--active::before {
+  border-color: var(--saffron);
+  background: var(--warning-soft);
+  color: var(--warning);
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+.step--done {
+  color: var(--text);
+}
+
+.step--done::before {
+  border-color: var(--harissa);
+  background: var(--harissa);
+  color: #ffffff;
+  content: "✓";
+}
+
+/* ---- Ready --------------------------------------------------------- */
+
+.doors {
+  margin: 8px 0 0;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+  list-style: none;
+}
+
+.door {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px;
+}
+
+.door + .door {
+  border-top: 1px solid var(--line);
+}
+
+.door strong {
+  display: block;
+  font-size: 20px;
+  font-stretch: var(--display-stretch);
+}
+
+.door span {
+  color: var(--muted);
+}
+
+.door__actions {
+  display: flex;
+  flex: none;
+  gap: 6px;
+}
+
+.block {
+  margin-top: 36px;
+}
+
+.block h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.block > p {
+  margin: 6px 0 14px;
+}
+
+.block--settings .row {
+  margin-top: 12px;
+}
+
+.keyvals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 32px;
+  margin: 0 0 12px;
+}
+
+.keyvals div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.keyvals dt {
+  color: var(--muted);
+}
+
+.keyvals dd {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin: 0;
+}
+
+code {
+  border-radius: var(--radius-xs);
+  padding: 2px 6px;
+  background: var(--surface-soft);
+  font-family: inherit;
+  font-weight: 600;
+}
+
+.people {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+}
+
+.people th,
+.people td {
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+}
+
+.people th {
+  color: var(--muted);
+  font-size: var(--text-micro-size);
+  font-weight: 600;
+}
+
+.people tr:last-child td {
+  border-bottom: 0;
+}
+
+.people__action {
+  text-align: right !important;
+}
+
+.resets {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.resets li {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border: 1px solid var(--state-warning-line);
+  border-radius: var(--radius-control);
+  padding: 8px 12px;
+  background: var(--state-warning-surface);
+}
+
+.confirm {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--state-blocked-line);
+  border-radius: var(--radius-control);
+  padding: 6px 6px 6px 12px;
+  background: var(--state-blocked-surface);
+  color: var(--state-blocked-text);
+}
+
+.badge {
+  display: inline-block;
+  margin: 0 0 12px;
+  border-radius: var(--radius-sm);
+  padding: 2px 10px;
+  font-size: var(--text-micro-size);
+  font-weight: 700;
+}
+
+.badge--error {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+@media (max-width: 900px) {
+  .launcher {
+    grid-template-columns: 220px minmax(0, 1fr);
+  }
+
+  .restaurant-form fieldset {
+    grid-template-columns: 1fr;
+  }
+
+  .door {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

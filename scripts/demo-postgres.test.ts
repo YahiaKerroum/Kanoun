@@ -3,7 +3,6 @@ import { join } from "node:path";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import {
-  bundledBinaryCandidate,
   isExistingPostgresCluster,
   selectDemoPostgresMode,
   type DemoPostgresCapabilities,
@@ -24,30 +23,6 @@ describe("selectDemoPostgresMode", () => {
     };
 
     expect(selectDemoPostgresMode(capabilities)).toBe("isolated");
-  });
-});
-
-describe("bundledBinaryCandidate", () => {
-  afterEach(() => {
-    delete (process as { resourcesPath?: string }).resourcesPath;
-  });
-
-  it("returns undefined outside Electron, where resourcesPath is unset", () => {
-    expect(bundledBinaryCandidate("initdb")).toBeUndefined();
-  });
-
-  it("resolves inside resourcesPath/postgresql/bin when running under Electron", () => {
-    (process as { resourcesPath?: string }).resourcesPath = join(
-      "C:\\",
-      "App",
-      "resources",
-    );
-
-    const result = bundledBinaryCandidate("initdb");
-
-    expect(result).toBe(
-      join("C:\\", "App", "resources", "postgresql", "bin", "initdb.exe"),
-    );
   });
 });
 

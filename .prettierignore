@@ -1,10 +1,16 @@
 Restaurant POS design system/
 design-exploration/
 .cc-history/
+.omo/
 .superpowers/
 .tmp/
+output/
+.playwright-cli/
 docs/
-apps/desktop/release/
+apps/desktop/build/
+apps/desktop/dist/
+apps/desktop/src-tauri/
+.playwright-mcp/
 apps/desktop/vendor/
 AGENTS.md
 restaurant-management-system-architecture.md

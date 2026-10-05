@@ -7,6 +7,9 @@ last_reviewed: 2026-08-29
 
 # MISE Desktop Context-Compaction Handoff
 
+> [!IMPORTANT]
+> Superseded on 2026-10-06. The Electron app described here was replaced by the Tauri desktop app in `apps/desktop` (ADR-0008); the packaging gaps listed below no longer apply.
+
 ## Current state
 
 Working in the git worktree at `C:\Users\HP\Desktop\mvp-desktop-app`, branch

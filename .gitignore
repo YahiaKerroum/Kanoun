@@ -49,11 +49,20 @@ Desktop.ini
 # Local tooling
 .eslintcache
 .npmrc.local
+.cc-history/
+.omo/
+.playwright-cli/
 .playwright-mcp/
 .image-slots.state.json
 .local/
+.tmp/
 
-# MISE Desktop packaging
-apps/desktop/release/
+# MISE desktop (Tauri)
+apps/desktop/build/
+apps/desktop/dist/
+apps/desktop/src-tauri/target/
+apps/desktop/src-tauri/gen/
+apps/desktop/src-tauri/binaries/
 apps/desktop/vendor/postgresql/*
 !apps/desktop/vendor/postgresql/README.md
+.playwright-mcp/

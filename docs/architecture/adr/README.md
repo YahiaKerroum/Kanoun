@@ -19,5 +19,6 @@ source_of_truth_for:
 | ADR-0005 | Staff and guest sessions | Accepted | Express adapter follows the Express implementation guide |
 | ADR-0006 | REST and Server-Sent Events | Accepted | None |
 | ADR-0007 | Deployment platform — phase 1 synthetic-data validation environment (Fly.io + Neon, Paris/Frankfurt) | Accepted for phase 1 only | Phase 2 (real client, local hosting) is a deferred, separate superseding ADR |
+| ADR-0008 | Tauri desktop shell with local or server PostgreSQL | Accepted | Phone ordering over the restaurant network needs its own decision |
 
 An accepted ADR is immutable. A changed decision uses a new ADR that supersedes the old record.

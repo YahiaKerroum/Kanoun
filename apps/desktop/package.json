@@ -1,23 +1,29 @@
 {
   "name": "@rms/desktop",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
-  "main": "dist/main.js",
   "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "start": "electron .",
+    "bundle-runtime": "corepack pnpm --filter @rms/staff-web --filter @rms/admin-web --filter @rms/customer-web build && node scripts/build-runtime.mjs",
+    "launcher:dev": "vite",
+    "launcher:build": "vite build",
+    "dev": "corepack pnpm bundle-runtime && tauri dev",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "dist:win": "electron-builder --win nsis --config electron-builder.config.cjs",
-    "dist:portable": "electron-builder --win portable --config electron-builder.config.cjs"
+    "installer": "corepack pnpm bundle-runtime && tauri build"
   },
   "dependencies": {
-    "tsx": "4.23.1",
+    "@fontsource-variable/archivo": "5.3.0",
+    "@fontsource/young-serif": "5.3.0",
+    "@rms/building-blocks": "workspace:*",
+    "@tauri-apps/api": "2.12.1",
+    "pg": "8.22.0",
     "zod": "4.4.3"
   },
   "devDependencies": {
+    "@tauri-apps/cli": "2.12.1",
     "@types/node": "24.13.3",
-    "electron": "44.0.0",
-    "electron-builder": "26.15.3"
+    "esbuild": "0.28.2",
+    "vite": "8.1.5",
+    "@types/pg": "8.20.0"
   }
 }

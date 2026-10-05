@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MISE</title>
+  </head>
+  <body>
+    <div class="launcher">
+      <aside class="launcher-rail">
+        <div class="launcher-rail__brand">
+          <span class="mise-mark" aria-hidden="true"></span>
+          <span class="mise-wordmark">MISE</span>
+        </div>
+        <p class="launcher-rail__restaurant" id="rail-restaurant"></p>
+        <ul
+          class="launcher-status"
+          id="status-list"
+          aria-label="System status"
+        ></ul>
+        <div class="launcher-rail__footer">
+          <button type="button" class="rail-link" id="open-data-folder">
+            Open data folder
+          </button>
+        </div>
+      </aside>
+      <main
+        class="launcher-main"
+        id="view"
+        tabindex="-1"
+        aria-live="polite"
+      ></main>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

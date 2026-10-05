@@ -7,7 +7,6 @@ packages:
 
 allowBuilds:
   argon2: true
-  electron-winstaller: true
   esbuild: true
 
 minimumReleaseAgeExclude:
