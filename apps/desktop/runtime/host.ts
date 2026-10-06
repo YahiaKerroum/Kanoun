@@ -46,6 +46,8 @@ import {
 } from "./settings.js";
 import { startWebAppServer } from "./web-server.js";
 
+const SAMPLE_BUSINESS_CODE = "dar-nedjma-demo";
+
 const dataRoot = process.env.MISE_DATA_DIR;
 if (!dataRoot) {
   process.stderr.write("MISE_DATA_DIR is required.\n");
@@ -417,10 +419,14 @@ async function loadSampleRestaurant(): Promise<void> {
   if (!databaseUrl) {
     return;
   }
-  if ((await listRestaurants(databaseUrl)).length > 0) {
-    throw new Error(
-      "The sample restaurant can only be added to an empty database.",
-    );
+  // The sample is its own business, so it can sit beside real restaurants;
+  // it is only refused when it is already there.
+  if (
+    (await listRestaurants(databaseUrl)).some(
+      (restaurant) => restaurant.businessCode === SAMPLE_BUSINESS_CODE,
+    )
+  ) {
+    throw new Error("The sample restaurant is already in this database.");
   }
   const result = await seedDemoData({
     connectionString: databaseUrl,

@@ -40,7 +40,9 @@ On first start it asks where the restaurant's data should live:
 
 Then it offers to **create your restaurant** (business, first branch, and owner
 account) or to **load the sample restaurant**, Dar Nedjma in Algiers, with a
-menu, tables, four staff accounts, and orders already in progress.
+two branches, a 32-dish menu with options, a team of thirteen, ten days of
+orders (paid, refunded, and cancelled), and a service in progress. The sample
+can also be added later beside your own restaurant without touching it.
 
 <p align="center">
   <img alt="Choosing where MISE keeps its data" src="docs/assets/screenshots/desktop-storage-choice.png" width="49%" />

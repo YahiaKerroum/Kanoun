@@ -654,7 +654,7 @@ function welcomeView(): HTMLElement {
         h(
           "span",
           { class: "choice__body" },
-          "Dar Nedjma in Algiers, with a menu, tables, four staff accounts, and a few orders already placed.",
+          "Dar Nedjma in Algiers: two branches, a full menu, a team of thirteen, ten days of orders, and a service in progress.",
         ),
         button(
           ui.busy ?? "Load sample",
@@ -880,6 +880,27 @@ function readyView(state: RuntimeState): HTMLElement {
         )
       : null,
     sample ? credentials(sample) : null,
+    restaurants.some((item) => item.businessCode === "dar-nedjma-demo")
+      ? null
+      : h(
+          "section",
+          { class: "block" },
+          h("h2", {}, "Sample restaurant"),
+          h(
+            "p",
+            { class: "muted" },
+            "Add Dar Nedjma beside your own restaurant: two branches, a full menu, a team of thirteen, ten days of orders, and a service in progress. Your data is not changed.",
+          ),
+          button(
+            ui.busy ?? "Add the sample restaurant",
+            () =>
+              void run("Adding the sample restaurant…", async () => {
+                await call({ type: "loadSample" });
+              }),
+            "secondary",
+            Boolean(ui.busy),
+          ),
+        ),
     h(
       "section",
       { class: "block block--settings" },
