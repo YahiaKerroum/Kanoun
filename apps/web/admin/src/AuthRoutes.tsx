@@ -142,7 +142,53 @@ function Feedback({
   );
 }
 
+const businessCodePattern = /^[a-z0-9][a-z0-9-]{2,63}$/i;
+const rememberedCodeKey = "mise.businessCode";
+
+/**
+ * Values for the sign-in form: the desktop launcher links here with the
+ * business code (and email) filled in, and a device remembers the last
+ * business code that signed in successfully. Only well-formed values are used.
+ */
+function signInPrefill(): {
+  readonly businessCode: string;
+  readonly email: string;
+} {
+  const query = new URLSearchParams(window.location.search);
+  let remembered = "";
+  try {
+    remembered = window.localStorage.getItem(rememberedCodeKey) ?? "";
+  } catch {
+    // Storage can be unavailable; the field simply starts empty.
+  }
+  const code = query.get("businessCode")?.trim() ?? remembered;
+  const email = query.get("email")?.trim() ?? "";
+  return {
+    businessCode: businessCodePattern.test(code) ? code.toLowerCase() : "",
+    email: email.length <= 320 && /^[^\s@]+@[^\s@]+$/.test(email) ? email : "",
+  };
+}
+
+function rememberBusinessCode(code: string): void {
+  try {
+    window.localStorage.setItem(rememberedCodeKey, code.trim().toLowerCase());
+  } catch {
+    // Remembering is a convenience only.
+  }
+}
+
+/** Explains a business code that cannot be right, before it is sent. */
+function businessCodeProblem(code: string): string | undefined {
+  const value = code.trim();
+  if (businessCodePattern.test(value)) return undefined;
+  if (/\s/.test(value)) {
+    return `"${value}" looks like a restaurant name. The business code is a short code with dashes instead of spaces, like dar-nedjma-demo. Ask your manager for yours; on a MISE desktop it is shown in the launcher.`;
+  }
+  return "The business code uses only letters, numbers, and dashes, like dar-nedjma-demo.";
+}
+
 function SignInForm() {
+  const prefill = signInPrefill();
   const [state, setState] = useState<RequestState>("idle");
   const [message, setMessage] = useState("");
   const query = new URLSearchParams(window.location.search);
@@ -152,6 +198,12 @@ function SignInForm() {
   async function submit(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
+    const codeProblem = businessCodeProblem(formText(data, "businessCode"));
+    if (codeProblem) {
+      setState("error");
+      setMessage(codeProblem);
+      return;
+    }
     setState("pending");
     setMessage("Signing in…");
     try {
@@ -160,6 +212,7 @@ function SignInForm() {
         email: formText(data, "email"),
         password: formText(data, "password"),
       });
+      rememberBusinessCode(formText(data, "businessCode"));
       replaceLocation(returnTo);
     } catch (error) {
       setState("error");
@@ -191,11 +244,28 @@ function SignInForm() {
       <form className="auth-form" onSubmit={(event) => void submit(event)}>
         <label>
           Business code
-          <input name="businessCode" autoComplete="organization" required />
+          <input
+            name="businessCode"
+            autoComplete="organization"
+            autoCapitalize="none"
+            spellCheck={false}
+            defaultValue={prefill.businessCode}
+            aria-describedby="business-code-help"
+            required
+          />
+          <span className="field-help" id="business-code-help">
+            A short code like dar-nedjma-demo, not the restaurant name.
+          </span>
         </label>
         <label>
           Work email
-          <input name="email" type="email" autoComplete="username" required />
+          <input
+            name="email"
+            type="email"
+            autoComplete="username"
+            defaultValue={prefill.email}
+            required
+          />
         </label>
         <label>
           Password

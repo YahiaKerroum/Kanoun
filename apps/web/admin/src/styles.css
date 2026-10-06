@@ -1634,8 +1634,6 @@ textarea:disabled {
   }
 }
 
-.auth-feedback,
-.auth-notice,
 .field-help {
   margin: 0;
   color: var(--muted);

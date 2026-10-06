@@ -756,9 +756,14 @@ function credentials(sample: SampleRestaurant): HTMLElement {
                 () => {
                   const urls = ui.runtime?.urls;
                   if (!urls) return;
+                  // The sign-in form opens with the business code and this
+                  // person's email filled in; only the password is typed.
+                  const signIn = new URL("/auth/sign-in", urls[role.workspace]);
+                  signIn.searchParams.set("businessCode", sample.businessCode);
+                  signIn.searchParams.set("email", role.email);
                   openWorkspace(
                     role.workspace,
-                    `${urls[role.workspace]}/auth/sign-in`,
+                    signIn.toString(),
                     role.workspace === "staff",
                   );
                 },
