@@ -13,7 +13,6 @@ export const administrationPages = [
   { id: "setup", label: "Setup", path: "/setup" },
   { id: "context", label: "Overview", path: "/context" },
   { id: "employees", label: "Staff", path: "/employees" },
-  { id: "permissions", label: "Permissions", path: "/permissions" },
   { id: "menu", label: "Menu", path: "/menu" },
   { id: "tables", label: "Tables & QR", path: "/tables" },
   { id: "insights", label: "Reports", path: "/insights" },
@@ -29,6 +28,8 @@ export interface AdministrationNavigationItem {
 }
 
 function pageFromPathname(pathname: string): AdministrationPage {
+  // What someone can do is edited on their Staff panel; keep old links working.
+  if (pathname === "/permissions") return "employees";
   const page = administrationPages.find((item) => item.path === pathname);
   return page?.id ?? "context";
 }

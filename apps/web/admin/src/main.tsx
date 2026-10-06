@@ -21,6 +21,11 @@ import {
   useAdministrationPage,
 } from "./AdminNavigation.js";
 import { AdminAuthRoutes } from "./AuthRoutes.js";
+import {
+  permissionModuleName,
+  permissionName,
+  permissionRiskNote,
+} from "./permission-copy.js";
 import { authRouteForPath, replaceLocation } from "./auth-navigation.js";
 import {
   sectionContainerVariants,
@@ -494,7 +499,13 @@ function App() {
     setInvitationLink("");
     setInvitationExpiry("");
     setCopyMessage("");
-    setMessage("Loading permissions…");
+    setPermissionSet(undefined);
+    const mayManagePermissions =
+      state.kind === "ready" &&
+      state.session.grants.some(
+        (grant) => grant.permissionKey === "employees.manage_permissions",
+      );
+    if (!mayManagePermissions) return;
     try {
       const result = await api(
         `/api/v1/staff/employees/${employeeId}/permissions`,
@@ -502,13 +513,25 @@ function App() {
       );
       setPermissionSet(result);
       setDraftGrantIds(new Set(result.grants.map(grantId)));
-      setMessage("");
     } catch (error) {
       setMessage(
-        error instanceof Error ? error.message : "Permissions unavailable.",
+        error instanceof Error
+          ? error.message
+          : "What this person can do didn’t load. Try selecting them again.",
       );
     }
   }
+
+  // On narrow screens the panel sits under the list; bring it into view.
+  useEffect(() => {
+    if (!selectedEmployeeId) return;
+    if (!window.matchMedia("(max-width: 1050px)").matches) return;
+    window.requestAnimationFrame(() =>
+      document
+        .getElementById("employee-panel")
+        ?.scrollIntoView({ behavior: "smooth", block: "start" }),
+    );
+  }, [selectedEmployeeId]);
 
   const selectedEmployee =
     state.kind === "ready"
@@ -873,11 +896,11 @@ function App() {
     });
     if (
       !window.confirm(
-        "Apply this permission set and end the employee’s active sessions?",
+        `Save what ${selectedEmployee.displayName} can do? They will be signed out so the change takes effect.`,
       )
     )
       return;
-    setMessage("Saving permissions…");
+    setMessage("Saving…");
     try {
       const result = await api(
         `/api/v1/staff/employees/${selectedEmployee.id}/permissions`,
@@ -894,7 +917,7 @@ function App() {
       setPermissionSet(result);
       setDraftGrantIds(new Set(result.grants.map(grantId)));
       setMessage(
-        "Permissions saved. Affected staff will need to sign in again.",
+        `Saved. ${selectedEmployee.displayName} will need to sign in again.`,
       );
     } catch (error) {
       setMessage(
@@ -911,7 +934,7 @@ function App() {
     }
     if (
       !window.confirm(
-        `Copy ${template.displayName} permissions to this employee? Existing custom grants remain.`,
+        `Add everything a ${template.displayName} usually does to ${selectedEmployee.displayName}? What they can already do stays.`,
       )
     )
       return;
@@ -932,7 +955,7 @@ function App() {
       setPermissionSet(result);
       setDraftGrantIds(new Set(result.grants.map(grantId)));
       setMessage(
-        `${template.displayName} copied. Future template changes will not alter this employee.`,
+        `Added the ${template.displayName} set. Later changes to the role won’t affect ${selectedEmployee.displayName}.`,
       );
     } catch (error) {
       setMessage(
@@ -1167,8 +1190,7 @@ function App() {
   const pageAvailability: Readonly<Record<AdministrationPage, boolean>> = {
     setup: canViewSetup,
     context: canViewSetup,
-    employees: canViewEmployees,
-    permissions: canManagePermissions,
+    employees: canViewEmployees || canManagePermissions,
     menu:
       menuTablesPermissions.menuView ||
       menuTablesPermissions.menuManage ||
@@ -1402,7 +1424,7 @@ function App() {
                   ) : null}
 
                   {activePage === "employees" ? (
-                    <section className="admin-section">
+                    <section className="admin-section staff-page">
                       <div className="section-heading">
                         <div>
                           <h3>Team</h3>
@@ -1434,460 +1456,540 @@ function App() {
                           they accept an invitation.
                         </p>
                       </form>
-                      <motion.ul
-                        className="employee-list"
-                        aria-label="Employee profiles"
-                        variants={staggerContainerVariants}
-                        initial="initial"
-                        animate="enter"
-                      >
-                        {state.employees.map((employee) => (
-                          <motion.li
-                            key={employee.id}
-                            variants={fadeUpItemVariants}
-                          >
-                            <button
-                              type="button"
-                              className={
-                                selectedEmployeeId === employee.id
-                                  ? "is-selected"
-                                  : ""
-                              }
-                              onClick={() => void selectEmployee(employee.id)}
-                            >
-                              <span>
-                                <strong>{employee.displayName}</strong>
-                                <small>{employee.email}</small>
-                              </span>
-                              <span className="employee-meta">
-                                {employee.status === "active"
-                                  ? "Active"
-                                  : "Inactive"}
-                                , {employee.branchIds.length} branch
-                                {employee.branchIds.length === 1 ? "" : "es"}
-                              </span>
-                            </button>
-                          </motion.li>
-                        ))}
-                      </motion.ul>
-                      {selectedEmployee ? (
-                        <div
-                          className="employee-lifecycle"
-                          aria-labelledby="employee-lifecycle-title"
+                      <div className="staff-layout">
+                        <motion.ul
+                          className="employee-list"
+                          aria-label="Employee profiles"
+                          variants={staggerContainerVariants}
+                          initial="initial"
+                          animate="enter"
                         >
-                          <div className="section-heading">
-                            <div>
-                              <h4 id="employee-lifecycle-title">
-                                Profile and access
-                              </h4>
-                            </div>
-                            <span>
-                              {selectedEmployee.status === "active"
-                                ? "Active"
-                                : "Inactive"}
-                            </span>
-                          </div>
-                          <form
-                            key={selectedEmployee.id}
-                            className="record-editor"
-                            onSubmit={(event) =>
-                              void updateSelectedEmployee(event)
-                            }
-                          >
-                            <label>
-                              Display name
-                              <input
-                                name="displayName"
-                                defaultValue={selectedEmployee.displayName}
-                                maxLength={160}
-                                required
-                              />
-                            </label>
-                            <label>
-                              Work email
-                              <input
-                                name="email"
-                                type="email"
-                                defaultValue={selectedEmployee.email}
-                                maxLength={320}
-                                required
-                              />
-                            </label>
-                            <button type="submit">Save profile</button>
-                          </form>
-                          <div className="lifecycle-block">
-                            <div className="lifecycle-block__heading">
-                              <div>
-                                <strong>Replace branch access</strong>
-                                <small>
-                                  Saving signs them out so the change takes
-                                  effect.
-                                </small>
-                              </div>
-                              <span>{branchDraftIds.size} selected</span>
-                            </div>
-                            <div className="branch-check-grid">
-                              {state.branches
-                                .filter(
-                                  (branch) =>
-                                    branch.restaurantId ===
-                                    selectedEmployee.restaurantId,
-                                )
-                                .map((branch) => (
-                                  <label key={branch.id}>
-                                    <input
-                                      type="checkbox"
-                                      checked={branchDraftIds.has(branch.id)}
-                                      onChange={(event) =>
-                                        setBranchDraftIds((current) => {
-                                          const next = new Set(current);
-                                          if (event.currentTarget.checked)
-                                            next.add(branch.id);
-                                          else next.delete(branch.id);
-                                          return next;
-                                        })
-                                      }
-                                    />
-                                    {branch.name} · {branch.status}
-                                  </label>
-                                ))}
-                            </div>
-                            <label className="reason-field">
-                              Reason for the change
-                              <input
-                                value={employeeReason}
-                                minLength={8}
-                                maxLength={500}
-                                onChange={(event) =>
-                                  setEmployeeReason(event.currentTarget.value)
-                                }
-                                placeholder="Explain the operational change"
-                              />
-                            </label>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                void replaceSelectedEmployeeBranches()
-                              }
+                          {state.employees.map((employee) => (
+                            <motion.li
+                              key={employee.id}
+                              variants={fadeUpItemVariants}
                             >
-                              Save branch access
-                            </button>
-                          </div>
-                          <div className="lifecycle-block lifecycle-block--actions">
-                            <div className="lifecycle-block__heading">
-                              <div>
-                                <strong>Login invitation</strong>
-                                <small>
-                                  Share the link with them. It works once and
-                                  expires.
-                                </small>
-                              </div>
-                              <span>{selectedEmployee.status}</span>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => void inviteSelectedEmployee()}
-                              disabled={selectedEmployee.status !== "active"}
-                            >
-                              Create invitation URL
-                            </button>
-                            {invitationLink ? (
-                              <div className="invitation-output">
-                                <label>
-                                  One-time invitation URL
-                                  <input
-                                    value={invitationLink}
-                                    readOnly
-                                    aria-describedby="invitation-expiry"
-                                  />
-                                </label>
-                                <button
-                                  type="button"
-                                  onClick={() => void copyInvitationLink()}
-                                >
-                                  Copy URL
-                                </button>
-                                <span id="invitation-expiry">
-                                  Expires{" "}
-                                  {new Date(invitationExpiry).toLocaleString()}
-                                </span>
-                                <p role="status" aria-live="polite">
-                                  {copyMessage}
-                                </p>
-                              </div>
-                            ) : null}
-                          </div>
-                          <div className="lifecycle-block lifecycle-block--actions">
-                            <div className="lifecycle-block__heading">
-                              <div>
-                                <strong>Employee status</strong>
-                                <small>
-                                  Deactivating signs them out everywhere. Their
-                                  history is kept.
-                                </small>
-                              </div>
-                              <span>{selectedEmployee.status}</span>
-                            </div>
-                            {selectedEmployee.status === "active" ? (
                               <button
                                 type="button"
-                                onClick={() =>
-                                  void deactivateSelectedEmployee()
+                                className={
+                                  selectedEmployeeId === employee.id
+                                    ? "is-selected"
+                                    : ""
                                 }
-                              >
-                                Deactivate employee
-                              </button>
-                            ) : (
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  void reactivateSelectedEmployee()
+                                aria-pressed={
+                                  selectedEmployeeId === employee.id
                                 }
-                              >
-                                Reactivate employee
-                              </button>
-                            )}
-                          </div>
-                          {canManagePermissions ? (
-                            <div className="lifecycle-block lifecycle-block--critical">
-                              <div className="lifecycle-block__heading">
-                                <div>
-                                  <strong>Administrator protection</strong>
-                                  <small>
-                                    You may be asked to sign in again. A
-                                    restaurant always keeps at least one
-                                    administrator.
-                                  </small>
-                                </div>
-                              </div>
-                              <div className="record-editor record-editor--compact">
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    void removeSelectedAdministrator()
-                                  }
-                                >
-                                  Remove administrator access
-                                </button>
-                                <label>
-                                  Replacement administrator
-                                  <select
-                                    value={replacementEmployeeId}
-                                    onChange={(event) =>
-                                      setReplacementEmployeeId(
-                                        event.currentTarget.value,
-                                      )
-                                    }
-                                  >
-                                    <option value="">
-                                      Select an active employee
-                                    </option>
-                                    {state.employees
-                                      .filter(
-                                        (employee) =>
-                                          employee.id !== selectedEmployee.id &&
-                                          employee.status === "active",
-                                      )
-                                      .map((employee) => (
-                                        <option
-                                          key={employee.id}
-                                          value={employee.id}
-                                        >
-                                          {employee.displayName}
-                                        </option>
-                                      ))}
-                                  </select>
-                                </label>
-                                <label className="checkbox-line">
-                                  <input
-                                    type="checkbox"
-                                    checked={removeCurrentAdministrator}
-                                    onChange={(event) =>
-                                      setRemoveCurrentAdministrator(
-                                        event.currentTarget.checked,
-                                      )
-                                    }
-                                  />
-                                  Remove my own administrator access after the
-                                  transfer
-                                </label>
-                                <button
-                                  type="button"
-                                  onClick={() => void transferAdministrator()}
-                                  disabled={!replacementEmployeeId}
-                                >
-                                  Transfer administrator access
-                                </button>
-                              </div>
-                            </div>
-                          ) : null}
-                        </div>
-                      ) : null}
-                    </section>
-                  ) : null}
-
-                  {activePage === "permissions" ? (
-                    <section className="admin-section">
-                      <div className="section-heading">
-                        <div>
-                          <h3 className="visually-hidden">Permissions</h3>
-                        </div>
-                        <span>
-                          {selectedEmployee
-                            ? selectedEmployee.displayName
-                            : "Select an employee"}
-                        </span>
-                      </div>
-                      {!selectedEmployee || !permissionSet ? (
-                        <p className="empty-state">
-                          Choose a staff member to see and change what they can
-                          do.
-                        </p>
-                      ) : (
-                        <>
-                          <div
-                            className="template-actions"
-                            aria-label="Permission templates"
-                          >
-                            {state.templates.map((template) => (
-                              <div
-                                className="template-action"
-                                key={template.key}
+                                onClick={() => void selectEmployee(employee.id)}
                               >
                                 <span>
-                                  <strong>{template.displayName}</strong>
-                                  <small>
-                                    {template.active
-                                      ? `Version ${template.version} · available`
-                                      : `Version ${template.version} · inactive`}
-                                  </small>
+                                  <strong>{employee.displayName}</strong>
+                                  <small>{employee.email}</small>
                                 </span>
-                                <button
-                                  type="button"
-                                  disabled={!template.active}
-                                  onClick={() => void applyTemplate(template)}
-                                >
-                                  Apply
-                                </button>
-                                <button
-                                  type="button"
-                                  disabled={!template.active}
-                                  onClick={() =>
-                                    void deactivateTemplate(template)
-                                  }
-                                >
-                                  Deactivate
-                                </button>
+                                <span className="employee-meta">
+                                  {employee.status === "active"
+                                    ? "Active"
+                                    : "Inactive"}
+                                  , {employee.branchIds.length} branch
+                                  {employee.branchIds.length === 1 ? "" : "es"}
+                                </span>
+                              </button>
+                            </motion.li>
+                          ))}
+                        </motion.ul>
+                        {selectedEmployee ? (
+                          <div
+                            id="employee-panel"
+                            className="employee-lifecycle"
+                            aria-labelledby="employee-lifecycle-title"
+                          >
+                            <div className="section-heading employee-lifecycle__header">
+                              <div>
+                                <h4 id="employee-lifecycle-title">
+                                  {selectedEmployee.displayName}
+                                </h4>
+                                <small>{selectedEmployee.email}</small>
                               </div>
-                            ))}
-                          </div>
-                          <label className="reason-field">
-                            Reason for retiring this template
-                            <input
-                              value={templateReason}
-                              minLength={8}
-                              maxLength={500}
-                              onChange={(event) =>
-                                setTemplateReason(event.currentTarget.value)
-                              }
-                              placeholder="Describe why future template use must stop"
-                            />
-                          </label>
-                          <div className="permission-groups">
-                            {Object.entries(groupedPermissions).map(
-                              ([module, definitions]) => (
-                                <fieldset key={module}>
-                                  <legend>{module.replaceAll("_", " ")}</legend>
-                                  {definitions.map((definition) =>
-                                    definition.scope === "branch" ? (
+                              <span
+                                className={`employee-status employee-status--${selectedEmployee.status}`}
+                              >
+                                {selectedEmployee.status === "active"
+                                  ? "Active"
+                                  : "Inactive"}
+                              </span>
+                            </div>
+                            {canManagePermissions ? (
+                              <div
+                                className="lifecycle-block employee-access"
+                                aria-labelledby="employee-access-title"
+                              >
+                                <div className="lifecycle-block__heading">
+                                  <div>
+                                    <strong id="employee-access-title">
+                                      What they can do
+                                    </strong>
+                                    <small>
+                                      Tick what {selectedEmployee.displayName}{" "}
+                                      needs, then save. Saving signs them out so
+                                      it takes effect.
+                                    </small>
+                                  </div>
+                                  <span>
+                                    {permissionSet
+                                      ? `${draftGrantIds.size} selected`
+                                      : ""}
+                                  </span>
+                                </div>
+                                {!permissionSet ? (
+                                  <p className="empty-state" role="status">
+                                    Loading what they can do…
+                                  </p>
+                                ) : (
+                                  <>
+                                    {state.templates.some(
+                                      (template) => template.active,
+                                    ) ? (
                                       <div
-                                        className="permission-row"
-                                        key={definition.key}
+                                        className="template-actions"
+                                        aria-label="Add a role's usual access"
                                       >
-                                        <strong>{definition.key}</strong>
-                                        <div>
-                                          {selectedEmployee.branchIds.map(
-                                            (branchId) => {
-                                              const grant = grantFor(
-                                                definition,
-                                                selectedEmployee,
-                                                branchId,
-                                              );
-                                              const branch =
-                                                state.branches.find(
-                                                  (item) =>
-                                                    item.id === branchId,
-                                                );
-                                              const id = grantId(grant);
-                                              return (
-                                                <label key={branchId}>
+                                        <span>Add a role’s usual access:</span>
+                                        {state.templates
+                                          .filter((template) => template.active)
+                                          .map((template) => (
+                                            <button
+                                              key={template.key}
+                                              type="button"
+                                              onClick={() =>
+                                                void applyTemplate(template)
+                                              }
+                                            >
+                                              {template.displayName}
+                                            </button>
+                                          ))}
+                                      </div>
+                                    ) : null}
+                                    <div className="permission-groups">
+                                      {Object.entries(groupedPermissions).map(
+                                        ([module, definitions]) => (
+                                          <fieldset key={module}>
+                                            <legend>
+                                              {permissionModuleName(module)}
+                                            </legend>
+                                            {definitions.map((definition) =>
+                                              definition.scope === "branch" ? (
+                                                <div
+                                                  className="permission-row"
+                                                  key={definition.key}
+                                                >
+                                                  <span>
+                                                    <strong>
+                                                      {permissionName(
+                                                        definition.key,
+                                                      )}
+                                                    </strong>
+                                                    {permissionRiskNote(
+                                                      definition.risk,
+                                                    ) ? (
+                                                      <small>
+                                                        {permissionRiskNote(
+                                                          definition.risk,
+                                                        )}
+                                                      </small>
+                                                    ) : null}
+                                                  </span>
+                                                  <div>
+                                                    {selectedEmployee.branchIds.map(
+                                                      (branchId) => {
+                                                        const grant = grantFor(
+                                                          definition,
+                                                          selectedEmployee,
+                                                          branchId,
+                                                        );
+                                                        const branch =
+                                                          state.branches.find(
+                                                            (item) =>
+                                                              item.id ===
+                                                              branchId,
+                                                          );
+                                                        const id =
+                                                          grantId(grant);
+                                                        return (
+                                                          <label key={branchId}>
+                                                            <input
+                                                              type="checkbox"
+                                                              checked={draftGrantIds.has(
+                                                                id,
+                                                              )}
+                                                              onChange={(
+                                                                event,
+                                                              ) =>
+                                                                toggleGrant(
+                                                                  id,
+                                                                  event.target
+                                                                    .checked,
+                                                                )
+                                                              }
+                                                            />
+                                                            {branch?.name ??
+                                                              "Assigned branch"}
+                                                          </label>
+                                                        );
+                                                      },
+                                                    )}
+                                                  </div>
+                                                </div>
+                                              ) : (
+                                                <label
+                                                  className="permission-row"
+                                                  key={definition.key}
+                                                >
                                                   <input
                                                     type="checkbox"
                                                     checked={draftGrantIds.has(
-                                                      id,
+                                                      grantId(
+                                                        grantFor(
+                                                          definition,
+                                                          selectedEmployee,
+                                                        ),
+                                                      ),
                                                     )}
                                                     onChange={(event) =>
                                                       toggleGrant(
-                                                        id,
+                                                        grantId(
+                                                          grantFor(
+                                                            definition,
+                                                            selectedEmployee,
+                                                          ),
+                                                        ),
                                                         event.target.checked,
                                                       )
                                                     }
                                                   />
-                                                  {branch?.name ??
-                                                    "Assigned branch"}
+                                                  <span>
+                                                    <strong>
+                                                      {permissionName(
+                                                        definition.key,
+                                                      )}
+                                                    </strong>
+                                                    {permissionRiskNote(
+                                                      definition.risk,
+                                                    ) ? (
+                                                      <small>
+                                                        {permissionRiskNote(
+                                                          definition.risk,
+                                                        )}
+                                                      </small>
+                                                    ) : null}
+                                                  </span>
                                                 </label>
-                                              );
-                                            },
-                                          )}
-                                        </div>
-                                      </div>
-                                    ) : (
-                                      <label
-                                        className="permission-row"
-                                        key={definition.key}
-                                      >
-                                        <input
-                                          type="checkbox"
-                                          checked={draftGrantIds.has(
-                                            grantId(
-                                              grantFor(
-                                                definition,
-                                                selectedEmployee,
                                               ),
-                                            ),
-                                          )}
-                                          onChange={(event) =>
-                                            toggleGrant(
-                                              grantId(
-                                                grantFor(
-                                                  definition,
-                                                  selectedEmployee,
-                                                ),
-                                              ),
-                                              event.target.checked,
+                                            )}
+                                          </fieldset>
+                                        ),
+                                      )}
+                                    </div>
+                                    <button
+                                      className="primary-action"
+                                      type="button"
+                                      onClick={() => void savePermissions()}
+                                    >
+                                      Save what they can do
+                                    </button>
+                                    {state.templates.some(
+                                      (template) => template.active,
+                                    ) ? (
+                                      <details className="template-manage">
+                                        <summary>Retire a role</summary>
+                                        <p>
+                                          A retired role can’t be added to
+                                          anyone again. People who already have
+                                          its access keep it.
+                                        </p>
+                                        <label className="reason-field">
+                                          Why are you retiring it?
+                                          <input
+                                            value={templateReason}
+                                            minLength={8}
+                                            maxLength={500}
+                                            onChange={(event) =>
+                                              setTemplateReason(
+                                                event.currentTarget.value,
+                                              )
+                                            }
+                                            placeholder="For example: we no longer have a delivery team"
+                                          />
+                                        </label>
+                                        <div className="template-actions">
+                                          {state.templates
+                                            .filter(
+                                              (template) => template.active,
                                             )
-                                          }
-                                        />
-                                        <span>
-                                          <strong>{definition.key}</strong>
-                                          <small>{definition.risk} risk</small>
-                                        </span>
-                                      </label>
-                                    ),
-                                  )}
-                                </fieldset>
-                              ),
-                            )}
+                                            .map((template) => (
+                                              <button
+                                                key={template.key}
+                                                type="button"
+                                                onClick={() =>
+                                                  void deactivateTemplate(
+                                                    template,
+                                                  )
+                                                }
+                                              >
+                                                Retire {template.displayName}
+                                              </button>
+                                            ))}
+                                        </div>
+                                      </details>
+                                    ) : null}
+                                  </>
+                                )}
+                              </div>
+                            ) : null}
+                            <form
+                              key={selectedEmployee.id}
+                              className="record-editor"
+                              onSubmit={(event) =>
+                                void updateSelectedEmployee(event)
+                              }
+                            >
+                              <label>
+                                Display name
+                                <input
+                                  name="displayName"
+                                  defaultValue={selectedEmployee.displayName}
+                                  maxLength={160}
+                                  required
+                                />
+                              </label>
+                              <label>
+                                Work email
+                                <input
+                                  name="email"
+                                  type="email"
+                                  defaultValue={selectedEmployee.email}
+                                  maxLength={320}
+                                  required
+                                />
+                              </label>
+                              <button type="submit">Save profile</button>
+                            </form>
+                            <div className="lifecycle-block">
+                              <div className="lifecycle-block__heading">
+                                <div>
+                                  <strong>Branches they work at</strong>
+                                  <small>
+                                    Saving signs them out so the change takes
+                                    effect.
+                                  </small>
+                                </div>
+                                <span>{branchDraftIds.size} selected</span>
+                              </div>
+                              <div className="branch-check-grid">
+                                {state.branches
+                                  .filter(
+                                    (branch) =>
+                                      branch.restaurantId ===
+                                      selectedEmployee.restaurantId,
+                                  )
+                                  .map((branch) => (
+                                    <label key={branch.id}>
+                                      <input
+                                        type="checkbox"
+                                        checked={branchDraftIds.has(branch.id)}
+                                        onChange={(event) =>
+                                          setBranchDraftIds((current) => {
+                                            const next = new Set(current);
+                                            if (event.currentTarget.checked)
+                                              next.add(branch.id);
+                                            else next.delete(branch.id);
+                                            return next;
+                                          })
+                                        }
+                                      />
+                                      {branch.name}
+                                      {branch.status === "active"
+                                        ? ""
+                                        : " (closed)"}
+                                    </label>
+                                  ))}
+                              </div>
+                              <label className="reason-field">
+                                Reason for the change
+                                <input
+                                  value={employeeReason}
+                                  minLength={8}
+                                  maxLength={500}
+                                  onChange={(event) =>
+                                    setEmployeeReason(event.currentTarget.value)
+                                  }
+                                  placeholder="Explain the operational change"
+                                />
+                              </label>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  void replaceSelectedEmployeeBranches()
+                                }
+                              >
+                                Save branches
+                              </button>
+                            </div>
+                            <div className="lifecycle-block lifecycle-block--actions">
+                              <div className="lifecycle-block__heading">
+                                <div>
+                                  <strong>Sign-in invitation</strong>
+                                  <small>
+                                    Share the link with them. It works once and
+                                    expires.
+                                  </small>
+                                </div>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => void inviteSelectedEmployee()}
+                                disabled={selectedEmployee.status !== "active"}
+                              >
+                                Create invitation link
+                              </button>
+                              {invitationLink ? (
+                                <div className="invitation-output">
+                                  <label>
+                                    One-time invitation link
+                                    <input
+                                      value={invitationLink}
+                                      readOnly
+                                      aria-describedby="invitation-expiry"
+                                    />
+                                  </label>
+                                  <button
+                                    type="button"
+                                    onClick={() => void copyInvitationLink()}
+                                  >
+                                    Copy link
+                                  </button>
+                                  <span id="invitation-expiry">
+                                    Expires{" "}
+                                    {new Date(
+                                      invitationExpiry,
+                                    ).toLocaleString()}
+                                  </span>
+                                  <p role="status" aria-live="polite">
+                                    {copyMessage}
+                                  </p>
+                                </div>
+                              ) : null}
+                            </div>
+                            <div className="lifecycle-block lifecycle-block--actions">
+                              <div className="lifecycle-block__heading">
+                                <div>
+                                  <strong>Employee status</strong>
+                                  <small>
+                                    Deactivating signs them out everywhere.
+                                    Their history is kept.
+                                  </small>
+                                </div>
+                              </div>
+                              {selectedEmployee.status === "active" ? (
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    void deactivateSelectedEmployee()
+                                  }
+                                >
+                                  Deactivate employee
+                                </button>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    void reactivateSelectedEmployee()
+                                  }
+                                >
+                                  Reactivate employee
+                                </button>
+                              )}
+                            </div>
+                            {canManagePermissions ? (
+                              <div className="lifecycle-block lifecycle-block--critical">
+                                <div className="lifecycle-block__heading">
+                                  <div>
+                                    <strong>Administrator protection</strong>
+                                    <small>
+                                      You may be asked to sign in again. A
+                                      restaurant always keeps at least one
+                                      administrator.
+                                    </small>
+                                  </div>
+                                </div>
+                                <div className="record-editor record-editor--compact">
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      void removeSelectedAdministrator()
+                                    }
+                                  >
+                                    Remove administrator access
+                                  </button>
+                                  <label>
+                                    Replacement administrator
+                                    <select
+                                      value={replacementEmployeeId}
+                                      onChange={(event) =>
+                                        setReplacementEmployeeId(
+                                          event.currentTarget.value,
+                                        )
+                                      }
+                                    >
+                                      <option value="">
+                                        Select an active employee
+                                      </option>
+                                      {state.employees
+                                        .filter(
+                                          (employee) =>
+                                            employee.id !==
+                                              selectedEmployee.id &&
+                                            employee.status === "active",
+                                        )
+                                        .map((employee) => (
+                                          <option
+                                            key={employee.id}
+                                            value={employee.id}
+                                          >
+                                            {employee.displayName}
+                                          </option>
+                                        ))}
+                                    </select>
+                                  </label>
+                                  <label className="checkbox-line">
+                                    <input
+                                      type="checkbox"
+                                      checked={removeCurrentAdministrator}
+                                      onChange={(event) =>
+                                        setRemoveCurrentAdministrator(
+                                          event.currentTarget.checked,
+                                        )
+                                      }
+                                    />
+                                    Remove my own administrator access after the
+                                    transfer
+                                  </label>
+                                  <button
+                                    type="button"
+                                    onClick={() => void transferAdministrator()}
+                                    disabled={!replacementEmployeeId}
+                                  >
+                                    Transfer administrator access
+                                  </button>
+                                </div>
+                              </div>
+                            ) : null}
                           </div>
-                          <button
-                            className="primary-action"
-                            type="button"
-                            onClick={() => void savePermissions()}
-                          >
-                            Save permission set
-                          </button>
-                        </>
-                      )}
+                        ) : (
+                          <p className="employee-lifecycle employee-lifecycle--empty">
+                            Choose someone to change their details, their
+                            branches, and what they can do.
+                          </p>
+                        )}
+                      </div>
                     </section>
                   ) : null}
 

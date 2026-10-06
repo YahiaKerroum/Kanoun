@@ -981,7 +981,7 @@ textarea:disabled {
   .admin-stage {
     height: auto;
     min-height: 100dvh;
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     grid-template-rows: auto 1fr;
   }
   .admin-rail {
@@ -1848,4 +1848,213 @@ textarea:disabled {
 .setup-content > div > :first-child,
 .setup-content > div > :first-child > .admin-section:first-of-type {
   padding-top: 0;
+}
+
+/* ------------------------------------------------------------------ */
+/* Staff: the team on the left, the chosen person on the right.         */
+/* Profile, branches, what they can do, invitation, and status live in  */
+/* one panel, so nothing about a person is on another page.             */
+/* ------------------------------------------------------------------ */
+.staff-page .setup-content,
+.setup-content:has(.staff-page) {
+  max-width: 1360px;
+}
+
+.staff-layout {
+  display: grid;
+  grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
+  align-items: start;
+  gap: 28px;
+  margin-top: 8px;
+}
+
+.staff-layout > .employee-list {
+  position: sticky;
+  top: 16px;
+  max-height: calc(100dvh - 140px);
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+}
+
+.staff-layout > .employee-list li:first-child {
+  border-top: 0;
+}
+
+.staff-layout > .employee-list button {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-height: 0;
+  padding: 12px 14px;
+}
+
+.staff-layout > .employee-list .employee-meta {
+  text-align: left;
+}
+
+.staff-layout > .employee-list button.is-selected {
+  box-shadow: inset 3px 0 0 var(--harissa);
+}
+
+.staff-layout .employee-lifecycle {
+  margin-top: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  padding: 24px;
+  background: var(--surface);
+  scroll-margin-top: 16px;
+}
+
+.employee-lifecycle--empty {
+  display: block;
+  margin: 0;
+  color: var(--muted);
+}
+
+.employee-lifecycle__header {
+  margin-bottom: 0;
+}
+
+.employee-lifecycle__header small {
+  color: var(--muted);
+}
+
+.employee-status {
+  border: 1px solid var(--state-success-line);
+  border-radius: var(--radius-sm);
+  padding: 2px 8px;
+  color: var(--state-success-text);
+  background: var(--state-success-surface);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.employee-status--inactive {
+  border-color: var(--line-strong);
+  color: var(--muted);
+  background: var(--surface-soft);
+}
+
+.employee-access .template-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.employee-access .template-actions button {
+  min-height: 38px;
+  font-size: 13px;
+}
+
+/* The panel's text-field rule must not reach checkboxes. */
+.employee-lifecycle input[type="checkbox"] {
+  width: 18px;
+  min-height: 0;
+  height: 18px;
+  flex: none;
+  padding: 0;
+  accent-color: var(--harissa);
+}
+
+.employee-access .permission-groups legend {
+  text-transform: none;
+}
+
+.employee-access .permission-row {
+  min-height: 40px;
+  align-items: flex-start;
+  padding: 6px 0;
+}
+
+.employee-access .permission-row > input {
+  margin-top: 2px;
+}
+
+.employee-access .template-actions > span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.employee-access .permission-groups {
+  margin-bottom: 4px;
+}
+
+.employee-access .permission-row {
+  font-size: 14px;
+}
+
+.employee-access .permission-row strong {
+  font-weight: 650;
+}
+
+.employee-access .permission-row small {
+  color: var(--state-warning-text);
+  font-size: 12px;
+}
+
+.employee-access > .primary-action {
+  justify-self: start;
+}
+
+.template-manage summary {
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.template-manage[open] {
+  display: grid;
+  gap: 12px;
+}
+
+.template-manage p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.staff-layout > *,
+.staff-page {
+  min-width: 0;
+}
+
+@media (max-width: 1050px) {
+  .staff-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .staff-layout .employee-lifecycle {
+    padding: 18px;
+  }
+
+  .lifecycle-block__heading > span {
+    white-space: nowrap;
+  }
+
+  .staff-layout .record-editor,
+  .staff-layout .invitation-output {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .staff-layout > .employee-list {
+    position: static;
+    max-height: none;
+  }
+
+  .employee-access .permission-groups {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  /* Clear the sticky top bar when the panel scrolls into view. */
+  .staff-layout .employee-lifecycle {
+    scroll-margin-top: 220px;
+  }
 }
