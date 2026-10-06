@@ -158,7 +158,7 @@ if (existsSync(join(vendoredPostgres, "bin"))) {
     for (const folder of ["bin", "lib", "share"]) {
       cpSync(join(vendoredPostgres, folder), join(bundledPostgres, folder), {
         recursive: true,
-        // pgAdmin/StackBuilder ship in the same zip; MISE needs neither.
+        // pgAdmin/StackBuilder ship in the same zip; Kanoun needs neither.
         filter: (source) => {
           const path = source.replaceAll("\\", "/");
           return (

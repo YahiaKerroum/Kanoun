@@ -8,12 +8,8 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { z } from "zod";
-import { motion } from "framer-motion";
-import {
-  actionButtonVariants,
-  cardHoverVariants,
-  staggerContainerVariants,
-} from "./motion.js";
+import { AnimatePresence, motion } from "framer-motion";
+import { settle } from "./motion.js";
 
 const kitchenItemSchema = z.object({
   id: z.uuid(),
@@ -343,47 +339,51 @@ export function KitchenWorkspace(props: {
     );
   }
 
+  const updatedAt =
+    state.kind === "ready" || state.kind === "stale"
+      ? new Intl.DateTimeFormat(undefined, {
+          hour: "2-digit",
+          minute: "2-digit",
+        }).format(state.updatedAt)
+      : null;
+
   return (
     <div className="workspace__content kitchen-workspace">
       <header className="kitchen-heading">
-        <div>
-          <h2>Kitchen</h2>
-          <p>
-            Tickets stay together until the whole order is ready. Updates every
-            two seconds.
-          </p>
-        </div>
-        <motion.button
+        <h2 className="visually-hidden">Kitchen</h2>
+        <p>
+          Tickets stay together until the whole order is ready. The board
+          updates on its own every few seconds.
+        </p>
+        <button
+          className="workspace-action workspace-action--quiet"
           type="button"
           onClick={() => void reload()}
-          whileHover="hover"
-          whileTap="tap"
-          variants={actionButtonVariants}
         >
-          <RefreshCw aria-hidden="true" size={18} />
+          <RefreshCw aria-hidden="true" size={17} />
           Refresh
-        </motion.button>
+        </button>
       </header>
 
-      <div className="kitchen-status" aria-live="polite">
+      <p className="kitchen-status" aria-live="polite">
         {state.kind === "loading"
-          ? "Loading the branch kitchen queue…"
+          ? "Loading the kitchen board…"
           : state.kind === "error"
             ? state.message
-            : `${groups.length} active order${groups.length === 1 ? "" : "s"}, updated ${state.updatedAt.toLocaleTimeString()}`}
-        {feedback ? ` ${feedback}` : ""}
-      </div>
+            : `${groups.length} ${groups.length === 1 ? "order" : "orders"} in the kitchen, updated ${updatedAt ?? ""}.`}
+        {feedback ? <strong> {feedback}</strong> : null}
+      </p>
       {targetOrderId ? (
         selectedGroup ? (
           <p className="kitchen-route-status" role="status">
-            Selected kitchen handoff: {selectedGroup.reference} at table{" "}
-            {selectedGroup.tableCode}.
+            Showing {selectedGroup.reference} for table{" "}
+            {selectedGroup.tableCode} first.
           </p>
         ) : (
           <p className="kitchen-route-status" role="status">
-            This order is no longer in the active kitchen queue.{" "}
+            This order has left the kitchen.{" "}
             <a href={`/orders?order=${encodeURIComponent(targetOrderId)}`}>
-              Open order
+              Open the order
             </a>
           </p>
         )
@@ -393,8 +393,7 @@ export function KitchenWorkspace(props: {
         <div className="kitchen-stale" role="status">
           <CircleAlert aria-hidden="true" size={18} />
           <span>
-            Live refresh failed. This is the last verified queue and may be
-            stale. {state.message}
+            Couldn’t refresh, so this board may be out of date. {state.message}
           </span>
         </div>
       ) : null}
@@ -402,22 +401,20 @@ export function KitchenWorkspace(props: {
       {state.kind === "error" ? (
         <section className="kitchen-empty">
           <CircleAlert aria-hidden="true" size={26} />
-          <h3>Kitchen queue unavailable</h3>
+          <h3>The kitchen board didn’t load</h3>
           <p>{state.message}</p>
-          <motion.button
+          <button
+            className="workspace-action"
             type="button"
             onClick={() => void reload()}
-            whileHover="hover"
-            whileTap="tap"
-            variants={actionButtonVariants}
           >
             Try again
-          </motion.button>
+          </button>
         </section>
       ) : state.kind === "loading" ? (
         <section className="kitchen-empty" aria-busy="true">
           <ChefHat aria-hidden="true" size={28} />
-          <h3>Preparing the kitchen display</h3>
+          <h3>Loading the kitchen board</h3>
         </section>
       ) : (
         <>
@@ -427,81 +424,80 @@ export function KitchenWorkspace(props: {
             aria-live="polite"
           >
             <header>
-              <div>
-                <h3 id="ready-orders-title">
-                  {readyGroups.length} order
-                  {readyGroups.length === 1 ? "" : "s"} to collect
-                </h3>
-              </div>
-              <CheckCheck aria-hidden="true" size={25} />
+              <CheckCheck aria-hidden="true" size={22} />
+              <h3 id="ready-orders-title">
+                {readyGroups.length === 0
+                  ? "Nothing to collect"
+                  : `${readyGroups.length} ${readyGroups.length === 1 ? "order" : "orders"} ready to collect`}
+              </h3>
             </header>
             {readyGroups.length === 0 ? (
               <p className="ready-orders__empty">
-                Ready orders appear here with their reference and table.
+                When every dish in an order is ready, it moves here for the
+                floor to take out.
               </p>
             ) : (
-              <motion.div
-                className="ready-order-grid"
-                initial="initial"
-                animate="enter"
-                variants={staggerContainerVariants}
-              >
-                {orderedReadyGroups.map((group) => (
-                  <motion.article
-                    key={group.orderId}
-                    className={
-                      group.orderId === targetOrderId
-                        ? "kitchen-order--selected"
-                        : undefined
-                    }
-                    variants={cardHoverVariants}
-                    whileHover="hover"
-                  >
-                    <div>
-                      <strong>{group.reference}</strong>
-                      <span>Table {group.tableCode}</span>
-                    </div>
-                    <a
-                      href={`/orders?order=${encodeURIComponent(group.orderId)}`}
-                    >
-                      Open order detail
-                    </a>
-                    <span>
-                      {group.items.reduce(
-                        (sum, item) => sum + item.quantity,
-                        0,
-                      )}{" "}
-                      item
-                      {group.items.length === 1 ? "" : "s"}
-                    </span>
-                    {props.canServe ? (
-                      <motion.button
-                        type="button"
-                        disabled={pendingId === group.orderId}
-                        onClick={() =>
-                          void runAction(
-                            group.orderId,
-                            () => markServed(group),
-                            `${group.reference} was marked served.`,
-                          )
+              <ul className="ready-order-grid">
+                <AnimatePresence initial={false}>
+                  {orderedReadyGroups.map((group) => {
+                    const count = group.items.reduce(
+                      (sum, item) => sum + item.quantity,
+                      0,
+                    );
+                    return (
+                      <motion.li
+                        key={group.orderId}
+                        layout
+                        className={
+                          group.orderId === targetOrderId
+                            ? "kitchen-order--selected"
+                            : undefined
                         }
-                        whileHover="hover"
-                        whileTap="tap"
-                        variants={actionButtonVariants}
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, transition: { duration: 0.12 } }}
+                        transition={settle}
                       >
-                        <Utensils aria-hidden="true" size={18} />
-                        {pendingId === group.orderId
-                          ? "Marking served…"
-                          : "Collect · mark served"}
-                      </motion.button>
-                    ) : (
-                      <span className="kitchen-permission-note">
-                        Serving permission required
-                      </span>
-                    )}
-                  </motion.article>
-                ))}
-              </motion.div>
+                        <div className="ready-order__who">
+                          <strong>{group.tableCode}</strong>
+                          <a
+                            className="kanoun-ticket__face"
+                            href={`/orders?order=${encodeURIComponent(group.orderId)}`}
+                          >
+                            {group.reference}
+                          </a>
+                        </div>
+                        <span className="ready-order__count">
+                          {count} {count === 1 ? "dish" : "dishes"}
+                        </span>
+                        {props.canServe ? (
+                          <button
+                            type="button"
+                            className="kitchen-action kitchen-action--serve"
+                            disabled={pendingId === group.orderId}
+                            onClick={() =>
+                              void runAction(
+                                group.orderId,
+                                () => markServed(group),
+                                `${group.reference} served.`,
+                              )
+                            }
+                          >
+                            <Utensils aria-hidden="true" size={17} />
+                            {pendingId === group.orderId
+                              ? "Marking served…"
+                              : "Mark served"}
+                          </button>
+                        ) : (
+                          <span className="kitchen-permission-note">
+                            Floor staff serve this order
+                          </span>
+                        )}
+                      </motion.li>
+                    );
+                  })}
+                </AnimatePresence>
+              </ul>
             )}
           </section>
 
@@ -510,131 +506,121 @@ export function KitchenWorkspace(props: {
             aria-labelledby="kitchen-board-title"
           >
             <header>
-              <div>
-                <h3 id="kitchen-board-title">Waiting and preparing</h3>
-              </div>
+              <h3 id="kitchen-board-title">On the pass</h3>
               <span>
                 {preparingGroups.length}{" "}
-                {preparingGroups.length === 1 ? "order" : "orders"}
+                {preparingGroups.length === 1 ? "ticket" : "tickets"}
               </span>
             </header>
             {preparingGroups.length === 0 ? (
               <div className="kitchen-empty">
                 <Clock3 aria-hidden="true" size={26} />
-                <h4>No items waiting for preparation</h4>
-                <p>New accepted orders will appear automatically.</p>
+                <h4>No tickets waiting</h4>
+                <p>New orders print here as soon as they are accepted.</p>
               </div>
             ) : (
-              <motion.div
-                className="kitchen-order-grid"
-                initial="initial"
-                animate="enter"
-                variants={staggerContainerVariants}
-              >
-                {orderedPreparingGroups.map((group) => (
-                  <motion.article
-                    className={`kitchen-order${
-                      group.orderId === targetOrderId
-                        ? " kitchen-order--selected"
-                        : ""
-                    }`}
-                    key={group.orderId}
-                    variants={cardHoverVariants}
-                    whileHover="hover"
-                  >
-                    <header>
-                      <div>
-                        <strong>{group.reference}</strong>
-                        <span>Table {group.tableCode}</span>
-                      </div>
-                      <a
-                        href={`/orders?order=${encodeURIComponent(group.orderId)}`}
-                      >
-                        Open order detail
-                      </a>
-                      <span className="kitchen-elapsed">
-                        <Clock3 aria-hidden="true" size={16} />
-                        {elapsed(group.submittedAt, now)}
-                      </span>
-                    </header>
-                    <ul>
-                      {group.items.map((item) => (
-                        <li key={item.id}>
-                          <div className="kitchen-item__title">
-                            <strong>
-                              {item.quantity}× {item.itemName}
-                            </strong>
-                            <span
-                              className={`kitchen-state kitchen-state--${item.state}`}
-                            >
-                              {item.state === "queued"
-                                ? item.changeKind === "corrected"
-                                  ? "Changed · queued"
-                                  : "New · queued"
-                                : item.state}
+              <div className="kitchen-order-grid">
+                <AnimatePresence initial={false}>
+                  {orderedPreparingGroups.map((group) => (
+                    <motion.article
+                      className={`kitchen-order kanoun-ticket${
+                        group.orderId === targetOrderId
+                          ? " kitchen-order--selected"
+                          : ""
+                      }`}
+                      key={group.orderId}
+                      layout="position"
+                      initial={ticketPrint.initial}
+                      animate={ticketPrint.enter}
+                      exit={{ opacity: 0, transition: { duration: 0.12 } }}
+                      aria-label={`${group.reference}, table ${group.tableCode}`}
+                    >
+                      <header>
+                        <strong className="kitchen-order__table">
+                          {group.tableCode}
+                        </strong>
+                        <span className="kitchen-order__meta kanoun-ticket__face">
+                          <a
+                            href={`/orders?order=${encodeURIComponent(group.orderId)}`}
+                          >
+                            {group.reference}
+                          </a>
+                          <span className="kitchen-elapsed">
+                            <Clock3 aria-hidden="true" size={14} />
+                            {elapsed(group.submittedAt, now)}
+                          </span>
+                        </span>
+                      </header>
+                      <ul>
+                        {group.items.map((item) => (
+                          <li
+                            key={item.id}
+                            className={`kitchen-item kitchen-item--${item.state}`}
+                          >
+                            <span className="kitchen-item__quantity kanoun-ticket__face">
+                              {item.quantity}×
                             </span>
-                          </div>
-                          {item.selectedOptions.length > 0 ? (
-                            <p>
-                              {item.selectedOptions
-                                .map((option) => option.optionName)
-                                .join(" · ")}
-                            </p>
-                          ) : null}
-                          {item.note ? (
-                            <p className="kitchen-note">
-                              <strong>Note:</strong> {item.note}
-                            </p>
-                          ) : null}
-                          <div className="kitchen-item__footer">
-                            <span>Waiting {elapsed(item.queuedAt, now)}</span>
+                            <div className="kitchen-item__body">
+                              <strong>{item.itemName}</strong>
+                              {item.selectedOptions.length > 0 ? (
+                                <p>
+                                  {item.selectedOptions
+                                    .map((option) => option.optionName)
+                                    .join(", ")}
+                                </p>
+                              ) : null}
+                              {item.note ? (
+                                <p className="kitchen-note">{item.note}</p>
+                              ) : null}
+                              <span className="kitchen-state">
+                                {item.state === "preparing"
+                                  ? `Preparing for ${elapsed(item.startedAt ?? item.queuedAt, now)}`
+                                  : item.state === "ready"
+                                    ? "Ready"
+                                    : item.changeKind === "corrected"
+                                      ? `Changed, waiting ${elapsed(item.queuedAt, now)}`
+                                      : `Waiting ${elapsed(item.queuedAt, now)}`}
+                              </span>
+                            </div>
                             {props.canUpdate && item.state === "queued" ? (
-                              <motion.button
+                              <button
                                 type="button"
+                                className="kitchen-action"
                                 disabled={pendingId === item.id}
                                 onClick={() =>
                                   void runAction(
                                     item.id,
                                     () => updateKitchenItem(item, "start"),
-                                    `${item.itemName} is preparing.`,
+                                    `${item.itemName} started.`,
                                   )
                                 }
-                                whileHover="hover"
-                                whileTap="tap"
-                                variants={actionButtonVariants}
                               >
-                                {pendingId === item.id
-                                  ? "Starting…"
-                                  : "Start preparation"}
-                              </motion.button>
+                                {pendingId === item.id ? "Starting…" : "Start"}
+                              </button>
                             ) : props.canUpdate &&
                               item.state === "preparing" ? (
-                              <motion.button
+                              <button
                                 type="button"
+                                className="kitchen-action kitchen-action--ready"
                                 disabled={pendingId === item.id}
                                 onClick={() =>
                                   void runAction(
                                     item.id,
                                     () => updateKitchenItem(item, "ready"),
-                                    `${item.itemName} is ready.`,
+                                    `${item.itemName} ready.`,
                                   )
                                 }
-                                whileHover="hover"
-                                whileTap="tap"
-                                variants={actionButtonVariants}
                               >
-                                {pendingId === item.id
-                                  ? "Finishing…"
-                                  : "Mark ready"}
-                              </motion.button>
+                                {pendingId === item.id ? "Finishing…" : "Ready"}
+                              </button>
                             ) : null}
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  </motion.article>
-                ))}
-              </motion.div>
+                          </li>
+                        ))}
+                      </ul>
+                    </motion.article>
+                  ))}
+                </AnimatePresence>
+              </div>
             )}
           </section>
         </>
@@ -642,3 +628,14 @@ export function KitchenWorkspace(props: {
     </div>
   );
 }
+
+/* A new ticket feeds down out of the printer; nothing else on the board moves. */
+const ticketPrint = {
+  initial: { opacity: 0, y: -10, clipPath: "inset(0 0 100% 0)" },
+  enter: {
+    opacity: 1,
+    y: 0,
+    clipPath: "inset(0 0 0% 0)",
+    transition: { duration: 0.34, ease: [0.22, 1, 0.36, 1] },
+  },
+} as const;

@@ -801,7 +801,7 @@ export function MenuTablesAdministration({
     if (!issuedQr) return;
     const printWindow = window.open(
       "",
-      "mise-qr-print",
+      "kanoun-qr-print",
       "width=720,height=840",
     );
     if (!printWindow) {
@@ -809,7 +809,7 @@ export function MenuTablesAdministration({
       return;
     }
     const document = printWindow.document;
-    document.title = "Table QR code — MISE";
+    document.title = "Table QR code — Kanoun";
     const main = document.createElement("main");
     main.style.cssText =
       "font-family:system-ui,sans-serif;text-align:center;padding:40px;color:#1e1b14";
@@ -1270,10 +1270,9 @@ function MenuAdministration({
                       dish.basePrice.amount,
                       dish.basePrice.currency,
                     )}
-                    {" · "}
                     {dish.status === "active" && dish.available
-                      ? "available"
-                      : "unavailable"}
+                      ? ""
+                      : ", sold out"}
                   </span>
                 </button>
               ))}
@@ -1811,8 +1810,13 @@ function TablesAdministration({
                   <h4>{selectedTable.code}</h4>
                 </div>
                 <span>
-                  {selectedTable.derivedState.replaceAll("_", " ")} · v
-                  {selectedTable.version}
+                  {selectedTable.derivedState === "occupied"
+                    ? "Seated"
+                    : selectedTable.derivedState === "available"
+                      ? "Free"
+                      : selectedTable.derivedState === "out_of_service"
+                        ? "Out of service"
+                        : "Inactive"}
                 </span>
               </div>
               <form
@@ -1974,8 +1978,8 @@ function TablesAdministration({
                             : "Branch browse QR"}
                         </strong>
                         <small>
-                          {qrCode.status} · issued{" "}
-                          {formatDate(qrCode.createdAtUtc)}
+                          {qrCode.status === "active" ? "In use" : "Revoked"},
+                          issued {formatDate(qrCode.createdAtUtc)}
                         </small>
                         {qrCode.revokedReason ? (
                           <small>Reason: {qrCode.revokedReason}</small>

@@ -1,6 +1,6 @@
-# MISE Desktop
+# Kanoun Desktop
 
-The Windows app that runs MISE without any other installs. A Tauri shell
+The Windows app that runs Kanoun without any other installs. A Tauri shell
 (`src-tauri/`) shows the launcher and the workspace windows; a Node sidecar
 runs the runtime host (`runtime/`), which starts PostgreSQL in local mode,
 migrates the database, and runs the API, the worker, and the three web apps.
@@ -40,7 +40,7 @@ corepack pnpm build:desktop   # build the runtime, then the NSIS installer
 ```
 
 The installer is written to
-`src-tauri/target/release/bundle/nsis/MISE_<version>_x64-setup.exe`.
+`src-tauri/target/release/bundle/nsis/Kanoun_<version>_x64-setup.exe`.
 It installs per user and needs no administrator rights.
 
 ## Where things live on a user's machine
@@ -61,7 +61,7 @@ local secrets; treat the folder as sensitive.
 
 ## Behaviour worth knowing
 
-- **Closing the launcher quits MISE.** The shell hides the windows, asks the
+- **Closing the launcher quits Kanoun.** The shell hides the windows, asks the
   host to stop, and waits; the host stops the API, the worker, and then
   PostgreSQL. If the shell itself dies, the host notices its stdin closing and
   does the same. A cluster left running by a crash is reused on next start.

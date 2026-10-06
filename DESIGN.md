@@ -1,12 +1,23 @@
-# MISE Design System
+# Kanoun Design System
 
-The source of truth for how MISE looks and reads. Tokens live in
+The source of truth for how Kanoun looks and reads. Tokens live in
 `apps/web/design-system.css` and are shared by the staff, back-office, and
-guest apps and by the desktop launcher.
+guest apps and by the desktop launcher. Brand assets live in
+`apps/web/brand/`.
 
 ## 1. Atmosphere & Identity
 
-MISE serves restaurants, so it borrows from the food: an Algerian spice
+A _kanoun_ is the clay brazier at the centre of an Algerian kitchen, the
+thing everything else is cooked around. The product takes its name and its
+mark from it: a brazier seen from the front, with its rim, three pot-rests, a
+horseshoe-arch opening, and a saffron ember inside (`kanoun-mark.svg` and
+`kanoun-ember.svg`, drawn on a 64-unit grid). The mark is plate-white on the
+harissa rail and harissa on light ground; the ember is always saffron. The
+app icon (`kanoun-icon.svg`, `apps/desktop/src-tauri/icons/mark.svg`) puts the
+white mark on a harissa tile. The wordmark is "Kanoun" in Young Serif, never
+set in capitals.
+
+Kanoun serves restaurants, so it borrows from the food: an Algerian spice
 market. Harissa paprika marks the brand and the main action, semolina and
 warm plate-white make the working surfaces, date-brown ink carries the text,
 saffron flags what needs attention, and olive confirms what is done.
@@ -37,16 +48,22 @@ component styles keep resolving; prefer the named tokens in new code.
 
 ## 3. Typography
 
-| Role      | Face                            | Notes                                                              |
-| --------- | ------------------------------- | ------------------------------------------------------------------ |
-| Display   | Young Serif 400                 | Page titles, section titles, dish names, the wordmark              |
-| Interface | Archivo (variable)              | Body, labels, buttons, tables; labels may use width 108%           |
-| Figures   | Archivo digits ("MISE Figures") | Digits inside display text, so prices and order numbers stay level |
+| Role      | Face                                     | Notes                                                                         |
+| --------- | ---------------------------------------- | ----------------------------------------------------------------------------- |
+| Display   | Young Serif 400                          | Page titles, section titles, dish names, table codes, the wordmark            |
+| Interface | Schibsted Grotesk (variable, 400–900)    | Body, labels, buttons, tables                                                 |
+| Figures   | Schibsted digits only ("Kanoun Figures") | Digits in display text, and every number that must line up (`--font-figures`) |
+| Ticket    | IBM Plex Mono 500/600                    | Kitchen tickets and the guest's receipt only (`.kanoun-ticket__face`)         |
 
-Young Serif has old-style figures; the `MISE Figures` face replaces digits
-with Archivo's lining, tabular ones wherever the display font is used. Body
-text is never smaller than 13px; labels are sentence case, never all caps or
-tracked out. Fonts are self-hosted so the desktop app renders offline.
+Young Serif has old-style figures, so the display stack starts with
+`Kanoun Figures`, a 2.5 KB face holding Schibsted Grotesk's tabular digits.
+Do not use `font-variant-numeric: tabular-nums` on Schibsted text: its `tnum`
+feature also widens full stops, commas, and colons ("3 , 100 . 00"). Numbers
+that must align switch family to `var(--font-figures)` instead. The ticket
+face stands in for a thermal printer and appears nowhere else; it is not for
+small data labels. Body text is never smaller than 13px; labels are sentence
+case, never all caps or tracked out. Fonts are self-hosted so the desktop app
+renders offline.
 
 ## 4. Spacing & Layout
 
@@ -70,8 +87,8 @@ hidden. No eyebrow labels above headings and no decorative numbering.
 
 ### Harissa rail
 
-- **Structure:** brand mark (an eight-point star in CSS, `.mise-mark`), the
-  wordmark, then navigation. The active item is a plate-white tile with ink
+- **Structure:** brand mark (`.kanoun-mark`, the brazier drawn with two CSS
+  masks), the wordmark, then navigation. The active item is a plate-white tile with ink
   text; other items are white at 80% opacity.
 - **States:** default, hover (white at 9% overlay), focus (saffron ring),
   current (`aria-current="page"`).
@@ -96,13 +113,32 @@ hidden. No eyebrow labels above headings and no decorative numbering.
 - **Accessibility:** radio-group storage choice, visible labels on every
   field, validation only after the user has interacted, live status region.
 
-### Dish card
+### Kitchen ticket and guest receipt
 
-- **Structure:** optional photograph, dish name in Young Serif with the price
-  beside it, description, options, quantity, note, and an add action.
-- **States:** available, unavailable, options expanded, disabled add.
-- **Layout:** responsive grid item; images keep their aspect ratio with
-  `object-fit: cover` and meaningful alternative text.
+- **Structure:** a plate-white slip with a torn bottom edge (`.kanoun-ticket`,
+  a CSS mask), a dashed rule under the header, and the ticket face for the
+  order reference, quantities, and times. On the kitchen board the table code
+  leads in large ticket type; each line has one action (Start, then Ready in
+  olive). Ready lines are struck through in olive.
+- **States:** waiting, preparing (saffron text), ready, changed by a
+  correction, selected from a link (saffron outline).
+- **Motion:** a new ticket feeds down out of the printer once
+  (`clip-path` reveal, 340 ms); tickets already on the board never animate.
+  The guest's receipt prints the same way once, after the order is sent.
+
+### Guest menu row and dish sheet
+
+- **Structure:** the menu reads like a printed one: dish name in Young Serif,
+  a dotted leader, the price in figures, two lines of description, and the
+  names of any choices. A round "+" adds a dish with no required choices in
+  one tap and then shows how many are in the order; tapping the dish opens a
+  sheet with the photograph, choices, note, a quantity stepper, and "Add 2 for
+  DZD 700".
+- **Layout:** one column up to 640px, sticky header and category tabs that
+  follow the scroll, a harissa order bar fixed to the bottom. Sheets rise from
+  the bottom on phones and centre on larger screens.
+- **States:** available, sold out (dimmed, no add), in the order (count on the
+  button), choices required.
 
 ## Writing
 
@@ -194,10 +230,14 @@ access ("Ask a manager to add order access").
 
 ## 6. Motion & Interaction
 
-Use only `transform` and `opacity`; controls respond in 160–200ms. Motion
-answers an action (opening, confirming, switching pages); nothing animates on
-its own except the launcher's starting indicator. `prefers-reduced-motion`
-removes non-essential transitions.
+Motion answers an action: a page settling after navigation (6px, 200 ms), the
+active rail item sliding to its new place, a sheet rising, a count changing
+on the order bar. Use short ease-out tweens (`--ease-out`,
+`--duration-fast` 140 ms, `--duration` 200 ms, `--duration-slow` 320 ms);
+never springs, overshoot, or hover growth. Pressing a control settles it to
+97% in CSS. The one orchestrated moment is a ticket printing. Nothing
+animates on its own except the launcher's starting indicator and the guest's
+loading ember. `prefers-reduced-motion` removes non-essential transitions.
 
 ## 7. Depth & Surface
 

@@ -9,11 +9,7 @@ import {
 import { z } from "zod";
 import { motion } from "framer-motion";
 import { OrderOperations } from "./OrderOperations.js";
-import {
-  actionButtonVariants,
-  fadeUpItemVariants,
-  staggerContainerVariants,
-} from "./motion.js";
+import { fadeUpItemVariants, staggerContainerVariants } from "./motion.js";
 
 const moneySchema = z.object({
   amount: z.string().regex(/^-?\d+(?:\.\d{1,2})?$/),
@@ -421,6 +417,12 @@ export function OrdersWorkspace(props: {
     setAppliedFilters(parsed.data);
   }
 
+  /** Quick filters apply as soon as they change; the draft follows along. */
+  function applyNow(patch: Partial<OrderFilters>) {
+    setFilters((current) => ({ ...current, ...patch }));
+    setAppliedFilters((current) => ({ ...current, ...patch }));
+  }
+
   const tableItems =
     tables.kind === "ready" || tables.kind === "stale" ? tables.data : [];
 
@@ -429,158 +431,170 @@ export function OrdersWorkspace(props: {
       <header className="orders-heading">
         <div>
           <h2>Orders</h2>
-          <p>
-            Every open order in this branch, with how long it has been waiting.
-          </p>
+          <p>Every order in this branch, with how long it has been waiting.</p>
         </div>
         {props.canCreate ? (
-          <motion.button
+          <button
             ref={entryTrigger}
             className="orders-primary-action"
             type="button"
             onClick={() => setEntryOpen(true)}
-            whileHover="hover"
-            whileTap="tap"
-            variants={actionButtonVariants}
           >
             <Plus aria-hidden="true" size={18} />
             Create order
-          </motion.button>
+          </button>
         ) : null}
       </header>
 
       {props.canView ? (
         <>
           <form className="order-filters" onSubmit={applyFilters}>
-            <label>
-              <span>Approval</span>
+            <div
+              className="order-view-switch"
+              role="radiogroup"
+              aria-label="Which orders"
+            >
+              {(
+                [
+                  ["active", "Open"],
+                  ["completed", "Completed"],
+                  ["cancelled", "Cancelled"],
+                ] as const
+              ).map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  role="radio"
+                  aria-checked={appliedFilters.closure === value}
+                  onClick={() => applyNow({ closure: value })}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <label className="order-filter-inline">
+              <span className="visually-hidden">Table</span>
               <select
-                value={filters.approval}
-                onChange={(event) => {
-                  const value = event.currentTarget.value;
-                  setFilters((current) => ({
-                    ...current,
-                    approval: value,
-                  }));
-                }}
+                value={appliedFilters.tableId}
+                disabled={tableItems.length === 0}
+                title={
+                  tableItems.length === 0
+                    ? "Table choices didn’t load. Refresh to filter by table."
+                    : undefined
+                }
+                onChange={(event) =>
+                  applyNow({ tableId: event.currentTarget.value })
+                }
               >
-                <option value="">All approval states</option>
-                <option value="submitted">Submitted</option>
-                <option value="accepted">Accepted</option>
-                <option value="rejected">Rejected</option>
+                <option value="">Every table</option>
+                {tableItems.map((table) => (
+                  <option key={table.id} value={table.id}>
+                    Table {table.code}
+                  </option>
+                ))}
               </select>
             </label>
-            <label>
-              <span>Fulfilment</span>
+            <label className="order-filter-inline">
+              <span className="visually-hidden">Kitchen progress</span>
               <select
-                value={filters.fulfilment}
-                onChange={(event) => {
-                  const value = event.currentTarget.value;
-                  setFilters((current) => ({
-                    ...current,
-                    fulfilment: value,
-                  }));
-                }}
+                value={appliedFilters.fulfilment}
+                onChange={(event) =>
+                  applyNow({ fulfilment: event.currentTarget.value })
+                }
               >
-                <option value="">All fulfilment states</option>
+                <option value="">Any progress</option>
                 <option value="not_started">Not started</option>
                 <option value="preparing">Preparing</option>
-                <option value="ready">Ready</option>
+                <option value="ready">Ready to serve</option>
                 <option value="served">Served</option>
               </select>
             </label>
-            <label>
-              <span>Table</span>
-              {tableItems.length > 0 ? (
-                <select
-                  value={filters.tableId}
-                  onChange={(event) => {
-                    const value = event.currentTarget.value;
-                    setFilters((current) => ({
-                      ...current,
-                      tableId: value,
-                    }));
-                  }}
-                >
-                  <option value="">All tables</option>
-                  {tableItems.map((table) => (
-                    <option key={table.id} value={table.id}>
-                      {table.code}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <span className="filter-unavailable">
-                  Table choices are unavailable. Reload to filter by table.
-                </span>
-              )}
-            </label>
-            <label>
-              <span>Closure</span>
-              <select
-                value={filters.closure}
-                onChange={(event) => {
-                  const value = event.currentTarget.value;
-                  setFilters((current) => ({ ...current, closure: value }));
-                }}
-              >
-                <option value="active">Active</option>
-                <option value="completed">Completed</option>
-                <option value="cancelled">Cancelled</option>
-              </select>
-            </label>
-            <label>
-              <span>Submitted from</span>
-              <input
-                type="datetime-local"
-                value={filters.submittedFrom}
-                onChange={(event) => {
-                  const value = event.currentTarget.value;
-                  setFilters((current) => ({
-                    ...current,
-                    submittedFrom: value,
-                  }));
-                }}
-              />
-            </label>
-            <label>
-              <span>Submitted to</span>
-              <input
-                type="datetime-local"
-                value={filters.submittedTo}
-                onChange={(event) => {
-                  const value = event.currentTarget.value;
-                  setFilters((current) => ({
-                    ...current,
-                    submittedTo: value,
-                  }));
-                }}
-              />
-            </label>
-            <div className="order-filter-actions">
-              <button type="submit">Apply filters</button>
-              <button
-                type="button"
-                onClick={() =>
-                  setFilters((current) => ({
-                    ...current,
-                    createdByEmployeeId: props.employeeId,
-                  }))
-                }
-              >
-                Created by me
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setFilters(initialFilters);
-                  setAppliedFilters(initialFilters);
-                  setFilterError(null);
-                }}
-              >
-                Clear
-              </button>
-            </div>
+            <button
+              className="order-filter-toggle"
+              type="button"
+              aria-pressed={appliedFilters.createdByEmployeeId !== ""}
+              onClick={() =>
+                applyNow({
+                  createdByEmployeeId:
+                    appliedFilters.createdByEmployeeId === ""
+                      ? props.employeeId
+                      : "",
+                })
+              }
+            >
+              Created by me
+            </button>
+            <details className="order-filter-more">
+              <summary>
+                More filters
+                {appliedFilters.approval ||
+                appliedFilters.submittedFrom ||
+                appliedFilters.submittedTo ? (
+                  <span className="order-filter-more__dot">On</span>
+                ) : null}
+              </summary>
+              <div className="order-filter-more__panel">
+                <label>
+                  <span>Approval</span>
+                  <select
+                    value={filters.approval}
+                    onChange={(event) => {
+                      const value = event.currentTarget.value;
+                      setFilters((current) => ({
+                        ...current,
+                        approval: value,
+                      }));
+                    }}
+                  >
+                    <option value="">Any approval</option>
+                    <option value="submitted">Waiting for approval</option>
+                    <option value="accepted">Accepted</option>
+                    <option value="rejected">Rejected</option>
+                  </select>
+                </label>
+                <label>
+                  <span>Sent after</span>
+                  <input
+                    type="datetime-local"
+                    value={filters.submittedFrom}
+                    onChange={(event) => {
+                      const value = event.currentTarget.value;
+                      setFilters((current) => ({
+                        ...current,
+                        submittedFrom: value,
+                      }));
+                    }}
+                  />
+                </label>
+                <label>
+                  <span>Sent before</span>
+                  <input
+                    type="datetime-local"
+                    value={filters.submittedTo}
+                    onChange={(event) => {
+                      const value = event.currentTarget.value;
+                      setFilters((current) => ({
+                        ...current,
+                        submittedTo: value,
+                      }));
+                    }}
+                  />
+                </label>
+                <div className="order-filter-actions">
+                  <button type="submit">Apply</button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFilters(initialFilters);
+                      setAppliedFilters(initialFilters);
+                      setFilterError(null);
+                    }}
+                  >
+                    Clear all filters
+                  </button>
+                </div>
+              </div>
+            </details>
             {filterError ? (
               <p className="order-filter-error" role="alert">
                 {filterError}
@@ -737,7 +751,7 @@ function OrdersList(props: {
     return (
       <div className="orders-loading" role="status">
         <RefreshCw className="is-spinning" aria-hidden="true" size={20} />
-        Loading active orders…
+        Loading orders…
       </div>
     );
   }
@@ -745,10 +759,14 @@ function OrdersList(props: {
     return (
       <section className="orders-boundary">
         <CircleAlert aria-hidden="true" size={25} />
-        <h3>Active orders could not be loaded</h3>
+        <h3>Orders didn’t load</h3>
         <p>{state.message}</p>
-        <button type="button" onClick={props.onReload}>
-          Reload orders
+        <button
+          className="workspace-action"
+          type="button"
+          onClick={props.onReload}
+        >
+          Try again
         </button>
       </section>
     );
@@ -759,12 +777,24 @@ function OrdersList(props: {
       <header>
         <div>
           <h3 id="active-orders-title">
-            {props.targetOrderId ? "Order" : "Open orders"}
+            {props.targetOrderId
+              ? "Order"
+              : `${state.data.length} ${
+                  props.filters.closure === "completed"
+                    ? "completed"
+                    : props.filters.closure === "cancelled"
+                      ? "cancelled"
+                      : "open"
+                } ${state.data.length === 1 ? "order" : "orders"}`}
           </h3>
         </div>
-        <button type="button" onClick={props.onReload}>
+        <button
+          className="workspace-action workspace-action--quiet"
+          type="button"
+          onClick={props.onReload}
+        >
           <RefreshCw aria-hidden="true" size={17} />
-          Reload
+          Refresh
         </button>
       </header>
       {state.kind === "stale" ? (
@@ -781,7 +811,7 @@ function OrdersList(props: {
           </p>
         ) : (
           <p className="order-route-status" role="status">
-            That order isn't in this branch, or it has been closed. Reload to
+            That order isn’t in this branch, or it has been closed. Refresh to
             see the current list.
           </p>
         )
@@ -789,8 +819,8 @@ function OrdersList(props: {
       {state.data.length === 0 ? (
         <div className="orders-empty">
           <Clock3 aria-hidden="true" size={24} />
-          <h4>No active orders match these filters</h4>
-          <p>Change the filters or wait for the next submission.</p>
+          <h4>No orders match</h4>
+          <p>Try another table or progress, or clear the filters.</p>
         </div>
       ) : (
         <motion.ul
@@ -815,54 +845,63 @@ function OrdersList(props: {
                 }
                 variants={fadeUpItemVariants}
               >
-                <div className="order-reference-cell">
-                  <strong>{order.reference}</strong>
-                  <span>{formatSubmittedAt(order.submittedAt)}</span>
-                </div>
-                <div>
-                  <span className="order-cell-label">Table</span>
+                <div className="order-row__table">
+                  <span className="visually-hidden">Table</span>
                   <strong>{order.tableCode}</strong>
                 </div>
-                <div>
-                  <span className="order-cell-label">Items</span>
-                  <strong>
-                    {order.items.reduce((sum, item) => sum + item.quantity, 0)}
+                <div className="order-row__main">
+                  <p className="order-row__title">
+                    <strong>{order.reference}</strong>
+                    <span>
+                      {order.creatorType === "guest"
+                        ? `Ordered by ${order.customerName ?? "a guest"} at the table`
+                        : "Taken by staff"}
+                    </span>
+                  </p>
+                  <p className="order-row__dishes">
+                    {order.items
+                      .map((item) => `${item.quantity}× ${item.name}`)
+                      .join(", ")}
+                  </p>
+                  <div className="order-state-cell">
+                    <span
+                      className={`order-state order-state--${order.closure === "active" ? order.fulfilment : order.closure}`}
+                    >
+                      {lifecycleLabel(order)}
+                    </span>
+                    <span
+                      className={`order-request-state order-request-state--${order.financial}`}
+                    >
+                      {financialLabel(order.financial)}
+                    </span>
+                    {order.billRequest ? (
+                      <span className="order-request-state order-request-state--attention">
+                        Bill requested
+                      </span>
+                    ) : null}
+                    {order.corrections.length > 0 ? (
+                      <span className="order-request-state">
+                        Changed {order.corrections.length}{" "}
+                        {order.corrections.length === 1 ? "time" : "times"}
+                      </span>
+                    ) : null}
+                    {order.cancellationRequested ? (
+                      <span className="order-request-state order-request-state--attention">
+                        Guest asked to cancel
+                      </span>
+                    ) : null}
+                  </div>
+                </div>
+                <div className="order-row__figures">
+                  <strong className="order-total">
+                    {formatMoney(order.total.amount, order.total.currency)}
                   </strong>
-                </div>
-                <div>
-                  <span className="order-cell-label">Created by</span>
-                  <strong>
-                    {order.creatorType === "guest"
-                      ? (order.customerName ?? "Guest")
-                      : "Staff team member"}
-                  </strong>
-                </div>
-                <div>
-                  <span className="order-cell-label">Elapsed</span>
-                  <strong>{elapsedTime(order.submittedAt, now)}</strong>
-                </div>
-                <div className="order-state-cell">
-                  <span className="order-state">{lifecycleLabel(order)}</span>
-                  <span className="order-request-state">
-                    {financialLabel(order.financial)}
+                  <span title={`Sent ${formatSubmittedAt(order.submittedAt)}`}>
+                    {order.closure === "active"
+                      ? `${elapsedTime(order.submittedAt, now)} ago`
+                      : formatSubmittedAt(order.submittedAt)}
                   </span>
-                  {order.billRequest ? (
-                    <span className="order-request-state">Bill requested</span>
-                  ) : null}
-                  {order.corrections.length > 0 ? (
-                    <span className="order-request-state">
-                      Corrected · revision {order.currentItemRevision}
-                    </span>
-                  ) : null}
-                  {order.cancellationRequested ? (
-                    <span className="order-request-state">
-                      Cancellation requested
-                    </span>
-                  ) : null}
                 </div>
-                <strong className="order-total">
-                  {formatMoney(order.total.amount, order.total.currency)}
-                </strong>
                 <OrderOperations
                   order={order}
                   tables={props.tables}
@@ -1293,17 +1332,14 @@ function OrderEntry(props: {
                   />
                 </label>
               </div>
-              <motion.button
+              <button
                 type="button"
                 className="order-add-item"
                 disabled={!dishId || configuration.kind !== "ready"}
                 onClick={addDraftItem}
-                whileHover="hover"
-                whileTap="tap"
-                variants={actionButtonVariants}
               >
                 Add item
-              </motion.button>
+              </button>
             </section>
           )}
 
@@ -1360,19 +1396,16 @@ function OrderEntry(props: {
                 : entryError}
             </p>
           ) : null}
-          <motion.button
+          <button
             className="order-submit"
             type="button"
             disabled={
               submission === "pending" || !tableId || draft.length === 0
             }
             onClick={() => void submit()}
-            whileHover="hover"
-            whileTap="tap"
-            variants={actionButtonVariants}
           >
             {submission === "pending" ? "Submitting…" : "Submit order"}
-          </motion.button>
+          </button>
         </>
       )}
     </div>

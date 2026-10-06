@@ -437,9 +437,7 @@ export function InsightsAdministration({
                 {report?.rows.map((row) => (
                   <tr key={row.orderId}>
                     <td>{row.orderReference}</td>
-                    <td>
-                      {row.restaurantName} · {row.branchName}
-                    </td>
+                    <td>{row.branchName}</td>
                     <td>{row.businessDate}</td>
                     <td>{row.orderState}</td>
                     <td>

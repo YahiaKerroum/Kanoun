@@ -58,7 +58,7 @@ function requestErrorMessage(error: unknown, action: string): string {
     if (error.status === 403) {
       return "This page has expired. Reload it and try again.";
     }
-    return `${action} failed on the restaurant server (error ${String(error.status)}). Try again, and restart MISE if it keeps happening.`;
+    return `${action} failed on the restaurant server (error ${String(error.status)}). Try again, and restart Kanoun if it keeps happening.`;
   }
   return `${action} could not reach the restaurant server. Check your connection and try again.`;
 }
@@ -96,8 +96,8 @@ function Layout({
       <main className="auth-shell" aria-labelledby="auth-title">
         <section className="auth-intro">
           <a className="auth-brand" href="/">
-            <span className="mise-mark" aria-hidden="true" />
-            <span className="mise-wordmark">MISE</span>
+            <span className="kanoun-mark" aria-hidden="true" />
+            <span className="kanoun-wordmark">Kanoun</span>
             <span className="auth-brand__workspace">Back office</span>
           </a>
           <h1 id="auth-title">{title}</h1>
@@ -182,7 +182,7 @@ function businessCodeProblem(code: string): string | undefined {
   const value = code.trim();
   if (businessCodePattern.test(value)) return undefined;
   if (/\s/.test(value)) {
-    return `"${value}" looks like a restaurant name. The business code is a short code with dashes instead of spaces, like dar-nedjma-demo. Ask your manager for yours; on a MISE desktop it is shown in the launcher.`;
+    return `"${value}" looks like a restaurant name. The business code is a short code with dashes instead of spaces, like dar-nedjma-demo. Ask your manager for yours; on a Kanoun desktop it is shown in the launcher.`;
   }
   return "The business code uses only letters, numbers, and dashes, like dar-nedjma-demo.";
 }

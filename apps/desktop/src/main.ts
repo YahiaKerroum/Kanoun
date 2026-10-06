@@ -1,4 +1,4 @@
-import "@fontsource-variable/archivo/wdth.css";
+import "@fontsource-variable/schibsted-grotesk/wght.css";
 import "@fontsource/young-serif/400.css";
 import "./launcher.css";
 import { invoke } from "@tauri-apps/api/core";
@@ -13,7 +13,7 @@ type Workspace = "staff" | "admin" | "guest";
 
 interface UiState {
   runtime: RuntimeState | undefined;
-  /** Shows the storage choice even when MISE is already configured. */
+  /** Shows the storage choice even when Kanoun is already configured. */
   changingStorage: boolean;
   storageChoice: "local" | "server";
   serverUrl: string;
@@ -286,7 +286,7 @@ function storageView(state: RuntimeState | undefined): HTMLElement {
       {},
       isChange
         ? "Change where data is kept"
-        : "Where should MISE keep your restaurant's data?",
+        : "Where should Kanoun keep your restaurant's data?",
     ),
     h(
       "p",
@@ -301,7 +301,7 @@ function storageView(state: RuntimeState | undefined): HTMLElement {
       choice(
         "local",
         "On this computer",
-        "For one counter or a single till. MISE runs its own database here, with nothing else to install.",
+        "For one counter or a single till. Kanoun runs its own database here, with nothing else to install.",
       ),
       choice(
         "server",
@@ -316,7 +316,7 @@ function storageView(state: RuntimeState | undefined): HTMLElement {
           field(
             "Connection URL",
             urlInput,
-            "Ask whoever runs the server. The database must already exist; MISE creates its own tables.",
+            "Ask whoever runs the server. The database must already exist; Kanoun creates its own tables.",
             true,
           ),
           h(
@@ -385,7 +385,7 @@ function startingView(state: RuntimeState): HTMLElement {
   return h(
     "section",
     { class: "panel" },
-    h("h1", {}, "Starting MISE"),
+    h("h1", {}, "Starting Kanoun"),
     h(
       "p",
       { class: "lead" },
@@ -783,7 +783,7 @@ function readyView(state: RuntimeState): HTMLElement {
   const sample = state.sample;
   const title =
     restaurants.length === 1
-      ? (restaurants[0]?.name ?? "MISE")
+      ? (restaurants[0]?.name ?? "Kanoun")
       : "Your restaurants";
   const door = (name: string, body: string, actions: HTMLElement[]) =>
     h(
@@ -859,7 +859,7 @@ function readyView(state: RuntimeState): HTMLElement {
           h(
             "p",
             { class: "muted" },
-            "MISE has no email on this computer, so reset links appear here. Open one for the person standing with you.",
+            "Kanoun has no email on this computer, so reset links appear here. Open one for the person standing with you.",
           ),
           h(
             "ul",
@@ -973,7 +973,7 @@ function errorView(state: RuntimeState): HTMLElement {
     "section",
     { class: "panel" },
     h("p", { class: "badge badge--error" }, "Stopped"),
-    h("h1", {}, state.error?.title ?? "MISE stopped"),
+    h("h1", {}, state.error?.title ?? "Kanoun stopped"),
     h(
       "p",
       { class: "lead" },
@@ -1005,7 +1005,7 @@ function render(): void {
   renderRail(state);
   let content: HTMLElement;
   if (!state) {
-    content = h("section", { class: "panel" }, h("h1", {}, "Opening MISE…"));
+    content = h("section", { class: "panel" }, h("h1", {}, "Opening Kanoun…"));
   } else if (ui.changingStorage || state.phase === "setup") {
     content = storageView(state);
   } else if (state.phase === "starting") {
@@ -1018,7 +1018,7 @@ function render(): void {
     content = h(
       "section",
       { class: "panel" },
-      h("h1", {}, "Closing MISE…"),
+      h("h1", {}, "Closing Kanoun…"),
       h("p", { class: "lead" }, "Saving and shutting down the database."),
     );
   } else {

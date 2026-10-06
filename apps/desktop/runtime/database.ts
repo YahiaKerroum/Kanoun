@@ -54,7 +54,7 @@ export function describeDatabaseError(
       return {
         title: "The database user is missing permissions",
         detail:
-          "MISE needs a user that can create schemas and tables in this database.",
+          "Kanoun needs a user that can create schemas and tables in this database.",
       };
     default:
       if (/does not support SSL/i.test(message)) {
@@ -87,7 +87,7 @@ export async function testConnection(databaseUrl: string): Promise<string> {
     if (Number.isFinite(major) && major < 16) {
       throw Object.assign(
         new Error(
-          `This server runs PostgreSQL ${version}. MISE needs PostgreSQL 16 or newer.`,
+          `This server runs PostgreSQL ${version}. Kanoun needs PostgreSQL 16 or newer.`,
         ),
         { code: "MISE_VERSION" },
       );

@@ -28,13 +28,14 @@ import {
 import { z } from "zod";
 import { checkApiReadiness, type Readiness } from "./health.js";
 import {
-  iconButtonVariants,
   navItemVariants,
+  navPillTransition,
   sectionContainerVariants,
   staggerContainerVariants,
   fadeUpItemVariants,
 } from "./motion.js";
 import { MenuWorkspace, TablesWorkspace } from "./OperationalWorkspaces.js";
+import { HomePulse } from "./HomePulse.js";
 import { KitchenWorkspace } from "./KitchenWorkspace.js";
 import { OrdersWorkspace } from "./OrdersWorkspace.js";
 import { PaymentsWorkspace } from "./PaymentsWorkspace.js";
@@ -321,10 +322,9 @@ function formatCheckedAt(readiness: Readiness): string {
     return "Checking connection";
   }
 
-  return new Intl.DateTimeFormat("en", {
+  return new Intl.DateTimeFormat(undefined, {
     hour: "2-digit",
     minute: "2-digit",
-    second: "2-digit",
   }).format(readiness.checkedAt);
 }
 
@@ -607,8 +607,6 @@ export function App() {
           event.preventDefault();
           if (isLocal) navigateTo(href);
         }}
-        whileHover="hover"
-        whileTap="tap"
         animate={isActive ? "active" : "rest"}
         variants={navItemVariants}
       >
@@ -617,6 +615,7 @@ export function App() {
             layoutId="active-nav-pill"
             className="navigation-item__pill"
             aria-hidden="true"
+            transition={navPillTransition}
           />
         ) : null}
         <Icon aria-hidden="true" size={21} />
@@ -634,8 +633,8 @@ export function App() {
         <div className="app-frame">
           <aside className="navigation-rail" aria-label="Staff navigation">
             <div className="brand-lockup">
-              <span className="mise-mark" aria-hidden="true" />
-              <span className="mise-wordmark">MISE</span>
+              <span className="kanoun-mark" aria-hidden="true" />
+              <span className="kanoun-wordmark">Kanoun</span>
             </div>
 
             <nav
@@ -686,36 +685,30 @@ export function App() {
                   Checked {formatCheckedAt(readiness)}
                 </span>
               </div>
-              <motion.button
+              <button
                 className="icon-button"
                 type="button"
                 aria-label="Refresh"
                 aria-describedby={statusId}
                 disabled={readiness.kind === "checking"}
                 onClick={refresh}
-                whileHover="hover"
-                whileTap="tap"
-                variants={iconButtonVariants}
               >
                 <RefreshCw
                   aria-hidden="true"
                   size={20}
                   className={readiness.kind === "checking" ? "is-spinning" : ""}
                 />
-              </motion.button>
-              <motion.button
+              </button>
+              <button
                 className="icon-button"
                 type="button"
                 aria-label="Open notifications"
                 aria-pressed={visibleSection === "Notifications"}
                 disabled={!notificationsAvailable}
                 onClick={() => selectSection("Notifications")}
-                whileHover="hover"
-                whileTap="tap"
-                variants={iconButtonVariants}
               >
                 <Bell aria-hidden="true" size={20} />
-              </motion.button>
+              </button>
               <details className="account-context">
                 <summary>
                   <UserRound aria-hidden="true" size={18} />
@@ -929,7 +922,8 @@ function AccessBoundary({
       : portal.kind === "signed-out"
         ? {
             title: "Sign in to continue",
-            detail: "You need to sign in with your staff account to use MISE.",
+            detail:
+              "You need to sign in with your staff account to use Kanoun.",
           }
         : portal.kind === "no-branch"
           ? {
@@ -938,14 +932,14 @@ function AccessBoundary({
                 "Ask the restaurant owner or a manager to add you to a branch in the back office.",
             }
           : {
-              title: "MISE can't load right now",
+              title: "Kanoun can't load right now",
               detail: portal.reason,
             };
 
   return (
     <div className="app-stage access-stage">
       <main className="access-boundary" aria-live="polite">
-        <span className="mise-mark" aria-hidden="true" />
+        <span className="kanoun-mark" aria-hidden="true" />
         <h1>{content.title}</h1>
         <p>{content.detail}</p>
         {portal.kind === "unavailable" ? (
@@ -1044,6 +1038,16 @@ function HomeWorkspace({
         </div>
       </motion.section>
 
+      <motion.div variants={fadeUpItemVariants}>
+        <HomePulse
+          branchId={capabilities.branchId}
+          canViewOrders={capabilities.permissions.includes("orders.view")}
+          canViewTables={capabilities.permissions.includes("tables.view")}
+          canViewPayments={capabilities.permissions.includes("payments.view")}
+          onNavigate={onNavigate}
+        />
+      </motion.div>
+
       {shortcuts.length > 0 ? (
         <motion.nav
           className="home-shortcuts"
@@ -1105,7 +1109,7 @@ function RouteBoundary({
   const detail =
     kind === "not-found"
       ? "The link may be old or mistyped."
-      : "Ask a manager if you need access to it.";
+      : "Your account doesn’t include this page. A manager can add it in the back office.";
   return (
     <section className="deferred-state" aria-labelledby="route-boundary-title">
       <span className="deferred-state__icon" aria-hidden="true">
@@ -1114,10 +1118,11 @@ function RouteBoundary({
       <h2 id="route-boundary-title">{title}</h2>
       <p>{detail}</p>
       <button
+        className="workspace-action"
         type="button"
         onClick={() => onNavigate(staffPathForSection(landingSection))}
       >
-        Open {landingSection.toLowerCase()}
+        Go to {landingSection.toLowerCase()}
       </button>
     </section>
   );

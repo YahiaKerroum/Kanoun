@@ -1,106 +1,38 @@
 import type { Transition, Variants } from "framer-motion";
 
-export const tapSpring: Transition = {
-  type: "spring",
-  stiffness: 600,
-  damping: 17,
-};
+/*
+ * Motion answers an action: a page settling in after navigation, a list
+ * filling after a load, the active rail item sliding to its new place.
+ * Short ease-out tweens only (see `--ease-out` in design-system.css);
+ * pressing controls is handled in CSS.
+ */
+const easeOut = [0.22, 1, 0.36, 1] as const;
 
-export const bouncy: Transition = {
-  type: "spring",
-  stiffness: 320,
-  damping: 19,
-};
-
-export const gentleSpring: Transition = {
-  type: "spring",
-  stiffness: 260,
-  damping: 24,
-};
+export const settle: Transition = { duration: 0.2, ease: easeOut };
 
 export const navItemVariants: Variants = {
-  rest: { scale: 1 },
-  hover: {
-    scale: 1.06,
-    transition: bouncy,
-  },
-  tap: {
-    scale: 0.9,
-    transition: tapSpring,
-  },
-  active: {
-    scale: 1,
-    transition: gentleSpring,
-  },
+  rest: {},
+  active: {},
 };
 
-export const iconButtonVariants: Variants = {
-  rest: { scale: 1 },
-  hover: {
-    scale: 1.1,
-    rotate: 0,
-    transition: bouncy,
-  },
-  tap: {
-    scale: 0.85,
-    rotate: -8,
-    transition: tapSpring,
-  },
-};
-
-export const actionButtonVariants: Variants = {
-  rest: { scale: 1 },
-  hover: {
-    scale: 1.04,
-    transition: gentleSpring,
-  },
-  tap: {
-    scale: 0.94,
-    transition: tapSpring,
-  },
-};
+export const navPillTransition: Transition = { duration: 0.26, ease: easeOut };
 
 export const sectionContainerVariants: Variants = {
-  initial: { opacity: 0 },
+  initial: { opacity: 0, y: 6 },
   enter: {
     opacity: 1,
-    transition: {
-      duration: 0.16,
-      when: "beforeChildren",
-      staggerChildren: 0.06,
-    },
+    y: 0,
+    transition: { ...settle, when: "beforeChildren", staggerChildren: 0.04 },
   },
-  exit: {
-    opacity: 0,
-    y: -10,
-    transition: { duration: 0.12 },
-  },
+  exit: { opacity: 0, transition: { duration: 0.1, ease: "easeIn" } },
 };
 
 export const staggerContainerVariants: Variants = {
   initial: {},
-  enter: { transition: { staggerChildren: 0.05 } },
+  enter: { transition: { staggerChildren: 0.035 } },
 };
 
 export const fadeUpItemVariants: Variants = {
-  initial: { opacity: 0, y: 12, scale: 0.98 },
-  enter: {
-    opacity: 1,
-    y: 0,
-    scale: 1,
-    transition: bouncy,
-  },
-};
-
-export const cardHoverVariants: Variants = {
-  rest: { y: 0, scale: 1 },
-  hover: {
-    y: -3,
-    scale: 1.012,
-    transition: gentleSpring,
-  },
-  tap: {
-    scale: 0.985,
-    transition: tapSpring,
-  },
+  initial: { opacity: 0, y: 6 },
+  enter: { opacity: 1, y: 0, transition: settle },
 };

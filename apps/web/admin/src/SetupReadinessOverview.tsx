@@ -45,9 +45,13 @@ export function SetupReadinessOverview({
                 : "Needs setup"}
           </strong>
           <span>
-            {blockingCount} blocked · {requiredAttentionCount} need setup
+            {blockingCount > 0
+              ? `${blockingCount} ${blockingCount === 1 ? "step is" : "steps are"} blocked.`
+              : requiredAttentionCount > 0
+                ? `${requiredAttentionCount} ${requiredAttentionCount === 1 ? "step needs" : "steps need"} your attention.`
+                : "Everything needed for service is done."}
             {optionalAttentionCount > 0
-              ? ` · ${optionalAttentionCount} optional`
+              ? ` ${optionalAttentionCount} optional ${optionalAttentionCount === 1 ? "step" : "steps"} left.`
               : ""}
           </span>
           <button

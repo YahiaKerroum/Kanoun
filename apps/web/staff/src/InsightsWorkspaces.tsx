@@ -8,12 +8,7 @@ import {
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 import { motion } from "framer-motion";
-import {
-  actionButtonVariants,
-  iconButtonVariants,
-  staggerContainerVariants,
-  fadeUpItemVariants,
-} from "./motion.js";
+import { staggerContainerVariants, fadeUpItemVariants } from "./motion.js";
 
 const problemSchema = z.object({
   title: z.string().optional(),
@@ -80,15 +75,15 @@ function notificationTask(item: NotificationItem): {
 } {
   const type = item.type.toLowerCase();
   if (type.includes("ready"))
-    return { href: "/kitchen", label: "Open kitchen" };
+    return { href: "/kitchen", label: "Go to the kitchen" };
   if (type.includes("bill") || type.includes("payment")) {
-    return { href: "/payments", label: "Open payment desk" };
+    return { href: "/payments", label: "Go to payments" };
   }
-  if (type.includes("table")) return { href: "/tables", label: "Open tables" };
+  if (type.includes("table")) return { href: "/tables", label: "Go to tables" };
   if (type.includes("order") || type.includes("cancel")) {
-    return { href: "/orders", label: "Open orders" };
+    return { href: "/orders", label: "Go to orders" };
   }
-  return { href: "/notifications", label: "Stay in inbox" };
+  return { href: "/notifications", label: "Stay here" };
 }
 
 export function NotificationInboxWorkspace({
@@ -209,16 +204,13 @@ export function NotificationInboxWorkspace({
             connection drops.
           </p>
         </div>
-        <motion.button
+        <button
           type="button"
-          className="secondary-action"
+          className="workspace-action workspace-action--quiet"
           onClick={() => void load()}
-          whileHover="hover"
-          whileTap="tap"
-          variants={actionButtonVariants}
         >
-          <RefreshCw aria-hidden="true" size={18} /> Reload inbox
-        </motion.button>
+          <RefreshCw aria-hidden="true" size={17} /> Refresh
+        </button>
       </section>
       <p className="stream-status" role="status">
         <span
@@ -228,7 +220,7 @@ export function NotificationInboxWorkspace({
         {streamState === "live"
           ? "Live"
           : streamState === "reconnecting"
-            ? "Reconnecting… the list below is still up to date"
+            ? "Reconnecting. The list below is still up to date."
             : "Connecting…"}
       </p>
       {message ? (
@@ -243,10 +235,10 @@ export function NotificationInboxWorkspace({
       ) : items.length === 0 ? (
         <div className="empty-panel">
           <Bell aria-hidden="true" />
-          <h3>No notifications need attention</h3>
+          <h3>Nothing needs you right now</h3>
           <p>
-            New eligible events will appear here after the worker processes
-            them.
+            New orders, ready dishes, and bill requests show up here as they
+            happen.
           </p>
         </div>
       ) : (
@@ -263,7 +255,10 @@ export function NotificationInboxWorkspace({
               variants={fadeUpItemVariants}
             >
               <div>
-                <span className="status-pill">{item.taskState}</span>
+                <span className="status-pill">
+                  {item.taskState === "unhandled" ? "Needs someone" : "Handled"}
+                  {item.readAt ? "" : ", new"}
+                </span>
                 <h3>{item.title}</h3>
                 <p>{item.body}</p>
                 <time dateTime={item.occurredAt}>
@@ -274,30 +269,26 @@ export function NotificationInboxWorkspace({
                 </time>
               </div>
               <div className="notification-card__actions">
+                {item.taskState === "unhandled" ? (
+                  <button
+                    type="button"
+                    className="notification-card__claim"
+                    onClick={() => void update(item.id, "acknowledge")}
+                  >
+                    <CheckCheck aria-hidden="true" size={17} /> I’ll handle it
+                  </button>
+                ) : null}
                 <a href={notificationTask(item).href}>
                   {notificationTask(item).label}
                 </a>
                 {!item.readAt ? (
-                  <motion.button
+                  <button
                     type="button"
+                    className="notification-card__read"
                     onClick={() => void update(item.id, "read")}
-                    whileHover="hover"
-                    whileTap="tap"
-                    variants={actionButtonVariants}
                   >
                     Mark read
-                  </motion.button>
-                ) : null}
-                {item.taskState === "unhandled" ? (
-                  <motion.button
-                    type="button"
-                    onClick={() => void update(item.id, "acknowledge")}
-                    whileHover="hover"
-                    whileTap="tap"
-                    variants={actionButtonVariants}
-                  >
-                    <CheckCheck aria-hidden="true" size={17} /> Acknowledge
-                  </motion.button>
+                  </button>
                 ) : null}
               </div>
             </motion.li>
@@ -406,17 +397,14 @@ export function DashboardWorkspace({
             reached the kitchen.
           </p>
         </div>
-        <motion.button
+        <button
           type="button"
           className="icon-button"
           aria-label="Reload dashboard"
           onClick={() => void load()}
-          whileHover="hover"
-          whileTap="tap"
-          variants={iconButtonVariants}
         >
           <RefreshCw aria-hidden="true" size={18} />
-        </motion.button>
+        </button>
       </div>
       {error ? (
         <div className="inline-alert" role="alert">
@@ -649,14 +637,7 @@ export function SalesReportWorkspace({
             <option value="cancelled">Cancelled</option>
           </select>
         </label>
-        <motion.button
-          type="submit"
-          whileHover="hover"
-          whileTap="tap"
-          variants={actionButtonVariants}
-        >
-          Apply filters
-        </motion.button>
+        <button type="submit">Apply filters</button>
       </form>
       {error ? (
         <div className="inline-alert" role="alert">
@@ -734,27 +715,21 @@ export function SalesReportWorkspace({
         ) : null}
       </div>
       <div className="report-pagination" aria-label="Sales report pages">
-        <motion.button
+        <button
           type="button"
           disabled={!report || report.page === 0}
           onClick={() => setPage((current) => Math.max(0, current - 1))}
-          whileHover="hover"
-          whileTap="tap"
-          variants={actionButtonVariants}
         >
           Previous page
-        </motion.button>
+        </button>
         <span>Page {(report?.page ?? 0) + 1}</span>
-        <motion.button
+        <button
           type="button"
           disabled={!report?.hasMore}
           onClick={() => setPage((current) => current + 1)}
-          whileHover="hover"
-          whileTap="tap"
-          variants={actionButtonVariants}
         >
           Next page
-        </motion.button>
+        </button>
       </div>
     </div>
   );
@@ -859,14 +834,7 @@ export function AuditWorkspace({
             placeholder="payments.payment_refunded"
           />
         </label>
-        <motion.button
-          type="submit"
-          whileHover="hover"
-          whileTap="tap"
-          variants={actionButtonVariants}
-        >
-          Search history
-        </motion.button>
+        <button type="submit">Search history</button>
       </form>
       {error ? (
         <div className="inline-alert" role="alert">
@@ -921,27 +889,21 @@ export function AuditWorkspace({
         </motion.ol>
       )}
       <div className="report-pagination" aria-label="Audit history pages">
-        <motion.button
+        <button
           type="button"
           disabled={auditPage.page === 0}
           onClick={() => setPage((current) => Math.max(0, current - 1))}
-          whileHover="hover"
-          whileTap="tap"
-          variants={actionButtonVariants}
         >
           Previous page
-        </motion.button>
+        </button>
         <span>Page {auditPage.page + 1}</span>
-        <motion.button
+        <button
           type="button"
           disabled={!auditPage.hasMore}
           onClick={() => setPage((current) => current + 1)}
-          whileHover="hover"
-          whileTap="tap"
-          variants={actionButtonVariants}
         >
           Next page
-        </motion.button>
+        </button>
       </div>
     </div>
   );

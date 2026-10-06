@@ -1,6 +1,8 @@
 /*
- * MISE design tokens, shared by the staff, back-office, and guest apps and
+ * Kanoun design tokens, shared by the staff, back-office, and guest apps and
  * the desktop launcher. See DESIGN.md for the reasoning behind each choice.
+ * A kanoun is the clay brazier at the centre of an Algerian kitchen; the
+ * brand mark draws one.
  *
  * Palette: an Algerian spice market. Harissa paprika for the rail and main
  * actions, semolina and warm plate-white surfaces, date-brown ink, saffron
@@ -12,16 +14,16 @@
  */
 /*
  * Young Serif has old-style figures, which make order numbers and prices
- * bounce. This face supplies Archivo digits only, so numbers set in the
- * display font stay level and tabular. Archivo is OFL-licensed; see
- * fonts/ARCHIVO-OFL.txt.
+ * bounce. This face supplies Schibsted Grotesk's tabular digits only, so
+ * numbers set in the display font stay level and line up in columns.
+ * Schibsted Grotesk is OFL-licensed; see fonts/SCHIBSTED-GROTESK-OFL.txt.
  */
 @font-face {
-  font-family: "MISE Figures";
+  font-family: "Kanoun Figures";
   font-style: normal;
-  font-weight: 100 900;
+  font-weight: 400 900;
   font-display: swap;
-  src: url("./fonts/archivo-figures.woff2") format("woff2");
+  src: url("./fonts/kanoun-figures.woff2") format("woff2");
   unicode-range: U+0030-0039;
 }
 
@@ -147,13 +149,29 @@
 
   /*
    * Young Serif (a soft, cookbook-like serif) for headings, dish names, and
-   * the wordmark; Archivo for working text, labels, and tabular figures.
+   * the wordmark; Schibsted Grotesk (a sturdy news grotesque) for working
+   * text, labels, and figures. IBM Plex Mono is reserved for kitchen tickets
+   * and the guest's receipt, where it stands in for a thermal printer.
    */
   --font-display:
-    "MISE Figures", "Young Serif", Georgia, "Times New Roman", serif;
-  --font-body: "Archivo Variable", "Archivo", "Segoe UI", system-ui, sans-serif;
+    "Kanoun Figures", "Young Serif", Georgia, "Times New Roman", serif;
+  --font-body:
+    "Schibsted Grotesk Variable", "Schibsted Grotesk", "Segoe UI", system-ui,
+    sans-serif;
+  --font-ticket: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+  --font-figures: "Kanoun Figures", var(--font-body);
   --display-stretch: normal;
-  --label-stretch: 108%;
+  --label-stretch: normal;
+
+  /*
+   * Motion: short ease-out tweens that answer an action. No springs, no
+   * hover growth; pressing a control settles it by a few percent.
+   */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --duration-fast: 140ms;
+  --duration: 200ms;
+  --duration-slow: 320ms;
 }
 
 html {
@@ -166,8 +184,17 @@ body {
   font-family: var(--font-body);
   font-size: var(--text-body-size);
   font-synthesis: none;
-  font-variant-numeric: tabular-nums;
   line-height: var(--line-body);
+}
+
+/*
+ * Schibsted Grotesk's `tnum` feature also widens full stops, commas, and
+ * colons, which breaks up prices ("3 , 100 . 00"). Numbers that must line up
+ * switch family instead: Kanoun Figures supplies tabular digits only and the
+ * punctuation stays Schibsted's own.
+ */
+:where(table, time, output, [data-figures="tabular"]) {
+  font-family: var(--font-figures);
 }
 
 h1,
@@ -201,12 +228,12 @@ p {
 }
 
 /*
- * The MISE mark: an eight-point star, as on Maghreb tiles and tagine lids
- * (two squares, one turned 45°)
- * with a saffron centre. Drawn in CSS so every app can use it without
- * sharing a component. Colour follows `currentColor`.
+ * The Kanoun mark: a clay brazier seen from the front, with its rim, three
+ * pot-rests, a horseshoe-arch opening, and a saffron ember inside. The body
+ * follows `currentColor` (plate-white on the rail, harissa on light ground);
+ * the ember is always saffron. Masks keep it a plain `<span>` in every app.
  */
-.mise-mark {
+.kanoun-mark {
   position: relative;
   display: inline-block;
   flex: none;
@@ -214,47 +241,90 @@ p {
   height: var(--mark-size, 30px);
 }
 
-.mise-mark::before,
-.mise-mark::after {
+.kanoun-mark::before,
+.kanoun-mark::after {
   position: absolute;
-  inset: 15%;
-  background: currentColor;
+  inset: 0;
   content: "";
+  -webkit-mask: var(--mark-shape) center / contain no-repeat;
+  mask: var(--mark-shape) center / contain no-repeat;
 }
 
-.mise-mark::after {
-  background:
-    radial-gradient(circle, var(--saffron) 0 21%, transparent 22%), currentColor;
-  transform: rotate(45deg);
+.kanoun-mark::before {
+  --mark-shape: url("./brand/kanoun-mark.svg");
+  background: currentColor;
 }
 
-.mise-wordmark {
+.kanoun-mark::after {
+  --mark-shape: url("./brand/kanoun-ember.svg");
+  background: var(--saffron);
+}
+
+.kanoun-wordmark {
   font-family: var(--font-display);
   font-weight: 400;
-  letter-spacing: 0.04em;
+  letter-spacing: -0.01em;
+}
+
+/*
+ * The ticket: kitchen tickets and the guest's receipt are printed things, so
+ * they get a torn bottom edge and the ticket face. Nothing else uses either.
+ */
+.kanoun-ticket {
+  --tear: 7px;
+  position: relative;
+  padding-bottom: calc(var(--tear) + var(--space-3));
+  background: var(--plate);
+  -webkit-mask:
+    linear-gradient(#000 0 0) top / 100% calc(100% - var(--tear)) no-repeat,
+    conic-gradient(from -45deg at 50% 100%, #000 90deg, #0000 0) bottom /
+      calc(var(--tear) * 2) var(--tear) repeat-x;
+  mask:
+    linear-gradient(#000 0 0) top / 100% calc(100% - var(--tear)) no-repeat,
+    conic-gradient(from -45deg at 50% 100%, #000 90deg, #0000 0) bottom /
+      calc(var(--tear) * 2) var(--tear) repeat-x;
+}
+
+.kanoun-ticket__face {
+  font-family: var(--font-ticket);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+/* Pressing any control settles it slightly; nothing grows on hover. */
+:where(button, [role="button"], a.kanoun-press):not(:disabled):active {
+  transform: scale(0.97);
+}
+
+:where(button, [role="button"], a.kanoun-press) {
+  transition:
+    transform var(--duration-fast) var(--ease-out),
+    background-color var(--duration) var(--ease-out),
+    border-color var(--duration) var(--ease-out),
+    color var(--duration) var(--ease-out);
 }
 
 /*
  * Shared stage: the guest app and auth screens sit directly on semolina.
  * (The former saffron frame around every screen has been retired.)
  */
-.mise-stage {
+.kanoun-stage {
   min-height: 100svh;
   background: var(--canvas);
 }
 
-.mise-shell {
+.kanoun-shell {
   background: var(--canvas);
 }
 
-.mise-task-link {
+.kanoun-task-link {
   min-height: 44px;
   color: var(--brand-700);
   font-weight: 650;
   text-underline-offset: 3px;
 }
 
-.mise-status-label {
+.kanoun-status-label {
   display: inline-flex;
   min-height: 26px;
   align-items: center;

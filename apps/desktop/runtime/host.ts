@@ -221,7 +221,7 @@ async function startServices(current: DesktopSettings, url: string) {
             error: {
               title: `The ${watched.label} stopped unexpectedly`,
               detail:
-                "Restart MISE services to continue. The runtime log in the data folder has the details.",
+                "Restart Kanoun services to continue. The runtime log in the data folder has the details.",
             },
           });
         });
@@ -276,7 +276,7 @@ async function openDatabase(current: DesktopSettings): Promise<string> {
     throw new StartupError({
       title: "PostgreSQL is missing from this installation",
       detail:
-        "Reinstall MISE, or connect to a PostgreSQL server instead of storing data on this computer.",
+        "Reinstall Kanoun, or connect to a PostgreSQL server instead of storing data on this computer.",
     });
   }
   try {
@@ -342,7 +342,7 @@ async function boot(current: DesktopSettings): Promise<void> {
         error instanceof StartupError
           ? error.friendly
           : {
-              title: "MISE could not start",
+              title: "Kanoun could not start",
               detail:
                 error instanceof Error ? error.message : "See the runtime log.",
             },
@@ -352,7 +352,7 @@ async function boot(current: DesktopSettings): Promise<void> {
 
 function requireReady(current: DesktopSettings | undefined): DesktopSettings {
   if (!current || !databaseUrl || services.length === 0) {
-    throw new Error("MISE is not running yet. Wait for startup to finish.");
+    throw new Error("Kanoun is not running yet. Wait for startup to finish.");
   }
   return current;
 }

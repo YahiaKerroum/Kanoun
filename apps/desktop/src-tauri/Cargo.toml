@@ -1,7 +1,7 @@
 [package]
 name = "mise-desktop"
 version = "0.2.0"
-description = "MISE restaurant operations for Windows"
+description = "Kanoun restaurant operations for Windows"
 edition = "2021"
 publish = false
 

@@ -103,7 +103,7 @@ function proxy(
       JSON.stringify({
         error: {
           code: "service_unavailable",
-          message: "MISE is still starting. Try again in a moment.",
+          message: "Kanoun is still starting. Try again in a moment.",
         },
       }),
     );

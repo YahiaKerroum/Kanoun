@@ -45,7 +45,7 @@ async fn open_workspace(
     };
     let target: Url = url.parse().map_err(|_| "Invalid workspace address.")?;
     if target.scheme() != "http" || target.host_str() != Some("127.0.0.1") {
-        return Err("Workspaces only open MISE's own local addresses.".into());
+        return Err("Workspaces only open Kanoun's own local addresses.".into());
     }
 
     let label = if separate {
@@ -73,9 +73,9 @@ async fn open_workspace(
         .join("webviews")
         .join(&label);
     let window_title = if separate {
-        format!("{title} ({}) — MISE", label.rsplit('-').next().unwrap_or(""))
+        format!("{title} ({}) — Kanoun", label.rsplit('-').next().unwrap_or(""))
     } else {
-        format!("{title} — MISE")
+        format!("{title} — Kanoun")
     };
     let (width, height) = if workspace == "guest" { (440.0, 860.0) } else { (1360.0, 880.0) };
     WebviewWindowBuilder::new(&app, &label, WebviewUrl::External(target))
@@ -128,7 +128,7 @@ pub fn run() {
             Ok(())
         })
         .on_window_event(|window, event| {
-            // Closing the launcher quits MISE, including workspace windows.
+            // Closing the launcher quits Kanoun, including workspace windows.
             // The close is held until the runtime has stopped the services
             // and PostgreSQL, so nothing keeps running in the background.
             if window.label() != "main" {
@@ -158,7 +158,7 @@ pub fn run() {
             open_data_folder
         ])
         .build(tauri::generate_context!())
-        .expect("error while building MISE");
+        .expect("error while building Kanoun");
 
     app.run(|app, event| match event {
         RunEvent::ExitRequested { api, .. } => {

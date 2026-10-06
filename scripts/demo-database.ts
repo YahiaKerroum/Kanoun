@@ -38,7 +38,7 @@ export function assertDemoDatabaseMarker(
       marker === null
         ? "unmarked_database_refused"
         : "database_marker_mismatch",
-      "The named demo database is not marked as MISE-owned; no data was changed.",
+      "The named demo database is not marked as Kanoun-owned; no data was changed.",
     );
   }
 }

@@ -1,4 +1,4 @@
-//! Supervises the Node runtime host (`runtime/host.mjs`) that runs the MISE
+//! Supervises the Node runtime host (`runtime/host.mjs`) that runs the Kanoun
 //! API, background worker, web apps, and — in local mode — PostgreSQL.
 //!
 //! The host speaks line-delimited JSON over stdio: commands go in on stdin,
@@ -55,7 +55,7 @@ fn sidecar_path() -> Result<PathBuf, String> {
     let executable = std::env::current_exe().map_err(|error| error.to_string())?;
     let directory = executable
         .parent()
-        .ok_or("The MISE install folder could not be found.")?;
+        .ok_or("The Kanoun install folder could not be found.")?;
     let name = if cfg!(windows) { "mise-node.exe" } else { "mise-node" };
     Ok(plain_path(directory.join(name)))
 }
@@ -67,7 +67,7 @@ impl Runtime {
         let node = sidecar_path()?;
         let host = resources.join("host.mjs");
         if !node.exists() || !host.exists() {
-            return Err("This MISE installation is incomplete. Reinstall MISE.".into());
+            return Err("This Kanoun installation is incomplete. Reinstall Kanoun.".into());
         }
         fs::create_dir_all(data.join("logs")).map_err(|error| error.to_string())?;
         let stderr_log = OpenOptions::new()
@@ -90,7 +90,7 @@ impl Runtime {
 
         let mut child = command
             .spawn()
-            .map_err(|error| format!("The MISE runtime could not start: {error}"))?;
+            .map_err(|error| format!("The Kanoun runtime could not start: {error}"))?;
         let stdout = child.stdout.take().ok_or("The runtime has no output stream.")?;
         *self.inner.stdin.lock().unwrap() = child.stdin.take();
         *self.inner.child.lock().unwrap() = Some(child);
@@ -105,7 +105,7 @@ impl Runtime {
     pub fn fail(&self, app: &AppHandle, detail: String, data: &Path) {
         let state = json!({
             "phase": "error",
-            "error": { "title": "MISE could not start", "detail": detail },
+            "error": { "title": "Kanoun could not start", "detail": detail },
             "dataDirectory": plain_path(data.to_path_buf()),
         });
         *self.inner.last_state.lock().unwrap() = Some(state.clone());
@@ -130,7 +130,7 @@ impl Runtime {
             return Err(error);
         }
         let reply = receiver.recv_timeout(timeout).unwrap_or_else(|_| {
-            Err("MISE did not answer in time. Check the runtime log.".into())
+            Err("Kanoun did not answer in time. Check the runtime log.".into())
         });
         self.inner.pending.lock().unwrap().remove(&id);
         reply
@@ -138,10 +138,10 @@ impl Runtime {
 
     fn write_line(&self, value: &Value) -> Result<(), String> {
         let mut guard = self.inner.stdin.lock().unwrap();
-        let stdin = guard.as_mut().ok_or("The MISE runtime is not running.")?;
+        let stdin = guard.as_mut().ok_or("The Kanoun runtime is not running.")?;
         writeln!(stdin, "{value}")
             .and_then(|_| stdin.flush())
-            .map_err(|_| "The MISE runtime is not running.".to_string())
+            .map_err(|_| "The Kanoun runtime is not running.".to_string())
     }
 
     pub fn is_stopped(&self) -> bool {
@@ -203,14 +203,14 @@ fn read_output(stdout: std::process::ChildStdout, inner: &Arc<Inner>, app: &AppH
     // The host exited. Fail every waiting call and tell the launcher, unless
     // this is the expected end of a shutdown.
     for (_, sender) in inner.pending.lock().unwrap().drain() {
-        let _ = sender.send(Err("The MISE runtime stopped.".into()));
+        let _ = sender.send(Err("The Kanoun runtime stopped.".into()));
     }
     if !inner.stopped.load(Ordering::SeqCst) {
         let state = json!({
             "phase": "error",
             "error": {
-                "title": "The MISE runtime stopped",
-                "detail": "Restart MISE. If this keeps happening, send the logs folder from the data directory to support."
+                "title": "The Kanoun runtime stopped",
+                "detail": "Restart Kanoun. If this keeps happening, send the logs folder from the data directory to support."
             },
             "dataDirectory": inner.last_state.lock().unwrap()
                 .as_ref()

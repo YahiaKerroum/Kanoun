@@ -126,7 +126,7 @@ function money(amount: number) {
 }
 
 export interface DemoSeedDataOptions {
-  /** A migrated MISE database without the `dar-nedjma-demo` business. */
+  /** A migrated Kanoun database without the `dar-nedjma-demo` business. */
   readonly connectionString: string;
   readonly password: string;
   readonly sessionSecret: string;

@@ -197,8 +197,8 @@ export function page(options: DemoLauncherOptions): string {
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#ffb300" />
-    <meta name="description" content="Local synthetic MISE demo launcher" />
-    <title>MISE · Local demo launcher</title>
+    <meta name="description" content="Local synthetic Kanoun demo launcher" />
+    <title>Kanoun · Local demo launcher</title>
     <style>
       ${sharedDesignSystem}
       * { box-sizing: border-box; }
@@ -251,11 +251,11 @@ export function page(options: DemoLauncherOptions): string {
     </style>
   </head>
   <body>
-    <main class="mise-stage">
-      <div class="shell mise-shell">
+    <main class="kanoun-stage">
+      <div class="shell kanoun-shell">
         <header class="masthead">
           <div>
-            <p class="eyebrow">MISE · Local synthetic demo</p>
+            <p class="eyebrow">Kanoun · Local synthetic demo</p>
             <h1>See the whole service floor.</h1>
             <p class="lede">A disposable Dar Nedjma workspace with realistic operating data, four ready identities, and a real table-ordering entry point.</p>
           </div>

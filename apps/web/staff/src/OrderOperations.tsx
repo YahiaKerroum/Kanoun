@@ -2,8 +2,6 @@ import { CircleAlert, Settings2 } from "lucide-react";
 import { useRef, useState, type SyntheticEvent } from "react";
 import { z } from "zod";
 import type { Order, Table } from "./OrdersWorkspace.js";
-import { motion } from "framer-motion";
-import { actionButtonVariants } from "./motion.js";
 
 const orderResponseSchema = z.object({
   id: z.uuid(),
@@ -104,32 +102,26 @@ export function OrderOperations(props: {
         aria-label={`Next actions for ${props.order.reference}`}
       >
         <a href={`/orders?order=${encodeURIComponent(props.order.id)}`}>
-          View order detail
+          Order detail
         </a>
         {props.canViewKitchen ? (
           <a href={`/kitchen?order=${encodeURIComponent(props.order.id)}`}>
             {props.order.fulfilment === "ready"
-              ? "Open serving handoff"
-              : "Open kitchen handoff"}
+              ? "Serve from the kitchen"
+              : "See in the kitchen"}
           </a>
         ) : null}
         {props.canViewPayments ? (
           <a href={`/payments?order=${encodeURIComponent(props.order.id)}`}>
-            Open payment ledger
+            Payments
           </a>
         ) : null}
       </div>
       {hasAction ? (
-        <motion.button
-          type="button"
-          onClick={() => setOpen((value) => !value)}
-          whileHover="hover"
-          whileTap="tap"
-          variants={actionButtonVariants}
-        >
+        <button type="button" onClick={() => setOpen((value) => !value)}>
           <Settings2 aria-hidden="true" size={17} />
           {open ? "Close actions" : "Manage"}
-        </motion.button>
+        </button>
       ) : null}
       {open ? (
         <div className="order-operation-panel">
@@ -272,15 +264,9 @@ function CorrectionForm(props: {
         />
       </label>
       {state === "failed" ? <p role="alert">{error}</p> : null}
-      <motion.button
-        type="submit"
-        disabled={!reason.trim() || state === "pending"}
-        whileHover="hover"
-        whileTap="tap"
-        variants={actionButtonVariants}
-      >
+      <button type="submit" disabled={!reason.trim() || state === "pending"}>
         {state === "pending" ? "Saving…" : "Save correction"}
-      </motion.button>
+      </button>
     </form>
   );
 }
@@ -348,15 +334,9 @@ function MoveTableForm(props: {
         </select>
       </label>
       {state === "failed" ? <p role="alert">{error}</p> : null}
-      <motion.button
-        type="submit"
-        disabled={state === "pending"}
-        whileHover="hover"
-        whileTap="tap"
-        variants={actionButtonVariants}
-      >
+      <button type="submit" disabled={state === "pending"}>
         {state === "pending" ? "Moving…" : "Move entire session"}
-      </motion.button>
+      </button>
     </form>
   );
 }

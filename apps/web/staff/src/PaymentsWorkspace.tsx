@@ -9,11 +9,7 @@ import {
 } from "react";
 import { z } from "zod";
 import { motion } from "framer-motion";
-import {
-  actionButtonVariants,
-  fadeUpItemVariants,
-  staggerContainerVariants,
-} from "./motion.js";
+import { fadeUpItemVariants, staggerContainerVariants } from "./motion.js";
 
 const moneySchema = z.object({
   amount: z.string().regex(/^-?\d+(?:\.\d{1,2})?$/),
@@ -349,16 +345,14 @@ export function PaymentsWorkspace(props: {
             cash or card payments here.
           </p>
         </div>
-        <motion.button
+        <button
+          className="workspace-action workspace-action--quiet"
           type="button"
           onClick={() => setReloadSequence((value) => value + 1)}
-          whileHover="hover"
-          whileTap="tap"
-          variants={actionButtonVariants}
         >
-          <RefreshCw aria-hidden="true" size={18} />
+          <RefreshCw aria-hidden="true" size={17} />
           Refresh
-        </motion.button>
+        </button>
       </header>
 
       {financialFeedback ? (
@@ -367,11 +361,11 @@ export function PaymentsWorkspace(props: {
         </p>
       ) : null}
 
-      <p className="payments-live-status" role="status" aria-live="polite">
+      <h3 className="payments-section-title" role="status" aria-live="polite">
         {items.length === 0
-          ? "No open bill requests."
-          : `${items.length} open bill ${items.length === 1 ? "request" : "requests"}.`}
-      </p>
+          ? "No tables waiting for the bill"
+          : `${items.length} ${items.length === 1 ? "table wants" : "tables want"} the bill`}
+      </h3>
       {queue.kind === "loading" ? (
         <div className="payments-loading" role="status">
           <RefreshCw className="is-spinning" aria-hidden="true" size={20} />
@@ -394,8 +388,8 @@ export function PaymentsWorkspace(props: {
           {items.length === 0 ? (
             <section className="payments-empty">
               <CreditCard aria-hidden="true" size={28} />
-              <h3>The payment desk is clear</h3>
-              <p>New customer bill requests will appear automatically.</p>
+              <h4>The payment desk is clear</h4>
+              <p>When a guest asks for the bill, the table shows up here.</p>
             </section>
           ) : (
             <motion.ul
@@ -406,20 +400,20 @@ export function PaymentsWorkspace(props: {
             >
               {items.map((item) => (
                 <motion.li key={item.id} variants={fadeUpItemVariants}>
-                  <LedgerSummary ledger={item} />
+                  <BillHeader ledger={item} />
                   <button
                     type="button"
                     className="payment-ledger-link"
                     onClick={() => setLookup({ kind: "ready", ledger: item })}
                   >
-                    Open bill ledger
+                    See payments and refunds
                   </button>
                   {props.canRecord && !item.payment ? (
                     <RecordPaymentForm
                       ledger={item}
-                      onRecorded={() => {
+                      onRecorded={(method) => {
                         setFinancialFeedback(
-                          `Payment recorded for ${item.orderReference}. The ledger was reloaded from the server.`,
+                          `Paid: ${item.orderReference}, ${formatMoney(item.total)} by ${method}.`,
                         );
                         void openLedger(item.orderId);
                         setReloadSequence((value) => value + 1);
@@ -439,7 +433,7 @@ export function PaymentsWorkspace(props: {
           aria-labelledby="recent-orders-title"
         >
           <h3 id="recent-orders-title">Unpaid and recent orders</h3>
-          <p>Pick an order to see its payments and refunds.</p>
+          <p>Open an order to take payment or record a refund.</p>
           {recentState.kind === "loading" ? (
             <p role="status">Loading recent orders…</p>
           ) : recentState.kind === "error" ? (
@@ -475,7 +469,7 @@ export function PaymentsWorkspace(props: {
                         type="button"
                         onClick={() => void openLedger(order.id)}
                       >
-                        Open ledger
+                        Open
                       </button>
                     </li>
                   ))}
@@ -486,38 +480,70 @@ export function PaymentsWorkspace(props: {
         </section>
       ) : null}
 
-      <section className="payment-history-lookup">
-        <h3>Payments for this order</h3>
-        <p>Choose a bill request or an order above.</p>
-        {lookup.kind === "loading" ? (
-          <p role="status">Loading payments…</p>
-        ) : null}
-        {lookup.kind === "error" ? <p role="alert">{lookup.message}</p> : null}
-        {lookup.kind === "ready" ? (
-          <div className="payment-ledger-result">
-            <LedgerSummary ledger={lookup.ledger} />
-            {props.canRecord && !lookup.ledger.payment ? (
-              <RecordPaymentForm
-                ledger={lookup.ledger}
-                onRecorded={() => {
-                  setFinancialFeedback(
-                    `Payment recorded for ${lookup.ledger.orderReference}. The ledger was reloaded from the server.`,
-                  );
-                  void openLedger(lookup.ledger.orderId);
-                }}
-              />
-            ) : null}
-            {props.canRefund &&
-            lookup.ledger.payment &&
-            lookup.ledger.financial !== "refunded" ? (
-              <RefundForm
-                ledger={lookup.ledger}
-                onRefunded={(ledger) => setLookup({ kind: "ready", ledger })}
-              />
-            ) : null}
-          </div>
-        ) : null}
-      </section>
+      {lookup.kind === "idle" ? null : (
+        <section
+          className="payment-history-lookup payment-history-lookup--open"
+          ref={(element) => {
+            if (element && lookup.kind === "ready") {
+              element.scrollIntoView({ block: "nearest", behavior: "smooth" });
+            }
+          }}
+        >
+          <h3>
+            {lookup.kind === "ready"
+              ? `Payments for ${lookup.ledger.orderReference}`
+              : "Payments for this order"}
+          </h3>
+          {lookup.kind === "loading" ? (
+            <p role="status">Loading payments…</p>
+          ) : null}
+          {lookup.kind === "error" ? (
+            <p role="alert">{lookup.message}</p>
+          ) : null}
+          {lookup.kind === "ready" ? (
+            <div className="payment-ledger-result">
+              <LedgerSummary ledger={lookup.ledger} />
+              {props.canRecord && !lookup.ledger.payment ? (
+                <RecordPaymentForm
+                  ledger={lookup.ledger}
+                  onRecorded={(method) => {
+                    setFinancialFeedback(
+                      `Paid: ${lookup.ledger.orderReference}, ${formatMoney(lookup.ledger.total)} by ${method}.`,
+                    );
+                    void openLedger(lookup.ledger.orderId);
+                  }}
+                />
+              ) : null}
+              {props.canRefund &&
+              lookup.ledger.payment &&
+              lookup.ledger.financial !== "refunded" ? (
+                <RefundForm
+                  ledger={lookup.ledger}
+                  onRefunded={(ledger) => setLookup({ kind: "ready", ledger })}
+                />
+              ) : null}
+            </div>
+          ) : null}
+        </section>
+      )}
+    </div>
+  );
+}
+
+function BillHeader(props: { readonly ledger: Ledger }) {
+  const { ledger } = props;
+  return (
+    <div className="bill-header">
+      <strong className="bill-header__table">{ledger.tableCode}</strong>
+      <span className="bill-header__reference">{ledger.orderReference}</span>
+      <strong className="bill-header__total">
+        {formatMoney(ledger.total)}
+      </strong>
+      <span
+        className={`order-request-state order-request-state--${ledger.financial}`}
+      >
+        {financialLabel(ledger.financial)}
+      </span>
     </div>
   );
 }
@@ -539,14 +565,14 @@ function LedgerSummary(props: { readonly ledger: Ledger }) {
         <strong>{formatMoney(ledger.total)}</strong>
       </div>
       <div>
-        <span>Financial</span>
+        <span>Payment</span>
         <strong>{financialLabel(ledger.financial)}</strong>
       </div>
       {ledger.payment ? (
         <div>
           <span>Original payment</span>
           <strong>
-            {formatMoney(ledger.payment.amount)} · {ledger.payment.method}
+            {formatMoney(ledger.payment.amount)} by {ledger.payment.method}
           </strong>
         </div>
       ) : null}
@@ -562,7 +588,7 @@ function LedgerSummary(props: { readonly ledger: Ledger }) {
 
 function RecordPaymentForm(props: {
   readonly ledger: Ledger;
-  readonly onRecorded: () => void;
+  readonly onRecorded: (method: "cash" | "card") => void;
 }) {
   const [method, setMethod] = useState<"cash" | "card">("cash");
   const [externalReference, setExternalReference] = useState("");
@@ -600,7 +626,7 @@ function RecordPaymentForm(props: {
       );
       key.current = undefined;
       setState("success");
-      props.onRecorded();
+      props.onRecorded(method);
     } catch {
       setState("failed");
     }
@@ -611,49 +637,53 @@ function RecordPaymentForm(props: {
       className="record-payment-form"
       onSubmit={(event) => void submit(event)}
     >
-      <label>
-        Method
-        <select
-          value={method}
-          onChange={(event) =>
-            setMethod(event.currentTarget.value as "cash" | "card")
-          }
-        >
-          <option value="cash">Cash</option>
-          <option value="card">Card</option>
-        </select>
-      </label>
-      <label>
-        External reference (optional)
-        <input
-          maxLength={100}
-          value={externalReference}
-          onChange={(event) => setExternalReference(event.currentTarget.value)}
-        />
-      </label>
+      <fieldset className="payment-method">
+        <legend>How did they pay?</legend>
+        {(["cash", "card"] as const).map((value) => (
+          <label key={value}>
+            <input
+              type="radio"
+              name={`method-${props.ledger.orderId}`}
+              value={value}
+              checked={method === value}
+              onChange={() => setMethod(value)}
+            />
+            <span>{value === "cash" ? "Cash" : "Card"}</span>
+          </label>
+        ))}
+      </fieldset>
+      {method === "card" ? (
+        <label>
+          Card slip number (optional)
+          <input
+            maxLength={100}
+            value={externalReference}
+            onChange={(event) =>
+              setExternalReference(event.currentTarget.value)
+            }
+          />
+        </label>
+      ) : null}
       <label className="financial-confirmation">
         <input
           type="checkbox"
           checked={confirmed}
           onChange={(event) => setConfirmed(event.currentTarget.checked)}
         />
-        Confirm receipt of exactly {formatMoney(props.ledger.total)}.
+        I have received exactly {formatMoney(props.ledger.total)}.
       </label>
       {state === "failed" ? (
         <p role="alert">
-          Payment was not recorded. Reload the bill and verify the balance.
+          The payment wasn’t recorded. Refresh the bill and check the balance
+          before trying again.
         </p>
       ) : null}
       {state === "success" ? <p role="status">Payment recorded.</p> : null}
-      <motion.button
-        type="submit"
-        disabled={!confirmed || state === "pending"}
-        whileHover="hover"
-        whileTap="tap"
-        variants={actionButtonVariants}
-      >
-        {state === "pending" ? "Recording…" : "Record payment"}
-      </motion.button>
+      <button type="submit" disabled={!confirmed || state === "pending"}>
+        {state === "pending"
+          ? "Recording…"
+          : `Record ${formatMoney(props.ledger.total)} ${method === "cash" ? "in cash" : "by card"}`}
+      </button>
     </form>
   );
 }
@@ -771,17 +801,14 @@ function RefundForm(props: {
         </p>
       ) : null}
       {state === "success" ? <p role="status">Refund recorded.</p> : null}
-      <motion.button
+      <button
         type="submit"
         disabled={
           !amount.trim() || !reason.trim() || !confirmed || state === "pending"
         }
-        whileHover="hover"
-        whileTap="tap"
-        variants={actionButtonVariants}
       >
         {state === "pending" ? "Recording…" : "Record refund"}
-      </motion.button>
+      </button>
     </form>
   );
 }

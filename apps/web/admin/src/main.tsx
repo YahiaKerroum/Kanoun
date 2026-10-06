@@ -23,12 +23,11 @@ import {
 import { AdminAuthRoutes } from "./AuthRoutes.js";
 import { authRouteForPath, replaceLocation } from "./auth-navigation.js";
 import {
-  actionButtonVariants,
   sectionContainerVariants,
   staggerContainerVariants,
   fadeUpItemVariants,
 } from "./motion.js";
-import "@fontsource-variable/archivo/wdth.css";
+import "@fontsource-variable/schibsted-grotesk/wght.css";
 import "@fontsource/young-serif/400.css";
 import "./styles.css";
 
@@ -37,6 +36,61 @@ const permissionGrantSchema = z.object({
   restaurantId: z.uuid().optional(),
   branchId: z.uuid().optional(),
 });
+
+/** Plain names for the feature catalog; keys come from docs/config/features.yaml. */
+const featureCopy: Partial<
+  Record<string, { readonly name: string; readonly detail: string }>
+> = {
+  restaurant_configuration: {
+    name: "Restaurant setup",
+    detail: "Restaurant, branches, hours, and service status.",
+  },
+  identity_access: {
+    name: "Team sign-in",
+    detail: "Staff accounts, invitations, and what each person can do.",
+  },
+  menu: { name: "Menu", detail: "Categories, dishes, choices, and prices." },
+  qr_menu: {
+    name: "Table QR codes",
+    detail: "Guests scan the code on their table to open the menu.",
+  },
+  ordering: {
+    name: "Ordering",
+    detail: "Guests and staff send orders to the kitchen.",
+  },
+  tables: {
+    name: "Tables",
+    detail: "Tables and whether they are free or seated.",
+  },
+  kitchen: {
+    name: "Kitchen board",
+    detail: "Tickets for the kitchen and dishes ready to serve.",
+  },
+  order_acceptance: {
+    name: "Order acceptance",
+    detail: "Orders are accepted as soon as they are sent.",
+  },
+  partial_serving: {
+    name: "Serving part of an order",
+    detail: "Take out dishes as they are ready instead of all at once.",
+  },
+  payments: {
+    name: "Payments",
+    detail: "Record cash and card payments, and refunds.",
+  },
+  notifications: {
+    name: "Alerts",
+    detail:
+      "New orders, ready dishes, and bill requests reach the right people.",
+  },
+  reporting: { name: "Reports", detail: "Sales and service by day." },
+  audit: { name: "History", detail: "Who changed what, and when." },
+};
+
+function featureName(key: string): string {
+  const name = featureCopy[key]?.name ?? key.replaceAll("_", " ");
+  return name.charAt(0).toUpperCase() + name.slice(1);
+}
 
 function formText(data: FormData, name: string): string {
   const value = data.get(name);
@@ -1199,8 +1253,8 @@ function App() {
         </a>
         <aside className="admin-rail">
           <div className="admin-rail__brand">
-            <span className="mise-mark" aria-hidden="true" />
-            <span className="mise-wordmark">MISE</span>
+            <span className="kanoun-mark" aria-hidden="true" />
+            <span className="kanoun-wordmark">Kanoun</span>
           </div>
           <p className="admin-rail__caption">Back office</p>
           <AdministrationNavigation
@@ -1327,12 +1381,12 @@ function App() {
                             value: activeBranch?.name ?? "Not selected",
                           },
                           {
-                            label: "Employee profiles",
-                            value: String(state.employees.length),
+                            label: "Team",
+                            value: `${state.employees.filter((employee) => employee.status === "active").length} active of ${state.employees.length}`,
                           },
                           {
-                            label: "Permissions",
-                            value: String(activePermissionKeys.size),
+                            label: "What you can do here",
+                            value: `${activePermissionKeys.size} kinds of work`,
                           },
                         ].map((item) => (
                           <motion.li
@@ -1372,16 +1426,9 @@ function App() {
                             required
                           />
                         </label>
-                        <motion.button
-                          type="submit"
-                          disabled={!activeBranch}
-                          variants={actionButtonVariants}
-                          initial="rest"
-                          whileHover="hover"
-                          whileTap="tap"
-                        >
+                        <button type="submit" disabled={!activeBranch}>
                           Add employee
-                        </motion.button>
+                        </button>
                         <p>
                           Adds them to the current branch. They can sign in once
                           they accept an invitation.
@@ -1399,7 +1446,7 @@ function App() {
                             key={employee.id}
                             variants={fadeUpItemVariants}
                           >
-                            <motion.button
+                            <button
                               type="button"
                               className={
                                 selectedEmployeeId === employee.id
@@ -1407,21 +1454,19 @@ function App() {
                                   : ""
                               }
                               onClick={() => void selectEmployee(employee.id)}
-                              variants={actionButtonVariants}
-                              initial="rest"
-                              whileHover="hover"
-                              whileTap="tap"
                             >
                               <span>
                                 <strong>{employee.displayName}</strong>
                                 <small>{employee.email}</small>
                               </span>
                               <span className="employee-meta">
-                                {employee.status} · {employee.branchIds.length}{" "}
-                                branch
+                                {employee.status === "active"
+                                  ? "Active"
+                                  : "Inactive"}
+                                , {employee.branchIds.length} branch
                                 {employee.branchIds.length === 1 ? "" : "es"}
                               </span>
-                            </motion.button>
+                            </button>
                           </motion.li>
                         ))}
                       </motion.ul>
@@ -1437,8 +1482,9 @@ function App() {
                               </h4>
                             </div>
                             <span>
-                              {selectedEmployee.status} · version{" "}
-                              {selectedEmployee.version}
+                              {selectedEmployee.status === "active"
+                                ? "Active"
+                                : "Inactive"}
                             </span>
                           </div>
                           <form
@@ -1716,30 +1762,22 @@ function App() {
                                       : `Version ${template.version} · inactive`}
                                   </small>
                                 </span>
-                                <motion.button
+                                <button
                                   type="button"
                                   disabled={!template.active}
                                   onClick={() => void applyTemplate(template)}
-                                  variants={actionButtonVariants}
-                                  initial="rest"
-                                  whileHover="hover"
-                                  whileTap="tap"
                                 >
                                   Apply
-                                </motion.button>
-                                <motion.button
+                                </button>
+                                <button
                                   type="button"
                                   disabled={!template.active}
                                   onClick={() =>
                                     void deactivateTemplate(template)
                                   }
-                                  variants={actionButtonVariants}
-                                  initial="rest"
-                                  whileHover="hover"
-                                  whileTap="tap"
                                 >
                                   Deactivate
-                                </motion.button>
+                                </button>
                               </div>
                             ))}
                           </div>
@@ -1841,17 +1879,13 @@ function App() {
                               ),
                             )}
                           </div>
-                          <motion.button
+                          <button
                             className="primary-action"
                             type="button"
                             onClick={() => void savePermissions()}
-                            variants={actionButtonVariants}
-                            initial="rest"
-                            whileHover="hover"
-                            whileTap="tap"
                           >
                             Save permission set
-                          </motion.button>
+                          </button>
                         </>
                       )}
                     </section>
@@ -1900,10 +1934,8 @@ function App() {
                           <h3>Branch features</h3>
                         </div>
                         <span>
-                          Branch v{state.features?.configuration.version ?? "—"}{" "}
-                          · Restaurant v
-                          {state.restaurantFeatures?.configuration.version ??
-                            "—"}
+                          Turn parts of Kanoun on or off for{" "}
+                          {activeBranch?.name ?? "this branch"}.
                         </span>
                       </div>
                       <form onSubmit={(event) => void saveFeatures(event)}>
@@ -1914,13 +1946,20 @@ function App() {
                             return (
                               <li key={feature.id}>
                                 <div>
-                                  <strong>
-                                    {feature.key.replaceAll("_", " ")}
-                                  </strong>
+                                  <strong>{featureName(feature.key)}</strong>
                                   <small>
-                                    {feature.id}
+                                    {featureCopy[feature.key]?.detail ?? ""}
                                     {feature.dependsOn.length
-                                      ? ` · requires ${feature.dependsOn.join(", ")}`
+                                      ? ` Needs ${feature.dependsOn
+                                          .map((id) =>
+                                            featureName(
+                                              configurableFeatures.find(
+                                                (candidate) =>
+                                                  candidate.id === id,
+                                              )?.key ?? id,
+                                            ).toLowerCase(),
+                                          )
+                                          .join(" and ")}.`
                                       : ""}
                                   </small>
                                 </div>
@@ -1938,11 +1977,13 @@ function App() {
                                         }))
                                       }
                                     />
-                                    {value}
+                                    {value === "enabled" ? "On" : "Off"}
                                   </label>
                                 ) : (
                                   <span className="fixed-value">
-                                    {value} · fixed in MVP
+                                    {value === "enabled"
+                                      ? "Always on"
+                                      : "Not available yet"}
                                   </span>
                                 )}
                               </li>
@@ -1950,25 +1991,18 @@ function App() {
                           })}
                         </ul>
                         <label className="reason-field">
-                          Reason for feature change
+                          Why are you changing this?
                           <input
                             name="reason"
                             minLength={8}
                             maxLength={500}
                             required
-                            placeholder="Describe the operational reason"
+                            placeholder="For example: the terrace is closed for the winter"
                           />
                         </label>
-                        <motion.button
-                          className="primary-action"
-                          type="submit"
-                          variants={actionButtonVariants}
-                          initial="rest"
-                          whileHover="hover"
-                          whileTap="tap"
-                        >
-                          Save feature version
-                        </motion.button>
+                        <button className="primary-action" type="submit">
+                          Save changes
+                        </button>
                       </form>
                     </section>
                   ) : null}

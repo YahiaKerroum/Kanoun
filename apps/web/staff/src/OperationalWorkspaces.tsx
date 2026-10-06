@@ -18,11 +18,7 @@ import {
 } from "react";
 import { z } from "zod";
 import { motion } from "framer-motion";
-import {
-  actionButtonVariants,
-  fadeUpItemVariants,
-  staggerContainerVariants,
-} from "./motion.js";
+import { fadeUpItemVariants, staggerContainerVariants } from "./motion.js";
 
 const copy = {
   menu: {
@@ -53,9 +49,9 @@ const copy = {
       "This page came back in an unexpected format. Reload, and contact support if it keeps happening.",
     unavailable: "This page couldn't load. Check the connection and try again.",
     stale:
-      "The latest reload failed. The list below is the last verified snapshot and may be stale.",
-    reload: "Reload data",
-    lastUpdated: "Last verified",
+      "Couldn’t refresh. This is the list from the last successful update.",
+    reload: "Refresh",
+    lastUpdated: "Updated",
   },
 } as const;
 
@@ -216,10 +212,9 @@ function useResource<Data>(load: (signal: AbortSignal) => Promise<Data>): {
 }
 
 function formatVerifiedAt(value: Date): string {
-  return new Intl.DateTimeFormat("en", {
+  return new Intl.DateTimeFormat(undefined, {
     hour: "2-digit",
     minute: "2-digit",
-    second: "2-digit",
   }).format(value);
 }
 
@@ -302,17 +297,10 @@ function ResourceFeedback({
         </span>
         <h2 id="load-error-title">Couldn't refresh</h2>
         <p>{state.message}</p>
-        <motion.button
-          className="workspace-action"
-          type="button"
-          onClick={reload}
-          whileHover="hover"
-          whileTap="tap"
-          variants={actionButtonVariants}
-        >
+        <button className="workspace-action" type="button" onClick={reload}>
           <RefreshCw aria-hidden="true" size={18} />
           {copy.shared.reload}
-        </motion.button>
+        </button>
       </section>
     );
   }
@@ -335,22 +323,19 @@ function ResourceFeedback({
             ? copy.shared.stale
             : `${copy.shared.lastUpdated} ${formatVerifiedAt(state.verifiedAt)}`}
         </span>
-        <motion.button
+        <button
           className="workspace-action workspace-action--quiet"
           type="button"
           disabled={refreshing}
           onClick={reload}
-          whileHover="hover"
-          whileTap="tap"
-          variants={actionButtonVariants}
         >
           <RefreshCw
             className={refreshing ? "is-spinning" : ""}
             aria-hidden="true"
             size={17}
           />
-          {refreshing ? "Reloading…" : copy.shared.reload}
-        </motion.button>
+          {refreshing ? "Refreshing…" : copy.shared.reload}
+        </button>
       </div>
       {children}
     </>

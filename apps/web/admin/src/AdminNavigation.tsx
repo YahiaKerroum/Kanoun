@@ -7,7 +7,7 @@ import {
   type MouseEvent,
 } from "react";
 import { AnimatePresence, motion, MotionConfig } from "framer-motion";
-import { navItemVariants } from "./motion.js";
+import { navItemVariants, navPillTransition } from "./motion.js";
 
 export const administrationPages = [
   { id: "setup", label: "Setup", path: "/setup" },
@@ -56,7 +56,7 @@ export function useAdministrationPage(): {
       window.history.replaceState({}, "", expectedPath);
     }
     const currentPage = administrationPages.find((item) => item.id === page);
-    document.title = `${currentPage?.label ?? "Back office"} — MISE`;
+    document.title = `${currentPage?.label ?? "Back office"} — Kanoun`;
   }, [page]);
 
   useEffect(() => {
@@ -142,9 +142,6 @@ export function AdministrationNavigation({
               aria-current={isActive ? "page" : undefined}
               className={isActive ? "is-active" : undefined}
               onClick={(event) => handleClick(event, item.id)}
-              initial="rest"
-              whileHover="hover"
-              whileTap="tap"
               animate={isActive ? "active" : "rest"}
               variants={navItemVariants}
               style={{
@@ -163,7 +160,7 @@ export function AdministrationNavigation({
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    transition={{ duration: 0.18 }}
+                    transition={navPillTransition}
                   />
                 ) : null}
               </AnimatePresence>

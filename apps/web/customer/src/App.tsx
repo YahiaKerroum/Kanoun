@@ -6,12 +6,7 @@ import {
   useState,
   type SyntheticEvent,
 } from "react";
-import {
-  AnimatePresence,
-  motion,
-  MotionConfig,
-  type Variants,
-} from "framer-motion";
+import { AnimatePresence, motion, MotionConfig } from "framer-motion";
 import {
   CustomerRequestError,
   exchangeQrToken,
@@ -26,50 +21,16 @@ import {
 } from "./api.js";
 import { copy } from "./copy.js";
 
-// ── Shared animation primitives ──────────────────────────────────────────────
+// Motion answers the guest's actions: a screen settling in, a sheet rising,
+// the receipt printing once. Short ease-out tweens only.
+const easeOut = [0.22, 1, 0.36, 1] as const;
+const settle = { duration: 0.24, ease: easeOut } as const;
 
-const tapSpring = { type: "spring", stiffness: 600, damping: 17 } as const;
-const bouncy = { type: "spring", stiffness: 320, damping: 19 } as const;
-const gentle = { type: "spring", stiffness: 260, damping: 24 } as const;
-
-const actionBtn: Variants = {
-  rest: { scale: 1 },
-  hover: { scale: 1.04, transition: gentle },
-  tap: { scale: 0.94, transition: tapSpring },
-};
-
-const addBtn: Variants = {
-  rest: { scale: 1 },
-  hover: { scale: 1.06, transition: bouncy },
-  tap: { scale: 0.88, transition: tapSpring },
-};
-
-const panelVariants: Variants = {
-  initial: { opacity: 0, y: 18, scale: 0.98 },
-  enter: {
-    opacity: 1,
-    y: 0,
-    scale: 1,
-    transition: { ...gentle, duration: 0.32 },
-  },
-  exit: { opacity: 0, y: -10, scale: 0.98, transition: { duration: 0.16 } },
-};
-
-const staggerList: Variants = {
-  initial: {},
-  enter: { transition: { staggerChildren: 0.055, delayChildren: 0.06 } },
-};
-
-const fadeUp: Variants = {
-  initial: { opacity: 0, y: 14, scale: 0.98 },
-  enter: { opacity: 1, y: 0, scale: 1, transition: bouncy },
-};
-
-const slideUp: Variants = {
-  initial: { opacity: 0, y: 32 },
-  enter: { opacity: 1, y: 0, transition: bouncy },
-  exit: { opacity: 0, y: 32, transition: { duration: 0.18 } },
-};
+const panelMotion = {
+  initial: { opacity: 0, y: 10 },
+  animate: { opacity: 1, y: 0, transition: settle },
+  exit: { opacity: 0, transition: { duration: 0.12 } },
+} as const;
 
 type Journey =
   | { readonly kind: "exchanging" }
@@ -92,6 +53,7 @@ type Journey =
 type HeadingFocusCallback = (heading: HTMLHeadingElement | null) => void;
 
 type MenuDish = CustomerMenu["categories"][number]["dishes"][number];
+type OptionGroup = MenuDish["optionGroups"][number];
 
 interface CartItem {
   readonly clientId: string;
@@ -159,20 +121,59 @@ function minorUnits(amount: string): number {
   return negative ? -value : value;
 }
 
-function cartItemMinorUnits(item: CartItem): number {
-  let unit = minorUnits(item.dish.unitPrice.amount);
-  for (const group of item.dish.optionGroups) {
+function unitMinorUnits(dish: MenuDish, optionIds: readonly string[]): number {
+  let unit = minorUnits(dish.unitPrice.amount);
+  for (const group of dish.optionGroups) {
     for (const option of group.options) {
-      if (item.optionIds.includes(option.id)) {
+      if (optionIds.includes(option.id)) {
         unit += minorUnits(option.priceDelta.amount);
       }
     }
   }
-  return unit * item.quantity;
+  return unit;
+}
+
+function cartItemMinorUnits(item: CartItem): number {
+  return unitMinorUnits(item.dish, item.optionIds) * item.quantity;
 }
 
 function formatMinorUnits(value: number, currency: string): string {
   return formatMoney((value / 100).toFixed(2), currency);
+}
+
+function selectionsValid(dish: MenuDish, optionIds: readonly string[]) {
+  return dish.optionGroups.every((group) => {
+    const count = group.options.filter((option) =>
+      optionIds.includes(option.id),
+    ).length;
+    return count >= group.minimum && count <= group.maximum;
+  });
+}
+
+function toggleOption(
+  current: readonly string[],
+  group: OptionGroup,
+  id: string,
+): readonly string[] {
+  const groupIds = group.options.map((option) => option.id);
+  if (group.maximum === 1) {
+    if (group.minimum === 0 && current.includes(id)) {
+      return current.filter((value) => value !== id);
+    }
+    return [...current.filter((value) => !groupIds.includes(value)), id];
+  }
+  return current.includes(id)
+    ? current.filter((value) => value !== id)
+    : [...current, id];
+}
+
+function BrandLockup(props: { readonly href: string; readonly label: string }) {
+  return (
+    <a href={props.href} className="brand-link" aria-label={props.label}>
+      <span className="kanoun-mark" aria-hidden="true" />
+      <span className="kanoun-wordmark">{copy.brand}</span>
+    </a>
+  );
 }
 
 function LoadingView(props: {
@@ -184,16 +185,9 @@ function LoadingView(props: {
     <motion.section
       className="journey-panel loading-panel"
       aria-busy="true"
-      variants={panelVariants}
-      initial="initial"
-      animate="enter"
-      exit="exit"
+      {...panelMotion}
     >
-      <div className="loading-mark" aria-hidden="true">
-        <span />
-        <span />
-        <span />
-      </div>
+      <div className="loading-ember" aria-hidden="true" />
       <h1 ref={props.onHeadingMount} tabIndex={-1}>
         {props.title}
       </h1>
@@ -203,40 +197,30 @@ function LoadingView(props: {
 }
 
 function ErrorView(props: {
-  readonly invalid?: boolean;
-  readonly onRetry?: () => void;
+  readonly title: string;
+  readonly body: string;
+  readonly action?: string;
+  readonly onAction?: () => void;
   readonly onHeadingMount: HeadingFocusCallback;
 }) {
   return (
     <motion.section
       className="journey-panel error-panel"
       role="alert"
-      variants={panelVariants}
-      initial="initial"
-      animate="enter"
-      exit="exit"
+      {...panelMotion}
     >
-      <div className="error-symbol" aria-hidden="true">
-        !
-      </div>
       <h1 ref={props.onHeadingMount} tabIndex={-1}>
-        {props.invalid ? copy.invalidTitle : copy.unavailableTitle}
+        {props.title}
       </h1>
-      <p className="lead">
-        {props.invalid ? copy.invalidBody : copy.unavailableBody}
-      </p>
-      {props.onRetry ? (
-        <motion.button
+      <p className="lead">{props.body}</p>
+      {props.onAction && props.action ? (
+        <button
           className="primary-action"
           type="button"
-          onClick={props.onRetry}
-          variants={actionBtn}
-          initial="rest"
-          whileHover="hover"
-          whileTap="tap"
+          onClick={props.onAction}
         >
-          {copy.retry}
-        </motion.button>
+          {props.action}
+        </button>
       ) : null}
     </motion.section>
   );
@@ -259,29 +243,20 @@ function ConfirmationView(props: {
   return (
     <motion.section
       className="journey-panel confirmation-panel"
-      variants={panelVariants}
-      initial="initial"
-      animate="enter"
-      exit="exit"
+      {...panelMotion}
     >
       <h1 ref={props.onHeadingMount} tabIndex={-1}>
         {tableSpecific ? copy.tableTitle : copy.browseTitle}
       </h1>
       {tableSpecific ? (
         <div
-          className="table-lockup"
+          className="table-tent"
           aria-label={`${copy.tableLabel} ${props.session.tableCode}`}
         >
           <span>{copy.tableLabel}</span>
           <strong>{props.session.tableCode}</strong>
         </div>
-      ) : (
-        <div className="branch-mark" aria-hidden="true">
-          <span />
-          <span />
-          <span />
-        </div>
-      )}
+      ) : null}
       <p className="lead">{tableSpecific ? copy.tableBody : copy.browseBody}</p>
       <form onSubmit={submit}>
         <label htmlFor="customer-name">{copy.nameLabel}</label>
@@ -299,16 +274,9 @@ function ConfirmationView(props: {
         <span id="customer-name-hint" className="field-hint">
           {copy.nameHint}
         </span>
-        <motion.button
-          className="primary-action"
-          type="submit"
-          variants={actionBtn}
-          initial="rest"
-          whileHover="hover"
-          whileTap="tap"
-        >
+        <button className="primary-action" type="submit">
           {tableSpecific ? copy.confirmTable : copy.continueBrowsing}
-        </motion.button>
+        </button>
       </form>
       {tableSpecific ? <p className="scan-note">{copy.wrongTable}</p> : null}
     </motion.section>
@@ -318,159 +286,253 @@ function ConfirmationView(props: {
 function DishRow(props: {
   readonly dish: MenuDish;
   readonly orderingEnabled: boolean;
-  readonly onAdd: (item: CartItem) => void;
+  readonly inCart: number;
+  readonly onOpen: () => void;
+  readonly onQuickAdd: () => void;
 }) {
   const { dish } = props;
-  const [quantity, setQuantity] = useState(1);
-  const [optionIds, setOptionIds] = useState<readonly string[]>([]);
-  const [note, setNote] = useState("");
-
-  const selectionsValid = dish.optionGroups.every((group) => {
-    const count = group.options.filter((option) =>
-      optionIds.includes(option.id),
-    ).length;
-    return count >= group.minimum && count <= group.maximum;
-  });
-
-  function selectOption(group: MenuDish["optionGroups"][number], id: string) {
-    setOptionIds((current) => {
-      const groupIds = group.options.map((option) => option.id);
-      if (group.maximum === 1) {
-        if (group.minimum === 0 && current.includes(id)) {
-          return current.filter((value) => value !== id);
-        }
-        return [...current.filter((value) => !groupIds.includes(value)), id];
-      }
-      return current.includes(id)
-        ? current.filter((value) => value !== id)
-        : [...current, id];
-    });
-  }
-
-  function add() {
-    props.onAdd({
-      clientId: crypto.randomUUID(),
-      dish,
-      optionIds,
-      note: note.trim() || undefined,
-      quantity,
-    });
-    setQuantity(1);
-    setOptionIds([]);
-    setNote("");
-  }
+  const canOrder = props.orderingEnabled && dish.available;
+  const quick = dish.optionGroups.every((group) => group.minimum === 0);
 
   return (
     <article
       className={`dish-row${dish.available ? "" : " is-unavailable"}`}
       aria-label={`${dish.name}${dish.available ? "" : `, ${copy.unavailableDish}`}`}
     >
-      {dish.imageUrl ? (
-        <img className="dish-image" src={dish.imageUrl} alt={dish.name} />
-      ) : null}
-      <div className="dish-copy">
-        <div className="dish-title-line">
-          <h3>{dish.name}</h3>
-          <strong>
-            {formatMoney(dish.unitPrice.amount, dish.unitPrice.currency)}
-          </strong>
-        </div>
-        {dish.description ? <p>{dish.description}</p> : null}
-        {!dish.available ? (
-          <p className="availability">
-            <span aria-hidden="true">—</span> {copy.unavailableDish}
-          </p>
+      <button type="button" className="dish-row__open" onClick={props.onOpen}>
+        {dish.imageUrl ? (
+          <img
+            className="dish-row__image"
+            src={dish.imageUrl}
+            alt=""
+            loading="lazy"
+          />
         ) : null}
-        {dish.optionGroups.length > 0 ? (
-          <details>
-            <summary>{copy.optionDetails}</summary>
-            <div className="option-groups">
-              {dish.optionGroups.map((group) => (
-                <fieldset key={group.id} className="option-group">
-                  <legend>
-                    <strong>{group.name}</strong>
-                    <span>
-                      {group.minimum > 0 ? copy.required : copy.optional}
-                      {" · "}
-                      {group.minimum === 1 && group.maximum === 1
-                        ? copy.oneChoice
-                        : copy.choiceRange(group.minimum, group.maximum)}
-                    </span>
-                  </legend>
-                  {group.options.map((option) => (
-                    <label key={option.id} className="option-choice">
-                      <input
-                        type={
-                          group.minimum === 1 && group.maximum === 1
-                            ? "radio"
-                            : "checkbox"
-                        }
-                        name={`${dish.id}-${group.id}`}
-                        checked={optionIds.includes(option.id)}
-                        onChange={() => selectOption(group, option.id)}
-                      />
-                      <span>{option.name}</span>
-                      <span>
+        <span className="dish-row__copy">
+          <span className="dish-row__title">
+            <h3>{dish.name}</h3>
+            <span className="dish-row__leader" aria-hidden="true" />
+            <strong>
+              {formatMoney(dish.unitPrice.amount, dish.unitPrice.currency)}
+            </strong>
+          </span>
+          {dish.description ? (
+            <span className="dish-row__description">{dish.description}</span>
+          ) : null}
+          {!dish.available ? (
+            <span className="dish-row__note">{copy.unavailableDish}</span>
+          ) : dish.optionGroups.length > 0 ? (
+            <span className="dish-row__note">
+              {dish.optionGroups.map((group) => group.name).join(", ")}
+            </span>
+          ) : null}
+        </span>
+      </button>
+      {canOrder ? (
+        <button
+          type="button"
+          className={`dish-row__add${props.inCart > 0 ? " has-items" : ""}`}
+          aria-label={
+            props.inCart > 0
+              ? `${copy.addDish(dish.name)}, ${copy.inOrder(props.inCart)}`
+              : copy.addDish(dish.name)
+          }
+          onClick={quick ? props.onQuickAdd : props.onOpen}
+        >
+          {props.inCart > 0 ? (
+            <motion.span
+              key={props.inCart}
+              initial={{ scale: 0.6, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.18, ease: easeOut }}
+            >
+              {props.inCart}
+            </motion.span>
+          ) : (
+            <span aria-hidden="true">+</span>
+          )}
+        </button>
+      ) : null}
+    </article>
+  );
+}
+
+function DishSheet(props: {
+  readonly dish: MenuDish | null;
+  readonly orderingEnabled: boolean;
+  readonly currency: string;
+  readonly onClose: () => void;
+  readonly onAdd: (item: CartItem) => void;
+}) {
+  const dialog = useRef<HTMLDialogElement>(null);
+  const [quantity, setQuantity] = useState(1);
+  const [optionIds, setOptionIds] = useState<readonly string[]>([]);
+  const [note, setNote] = useState("");
+  const dish = props.dish;
+
+  useEffect(() => {
+    const element = dialog.current;
+    if (!element) return;
+    if (dish && !element.open) {
+      setQuantity(1);
+      setOptionIds([]);
+      setNote("");
+      element.showModal();
+    } else if (!dish && element.open) {
+      element.close();
+    }
+  }, [dish]);
+
+  const canOrder = Boolean(dish?.available) && props.orderingEnabled;
+  const valid = dish ? selectionsValid(dish, optionIds) : false;
+  const total = dish ? unitMinorUnits(dish, optionIds) * quantity : 0;
+
+  return (
+    <dialog
+      ref={dialog}
+      className="sheet dish-sheet"
+      aria-labelledby="dish-sheet-title"
+      onClose={props.onClose}
+      onClick={(event) => {
+        if (event.target === event.currentTarget) props.onClose();
+      }}
+    >
+      {dish ? (
+        <form
+          className="sheet__body"
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (!canOrder || !valid) return;
+            props.onAdd({
+              clientId: crypto.randomUUID(),
+              dish,
+              optionIds,
+              note: note.trim() || undefined,
+              quantity,
+            });
+          }}
+        >
+          <button
+            type="button"
+            className="sheet__close"
+            aria-label={copy.closeDish}
+            onClick={props.onClose}
+          >
+            <span aria-hidden="true">×</span>
+          </button>
+          {dish.imageUrl ? (
+            <img className="dish-sheet__image" src={dish.imageUrl} alt="" />
+          ) : null}
+          <header className="dish-sheet__header">
+            <h2 id="dish-sheet-title">{dish.name}</h2>
+            <strong>
+              {formatMoney(dish.unitPrice.amount, dish.unitPrice.currency)}
+            </strong>
+          </header>
+          {dish.description ? (
+            <p className="dish-sheet__description">{dish.description}</p>
+          ) : null}
+          {!dish.available ? (
+            <p className="dish-sheet__soldout">{copy.unavailableDish}</p>
+          ) : null}
+          {dish.optionGroups.map((group) => {
+            const single = group.minimum === 1 && group.maximum === 1;
+            return (
+              <fieldset key={group.id} className="option-group">
+                <legend>
+                  <strong>{group.name}</strong>
+                  <span>
+                    {group.minimum > 0 ? copy.required : copy.optional},{" "}
+                    {single
+                      ? copy.oneChoice.toLowerCase()
+                      : copy.choiceRange(group.minimum, group.maximum)}
+                  </span>
+                </legend>
+                {group.options.map((option) => (
+                  <label key={option.id} className="option-choice">
+                    <input
+                      type={single ? "radio" : "checkbox"}
+                      name={`${dish.id}-${group.id}`}
+                      checked={optionIds.includes(option.id)}
+                      disabled={!canOrder}
+                      onChange={() =>
+                        setOptionIds((current) =>
+                          toggleOption(current, group, option.id),
+                        )
+                      }
+                    />
+                    <span>{option.name}</span>
+                    {minorUnits(option.priceDelta.amount) !== 0 ? (
+                      <span className="option-choice__price">
                         {formatMoney(
                           option.priceDelta.amount,
                           option.priceDelta.currency,
                           "exceptZero",
                         )}
                       </span>
-                    </label>
-                  ))}
-                </fieldset>
-              ))}
-            </div>
-          </details>
-        ) : null}
-        {props.orderingEnabled && dish.available ? (
-          <div className="dish-order-controls">
-            <label>
-              <span>{copy.quantity}</span>
-              <input
-                type="number"
-                inputMode="numeric"
-                min={1}
-                max={99}
-                value={quantity}
-                onChange={(event) =>
-                  setQuantity(
-                    Math.max(
-                      1,
-                      Math.min(99, Number(event.currentTarget.value) || 1),
-                    ),
-                  )
-                }
-              />
-            </label>
-            <label className="dish-note">
-              <span>{copy.noteLabel}</span>
-              <textarea
-                maxLength={500}
-                rows={2}
-                value={note}
-                placeholder={copy.notePlaceholder}
-                onChange={(event) => setNote(event.currentTarget.value)}
-              />
-            </label>
-            <p className="note-disclaimer">{copy.noteDisclaimer}</p>
-            <motion.button
-              type="button"
-              className="add-action"
-              disabled={!selectionsValid}
-              onClick={add}
-              variants={addBtn}
-              initial="rest"
-              whileHover="hover"
-              whileTap="tap"
-            >
-              {copy.addToOrder}
-            </motion.button>
-          </div>
-        ) : null}
-      </div>
-    </article>
+                    ) : null}
+                  </label>
+                ))}
+              </fieldset>
+            );
+          })}
+          {canOrder ? (
+            <>
+              <label className="dish-sheet__note">
+                <span>{copy.noteLabel}</span>
+                <textarea
+                  maxLength={500}
+                  rows={2}
+                  value={note}
+                  placeholder={copy.notePlaceholder}
+                  onChange={(event) => setNote(event.currentTarget.value)}
+                />
+                <small>{copy.noteDisclaimer}</small>
+              </label>
+              <div className="sheet__footer">
+                <div
+                  className="stepper"
+                  role="group"
+                  aria-label={copy.quantity}
+                >
+                  <button
+                    type="button"
+                    aria-label={copy.decrease}
+                    disabled={quantity <= 1}
+                    onClick={() =>
+                      setQuantity((value) => Math.max(1, value - 1))
+                    }
+                  >
+                    −
+                  </button>
+                  <output aria-live="polite">{quantity}</output>
+                  <button
+                    type="button"
+                    aria-label={copy.increase}
+                    disabled={quantity >= 99}
+                    onClick={() =>
+                      setQuantity((value) => Math.min(99, value + 1))
+                    }
+                  >
+                    +
+                  </button>
+                </div>
+                <button
+                  className="primary-action"
+                  type="submit"
+                  disabled={!valid}
+                >
+                  {copy.addFor(
+                    quantity,
+                    formatMinorUnits(total, props.currency),
+                  )}
+                </button>
+              </div>
+            </>
+          ) : null}
+        </form>
+      ) : null}
+    </dialog>
   );
 }
 
@@ -483,7 +545,16 @@ function MenuView(props: {
   readonly onHeadingMount: HeadingFocusCallback;
 }) {
   const [cart, setCart] = useState<readonly CartItem[]>([]);
-  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [openDish, setOpenDish] = useState<MenuDish | null>(null);
+  const categories = useMemo(
+    () =>
+      props.menu.categories.filter((category) => category.dishes.length > 0),
+    [props.menu.categories],
+  );
+  const [activeCategory, setActiveCategory] = useState<string | null>(
+    categories[0]?.id ?? null,
+  );
+  const [announcement, setAnnouncement] = useState("");
   const [reviewOpen, setReviewOpen] = useState(false);
   const [submissionState, setSubmissionState] = useState<
     "idle" | "pending" | "failed" | "conflict" | "rejected"
@@ -492,19 +563,20 @@ function MenuView(props: {
   const idempotencyKey = useRef<string | undefined>(undefined);
   const reviewDialog = useRef<HTMLDialogElement>(null);
   const reviewTrigger = useRef<HTMLButtonElement>(null);
-  const hasDishes = props.menu.categories.some(
-    (category) => category.dishes.length > 0,
-  );
+  const tabs = useRef<HTMLElement>(null);
   const orderingEnabled = props.session.tableId !== null;
   const cartTotal = cart.reduce(
     (sum, item) => sum + cartItemMinorUnits(item),
     0,
   );
   const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
-
-  const visibleCategories = activeCategory
-    ? props.menu.categories.filter((c) => c.id === activeCategory)
-    : props.menu.categories;
+  const countByDish = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const item of cart) {
+      counts.set(item.dish.id, (counts.get(item.dish.id) ?? 0) + item.quantity);
+    }
+    return counts;
+  }, [cart]);
 
   useEffect(() => {
     const dialog = reviewDialog.current;
@@ -516,20 +588,74 @@ function MenuView(props: {
     }
   }, [reviewOpen]);
 
-  function closeReview() {
-    setReviewOpen(false);
+  // The tab for the section under the sticky header follows the scroll.
+  useEffect(() => {
+    const sections = categories
+      .map((category) => document.getElementById(`category-${category.id}`))
+      .filter((section): section is HTMLElement => section !== null);
+    if (sections.length === 0 || !("IntersectionObserver" in window)) return;
+    // Callbacks only report sections that changed, so remember which are in
+    // view and pick the first of those in menu order.
+    const visible = new Set<string>();
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          const id = entry.target.id.replace("category-", "");
+          if (entry.isIntersecting) visible.add(id);
+          else visible.delete(id);
+        }
+        const first = categories.find((category) => visible.has(category.id));
+        if (first) setActiveCategory(first.id);
+      },
+      { rootMargin: "-140px 0px -55% 0px" },
+    );
+    for (const section of sections) observer.observe(section);
+    return () => observer.disconnect();
+  }, [categories]);
+
+  useEffect(() => {
+    const strip = tabs.current;
+    const tab = strip?.querySelector<HTMLElement>(
+      `[data-category="${activeCategory ?? ""}"]`,
+    );
+    if (!strip || !tab) return;
+    strip.scrollTo({
+      left: tab.offsetLeft - strip.clientWidth / 2 + tab.clientWidth / 2,
+      behavior: "smooth",
+    });
+  }, [activeCategory]);
+
+  function add(item: CartItem) {
+    setCart((current) => {
+      const same = current.find(
+        (candidate) =>
+          candidate.dish.id === item.dish.id &&
+          candidate.note === item.note &&
+          candidate.optionIds.length === item.optionIds.length &&
+          candidate.optionIds.every((id) => item.optionIds.includes(id)),
+      );
+      return same
+        ? current.map((candidate) =>
+            candidate === same
+              ? {
+                  ...candidate,
+                  quantity: Math.min(99, candidate.quantity + item.quantity),
+                }
+              : candidate,
+          )
+        : [...current, item];
+    });
+    setAnnouncement(copy.added(item.dish.name));
+    setSubmissionState("idle");
   }
 
   function changeQuantity(clientId: string, delta: number) {
     setCart((current) =>
-      current.map((item) =>
-        item.clientId === clientId
-          ? {
-              ...item,
-              quantity: Math.max(1, Math.min(99, item.quantity + delta)),
-            }
-          : item,
-      ),
+      current.flatMap((item) => {
+        if (item.clientId !== clientId) return [item];
+        const quantity = Math.min(99, item.quantity + delta);
+        return quantity < 1 ? [] : [{ ...item, quantity }];
+      }),
     );
   }
 
@@ -580,326 +706,293 @@ function MenuView(props: {
   }
 
   return (
-    <div className="menu-stage mise-stage">
-      <div className="menu-shell mise-shell">
-        <header className="menu-header">
-          <div>
-            <a
-              href="#menu-content"
-              className="brand-link"
-              aria-label={copy.brandMenuTopLabel}
-            >
-              {copy.brand}
-            </a>
-            <p>{copy.menuUpdated}</p>
+    <div className="menu-stage kanoun-stage">
+      <header className="menu-header">
+        <BrandLockup href="#menu-content" label={copy.brandMenuTopLabel} />
+        {props.session.tableCode ? (
+          <div className="table-chip">
+            <span>{copy.tableLabel}</span>
+            <strong>{props.session.tableCode}</strong>
           </div>
-          {props.session.tableCode ? (
-            <div className="table-chip">
-              <span>{copy.tableLabel}</span>
-              <strong>{props.session.tableCode}</strong>
-            </div>
-          ) : (
-            <span className="browse-chip">{copy.browseOnly}</span>
-          )}
-        </header>
+        ) : (
+          <span className="browse-chip">{copy.browseOnly}</span>
+        )}
+      </header>
 
-        <main id="menu-content" className="menu-content">
-          <section className="menu-intro">
-            <h1 ref={props.onHeadingMount} tabIndex={-1}>
-              {copy.menuTitle}
-            </h1>
-            {props.menu.categories.length > 1 ? (
-              <nav
-                aria-label={copy.menuCategoriesLabel}
-                className="category-tabs"
+      <main id="menu-content" className="menu-content">
+        <h1 ref={props.onHeadingMount} tabIndex={-1}>
+          {copy.menuTitle}
+        </h1>
+        {categories.length > 1 ? (
+          <nav
+            ref={tabs}
+            aria-label={copy.menuCategoriesLabel}
+            className="category-tabs"
+          >
+            {categories.map((category) => (
+              <a
+                key={category.id}
+                href={`#category-${category.id}`}
+                data-category={category.id}
+                className="category-tab"
+                aria-current={
+                  activeCategory === category.id ? "true" : undefined
+                }
+                onClick={() => setActiveCategory(category.id)}
               >
-                <button
-                  type="button"
-                  className="category-tab"
-                  aria-current={activeCategory === null ? "true" : undefined}
-                  onClick={() => setActiveCategory(null)}
-                >
-                  {activeCategory === null ? (
-                    <motion.span
-                      className="category-tab__pill"
-                      layoutId="cat-pill"
-                      transition={bouncy}
+                {activeCategory === category.id ? (
+                  <motion.span
+                    className="category-tab__pill"
+                    layoutId="category-pill"
+                    transition={{ duration: 0.22, ease: easeOut }}
+                  />
+                ) : null}
+                <span className="category-tab__label">{category.name}</span>
+              </a>
+            ))}
+          </nav>
+        ) : null}
+
+        {categories.length > 0 ? (
+          <div className="category-list">
+            {categories.map((category) => (
+              <section
+                className="menu-category"
+                id={`category-${category.id}`}
+                key={category.id}
+                aria-labelledby={`category-title-${category.id}`}
+              >
+                <header className="category-heading">
+                  <h2 id={`category-title-${category.id}`}>{category.name}</h2>
+                  <span>{copy.dishCount(category.dishes.length)}</span>
+                </header>
+                <div className="category-dishes">
+                  {category.dishes.map((dish) => (
+                    <DishRow
+                      key={dish.id}
+                      dish={dish}
+                      orderingEnabled={orderingEnabled}
+                      inCart={countByDish.get(dish.id) ?? 0}
+                      onOpen={() => setOpenDish(dish)}
+                      onQuickAdd={() =>
+                        add({
+                          clientId: crypto.randomUUID(),
+                          dish,
+                          optionIds: [],
+                          quantity: 1,
+                        })
+                      }
                     />
-                  ) : null}
-                  <span className="category-tab__label">All</span>
-                </button>
-                {props.menu.categories.map((category) => (
-                  <button
-                    key={category.id}
-                    type="button"
-                    className="category-tab"
-                    aria-current={
-                      activeCategory === category.id ? "true" : undefined
-                    }
-                    onClick={() => setActiveCategory(category.id)}
-                  >
-                    {activeCategory === category.id ? (
-                      <motion.span
-                        className="category-tab__pill"
-                        layoutId="cat-pill"
-                        transition={bouncy}
-                      />
-                    ) : null}
-                    <span className="category-tab__label">{category.name}</span>
-                  </button>
-                ))}
-              </nav>
-            ) : null}
-          </section>
-
-          {hasDishes ? (
-            <div className="category-list">
-              <AnimatePresence mode="popLayout" initial={false}>
-                {visibleCategories.map((category) => (
-                  <motion.section
-                    className="menu-category"
-                    id={`category-${category.id}`}
-                    key={category.id}
-                    initial={{ opacity: 0, y: 16 }}
-                    animate={{ opacity: 1, y: 0, transition: bouncy }}
-                    exit={{
-                      opacity: 0,
-                      y: -12,
-                      transition: { duration: 0.15 },
-                    }}
-                  >
-                    <div className="category-heading">
-                      <h2>{category.name}</h2>
-                    </div>
-                    <motion.div
-                      className="category-dishes"
-                      variants={staggerList}
-                      initial="initial"
-                      whileInView="enter"
-                      viewport={{ once: true, margin: "-60px" }}
-                    >
-                      {category.dishes.map((dish) => (
-                        <motion.div key={dish.id} variants={fadeUp}>
-                          <DishRow
-                            dish={dish}
-                            orderingEnabled={orderingEnabled}
-                            onAdd={(item) =>
-                              setCart((current) => [...current, item])
-                            }
-                          />
-                        </motion.div>
-                      ))}
-                    </motion.div>
-                  </motion.section>
-                ))}
-              </AnimatePresence>
-            </div>
-          ) : (
-            <section className="empty-menu">
-              <h2>{copy.emptyMenuTitle}</h2>
-              <p>{copy.emptyMenuBody}</p>
-              <motion.button
-                type="button"
-                className="text-action"
-                onClick={props.onReload}
-                variants={actionBtn}
-                initial="rest"
-                whileHover="hover"
-                whileTap="tap"
-              >
-                {copy.reloadMenu}
-              </motion.button>
-            </section>
-          )}
-        </main>
-
-        <AnimatePresence>
-          {orderingEnabled && cart.length > 0 ? (
-            <motion.div
-              className="cart-bar"
-              aria-live="polite"
-              variants={slideUp}
-              initial="initial"
-              animate="enter"
-              exit="exit"
-            >
-              <div>
-                <strong>
-                  {itemCount} {itemCount === 1 ? "item" : "items"}
-                </strong>
-                <span>{formatMinorUnits(cartTotal, props.menu.currency)}</span>
-              </div>
-              <motion.button
-                ref={reviewTrigger}
-                type="button"
-                onClick={() => setReviewOpen(true)}
-                variants={actionBtn}
-                initial="rest"
-                whileHover="hover"
-                whileTap="tap"
-              >
-                {copy.reviewOrder}
-              </motion.button>
-            </motion.div>
-          ) : null}
-        </AnimatePresence>
-
-        <dialog
-          ref={reviewDialog}
-          className="cart-review"
-          aria-labelledby="cart-title"
-          onCancel={closeReview}
-          onClose={() => {
-            setReviewOpen(false);
-            reviewTrigger.current?.focus();
-          }}
-        >
-          {reviewOpen ? (
-            <>
-              <div className="cart-review__header">
-                <div>
-                  <p className="cart-review__table">
-                    {copy.tableLabel} {props.session.tableCode}
-                  </p>
-                  <h2 id="cart-title">{copy.cartTitle}</h2>
+                  ))}
                 </div>
-                <motion.button
-                  type="button"
-                  onClick={closeReview}
-                  variants={actionBtn}
-                  initial="rest"
-                  whileHover="hover"
-                  whileTap="tap"
-                >
-                  {copy.closeReview}
-                </motion.button>
-              </div>
-              <motion.div
-                className="cart-items"
-                variants={staggerList}
-                initial="initial"
-                animate="enter"
-              >
-                {cart.map((item) => (
-                  <motion.article key={item.clientId} variants={fadeUp}>
-                    <div>
-                      <h3>{item.dish.name}</h3>
-                      {item.optionIds.length > 0 ? (
-                        <p>
-                          {item.dish.optionGroups
-                            .flatMap((group) => group.options)
-                            .filter((option) =>
-                              item.optionIds.includes(option.id),
-                            )
-                            .map((option) => option.name)
-                            .join(", ")}
-                        </p>
-                      ) : null}
-                      {item.note ? <p>{item.note}</p> : null}
-                    </div>
-                    <div className="cart-item-actions">
-                      <motion.button
-                        type="button"
-                        aria-label={`Decrease ${item.dish.name} quantity`}
-                        onClick={() => changeQuantity(item.clientId, -1)}
-                        variants={addBtn}
-                        initial="rest"
-                        whileHover="hover"
-                        whileTap="tap"
-                      >
-                        −
-                      </motion.button>
-                      <span aria-label={`${copy.quantity} ${item.quantity}`}>
-                        {item.quantity}
-                      </span>
-                      <motion.button
-                        type="button"
-                        aria-label={`Increase ${item.dish.name} quantity`}
-                        onClick={() => changeQuantity(item.clientId, 1)}
-                        variants={addBtn}
-                        initial="rest"
-                        whileHover="hover"
-                        whileTap="tap"
-                      >
-                        +
-                      </motion.button>
-                      <motion.button
-                        type="button"
-                        className="remove-action"
-                        onClick={() =>
-                          setCart((current) =>
-                            current.filter(
-                              (candidate) =>
-                                candidate.clientId !== item.clientId,
-                            ),
-                          )
-                        }
-                        variants={actionBtn}
-                        initial="rest"
-                        whileHover="hover"
-                        whileTap="tap"
-                      >
-                        {copy.removeItem}
-                      </motion.button>
-                    </div>
-                    <strong>
-                      {formatMinorUnits(
-                        cartItemMinorUnits(item),
-                        props.menu.currency,
-                      )}
-                    </strong>
-                  </motion.article>
-                ))}
-              </motion.div>
-              <div className="cart-total">
-                <span>Total</span>
-                <strong>
-                  {formatMinorUnits(cartTotal, props.menu.currency)}
-                </strong>
-              </div>
-              {submissionState === "conflict" ? (
-                <p className="submit-message" role="alert">
-                  {copy.orderConflict}{" "}
-                  <button type="button" onClick={props.onReload}>
-                    {copy.reloadMenu}
-                  </button>
-                </p>
-              ) : null}
-              {submissionState === "failed" ? (
-                <p className="submit-message" role="alert">
-                  {copy.orderFailure}
-                </p>
-              ) : null}
-              {submissionState === "rejected" ? (
-                <p className="submit-message" role="alert">
-                  {rejectionMessage}
-                </p>
-              ) : null}
-              <motion.button
-                type="button"
-                className="primary-action submit-order"
-                disabled={cart.length === 0 || submissionState === "pending"}
-                onClick={() => void submit()}
-                variants={actionBtn}
-                initial="rest"
-                whileHover="hover"
-                whileTap="tap"
-              >
-                {submissionState === "pending"
-                  ? copy.submittingOrder
-                  : copy.submitOrder}
-              </motion.button>
-            </>
-          ) : null}
-        </dialog>
+              </section>
+            ))}
+          </div>
+        ) : (
+          <section className="empty-menu">
+            <h2>{copy.emptyMenuTitle}</h2>
+            <p>{copy.emptyMenuBody}</p>
+            <button
+              type="button"
+              className="secondary-action"
+              onClick={props.onReload}
+            >
+              {copy.reloadMenu}
+            </button>
+          </section>
+        )}
 
-        <footer>
-          <span>{copy.brand}</span>
+        <footer className="menu-footer">
           <p>{orderingEnabled ? copy.noteDisclaimer : copy.browseOnlyNotice}</p>
         </footer>
-      </div>
+      </main>
+
+      <p className="sr-only" aria-live="polite">
+        {announcement}
+      </p>
+
+      <AnimatePresence>
+        {orderingEnabled && cart.length > 0 ? (
+          <motion.div
+            className="cart-bar"
+            initial={{ y: "120%" }}
+            animate={{ y: 0, transition: settle }}
+            exit={{ y: "120%", transition: { duration: 0.16 } }}
+          >
+            <div className="cart-bar__summary">
+              <motion.strong
+                key={itemCount}
+                initial={{ y: -6, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ duration: 0.18, ease: easeOut }}
+              >
+                {copy.itemCount(itemCount)}
+              </motion.strong>
+              <span>{formatMinorUnits(cartTotal, props.menu.currency)}</span>
+            </div>
+            <button
+              ref={reviewTrigger}
+              type="button"
+              onClick={() => setReviewOpen(true)}
+            >
+              {copy.reviewOrder}
+            </button>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+
+      <DishSheet
+        dish={openDish}
+        orderingEnabled={orderingEnabled}
+        currency={props.menu.currency}
+        onClose={() => setOpenDish(null)}
+        onAdd={(item) => {
+          add(item);
+          setOpenDish(null);
+        }}
+      />
+
+      <dialog
+        ref={reviewDialog}
+        className="sheet cart-review"
+        aria-labelledby="cart-title"
+        onCancel={() => setReviewOpen(false)}
+        onClose={() => {
+          setReviewOpen(false);
+          reviewTrigger.current?.focus();
+        }}
+        onClick={(event) => {
+          if (event.target === event.currentTarget) setReviewOpen(false);
+        }}
+      >
+        {reviewOpen ? (
+          <div className="sheet__body">
+            <header className="cart-review__header">
+              <div>
+                <p className="cart-review__table">
+                  {copy.tableLabel} {props.session.tableCode}
+                </p>
+                <h2 id="cart-title">{copy.cartTitle}</h2>
+              </div>
+              <button
+                type="button"
+                className="sheet__close"
+                aria-label={copy.closeReview}
+                onClick={() => setReviewOpen(false)}
+              >
+                <span aria-hidden="true">×</span>
+              </button>
+            </header>
+            {cart.length === 0 ? (
+              <p className="cart-review__empty">{copy.cartEmpty}</p>
+            ) : (
+              <ul className="cart-items">
+                <AnimatePresence initial={false}>
+                  {cart.map((item) => (
+                    <motion.li
+                      key={item.clientId}
+                      layout
+                      exit={{ opacity: 0, transition: { duration: 0.12 } }}
+                    >
+                      <div className="cart-items__copy">
+                        <h3>{item.dish.name}</h3>
+                        {item.optionIds.length > 0 ? (
+                          <p>
+                            {item.dish.optionGroups
+                              .flatMap((group) => group.options)
+                              .filter((option) =>
+                                item.optionIds.includes(option.id),
+                              )
+                              .map((option) => option.name)
+                              .join(", ")}
+                          </p>
+                        ) : null}
+                        {item.note ? (
+                          <p className="cart-items__note">{item.note}</p>
+                        ) : null}
+                      </div>
+                      <strong className="cart-items__price">
+                        {formatMinorUnits(
+                          cartItemMinorUnits(item),
+                          props.menu.currency,
+                        )}
+                      </strong>
+                      <div
+                        className="stepper stepper--small"
+                        role="group"
+                        aria-label={`${copy.quantity}, ${item.dish.name}`}
+                      >
+                        <button
+                          type="button"
+                          aria-label={
+                            item.quantity === 1
+                              ? `${copy.removeItem} ${item.dish.name}`
+                              : `${copy.decrease}, ${item.dish.name}`
+                          }
+                          onClick={() => changeQuantity(item.clientId, -1)}
+                        >
+                          −
+                        </button>
+                        <output>{item.quantity}</output>
+                        <button
+                          type="button"
+                          aria-label={`${copy.increase}, ${item.dish.name}`}
+                          onClick={() => changeQuantity(item.clientId, 1)}
+                        >
+                          +
+                        </button>
+                      </div>
+                    </motion.li>
+                  ))}
+                </AnimatePresence>
+              </ul>
+            )}
+            <div className="cart-total">
+              <span>Total</span>
+              <strong>
+                {formatMinorUnits(cartTotal, props.menu.currency)}
+              </strong>
+            </div>
+            {submissionState === "conflict" ? (
+              <p className="submit-message" role="alert">
+                {copy.orderConflict}{" "}
+                <button type="button" onClick={props.onReload}>
+                  {copy.reloadMenu}
+                </button>
+              </p>
+            ) : null}
+            {submissionState === "failed" ? (
+              <p className="submit-message" role="alert">
+                {copy.orderFailure}
+              </p>
+            ) : null}
+            {submissionState === "rejected" ? (
+              <p className="submit-message" role="alert">
+                {rejectionMessage}
+              </p>
+            ) : null}
+            <button
+              type="button"
+              className="primary-action submit-order"
+              disabled={cart.length === 0 || submissionState === "pending"}
+              onClick={() => void submit()}
+            >
+              {submissionState === "pending"
+                ? copy.submittingOrder
+                : copy.submitOrder}
+            </button>
+          </div>
+        ) : null}
+      </dialog>
     </div>
   );
+}
+
+function orderStep(order: GuestOrder): number {
+  if (order.fulfilment === "served") return 3;
+  if (order.fulfilment === "ready") return 2;
+  if (order.fulfilment === "preparing") return 1;
+  return 0;
 }
 
 function OrderView(props: {
@@ -983,180 +1076,205 @@ function OrderView(props: {
     }
   }
 
-  const status =
+  const halted =
     order.closure === "cancelled"
       ? copy.cancelledStatus
       : order.approval === "rejected"
         ? copy.rejectedStatus
-        : order.fulfilment === "served"
-          ? copy.servedStatus
-          : order.fulfilment === "ready"
-            ? copy.readyStatus
-            : order.fulfilment === "preparing"
-              ? copy.preparingStatus
-              : copy.receivedStatus;
+        : null;
+  const step = orderStep(order);
+  const sentAt = new Intl.DateTimeFormat(undefined, {
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(order.submittedAt));
 
   return (
     <MotionConfig reducedMotion="user">
-      <motion.main
-        className="order-confirmation"
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={gentle}
-      >
-        <header>
-          <a href="/" className="brand-link" aria-label={copy.brandHomeLabel}>
-            {copy.brand}
-          </a>
+      <div className="order-stage kanoun-stage">
+        <header className="menu-header">
+          <BrandLockup href="/" label={copy.brandHomeLabel} />
           <div className="table-chip">
             <span>{copy.tableLabel}</span>
             <strong>{order.tableCode}</strong>
           </div>
         </header>
-        <section className="order-receipt">
-          <h1>{copy.orderReference}</h1>
-          <strong className="order-reference">{order.reference}</strong>
-          <div className="order-status" aria-live="polite">
-            <span>{copy.orderProgress}</span>
-            <strong>{status}</strong>
-          </div>
+        <main className="order-confirmation">
+          <h1>{halted ?? copy.sentTitle}</h1>
+          {halted ? null : <p className="lead">{copy.sentBody}</p>}
+
+          {halted ? null : (
+            <ol className="order-progress" aria-label={copy.orderProgress}>
+              {copy.orderSteps.map((label, index) => (
+                <li
+                  key={label}
+                  className={
+                    index < step
+                      ? "is-done"
+                      : index === step
+                        ? "is-current"
+                        : undefined
+                  }
+                  aria-current={index === step ? "step" : undefined}
+                >
+                  <span className="order-progress__dot" aria-hidden="true">
+                    {index === step ? (
+                      <motion.span
+                        layoutId="progress-ember"
+                        className="order-progress__ember"
+                        transition={{ duration: 0.4, ease: easeOut }}
+                      />
+                    ) : null}
+                  </span>
+                  <span>{label}</span>
+                </li>
+              ))}
+            </ol>
+          )}
+          <p className="sr-only" aria-live="polite">
+            {halted ?? copy.orderSteps[step]}
+          </p>
           {order.customerSafeStatusReason ? (
             <p className="status-reason">{order.customerSafeStatusReason}</p>
           ) : null}
+
+          <motion.section
+            className="order-receipt kanoun-ticket"
+            aria-label={copy.orderReference}
+            initial={{ clipPath: "inset(0 0 100% 0)", y: -16 }}
+            animate={{
+              clipPath: "inset(0 0 0% 0)",
+              y: 0,
+              transition: { duration: 0.7, ease: easeOut, delay: 0.1 },
+            }}
+          >
+            <header className="order-receipt__header kanoun-ticket__face">
+              <span>
+                {copy.tableLabel} {order.tableCode}
+              </span>
+              <span>{sentAt}</span>
+              <strong className="order-reference">{order.reference}</strong>
+            </header>
+            <ul className="receipt-items kanoun-ticket__face">
+              {order.items.map((item) => (
+                <li key={item.id}>
+                  <span>{item.quantity}×</span>
+                  <div>
+                    <strong>{item.name}</strong>
+                    {item.selectedOptions.length > 0 ? (
+                      <p>
+                        {item.selectedOptions
+                          .map((option) => option.optionName)
+                          .join(", ")}
+                      </p>
+                    ) : null}
+                    {item.note ? <p>{item.note}</p> : null}
+                  </div>
+                  <span>
+                    {formatMoney(item.total.amount, item.total.currency)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <div className="order-receipt__total kanoun-ticket__face">
+              <span>Total</span>
+              <strong>
+                {formatMoney(order.total.amount, order.total.currency)}
+              </strong>
+            </div>
+          </motion.section>
+
           <p
             className={`order-freshness${refreshState === "stale" ? " is-stale" : ""}`}
             role="status"
           >
             {refreshState === "stale"
               ? copy.statusMayBeStale
-              : copy.statusUpdatesAutomatically}
-          </p>
-          <motion.div
-            className="receipt-items"
-            variants={staggerList}
-            initial="initial"
-            animate="enter"
-          >
-            {order.items.map((item) => (
-              <motion.article key={item.id} variants={fadeUp}>
-                <span>{item.quantity}×</span>
-                <div>
-                  <strong>{item.name}</strong>
-                  {item.selectedOptions.length > 0 ? (
-                    <p>
-                      {item.selectedOptions
-                        .map((option) => option.optionName)
-                        .join(", ")}
-                    </p>
-                  ) : null}
-                  {item.note ? <p>{item.note}</p> : null}
-                </div>
-                <strong>
-                  {formatMoney(item.total.amount, item.total.currency)}
-                </strong>
-              </motion.article>
-            ))}
-          </motion.div>
-          <div className="cart-total">
-            <span>Total</span>
-            <strong>
-              {formatMoney(order.total.amount, order.total.currency)}
-            </strong>
-          </div>
-          <div className="order-actions">
-            <motion.button
+              : copy.statusUpdatesAutomatically}{" "}
+            <button
               type="button"
               className="text-action"
               disabled={refreshState === "pending"}
               onClick={() => void refresh()}
-              variants={actionBtn}
-              initial="rest"
-              whileHover="hover"
-              whileTap="tap"
             >
               {refreshState === "pending"
                 ? copy.refreshingStatus
                 : copy.refreshStatus}
-            </motion.button>
-            <motion.button
-              type="button"
-              className="primary-action"
-              onClick={props.onOrderMore}
-              variants={actionBtn}
-              initial="rest"
-              whileHover="hover"
-              whileTap="tap"
-            >
-              {copy.addAnotherOrder}
-            </motion.button>
-          </div>
-        </section>
-        {order.closure === "active" ? (
-          <section className="cancellation-request bill-request">
-            <h2>{copy.billTitle}</h2>
-            {billState === "sent" || order.billRequest ? (
-              <p role="status">{copy.billSent}</p>
-            ) : (
-              <>
-                {billState === "failed" ? (
-                  <p role="alert">{copy.billFailure}</p>
-                ) : null}
-                <motion.button
+            </button>
+          </p>
+
+          <div className="order-actions">
+            {order.closure === "active" ? (
+              billState === "sent" || order.billRequest ? (
+                <p className="order-actions__sent" role="status">
+                  {copy.billSent}
+                </p>
+              ) : (
+                <button
                   type="button"
+                  className={step >= 3 ? "primary-action" : "secondary-action"}
                   disabled={billState === "pending"}
                   onClick={() => void requestBill()}
-                  variants={actionBtn}
-                  initial="rest"
-                  whileHover="hover"
-                  whileTap="tap"
                 >
                   {billState === "pending"
                     ? copy.billPending
                     : copy.requestBill}
-                </motion.button>
-              </>
-            )}
-          </section>
-        ) : null}
-        {order.closure === "active" && cancellationState !== "sent" ? (
-          <section className="cancellation-request">
-            <h2>{copy.cancellationTitle}</h2>
-            <label htmlFor="cancellation-reason">
-              {copy.cancellationReason}
-            </label>
-            <textarea
-              id="cancellation-reason"
-              maxLength={500}
-              rows={3}
-              value={reason}
-              placeholder={copy.cancellationPlaceholder}
-              onChange={(event) => setReason(event.currentTarget.value)}
-            />
-            {cancellationState === "failed" ? (
-              <p role="alert">{copy.cancellationFailure}</p>
+                </button>
+              )
             ) : null}
-            <motion.button
+            <button
               type="button"
-              disabled={
-                reason.trim().length === 0 || cancellationState === "pending"
-              }
-              onClick={() => void cancel()}
-              variants={actionBtn}
-              initial="rest"
-              whileHover="hover"
-              whileTap="tap"
+              className={step >= 3 ? "secondary-action" : "primary-action"}
+              onClick={props.onOrderMore}
             >
-              {cancellationState === "pending"
-                ? copy.cancellationPending
-                : copy.requestCancellation}
-            </motion.button>
-          </section>
-        ) : cancellationState === "sent" || order.cancellationRequested ? (
-          <p className="cancellation-sent" role="status">
-            {copy.cancellationSent}
-          </p>
-        ) : null}
-      </motion.main>
+              {copy.addAnotherOrder}
+            </button>
+            {billState === "failed" ? (
+              <p className="submit-message" role="alert">
+                {copy.billFailure}
+              </p>
+            ) : null}
+          </div>
+
+          {order.closure === "active" && cancellationState !== "sent" ? (
+            <details className="cancellation-request">
+              <summary>{copy.somethingWrong}</summary>
+              <div>
+                <label htmlFor="cancellation-reason">
+                  {copy.cancellationReason}
+                </label>
+                <textarea
+                  id="cancellation-reason"
+                  maxLength={500}
+                  rows={3}
+                  value={reason}
+                  placeholder={copy.cancellationPlaceholder}
+                  onChange={(event) => setReason(event.currentTarget.value)}
+                />
+                {cancellationState === "failed" ? (
+                  <p role="alert">{copy.cancellationFailure}</p>
+                ) : null}
+                <button
+                  type="button"
+                  className="secondary-action"
+                  disabled={
+                    reason.trim().length === 0 ||
+                    cancellationState === "pending"
+                  }
+                  onClick={() => void cancel()}
+                >
+                  {cancellationState === "pending"
+                    ? copy.cancellationPending
+                    : copy.requestCancellation}
+                </button>
+              </div>
+            </details>
+          ) : cancellationState === "sent" || order.cancellationRequested ? (
+            <p className="cancellation-sent" role="status">
+              {copy.cancellationSent}
+            </p>
+          ) : null}
+        </main>
+      </div>
     </MotionConfig>
   );
 }
@@ -1204,6 +1322,7 @@ export function App() {
       const menu = await getGuestMenu();
       headingFocusPending.current = true;
       setJourney({ kind: "menu", session, menu });
+      window.scrollTo({ top: 0 });
     } catch (error) {
       if (error instanceof CustomerRequestError && error.status === 401) {
         headingFocusPending.current = true;
@@ -1224,9 +1343,10 @@ export function App() {
           customerName={name}
           onReload={() => void loadMenu(journey.session)}
           onHeadingMount={focusHeading}
-          onAccepted={(order) =>
-            setJourney({ kind: "order", session: journey.session, order })
-          }
+          onAccepted={(order) => {
+            window.scrollTo({ top: 0 });
+            setJourney({ kind: "order", session: journey.session, order });
+          }}
         />
       </MotionConfig>
     );
@@ -1242,12 +1362,13 @@ export function App() {
     );
   }
 
+  const browsing =
+    journey.kind === "confirm" && journey.session.tableCode === null;
+
   return (
     <MotionConfig reducedMotion="user">
-      <main className="journey-shell">
-        <a className="journey-brand" href="/" aria-label={copy.brandHomeLabel}>
-          {copy.brand}
-        </a>
+      <main className="journey-shell kanoun-stage">
+        <BrandLockup href="/" label={copy.brandHomeLabel} />
         <div className="journey-frame">
           <AnimatePresence mode="wait" initial={false}>
             {journey.kind === "exchanging" ? (
@@ -1258,11 +1379,19 @@ export function App() {
                 onHeadingMount={focusHeading}
               />
             ) : journey.kind === "invalid" ? (
-              <ErrorView key="invalid" invalid onHeadingMount={focusHeading} />
+              <ErrorView
+                key="invalid"
+                title={copy.invalidTitle}
+                body={copy.invalidBody}
+                onHeadingMount={focusHeading}
+              />
             ) : journey.kind === "exchange-error" ? (
               <ErrorView
                 key="exchange-error"
-                onRetry={() => setAttempt((value) => value + 1)}
+                title={copy.unavailableTitle}
+                body={copy.unavailableBody}
+                action={copy.retry}
+                onAction={() => setAttempt((value) => value + 1)}
                 onHeadingMount={focusHeading}
               />
             ) : journey.kind === "confirm" ? (
@@ -1282,38 +1411,20 @@ export function App() {
                 onHeadingMount={focusHeading}
               />
             ) : (
-              <motion.section
+              <ErrorView
                 key="menu-error"
-                className="journey-panel error-panel"
-                role="alert"
-                variants={panelVariants}
-                initial="initial"
-                animate="enter"
-                exit="exit"
-              >
-                <div className="error-symbol" aria-hidden="true">
-                  !
-                </div>
-                <h1 ref={focusHeading} tabIndex={-1}>
-                  {copy.menuLoadErrorTitle}
-                </h1>
-                <p className="lead">{copy.menuLoadErrorBody}</p>
-                <motion.button
-                  className="primary-action"
-                  type="button"
-                  onClick={() => void loadMenu(journey.session)}
-                  variants={actionBtn}
-                  initial="rest"
-                  whileHover="hover"
-                  whileTap="tap"
-                >
-                  {copy.reloadMenu}
-                </motion.button>
-              </motion.section>
+                title={copy.menuLoadErrorTitle}
+                body={copy.menuLoadErrorBody}
+                action={copy.reloadMenu}
+                onAction={() => void loadMenu(journey.session)}
+                onHeadingMount={focusHeading}
+              />
             )}
           </AnimatePresence>
         </div>
-        <p className="journey-footnote">{copy.browseOnlyNotice}</p>
+        {browsing ? (
+          <p className="journey-footnote">{copy.browseOnlyNotice}</p>
+        ) : null}
         <div className="sr-only" aria-live="polite">
           {journey.kind === "confirm" ? copy.tableVerifiedAnnouncement : ""}
         </div>
