@@ -60,6 +60,16 @@ export const copy = {
     "The menu changed. Reload the current menu, review your choices, and submit again.",
   orderFailure:
     "Your order wasn’t sent. Check your connection and try again. You won’t be charged twice.",
+  orderBranchClosed:
+    "The restaurant isn’t taking orders right now. Ask a member of staff, or order during opening hours.",
+  orderDishUnavailable:
+    "Something in your order has just sold out. Reload the menu and check your order.",
+  orderTableUnavailable:
+    "This table can’t take orders right now. Please ask a member of staff.",
+  orderSessionExpired:
+    "Your table link has expired. Scan the QR code on your table again.",
+  orderRejected:
+    "Your order wasn’t accepted. Please ask a member of staff for help.",
   orderReference: "Order reference",
   orderProgress: "Order progress",
   receivedStatus: "Received",

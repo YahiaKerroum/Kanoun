@@ -800,7 +800,8 @@ button:disabled {
 
 .submit-message {
   padding: 12px;
-  border-left: 3px solid var(--brand-fill);
+  border: 1px solid var(--state-blocked-line);
+  border-radius: var(--radius-control);
   color: var(--state-blocked-text);
   background: var(--danger-soft);
   line-height: 1.5;

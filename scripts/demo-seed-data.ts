@@ -907,6 +907,22 @@ export async function seedDemoData(
     await cook(babCrew, babServed.id, ago(58), ago(36));
     await serve(babCrew, babServed.id, ago(31));
 
+    // So the sample can be tried at any hour, both branches keep accepting
+    // orders outside their opening hours (Setup > Branches turns this off).
+    const latestOwner = await login(ownerEmail, live);
+    for (const branchId of [hydra.id, babEzzouar.id]) {
+      const current = await tenantOwner.getBranch(latestOwner, branchId);
+      await tenantOwner.updateBranch(
+        latestOwner,
+        {
+          branchId,
+          expectedVersion: current.version,
+          allowOrderOverride: true,
+        },
+        metadata(live),
+      );
+    }
+
     /* ---- Notifications and reports from the recorded events --------- */
 
     const notificationService = new NotificationService({

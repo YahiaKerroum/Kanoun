@@ -5,6 +5,8 @@ export const loginSchema = z.object({
   businessCode: z
     .string()
     .trim()
+    // Business codes are stored in lowercase; accept any capitalisation.
+    .toLowerCase()
     .min(3)
     .max(64)
     .regex(/^[a-z0-9][a-z0-9-]+$/),

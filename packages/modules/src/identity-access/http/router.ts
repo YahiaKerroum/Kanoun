@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { Router, type CookieOptions, type Request } from "express";
-import { rateLimit } from "express-rate-limit";
+import { ipKeyGenerator, rateLimit } from "express-rate-limit";
 import { z } from "zod";
 import { ApplicationError } from "../../shared/application-error.js";
 import type { StaffRequestContext } from "../domain/session-context.js";
@@ -199,9 +199,25 @@ export function createIdentityAccessRouter(
   dependencies: IdentityRouterDependencies,
 ): Router {
   const router = Router();
+  // Failed sign-ins are limited per account and address, not per address
+  // alone: on a desktop install every window shares 127.0.0.1, and an
+  // address-only limit would let one mistyped password lock out the team.
   const loginLimiter = rateLimit({
     windowMs: 15 * 60_000,
     limit: 10,
+    skipSuccessfulRequests: true,
+    keyGenerator: (request) => {
+      const body = (request.body ?? {}) as {
+        businessCode?: unknown;
+        email?: unknown;
+      };
+      const account = [body.businessCode, body.email]
+        .map((part) =>
+          typeof part === "string" ? part.trim().toLowerCase() : "",
+        )
+        .join("/");
+      return `${ipKeyGenerator(request.ip ?? "")}|${account}`;
+    },
     standardHeaders: "draft-8",
     legacyHeaders: false,
   });

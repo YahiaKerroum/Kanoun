@@ -45,7 +45,7 @@ async function submitAuthRequest(
 function requestErrorMessage(error: unknown, action: string): string {
   if (error instanceof AuthRequestError) {
     if (error.status === 401) {
-      return "The supplied credentials could not be verified. Check the business code, email, and password.";
+      return "The business code, email, or password is wrong. Check them and try again.";
     }
     if (error.status === 404) {
       return "This link is invalid, expired, or already used. Request a new link or contact an administrator.";
@@ -60,7 +60,16 @@ function requestErrorMessage(error: unknown, action: string): string {
       return "Recovery delivery is temporarily unavailable. Try again later or contact an administrator.";
     }
   }
-  return `${action} could not be completed. Check your connection and try again.`;
+  if (error instanceof AuthRequestError) {
+    if (error.status === 422) {
+      return "Check what you entered. The business code uses only letters, numbers, and dashes, and the email must be complete.";
+    }
+    if (error.status === 403) {
+      return "This page has expired. Reload it and try again.";
+    }
+    return `${action} failed on the restaurant server (error ${String(error.status)}). Try again, and restart MISE if it keeps happening.`;
+  }
+  return `${action} could not reach the restaurant server. Check your connection and try again.`;
 }
 
 function useCapturedToken(parameter: "token"): string {

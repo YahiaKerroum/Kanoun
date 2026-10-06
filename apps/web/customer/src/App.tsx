@@ -486,8 +486,9 @@ function MenuView(props: {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [reviewOpen, setReviewOpen] = useState(false);
   const [submissionState, setSubmissionState] = useState<
-    "idle" | "pending" | "failed" | "conflict"
+    "idle" | "pending" | "failed" | "conflict" | "rejected"
   >("idle");
+  const [rejectionMessage, setRejectionMessage] = useState("");
   const idempotencyKey = useRef<string | undefined>(undefined);
   const reviewDialog = useRef<HTMLDialogElement>(null);
   const reviewTrigger = useRef<HTMLButtonElement>(null);
@@ -556,11 +557,25 @@ function MenuView(props: {
       setSubmissionState("idle");
       props.onAccepted(order);
     } catch (error) {
-      setSubmissionState(
-        error instanceof CustomerRequestError && error.code === "menu_changed"
-          ? "conflict"
-          : "failed",
-      );
+      if (
+        error instanceof CustomerRequestError &&
+        error.code === "menu_changed"
+      ) {
+        setSubmissionState("conflict");
+        return;
+      }
+      // Network failures and server errors are worth retrying; a refusal
+      // (closed restaurant, sold-out dish, expired link) is not, so it gets
+      // its own explanation instead of "check your connection".
+      const rejection = rejectionFor(error);
+      if (rejection) {
+        // The server refused this attempt; a retry needs a fresh key.
+        idempotencyKey.current = undefined;
+        setRejectionMessage(rejection);
+        setSubmissionState("rejected");
+        return;
+      }
+      setSubmissionState("failed");
     }
   }
 
@@ -853,6 +868,11 @@ function MenuView(props: {
               {submissionState === "failed" ? (
                 <p className="submit-message" role="alert">
                   {copy.orderFailure}
+                </p>
+              ) : null}
+              {submissionState === "rejected" ? (
+                <p className="submit-message" role="alert">
+                  {rejectionMessage}
                 </p>
               ) : null}
               <motion.button
@@ -1300,4 +1320,24 @@ export function App() {
       </main>
     </MotionConfig>
   );
+}
+
+/** A guest-facing reason for a refused order, or undefined to retry. */
+function rejectionFor(error: unknown): string | undefined {
+  if (!(error instanceof CustomerRequestError)) return undefined;
+  if (error.status === 401 || error.code === "authentication_required") {
+    return copy.orderSessionExpired;
+  }
+  if (error.status >= 500 || error.status === 429) return undefined;
+  if (/not accepting new orders|when the branch is open/i.test(error.message)) {
+    return copy.orderBranchClosed;
+  }
+  switch (error.code) {
+    case "dish_unavailable":
+      return copy.orderDishUnavailable;
+    case "table_unavailable":
+      return copy.orderTableUnavailable;
+    default:
+      return copy.orderRejected;
+  }
 }
